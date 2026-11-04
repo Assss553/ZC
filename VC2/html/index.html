@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>VC2 Showroom</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="dim"></div>
+
+<!-- floating prompt / test drive timer (visible without the kiosk) -->
+<div id="prompt"><kbd>E</kbd><span>اضغط لفتح جهاز المعرض</span></div>
+<div id="timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span>تجربة قيادة</span><b id="tleft">1:00</b></div>
+
+<div id="stage">
+ <div class="a floor"></div>
+ <div class="a" id="kiosk">
+  <!-- crown -->
+  <div class="a crown">
+   <div class="a logo">VC<i>2</i></div>
+   <div class="a brand">AUTO SHOWROOM · KIOSK</div>
+   <i class="a cam"></i>
+   <div class="a led-strip"></div>
+  </div>
+
+  <!-- screen -->
+  <div class="a bezel">
+   <div class="a" id="panel"><div class="sweep"></div>
+    <div class="a hd">
+     <div class="a ttl"><div class="cbox"><svg viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></div>
+      <div><h1 id="title">معرض السيارات</h1><small id="kname">معرض VC2</small></div></div>
+     <div class="a chips">
+      <div class="chip"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg><span id="mcash">0</span></div>
+      <div class="chip o"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M2 10l10-6 10 6"/></svg><span id="mbank">0</span></div>
+     </div>
+    </div>
+
+    <!-- 1: catalogue -->
+    <div class="scr on" id="s1">
+     <div class="a bar">
+      <div class="tabs" id="tabs"></div>
+      <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="ابحث عن سيارة..." autocomplete="off"></label>
+     </div>
+     <div class="a grid" id="grid"></div>
+     <div class="a hint" id="count">اختر السيارة اللي تبيها</div>
+     <button class="a btn" id="close1" style="left:28px;top:512px;width:190px"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>إغلاق</button>
+    </div>
+
+    <!-- 2: details -->
+    <div class="scr" id="s2">
+     <div class="a pv">
+      <div class="glow" id="pglow"></div>
+      <div class="car" id="pcar"></div>
+      <div class="plat"></div>
+      <div class="sw" id="sw"></div>
+      <div class="cname" id="cname">أسود</div>
+     </div>
+     <div class="a info">
+      <div class="tagrow"><span class="tag" id="dcat">رياضية</span><span class="seats" id="dseats">2 مقاعد</span></div>
+      <h2 id="dname">Zentorno</h2>
+      <div class="brandl" id="dbrand">Pegassi</div>
+      <div class="price" id="dprice">$0</div>
+      <div class="stats" id="stats"></div>
+      <div class="pay" id="pay"></div>
+      <div class="warn" id="warn"></div>
+     </div>
+     <button class="a btn" id="back" style="left:28px;top:512px;width:170px"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>رجوع</button>
+     <button class="a btn" id="test" style="left:212px;top:512px;width:290px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 14v7M10 12H3M14 12h7"/></svg>تجربة القيادة</button>
+     <button class="a btn o" id="buy" style="left:516px;top:512px;width:632px"><svg viewBox="0 0 24 24" class="spin"><circle cx="12" cy="12" r="8" stroke-dasharray="38 14"/></svg><span id="btxt">شراء السيارة</span></button>
+    </div>
+
+    <!-- 3: receipt -->
+    <div class="scr" id="s3">
+     <div class="a tcard"><div class="l">رقم اللوحة</div><div class="plate"><b id="rplate">VC2 0000</b><i>SAN ANDREAS</i></div><div class="v"><span id="rcar">-</span> · <b id="rcol">-</b></div></div>
+     <div class="a rows">
+      <div><span>رقم الطلب</span><b id="rorder">#1</b></div>
+      <div><span>المبلغ المدفوع</span><b id="rprice">$0</b></div>
+      <div><span>طريقة الدفع</span><b id="rpay">البنك</b></div>
+      <div><span>الحالة</span><span class="st go">جاهزة للاستلام</span></div>
+     </div>
+     <div class="a note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg><span>سيارتك بانتظارك في موقف التسليم، حطينا لك علامة على الخريطة. احتفظ بالإيصال.</span></div>
+     <div class="a ok" id="okmsg"></div>
+     <button class="a btn" id="more" style="left:212px;top:512px;width:290px"><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18"/></svg>شراء سيارة ثانية</button>
+     <button class="a btn o" id="done" style="left:28px;top:512px;width:170px"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>تم</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+   </div>
+  </div>
+
+  <!-- console under the screen -->
+  <div class="a console">
+   <div class="a slot card-slot"><i></i><span>CARD</span></div>
+   <div class="a slot" id="printer"><div class="paper"><b>VC2</b><i></i><i></i><i></i></div><i class="pled"></i><span>RECEIPT</span></div>
+   <div class="a nfc" id="nfc"><svg viewBox="0 0 24 24"><path d="M8.5 8.5a5 5 0 0 1 0 7M12 6a8.5 8.5 0 0 1 0 12M15.5 3.5a12 12 0 0 1 0 17"/></svg></div>
+   <div class="a grille"></div>
+  </div>
+ </div>
+</div>
+<script src="script.js"></script>
+</body></html>
