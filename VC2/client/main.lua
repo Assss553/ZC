@@ -1,7 +1,8 @@
 local FW, Core = 'standalone', nil
-local isOpen, currentKiosk, prompting = false, nil, false
+local isOpen, mode, currentKiosk, currentGarage = false, nil, nil, nil
+local prompting = nil
 local testDrive = nil
-local props, blips = {}, {}
+local props, peds, blips = {}, {}, {}
 
 ---------------------------------------------------------------- framework
 local function detect()
@@ -21,10 +22,18 @@ local function notify(msg, kind)
         EndTextCommandThefeedPostTicker(false, true)
     end
 end
+RegisterNetEvent('vc2:notify', notify)
 
 local function getProps(veh)
     if FW == 'qb' then return Core.Functions.GetVehicleProperties(veh) end
     if FW == 'esx' then return Core.Game.GetVehicleProperties(veh) end
+end
+
+local function setProps(veh, p)
+    if type(p) ~= 'table' then return false end
+    if FW == 'qb' then Core.Functions.SetVehicleProperties(veh, p) return true end
+    if FW == 'esx' then Core.Game.SetVehicleProperties(veh, p) return true end
+    return false
 end
 
 ---------------------------------------------------------------- callbacks
@@ -51,27 +60,39 @@ local function loadModel(hash)
     return true
 end
 
-local function spawnVehicle(model, c, plate, colorIdx)
-    local hash = joaat(model)
+local function spawnVehicle(model, c, plate, colorIdx, vprops)
+    local hash = type(model) == 'number' and model or joaat(model)
     if not loadModel(hash) then return nil end
     local veh = CreateVehicle(hash, c.x, c.y, c.z, c.w, true, false)
     SetModelAsNoLongerNeeded(hash)
     SetEntityAsMissionEntity(veh, true, true)
     SetVehicleOnGroundProperly(veh)
-    SetVehicleNumberPlateText(veh, plate)
     SetVehicleDirtLevel(veh, 0.0)
     SetVehicleHasBeenOwnedByPlayer(veh, true)
-    local col = Config.Colors[colorIdx or 1]
-    if col then SetVehicleColours(veh, col.primary, col.primary) end
+    if not setProps(veh, vprops) then
+        local col = Config.Colors[colorIdx or 1]
+        if col then SetVehicleColours(veh, col.primary, col.primary) end
+    end
+    SetVehicleNumberPlateText(veh, plate)
     SetNetworkIdCanMigrate(NetworkGetNetworkIdFromEntity(veh), true)
     return veh
 end
 
-local function freeSpot(list)
-    for _, c in ipairs(list) do
-        if not IsAnyVehicleNearPoint(c.x, c.y, c.z, 3.0) then return c end
+-- spawn a car the player owns and tag it on the server as a VC2 car
+local function spawnOwned(model, spots, plate, colorIdx, vprops)
+    local spot = spots[1]
+    for _, c in ipairs(spots) do
+        if not IsAnyVehicleNearPoint(c.x, c.y, c.z, 3.0) then spot = c break end
     end
-    return list[1]
+    local veh = spawnVehicle(model, spot, plate, colorIdx, vprops)
+    if not veh then
+        notify('This vehicle model is not available on the server', 'error')
+        return
+    end
+    Config.OnVehicleSpawned(veh, plate, false)
+    TriggerServerEvent('vc2:spawned', NetworkGetNetworkIdFromEntity(veh), plate, getProps(veh))
+    SetNewWaypoint(spot.x, spot.y)
+    return veh
 end
 
 local function nui(action, data)
@@ -80,10 +101,10 @@ local function nui(action, data)
     SendNUIMessage(data)
 end
 
-local function setPrompt(state)
-    if prompting == state then return end
-    prompting = state
-    nui('prompt', { show = state })
+local function setPrompt(text)
+    if prompting == text then return end
+    prompting = text
+    nui('prompt', { show = text ~= nil, text = text })
 end
 
 ---------------------------------------------------------------- catalogue (read from the game)
@@ -102,23 +123,35 @@ local function text(key)
     return t
 end
 
+-- name / brand / class of any spawn code, straight from the game
+local function modelInfo(model)
+    local hash = joaat(model)
+    if not IsModelInCdimage(hash) or not IsModelAVehicle(hash) then return nil end
+    local display = GetDisplayNameFromVehicleModel(hash)
+    return {
+        hash = hash,
+        label = text(display) or display or model,
+        brand = text(GetMakeNameFromVehicleModel(hash)) or '',
+        class = GetVehicleClassFromName(hash),
+    }
+end
+
 local function buildCatalog()
     if catalog then return catalog end
     catalog = {}
     for _, v in ipairs(Config.Vehicles) do
-        local hash = joaat(v.model)
-        if IsModelInCdimage(hash) and IsModelAVehicle(hash) then
-            local display = GetDisplayNameFromVehicleModel(hash)
-            local class = GetVehicleClassFromName(hash)
+        local info = modelInfo(v.model)
+        if info then
+            local hash = info.hash
             local speed = GetVehicleModelEstimatedMaxSpeed(hash)
             local s = v.stats or {}
             local item = {
                 model = v.model,
                 price = v.price,
-                label = v.label or text(display) or display or v.model,
-                brand = v.brand or text(GetMakeNameFromVehicleModel(hash)) or '',
-                class = class,
-                category = v.category or classToCat[class] or 'other',
+                label = v.label or info.label,
+                brand = v.brand or info.brand,
+                class = info.class,
+                category = v.category or classToCat[info.class] or 'other',
                 seats = GetVehicleModelNumberOfSeats(hash),
                 topSpeed = math.floor(speed * 3.6 + 0.5),
                 image = v.image,
@@ -138,68 +171,176 @@ local function buildCatalog()
     return catalog
 end
 
+local function fullName(model)
+    local c = byModel[model] or modelInfo(model)
+    if not c then return model end
+    return (c.brand ~= '' and c.brand .. ' ' or '') .. c.label
+end
+
+-- add game names / pictures info to rows coming from the server
+local function enrich(rows)
+    for _, r in ipairs(rows or {}) do
+        if r.model and r.model ~= '' then
+            local c = byModel[r.model] or modelInfo(r.model)
+            if c then
+                r.label, r.brand, r.class = c.label, c.brand, c.class
+                r.image = byModel[r.model] and byModel[r.model].image or nil
+            else
+                r.label, r.brand = r.model, ''
+            end
+        end
+    end
+    return rows or {}
+end
+
 ---------------------------------------------------------------- UI
 local function closeUI()
     if not isOpen then return end
-    isOpen = false
+    isOpen, mode = false, nil
     SetNuiFocus(false, false)
     nui('hide')
     ClearPedTasks(PlayerPedId())
 end
 
-local function openUI(index)
+local function faceAndOpen(coords, scenario, data)
+    isOpen = true
+    setPrompt(nil)
+    local ped = PlayerPedId()
+    if coords then
+        local p = GetEntityCoords(ped)
+        SetEntityHeading(ped, GetHeadingFromVector_2d(coords.x - p.x, coords.y - p.y))
+    end
+    if scenario then TaskStartScenarioInPlace(ped, scenario, 0, true) end
+    SetNuiFocus(true, true)
+    data.currency = Config.Currency
+    data.colors = Config.Colors
+    data.imageUrl = Config.ImageUrl
+    data.payments = Config.Payments
+    nui('open', data)
+end
+
+local function openShop(index)
     if isOpen or testDrive then return end
     local k = Config.Kiosks[index]
     if not k then return end
     currentKiosk = index
-    setPrompt(false)
     serverCallback('vc2:money', function(money)
-        isOpen = true
-        local ped = PlayerPedId()
-        local p = GetEntityCoords(ped)
-        SetEntityHeading(ped, GetHeadingFromVector_2d(k.coords.x - p.x, k.coords.y - p.y))
-        TaskStartScenarioInPlace(ped, 'PROP_HUMAN_ATM', 0, true)
-        SetNuiFocus(true, true)
-        nui('open', {
-            kiosk = k.label,
-            money = money,
-            currency = Config.Currency,
-            payments = Config.Payments,
-            testDrive = Config.TestDrive.enabled,
-            categories = Config.Categories,
-            colors = Config.Colors,
-            vehicles = buildCatalog(),
-            imageUrl = Config.ImageUrl,
+        serverCallback('vc2:myOrders', function(orders)
+            mode = 'shop'
+            faceAndOpen(k.coords, 'PROP_HUMAN_ATM', {
+                mode = 'shop',
+                kiosk = k.label,
+                money = money,
+                testDrive = Config.TestDrive.enabled,
+                categories = Config.Categories,
+                vehicles = buildCatalog(),
+                orders = enrich(orders),
+                ordersEnabled = Config.Orders.enabled,
+                orderTypes = Config.Orders.types,
+            })
+        end)
+    end)
+end
+
+local function openGarage(index)
+    if isOpen or testDrive then return end
+    local g = Config.Garages[index]
+    if not g then return end
+    currentGarage = index
+    buildCatalog()
+    serverCallback('vc2:garage', function(res)
+        mode = 'garage'
+        faceAndOpen(g.coords, nil, {
+            mode = 'garage', kiosk = g.label, money = res.money,
+            owned = enrich(res.vehicles), fees = Config.Retrieve,
         })
     end)
 end
+
+RegisterNetEvent('vc2:openManager', function()
+    if isOpen or testDrive then return end
+    buildCatalog()
+    serverCallback('vc2:mgrOrders', function(orders)
+        if not orders then return end
+        mode = 'manager'
+        faceAndOpen(nil, nil, { mode = 'manager', kiosk = 'Workshop panel', orders = enrich(orders) })
+    end, 'pending')
+end)
 
 RegisterNUICallback('close', function(_, cb)
     closeUI()
     cb({})
 end)
 
+local function onPurchase(res)
+    if not res or not res.ok then
+        nui('error', { msg = res and res.msg or 'Something went wrong, please try again' })
+        return
+    end
+    res.receipt.vehicle = fullName(res.receipt.model)
+    nui('receipt', { receipt = res.receipt, money = res.money, orders = res.orders and enrich(res.orders) })
+    spawnOwned(res.receipt.model, Config.Kiosks[currentKiosk].delivery, res.receipt.plate, res.receipt.colorIndex)
+    notify(('Congratulations! Pick up your %s at the delivery spot'):format(res.receipt.vehicle), 'success')
+end
+
 RegisterNUICallback('buy', function(d, cb)
     cb({})
-    serverCallback('vc2:buy', function(res)
-        if not res or not res.ok then
-            nui('error', { msg = res and res.msg or 'Something went wrong, please try again' })
-            return
-        end
-        local info = byModel[res.receipt.model]
-        if info then res.receipt.vehicle = (info.brand ~= '' and info.brand .. ' ' or '') .. info.label end
-        nui('receipt', { receipt = res.receipt, money = res.money })
-        local k = Config.Kiosks[currentKiosk]
-        local spot = freeSpot(k.delivery)
-        local veh = spawnVehicle(res.receipt.model, spot, res.receipt.plate, res.receipt.colorIndex)
-        if veh then
-            Config.OnVehicleSpawned(veh, res.receipt.plate, false)
-            local p = getProps(veh)
-            if p then TriggerServerEvent('vc2:setProps', res.receipt.plate, p) end
-            SetNewWaypoint(spot.x, spot.y)
-        end
-        notify(('Congratulations! Pick up your %s at the delivery spot'):format(res.receipt.vehicle), 'success')
-    end, d.model, tonumber(d.color) or 1, d.payment, currentKiosk)
+    serverCallback('vc2:buy', onPurchase, d.model, tonumber(d.color) or 1, d.payment, currentKiosk)
+end)
+
+-------- custom orders
+RegisterNUICallback('orderSubmit', function(d, cb)
+    cb({})
+    serverCallback('vc2:orderSubmit', function(res)
+        if not res.ok then return nui('error', { msg = res.msg }) end
+        nui('orders', { orders = enrich(res.orders), msg = ('Order #%d sent! The workshop will build your car.'):format(res.id) })
+    end, d, currentKiosk)
+end)
+
+RegisterNUICallback('orderCollect', function(d, cb)
+    cb({})
+    serverCallback('vc2:orderCollect', onPurchase, d.id, d.payment, currentKiosk)
+end)
+
+RegisterNUICallback('mgrRefresh', function(d, cb)
+    cb({})
+    serverCallback('vc2:mgrOrders', function(orders)
+        nui('mgr', { orders = enrich(orders) })
+    end, d.filter)
+end)
+
+RegisterNUICallback('mgrBuild', function(d, cb)
+    cb({})
+    local model = tostring(d.model or ''):lower():gsub('%s', '')
+    if not modelInfo(model) then
+        return nui('error', { msg = ('Spawn code "%s" does not exist on this server'):format(model) })
+    end
+    serverCallback('vc2:mgrBuild', function(res)
+        if not res.ok then return nui('error', { msg = res.msg }) end
+        serverCallback('vc2:mgrOrders', function(orders)
+            nui('mgr', { orders = enrich(orders), msg = ('Order #%s is ready for the customer'):format(d.id) })
+        end, d.filter)
+    end, d.id, model, d.price, d.note)
+end)
+
+RegisterNUICallback('mgrReject', function(d, cb)
+    cb({})
+    serverCallback('vc2:mgrReject', function(res)
+        if not res.ok then return nui('error', { msg = res.msg }) end
+        serverCallback('vc2:mgrOrders', function(orders)
+            nui('mgr', { orders = enrich(orders), msg = ('Order #%s declined'):format(d.id) })
+        end, d.filter)
+    end, d.id, d.note)
+end)
+
+-------- recovery
+RegisterNUICallback('retrieve', function(d, cb)
+    cb({})
+    serverCallback('vc2:retrieve', function(res)
+        if not res.ok then return nui('error', { msg = res.msg }) end
+        local veh = spawnOwned(res.model, Config.Garages[currentGarage].spawn, res.plate, res.color, res.props)
+        nui('garage', { owned = enrich(res.vehicles), money = res.money, msg = veh and ('%s is waiting for you outside (paid %s%d)'):format(fullName(res.model), Config.Currency, res.fee) or nil })
+    end, d.plate, currentGarage, d.payment)
 end)
 
 ---------------------------------------------------------------- test drive
@@ -266,8 +407,10 @@ RegisterNUICallback('testDrive', function(d, cb)
     end, d.model, currentKiosk)
 end)
 
----------------------------------------------------------------- kiosks
-local function useTarget()
+---------------------------------------------------------------- world points (kiosks + recovery NPCs)
+local points = {}
+
+local function interactionMode()
     local m = Config.Interaction
     if m == 'auto' then
         if GetResourceState('ox_target') == 'started' then return 'ox_target' end
@@ -277,20 +420,36 @@ local function useTarget()
     return m
 end
 
-local function setupKiosks()
-    local mode = useTarget()
+local function addBlip(c, b, name)
+    if not b then return end
+    local blip = AddBlipForCoord(c.x, c.y, c.z)
+    SetBlipSprite(blip, b.sprite)
+    SetBlipColour(blip, b.color)
+    SetBlipScale(blip, b.scale)
+    SetBlipAsShortRange(blip, true)
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentSubstringPlayerName(name)
+    EndTextCommandSetBlipName(blip)
+    blips[#blips + 1] = blip
+end
+
+local function addPoint(id, coords, entity, label, onUse)
+    local m = interactionMode()
+    points[#points + 1] = { coords = coords.xyz, label = label, onUse = onUse }
+    if m == 'ox_target' then
+        local opt = { { name = id, icon = 'fas fa-car', label = label, distance = 2.0, onSelect = onUse } }
+        if entity then exports.ox_target:addLocalEntity(entity, opt)
+        else exports.ox_target:addSphereZone({ coords = coords.xyz, radius = 1.2, options = opt }) end
+    elseif m == 'qb-target' then
+        local opt = { options = { { icon = 'fas fa-car', label = label, action = onUse } }, distance = 2.0 }
+        if entity then exports['qb-target']:AddTargetEntity(entity, opt)
+        else exports['qb-target']:AddCircleZone(id, coords.xyz, 1.2, { name = id }, opt) end
+    end
+end
+
+local function setupWorld()
     for i, k in ipairs(Config.Kiosks) do
-        if k.blip then
-            local b = AddBlipForCoord(k.coords.x, k.coords.y, k.coords.z)
-            SetBlipSprite(b, k.blip.sprite)
-            SetBlipColour(b, k.blip.color)
-            SetBlipScale(b, k.blip.scale)
-            SetBlipAsShortRange(b, true)
-            BeginTextCommandSetBlipName('STRING')
-            AddTextComponentSubstringPlayerName('VC2 Showroom')
-            EndTextCommandSetBlipName(b)
-            blips[#blips + 1] = b
-        end
+        addBlip(k.coords, k.blip, 'VC2 Showroom')
         local obj
         if k.spawnProp then
             local hash = joaat(k.model)
@@ -304,35 +463,44 @@ local function setupKiosks()
                 props[#props + 1] = obj
             end
         end
-        if mode == 'ox_target' then
-            local opt = { { name = 'vc2_kiosk_' .. i, icon = 'fas fa-car', label = 'Showroom kiosk', distance = 2.0, onSelect = function() openUI(i) end } }
-            if obj then exports.ox_target:addLocalEntity(obj, opt)
-            else exports.ox_target:addSphereZone({ coords = k.coords.xyz, radius = 1.2, options = opt }) end
-        elseif mode == 'qb-target' then
-            local opt = { options = { { icon = 'fas fa-car', label = 'Showroom kiosk', action = function() openUI(i) end } }, distance = 2.0 }
-            if obj then exports['qb-target']:AddTargetEntity(obj, opt)
-            else exports['qb-target']:AddCircleZone('vc2_kiosk_' .. i, k.coords.xyz, 1.2, { name = 'vc2_kiosk_' .. i }, opt) end
-        end
+        addPoint('vc2_kiosk_' .. i, k.coords, obj, 'Use the showroom kiosk', function() openShop(i) end)
     end
 
-    if mode ~= 'key' then return end
+    for i, g in ipairs(Config.Garages) do
+        addBlip(g.coords, g.blip, 'VC2 Vehicle Recovery')
+        local hash = joaat(g.ped)
+        local ped
+        if loadModel(hash) then
+            ped = CreatePed(4, hash, g.coords.x, g.coords.y, g.coords.z, g.coords.w, false, true)
+            SetEntityInvincible(ped, true)
+            FreezeEntityPosition(ped, true)
+            SetBlockingOfNonTemporaryEvents(ped, true)
+            SetPedCanRagdoll(ped, false)
+            if g.scenario then TaskStartScenarioInPlace(ped, g.scenario, 0, true) end
+            SetModelAsNoLongerNeeded(hash)
+            peds[#peds + 1] = ped
+        end
+        addPoint('vc2_garage_' .. i, g.coords, ped, 'Retrieve my vehicle', function() openGarage(i) end)
+    end
+
+    if interactionMode() ~= 'key' then return end
     CreateThread(function()
         while true do
             local sleep, near = 750, nil
             if not isOpen and not testDrive then
                 local p = GetEntityCoords(PlayerPedId())
-                for i, k in ipairs(Config.Kiosks) do
-                    local d = #(p - k.coords.xyz)
+                for _, pt in ipairs(points) do
+                    local d = #(p - pt.coords)
                     if d < 10.0 then sleep = 250 end
-                    if d < Config.InteractDistance then near = i break end
+                    if d < Config.InteractDistance + 0.4 then near = pt break end
                 end
             end
             if near then
                 sleep = 0
-                setPrompt(true)
-                if IsControlJustReleased(0, 38) then openUI(near) end
+                setPrompt(near.label)
+                if IsControlJustReleased(0, 38) then near.onUse() end
             else
-                setPrompt(false)
+                setPrompt(nil)
             end
             Wait(sleep)
         end
@@ -341,7 +509,29 @@ end
 
 CreateThread(function()
     detect()
-    setupKiosks()
+    setupWorld()
+end)
+
+---------------------------------------------------------------- /vc2check + export
+RegisterCommand(Config.CheckCommand, function()
+    local ped = PlayerPedId()
+    local veh = GetVehiclePedIsIn(ped, false)
+    if veh == 0 then
+        local c = GetEntityCoords(ped)
+        veh = GetClosestVehicle(c.x, c.y, c.z, 5.0, 0, 70)
+    end
+    if veh == 0 then return notify('No vehicle nearby', 'error') end
+    local netId = NetworkGetEntityIsNetworked(veh) and NetworkGetNetworkIdFromEntity(veh) or nil
+    serverCallback('vc2:check', function(res)
+        local r = res and res.row
+        if not r then return notify('This vehicle was NOT sold by VC2', 'error') end
+        notify(('VC2 vehicle · %s · plate %s · owner %s · %s'):format(fullName(r.model), r.plate, r.owner_name or '?', r.origin == 'custom' and 'custom build' or 'showroom'), 'success')
+    end, netId, GetVehicleNumberPlateText(veh))
+end, false)
+
+-- exports.VC2:IsVC2Vehicle(vehicle) -> true when the server tagged this car as a VC2 car
+exports('IsVC2Vehicle', function(veh)
+    return DoesEntityExist(veh) and Entity(veh).state.vc2 ~= nil
 end)
 
 AddEventHandler('onResourceStop', function(res)
@@ -352,5 +542,6 @@ AddEventHandler('onResourceStop', function(res)
         SetEntityCoords(PlayerPedId(), testDrive.back.x, testDrive.back.y, testDrive.back.z - 1.0, false, false, false, false)
     end
     for _, o in ipairs(props) do if DoesEntityExist(o) then DeleteEntity(o) end end
+    for _, p in ipairs(peds) do if DoesEntityExist(p) then DeleteEntity(p) end end
     for _, b in ipairs(blips) do RemoveBlip(b) end
 end)

@@ -45,6 +45,44 @@ Config.Kiosks = {
     },
 }
 
+-- Vehicle recovery NPCs: owners retrieve their VC2 cars here after they were
+-- impounded, destroyed, lost after a disconnect / restart, or are still out on the street
+Config.Retrieve = {
+    fee = 500,          -- normal retrieval fee
+    impoundFee = 2500,  -- fee if the car was impounded by police (exports.VC2:ImpoundVehicle)
+}
+Config.Garages = {
+    {
+        label = 'VC2 Vehicle Recovery',
+        ped = 's_m_m_autoshop_01',
+        coords = vector4(-31.50, -1089.40, 25.42, 340.0), -- NPC position (z = ground)
+        scenario = 'WORLD_HUMAN_CLIPBOARD',
+        blip = { sprite = 357, color = 47, scale = 0.7 },
+        spawn = {                                          -- where retrieved cars appear
+            vector4(-56.79, -1109.85, 26.43, 71.5),
+            vector4(-51.20, -1111.40, 26.43, 71.5),
+            vector4(-45.60, -1113.00, 26.43, 71.5),
+        },
+    },
+}
+
+-- Custom car orders: players describe the car they want at the kiosk,
+-- workshop owners / admins review it with /vc2orders and build it for them.
+Config.Orders = {
+    enabled = true,
+    maxActive = 2,               -- open orders (pending + ready) per player
+    command = 'vc2orders',       -- opens the workshop panel
+    managers = {
+        ace = 'vc2.admin',       -- add_ace group.admin vc2.admin allow
+        jobs = { mechanic = 0 }, -- job name = minimum grade (QBCore / ESX)
+    },
+    types = { 'Sedan', 'SUV', 'Sports', 'Super', 'Bike', 'Other' },
+    maxPrice = 100000000,
+}
+
+-- /vc2check : look at (or sit in) a car to see if it was sold by VC2 and who owns it
+Config.CheckCommand = 'vc2check'
+
 -- Paint colours (primary = GTA colour index)
 Config.Colors = {
     { label = 'Black',  hex = '#15161a', primary = 0 },

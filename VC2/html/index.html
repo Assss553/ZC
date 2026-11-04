@@ -7,7 +7,7 @@
 <div id="dim"></div>
 
 <!-- floating prompt / test drive timer (visible without the kiosk) -->
-<div id="prompt"><kbd>E</kbd><span>Open the showroom kiosk</span></div>
+<div id="prompt"><kbd>E</kbd><span id="ptxt">Use the showroom kiosk</span></div>
 <div id="timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span>Test drive</span><b id="tleft">1:00</b></div>
 
 <div id="stage">
@@ -27,7 +27,7 @@
     <div class="a hd">
      <div class="a ttl"><div class="cbox"><svg viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></div>
       <div><h1 id="title">Car showroom</h1><small id="kname">VC2 Showroom</small></div></div>
-     <div class="a chips">
+     <div class="a chips" id="chips">
       <div class="chip"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg><span id="mcash">0</span></div>
       <div class="chip o"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M2 10l10-6 10 6"/></svg><span id="mbank">0</span></div>
      </div>
@@ -41,6 +41,7 @@
      </div>
      <div class="a grid" id="grid"></div>
      <div class="a hint" id="count">Pick the car you want</div>
+     <button class="a btn" id="custom" style="right:232px;top:512px;width:300px"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>Custom order<i class="dot" id="odot"></i></button>
      <button class="a btn" id="close1" style="right:28px;top:512px;width:190px"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>Close</button>
     </div>
 
@@ -80,6 +81,46 @@
      <div class="a ok" id="okmsg"></div>
      <button class="a btn" id="more" style="left:28px;top:512px;width:330px"><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18"/></svg>Buy another car</button>
      <button class="a btn o" id="done" style="left:372px;top:512px;width:176px"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Done</button>
+    </div>
+
+    <!-- 4: custom order (player) -->
+    <div class="scr" id="s4">
+     <div class="a form">
+      <div class="row2">
+       <label class="fld"><span>Base car or idea</span><input id="obase" maxlength="60" placeholder="e.g. Sultan RS widebody"></label>
+       <label class="fld sm"><span>Budget</span><input id="obud" type="number" min="0" placeholder="0"></label>
+      </div>
+      <div class="fld"><span>Vehicle type</span><div class="chipset" id="otype"></div></div>
+      <div class="fld"><span>Colour <b id="ocname"></b></span><div class="sw2" id="ocol"></div></div>
+      <label class="fld"><span>What do you want? <b id="ocount">0/500</b></span><textarea id="ospec" maxlength="500" placeholder="Describe the specs: engine, top speed, body kit, wheels, interior, livery, extras..."></textarea></label>
+     </div>
+     <div class="a side">
+      <div class="sh"><b>My orders</b><span id="ocnt"></span></div>
+      <div class="olist" id="olist"></div>
+      <div class="paysm" id="paysm"></div>
+     </div>
+     <button class="a btn" id="oback" style="left:28px;top:512px;width:170px"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>Back</button>
+     <button class="a btn o" id="osend" style="left:212px;top:512px;width:416px"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>Send order</button>
+    </div>
+
+    <!-- 5: recovery desk -->
+    <div class="scr" id="s5">
+     <div class="a glist" id="glist"></div>
+     <div class="a hint" id="ghint">Impounded, destroyed or lost? Get your VC2 car back here.</div>
+     <div class="a paysm2" id="gpay"></div>
+     <button class="a btn" id="close5" style="right:28px;top:512px;width:190px"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>Close</button>
+    </div>
+
+    <!-- 6: workshop panel (owner / admin) -->
+    <div class="scr" id="s6">
+     <div class="a mleft">
+      <div class="tabs" id="mtabs"></div>
+      <div class="mlist" id="mlist"></div>
+     </div>
+     <div class="a mdet" id="mdet"></div>
+     <button class="a btn" id="close6" style="left:478px;top:512px;width:150px"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>Close</button>
+     <button class="a btn" id="mrej" style="left:642px;top:512px;width:200px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>Decline</button>
+     <button class="a btn o" id="mbuild" style="left:856px;top:512px;width:292px"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>Build car</button>
     </div>
 
     <div class="toast" id="toast"></div>

@@ -6,7 +6,7 @@ const PAY = {
 };
 const STATS = [['speed', 'Top speed'], ['accel', 'Acceleration'], ['brake', 'Braking'], ['handling', 'Handling']];
 
-let D = { vehicles: [], categories: [], colors: [], money: { cash: 0, bank: 0 }, currency: '$', payments: ['bank', 'cash'], testDrive: true, kiosk: '', imageUrl: '' };
+let D = { mode: 'shop', vehicles: [], categories: [], colors: [], money: { cash: 0, bank: 0 }, currency: '$', payments: ['bank', 'cash'], testDrive: true, kiosk: '', imageUrl: '', orders: [], owned: [], orderTypes: [], ordersEnabled: true, fees: {} };
 let cat = 'all', query = '', cur = null, col = 1, pay = 'bank', K = 1, confirmT = null, buying = false;
 
 /* ---------------- utils ---------------- */
@@ -18,7 +18,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const fmt = n => D.currency + Number(n || 0).toLocaleString('en-US');
 const catOf = id => D.categories.find(c => c.id === id) || { label: id };
 function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 3200); }
+function toast(msg, good) { const t = $('toast'); t.textContent = msg; t.classList.toggle('good', !!good); t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 3200); }
 
 /* ---------------- car drawings ---------------- */
 const SHAPES = {
@@ -59,7 +59,7 @@ function imgOf(v, color) {
 }
 window.imgLoad = el => { imgOk[el.dataset.m] = el.getAttribute('src'); };
 window.imgFail = el => {
-  const v = D.vehicles.find(x => x.model === el.dataset.m); if (!v) return;
+  const v = findV(el.dataset.m);
   const c = sources(v), n = +el.dataset.n;
   if (n < c.length) { el.dataset.n = n + 1; el.src = c[n]; }
   else { imgNone[v.model] = true; el.outerHTML = carSVG(shapeOf(v), el.dataset.col); }
@@ -96,8 +96,9 @@ function grid() {
 
 /* ---------------- screen 2 ---------------- */
 function view(n) {
-  ['s1', 's2', 's3'].forEach((s, i) => $(s).classList.toggle('on', i + 1 === n));
-  $('title').textContent = ['Car showroom', 'Vehicle details', 'Purchase receipt'][n - 1];
+  ['s1', 's2', 's3', 's4', 's5', 's6'].forEach((s, i) => $(s).classList.toggle('on', i + 1 === n));
+  $('title').textContent = ['Car showroom', 'Vehicle details', 'Purchase receipt', 'Custom car order', 'Vehicle recovery', 'Custom orders'][n - 1];
+  $('chips').style.display = n === 6 ? 'none' : '';
 }
 function go(n) {
   const on = document.querySelector('.scr.on');
@@ -165,8 +166,9 @@ function roll(el, final) {
     if (i++ >= 14) { clearInterval(t); const p = el.parentElement; p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); }
   }, 55);
 }
-function onReceipt(r, m) {
+function onReceipt(r, m, orders) {
   $('nfc').classList.remove('on');
+  if (orders) { D.orders = orders; renderOrders(); }
   money(m);
   $('rorder').textContent = '#' + r.order; $('rprice').textContent = fmt(r.price); $('rpay').textContent = PAY[r.payment]?.label || r.payment;
   $('rcar').textContent = r.vehicle; $('rcol').textContent = r.color; $('rplate').textContent = '--------';
@@ -175,19 +177,139 @@ function onReceipt(r, m) {
   setTimeout(() => { buying = false; }, 300);
 }
 $('more').onclick = () => { unconfirm(); $('printer').classList.remove('printing'); go(1); };
+$('custom').onclick = () => { renderOrders(); go(4); };
+$('oback').onclick = () => go(1);
+$('close5').onclick = () => closeUI();
+$('close6').onclick = () => closeUI();
 $('done').onclick = () => closeUI();
 $('close1').onclick = () => closeUI();
 $('q').oninput = e => { query = e.target.value; grid(); };
 
+/* ---------------- helpers for game data rows ---------------- */
+function findV(model) {
+  return D.vehicles.find(x => x.model === model) || D.owned.find(x => x.model === model) || D.orders.find(x => x.model === model) || { model };
+}
+const nameOf = r => r.label ? ((r.brand ? r.brand + ' ' : '') + r.label) : (r.model || '');
+const colOf = i => D.colors[(i || 1) - 1] || D.colors[0] || { label: '', hex: '#888' };
+const STATUS = { pending: 'Pending', ready: 'Ready', rejected: 'Declined', delivered: 'Delivered', collecting: 'Processing', stored: 'Ready', out: 'On the street', impounded: 'Impounded', destroyed: 'Destroyed' };
+const badge = st => `<span class="b ${esc(st)}">${STATUS[st] || esc(st)}</span>`;
+function payPicker(el) {
+  $(el).innerHTML = 'Pay with' + D.payments.map(p => `<button class="${pay === p ? 'sel' : ''}" data-p="${p}">${PAY[p]?.label || p} · ${fmt(D.money[p])}</button>`).join('');
+  $(el).querySelectorAll('button').forEach(b => b.onclick = () => { pay = b.dataset.p; payPicker(el); });
+}
+
+/* ---------------- 4: custom order ---------------- */
+let oType = null, oCol = 1;
+function resetForm() {
+  oType = null; oCol = 1; $('obase').value = ''; $('obud').value = ''; $('ospec').value = ''; $('ocount').textContent = '0/500';
+  $('otype').innerHTML = (D.orderTypes || []).map(t => `<button data-t="${esc(t)}">${esc(t)}</button>`).join('');
+  $('otype').querySelectorAll('button').forEach(b => b.onclick = () => { oType = b.dataset.t; $('otype').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b)); });
+  $('ocol').innerHTML = D.colors.map((c, i) => `<button style="background:${esc(c.hex)}" data-i="${i + 1}" title="${esc(c.label)}"></button>`).join('');
+  const paintO = () => { $('ocol').querySelectorAll('button').forEach((b, i) => b.classList.toggle('sel', i + 1 === oCol)); $('ocname').textContent = colOf(oCol).label; };
+  $('ocol').querySelectorAll('button').forEach(b => b.onclick = () => { oCol = +b.dataset.i; paintO(); });
+  paintO(); $('osend').classList.remove('ld');
+}
+$('ospec').oninput = e => { $('ocount').textContent = `${e.target.value.length}/500`; };
+function renderOrders() {
+  const o = D.orders || [];
+  const open = o.filter(x => x.status === 'pending' || x.status === 'ready').length;
+  $('ocnt').textContent = o.length ? `${open} open` : '';
+  $('odot').classList.toggle('on', o.some(x => x.status === 'ready'));
+  $('olist').innerHTML = o.length ? o.map((x, i) => `<div class="oi ${x.status}" style="--i:${i}">
+    <div class="t"><b>#${x.id} · ${esc(x.status === 'ready' || x.status === 'delivered' ? nameOf(x) : (x.base || x.type))}</b>${badge(x.status)}</div>
+    <p>${esc(x.note && (x.status === 'ready' || x.status === 'rejected') ? 'Workshop: ' + x.note : x.specs)}</p>
+    ${x.status === 'ready' ? `<div class="act"><b>${fmt(x.price)}</b><button data-id="${x.id}">Pay &amp; collect</button></div>` : ''}
+    ${x.status === 'delivered' && x.plate ? `<div class="act"><span class="pl">${esc(x.plate)}</span></div>` : ''}</div>`).join('')
+    : `<div class="none">No orders yet.<br>Describe your dream car and the workshop will build it.</div>`;
+  $('olist').querySelectorAll('.act button').forEach(b => b.onclick = () => {
+    b.classList.add('ld'); b.textContent = 'Processing...';
+    $('nfc').classList.add('on'); $('printer').classList.add('printing');
+    send('orderCollect', { id: +b.dataset.id, payment: pay });
+    if (!RES) setTimeout(() => { const x = D.orders.find(y => y.id == b.dataset.id); x.status = 'delivered'; x.plate = 'VC2 7781';
+      onReceipt({ order: x.id, plate: x.plate, vehicle: nameOf(x), color: colOf(x.color).label, price: x.price, payment: pay }, D.money, D.orders); }, 1000);
+  });
+  payPicker('paysm');
+}
+$('osend').onclick = () => {
+  const d = { base: $('obase').value.trim(), type: oType, color: oCol, budget: +$('obud').value || 0, specs: $('ospec').value.trim() };
+  if (!d.type) return toast('Pick a vehicle type');
+  if (d.specs.length < 10) return toast('Describe the car you want (at least 10 characters)');
+  $('osend').classList.add('ld');
+  send('orderSubmit', d);
+  if (!RES) setTimeout(() => { D.orders.unshift({ id: 13, status: 'pending', ...d }); resetForm(); renderOrders(); toast('Order #13 sent! The workshop will build your car.', true); }, 600);
+};
+
+/* ---------------- 5: recovery ---------------- */
+function renderGarage() {
+  const g = D.owned || [];
+  $('glist').innerHTML = g.length ? g.map((v, i) => {
+    const fee = v.fee || 0, label = v.status === 'out' ? 'Bring it back' : 'Retrieve';
+    return `<div class="gi" style="--i:${i}"><div class="gim">${imgOf(v, colOf(v.color).hex)}</div><div class="gx">
+      <h4>${esc(nameOf(v))}</h4><span class="pl">${esc(v.plate)}</span>
+      <div class="gs">${badge(v.status)}${v.origin === 'custom' ? '<span>Custom build</span>' : '<span>Showroom</span>'}</div>
+      <button class="gb ${v.status === 'out' ? 'alt' : ''}" data-p="${esc(v.plate)}">${label} · ${fee ? fmt(fee) : 'Free'}</button></div></div>`;
+  }).join('') : `<div class="none" style="grid-column:1/-1;padding-top:120px">You don't own any VC2 vehicles yet.</div>`;
+  $('glist').querySelectorAll('.gb').forEach(b => b.onclick = () => {
+    b.classList.add('ld'); b.textContent = 'Calling the tow truck...';
+    send('retrieve', { plate: b.dataset.p, payment: pay });
+    if (!RES) setTimeout(() => { const v = D.owned.find(x => x.plate === b.dataset.p); v.status = 'out'; renderGarage(); toast(`${nameOf(v)} is waiting for you outside`, true); }, 900);
+  });
+  payPicker('gpay');
+}
+
+/* ---------------- 6: workshop panel ---------------- */
+let mFilter = 'pending', mSel = null;
+function renderMgr() {
+  const tabsL = [['pending', 'Pending'], ['ready', 'Ready'], ['done', 'Closed'], ['all', 'All']];
+  $('mtabs').innerHTML = tabsL.map(([k, l]) => `<button class="tab ${mFilter === k ? 'sel' : ''}" data-f="${k}">${l}</button>`).join('');
+  $('mtabs').querySelectorAll('.tab').forEach(b => b.onclick = () => { mFilter = b.dataset.f; mSel = null; send('mgrRefresh', { filter: mFilter }); renderMgr(); });
+  const o = (D.orders || []).filter(x => mFilter === 'all' || (mFilter === 'done' ? ['delivered', 'rejected'].includes(x.status) : x.status === mFilter));
+  if (!o.find(x => x.id === mSel)) mSel = o[0]?.id ?? null;
+  $('mlist').innerHTML = o.length ? o.map((x, i) => `<button class="mi ${x.id === mSel ? 'sel' : ''}" style="--i:${i}" data-id="${x.id}">
+    <div class="t"><b>#${x.id} · ${esc(x.owner_name || 'Unknown')}</b>${badge(x.status)}</div><p>${esc(x.type)} · ${esc(x.base || x.specs)}</p></button>`).join('')
+    : `<div class="none">No orders here.</div>`;
+  $('mlist').querySelectorAll('.mi').forEach(b => b.onclick = () => { mSel = +b.dataset.id; renderMgr(); });
+  const x = o.find(y => y.id === mSel), editable = x && (x.status === 'pending' || x.status === 'ready');
+  $('mbuild').disabled = $('mrej').disabled = !editable;
+  $('mbuild').lastChild.textContent = x && x.status === 'ready' ? 'Update build' : 'Build car';
+  if (!x) { $('mdet').innerHTML = `<div class="none" style="padding-top:150px">Select an order to see what the customer wants.</div>`; return; }
+  const c = colOf(x.color);
+  $('mdet').innerHTML = `<div class="mh"><h3>Order #${x.id} · ${esc(x.owner_name || 'Unknown')}</h3></div>
+    ${x.model ? `<div class="mprev">${imgOf(x, c.hex)}</div>` : ''}
+    <div class="meta">${badge(x.status)}<span>Type <b>${esc(x.type)}</b></span><span>Budget <b>${fmt(x.budget)}</b></span><span><i style="background:${esc(c.hex)}"></i><b>${esc(c.label)}</b></span>${x.base ? `<span>Base <b>${esc(x.base)}</b></span>` : ''}</div>
+    <div class="spec">${esc(x.specs)}</div>
+    <div class="row2"><label class="fld"><span>Spawn code of the car you built</span><input id="mmodel" maxlength="32" placeholder="e.g. sultanrs" value="${esc(x.model || '')}" ${editable ? '' : 'disabled'}></label>
+    <label class="fld sm"><span>Price</span><input id="mprice" type="number" min="0" placeholder="${esc(x.budget || 0)}" value="${x.price ?? ''}" ${editable ? '' : 'disabled'}></label></div>
+    <label class="fld" style="margin-top:10px"><span>Note to the customer</span><input id="mnote" maxlength="255" placeholder="Optional" value="${esc(x.note || '')}" ${editable ? '' : 'disabled'}></label>
+    ${x.handled_by ? `<div class="meta"><span>Handled by <b>${esc(x.handled_by)}</b></span>${x.plate ? `<span>Plate <b>${esc(x.plate)}</b></span>` : ''}</div>` : ''}`;
+}
+$('mbuild').onclick = () => {
+  if (mSel == null) return;
+  const model = $('mmodel').value.trim(), price = $('mprice').value;
+  if (!model) return toast('Enter the spawn code of the car');
+  if (price === '' || +price < 0) return toast('Enter a price (0 = free)');
+  send('mgrBuild', { id: mSel, model, price: +price, note: $('mnote').value, filter: mFilter });
+  if (!RES) { const x = D.orders.find(y => y.id === mSel); Object.assign(x, { status: 'ready', model, price: +price, note: $('mnote').value, handled_by: 'You' }); renderMgr(); toast(`Order #${x.id} is ready for the customer`, true); }
+};
+$('mrej').onclick = () => {
+  if (mSel == null) return;
+  send('mgrReject', { id: mSel, note: $('mnote').value, filter: mFilter });
+  if (!RES) { const x = D.orders.find(y => y.id === mSel); x.status = 'rejected'; renderMgr(); toast(`Order #${x.id} declined`, true); }
+};
+
 /* ---------------- open / close ---------------- */
 const P = $('panel');
 function bootIn() { P.classList.remove('off', 'boot'); void P.offsetWidth; P.classList.add('boot'); }
-function reset() { unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); cat = 'all'; query = ''; $('q').value = ''; ['s1', 's2', 's3'].forEach(s => $(s).classList.remove('out')); view(1); }
+function reset() { unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); cat = 'all'; query = ''; $('q').value = ''; ['s1', 's2', 's3', 's4', 's5', 's6'].forEach(s => $(s).classList.remove('out')); view({ shop: 1, garage: 5, manager: 6 }[D.mode] || 1); }
 function openUI(d) {
   Object.assign(D, d);
   pay = D.payments[0] || 'bank';
   $('kname').textContent = D.kiosk || 'VC2 Showroom';
-  money(d.money); reset(); tabs(); grid();
+  D.orders = d.orders ?? D.orders ?? []; D.owned = d.owned ?? D.owned ?? [];
+  money(d.money); reset();
+  if (D.mode === 'shop') { tabs(); grid(); resetForm(); renderOrders(); $('custom').style.display = D.ordersEnabled ? '' : 'none'; }
+  if (D.mode === 'garage') renderGarage();
+  if (D.mode === 'manager') { mFilter = 'pending'; mSel = null; renderMgr(); }
   document.body.classList.add('open'); bootIn();
 }
 let closing = false;
@@ -205,9 +327,13 @@ addEventListener('message', e => {
     case 'open': openUI(d); break;
     case 'hide': closeUI(true); break;
     case 'money': money(d.money); break;
-    case 'receipt': onReceipt(d.receipt, d.money); break;
-    case 'error': unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); toast(d.msg || 'Something went wrong'); break;
-    case 'prompt': $('prompt').classList.toggle('on', !!d.show); break;
+    case 'receipt': onReceipt(d.receipt, d.money, d.orders); break;
+    case 'error': unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); $('osend').classList.remove('ld');
+      if (D.mode === 'garage') renderGarage(); if (D.mode === 'shop') renderOrders(); toast(d.msg || 'Something went wrong'); break;
+    case 'orders': D.orders = d.orders || []; resetForm(); renderOrders(); if (d.msg) toast(d.msg, true); break;
+    case 'garage': D.owned = d.owned || []; money(d.money); renderGarage(); if (d.msg) toast(d.msg, true); break;
+    case 'mgr': D.orders = d.orders || []; renderMgr(); if (d.msg) toast(d.msg, true); break;
+    case 'prompt': $('prompt').classList.toggle('on', !!d.show); if (d.text) $('ptxt').textContent = d.text; break;
     case 'timer': {
       const t = $('timer'); t.classList.toggle('on', !!d.show);
       if (d.show) { const s = d.seconds | 0; $('tleft').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; t.classList.toggle('low', s <= 10); }
@@ -229,8 +355,24 @@ addEventListener('resize', fit); fit();
 if (!RES) {
   document.body.classList.add('web');
   const V = (model, label, brand, cls, category, price, seats, top, st) => ({ model, label, brand, class: cls, category, price, seats, topSpeed: top, stats: { speed: st[0], accel: st[1], brake: st[2], handling: st[3] } });
+  const demoMode = new URLSearchParams(location.search).get('mode') || 'shop';
   openUI({
-    kiosk: 'VC2 Showroom - Downtown', currency: '$', payments: ['bank', 'cash'], testDrive: true, money: { cash: 42500, bank: 960000 },
+    mode: demoMode, orderTypes: ['Sedan', 'SUV', 'Sports', 'Super', 'Bike', 'Other'], ordersEnabled: true, fees: { fee: 500, impoundFee: 2500 },
+    orders: demoMode === 'manager' ? [
+      { id: 12, owner_name: 'Sara Al-Harbi', type: 'Super', base: 'Zentorno', color: 5, budget: 900000, specs: 'Orange Zentorno with a carbon body kit, rear wing, black rims, 220+ km/h, tinted windows and VC2 livery on the doors.', status: 'pending' },
+      { id: 11, owner_name: 'Mohammed K.', type: 'SUV', base: 'Baller', color: 1, budget: 150000, specs: 'Armoured black SUV, 7 seats, off-road tyres.', status: 'pending' },
+      { id: 9, owner_name: 'Faisal', type: 'Sports', base: 'Comet', color: 4, budget: 200000, specs: 'Red Comet, stage 3 engine.', status: 'ready', model: 'comet2', label: 'Comet', brand: 'Pfister', class: 6, price: 210000, handled_by: 'Workshop' }
+    ] : [
+      { id: 9, type: 'Sports', base: 'Comet', color: 4, budget: 200000, specs: 'Red Comet, stage 3 engine.', status: 'ready', model: 'comet2', label: 'Comet', brand: 'Pfister', class: 6, price: 210000, note: 'Stage 3 + carbon wing done' },
+      { id: 7, type: 'SUV', base: 'Granger', color: 1, budget: 60000, specs: 'Black Granger with push bar and light bar.', status: 'pending' }
+    ],
+    owned: [
+      { plate: 'VC2 4821', model: 'zentorno', label: 'Zentorno', brand: 'Pegassi', class: 7, color: 5, origin: 'showroom', status: 'impounded', fee: 2500 },
+      { plate: 'VC2 1190', model: 'comet2', label: 'Comet', brand: 'Pfister', class: 6, color: 4, origin: 'custom', status: 'destroyed', fee: 500 },
+      { plate: 'VC2 0335', model: 'baller2', label: 'Baller', brand: 'Gallivanter', class: 2, color: 1, origin: 'showroom', status: 'stored', fee: 500 },
+      { plate: 'VC2 7702', model: 'bati', label: 'Bati 801', brand: 'Pegassi', class: 8, color: 7, origin: 'showroom', status: 'out', fee: 500 }
+    ],
+    kiosk: demoMode === 'manager' ? 'Workshop panel' : demoMode === 'garage' ? 'VC2 Vehicle Recovery' : 'VC2 Showroom - Downtown', currency: '$', payments: ['bank', 'cash'], testDrive: true, money: { cash: 42500, bank: 960000 },
     imageUrl: 'https://docs.fivem.net/vehicles/%s.webp',
     categories: [{ id: 'sedans', label: 'Sedans' }, { id: 'suvs', label: 'SUVs' }, { id: 'sports', label: 'Sports' }, { id: 'super', label: 'Super' }, { id: 'motos', label: 'Bikes' }],
     colors: [{ label: 'Black', hex: '#15161a' }, { label: 'White', hex: '#eceef0' }, { label: 'Silver', hex: '#a9adb3' }, { label: 'Red', hex: '#b3141b' }, { label: 'Orange', hex: '#e4501c' }, { label: 'Yellow', hex: '#f2c21b' }, { label: 'Blue', hex: '#1f4fae' }, { label: 'Green', hex: '#1f6b3a' }],
