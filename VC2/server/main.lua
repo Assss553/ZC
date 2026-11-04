@@ -8,6 +8,11 @@ for _, p in ipairs(Config.Payments) do allowedPay[p] = true end
 local orderTypes = {}
 for _, t in ipairs(Config.Orders.types) do orderTypes[t] = true end
 
+local function modelHash(m)
+    local n = tostring(m):match('^#(%-?%d+)$')
+    return n and tonumber(n) or joaat(m)
+end
+
 ---------------------------------------------------------------- db
 local function db(fn, q, p)
     local pr = promise.new()
@@ -33,8 +38,16 @@ CreateThread(function()
         `origin` VARCHAR(16) DEFAULT 'showroom',
         `price` INT DEFAULT 0,
         `impounded` TINYINT DEFAULT 0,
+        `body` FLOAT DEFAULT 1000,
+        `engine` FLOAT DEFAULT 1000,
+        `fuel` FLOAT DEFAULT 100,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX (`owner`))]])
+    -- upgrade tables created by older VC2 versions
+    for col, def in pairs({ body = 'FLOAT DEFAULT 1000', engine = 'FLOAT DEFAULT 1000', fuel = 'FLOAT DEFAULT 100' }) do
+        local has = db('scalar', "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'vc2_vehicles' AND COLUMN_NAME = ?", { col })
+        if has == 0 then db('query', ('ALTER TABLE `vc2_vehicles` ADD COLUMN `%s` %s'):format(col, def)) end
+    end
     db('query', [[CREATE TABLE IF NOT EXISTS `vc2_orders` (
         `id` INT AUTO_INCREMENT PRIMARY KEY,
         `owner` VARCHAR(64) NOT NULL,
@@ -183,11 +196,11 @@ end
 -- stores the car in the framework garage table AND in vc2_vehicles (the VC2 ownership record)
 local function saveVehicle(src, model, plate, color, price, origin)
     local P = getPlayer(src)
-    local base = json.encode({ model = joaat(model), plate = plate })
+    local base = json.encode({ model = modelHash(model), plate = plate })
     local ok = true
     if FW == 'qb' then
         ok = db('insert', 'INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, garage, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            { P.PlayerData.license, P.PlayerData.citizenid, model, joaat(model), base, plate, Config.QBGarage, 0 }) ~= nil
+            { P.PlayerData.license, P.PlayerData.citizenid, model, modelHash(model), base, plate, Config.QBGarage, 0 }) ~= nil
     elseif FW == 'esx' then
         ok = db('insert', 'INSERT INTO owned_vehicles (owner, plate, vehicle, type, stored) VALUES (?, ?, ?, ?, ?)',
             { P.identifier, plate, base, 'car', 0 }) ~= nil
@@ -412,11 +425,16 @@ local function feeFor(status)
     return status == 'impounded' and Config.Retrieve.impoundFee or Config.Retrieve.fee
 end
 
+local function pct(v, max) return math.floor(math.max(0, math.min(100, (tonumber(v) or 0) / max * 100)) + 0.5) end
+
 local function myVehicles(src)
-    local rows = db('query', 'SELECT plate, model, color, origin, impounded FROM vc2_vehicles WHERE owner = ? ORDER BY id DESC', { identifier(src) }) or {}
+    local rows = db('query', 'SELECT plate, model, color, origin, impounded, body, engine, fuel FROM vc2_vehicles WHERE owner = ? ORDER BY id DESC', { identifier(src) }) or {}
     for _, r in ipairs(rows) do
         r.status = vehicleStatus(r)
         r.fee = feeFor(r.status)
+        local ent = activeEntity(r.plate)
+        if ent then r.body, r.engine = GetVehicleBodyHealth(ent), GetVehicleEngineHealth(ent) end
+        r.body, r.engine, r.fuel = pct(r.body, 1000), pct(r.engine, 1000), pct(r.fuel, 100)
         r.impounded = nil
     end
     return rows
@@ -444,6 +462,7 @@ Callbacks['vc2:retrieve'] = function(src, plate, garage, payment)
     return {
         ok = true, model = row.model, plate = plate, color = row.color,
         props = row.props and json.decode(row.props) or nil,
+        body = row.body, engine = row.engine, fuel = row.fuel,
         vehicles = myVehicles(src), money = getMoney(src), fee = fee
     }
 end
@@ -455,6 +474,83 @@ Callbacks['vc2:check'] = function(src, netId, plate)
     plate = st and st.plate or trim(plate)
     local row = db('single', 'SELECT plate, owner_name, model, origin, UNIX_TIMESTAMP(created_at) AS created FROM vc2_vehicles WHERE plate = ?', { plate })
     return { row = row, tagged = st ~= nil }
+end
+
+-------- health snapshots (shown in the impound terminal)
+local lastHealth = {}
+RegisterNetEvent('vc2:health', function(netId, body, engine, fuel)
+    local src = source
+    local ent = NetworkGetEntityFromNetworkId(tonumber(netId) or 0)
+    if not ent or ent == 0 or not DoesEntityExist(ent) then return end
+    local st = Entity(ent).state.vc2
+    if not st or active[st.plate] ~= ent or GetPedInVehicleSeat(ent, -1) ~= GetPlayerPed(src) then return end
+    local now = os.time()
+    if (lastHealth[st.plate] or 0) > now - 8 then return end
+    lastHealth[st.plate] = now
+    local c = function(v, max) return math.max(0.0, math.min(max, tonumber(v) or max)) end
+    db('update', 'UPDATE vc2_vehicles SET body = ?, engine = ?, fuel = ? WHERE plate = ?', { c(body, 1000.0), c(engine, 1000.0), c(fuel, 100.0), st.plate })
+end)
+
+-------- admin
+local function isAdmin(src) return IsPlayerAceAllowed(src, Config.AdminAce) end
+
+local function vehicleFromNet(netId)
+    local ent = NetworkGetEntityFromNetworkId(tonumber(netId) or 0)
+    if ent and ent ~= 0 and DoesEntityExist(ent) and GetEntityType(ent) == 2 then return ent end
+end
+
+-- register an existing car (any car) under a player's name
+Callbacks['vc2:adminOwn'] = function(src, netId, model, props, target)
+    if not isAdmin(src) then return { ok = false, msg = 'Admins only' } end
+    local ent = vehicleFromNet(netId)
+    if not ent then return { ok = false, msg = 'Vehicle not found (it must be a networked car)' } end
+    target = tonumber(target) or src
+    if not GetPlayerName(target) or not identifier(target) then return { ok = false, msg = 'Player not found' } end
+    model = tostring(model or '')
+    if not model:match('^#?[%w_%-]+$') or (modelHash(model) % 4294967296) ~= (GetEntityModel(ent) % 4294967296) then return { ok = false, msg = 'Could not read the vehicle model' } end
+    local plate = trim(GetVehicleNumberPlateText(ent))
+    if plate == '' then return { ok = false, msg = 'This vehicle has no plate' } end
+    local ident, name, P = identifier(target), playerName(target), getPlayer(target)
+    local data = type(props) == 'table' and json.encode(props) or json.encode({ model = modelHash(model), plate = plate })
+
+    if db('scalar', 'SELECT 1 FROM vc2_vehicles WHERE plate = ?', { plate }) then
+        db('update', "UPDATE vc2_vehicles SET owner = ?, owner_name = ?, model = ?, props = ?, origin = 'admin', impounded = 0 WHERE plate = ?", { ident, name, model, data, plate })
+    else
+        db('insert', "INSERT INTO vc2_vehicles (plate, owner, owner_name, model, props, origin) VALUES (?, ?, ?, ?, ?, 'admin')", { plate, ident, name, model, data })
+    end
+    if FW == 'qb' then
+        if db('scalar', 'SELECT 1 FROM player_vehicles WHERE plate = ?', { plate }) then
+            db('update', 'UPDATE player_vehicles SET license = ?, citizenid = ?, mods = ? WHERE plate = ?', { P.PlayerData.license, ident, data, plate })
+        else
+            db('insert', 'INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, garage, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                { P.PlayerData.license, ident, model, modelHash(model), data, plate, Config.QBGarage, 0 })
+        end
+    elseif FW == 'esx' then
+        if db('scalar', 'SELECT 1 FROM owned_vehicles WHERE plate = ?', { plate }) then
+            db('update', 'UPDATE owned_vehicles SET owner = ?, vehicle = ? WHERE plate = ?', { ident, data, plate })
+        else
+            db('insert', 'INSERT INTO owned_vehicles (owner, plate, vehicle, type, stored) VALUES (?, ?, ?, ?, ?)', { ident, plate, data, 'car', 0 })
+        end
+    end
+    local old = activeEntity(plate)
+    if old and old ~= ent then DeleteEntity(old) end
+    active[plate] = ent
+    Entity(ent).state:set('vc2', { plate = plate, owner = ident, origin = 'admin', model = model }, true)
+    if target ~= src then notify(target, ('An admin registered the vehicle %s under your name'):format(plate), 'success') end
+    log(src, 'Vehicle registered by admin', ('**Plate:** %s\n**Model:** %s\n**New owner:** %s (%s)'):format(plate, model, name, ident))
+    return { ok = true, plate = plate, name = name }
+end
+
+Callbacks['vc2:adminImpound'] = function(src, netId)
+    if not isAdmin(src) then return { ok = false, msg = 'Admins only' } end
+    local ent = vehicleFromNet(netId)
+    if not ent then return { ok = false, msg = 'Vehicle not found' } end
+    local plate = trim(GetVehicleNumberPlateText(ent))
+    if not db('scalar', 'SELECT 1 FROM vc2_vehicles WHERE plate = ?', { plate }) then return { ok = false, msg = 'This is not a VC2 vehicle' } end
+    db('update', 'UPDATE vc2_vehicles SET impounded = 1, body = ?, engine = ? WHERE plate = ?', { GetVehicleBodyHealth(ent), GetVehicleEngineHealth(ent), plate })
+    DeleteEntity(ent)
+    active[plate] = nil
+    return { ok = true, plate = plate }
 end
 
 RegisterNetEvent('vc2:cb:req', function(name, id, ...)

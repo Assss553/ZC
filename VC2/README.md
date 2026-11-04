@@ -1,6 +1,6 @@
 # VC2 — Car Showroom Kiosk
 
-A standalone self-service machine (like an ATM) where players browse, test drive and buy cars, order custom builds, and get their cars back from recovery NPCs.
+A standalone self-service machine (like an ATM) where players browse, test drive and buy cars, order custom builds, and get their cars back from the Impound NPC.
 
 ## Features
 
@@ -17,14 +17,20 @@ A standalone self-service machine (like an ATM) where players browse, test drive
 
 Managers are set in `Config.Orders.managers`: an ACE permission (`add_ace group.admin vc2.admin allow`) and/or jobs with a minimum grade (for example `mechanic = 0`).
 
-### Ownership & recovery
-- Every car bought or built through VC2 is saved in the `vc2_vehicles` table, linked to the owner. It is also saved in the framework garage table (`player_vehicles` / `owned_vehicles`).
-- **Recovery NPCs** (`Config.Garages`) list the player's VC2 cars with their status:
-  - **Ready**: not in the world (after a disconnect, a server restart, or if it was deleted).
-  - **On the street**: still spawned somewhere. Retrieving it removes the old car first, so it is never duplicated.
+### Impound NPC
+- An NPC named **Impound Lot** (`Config.Garages`). Look at it with the target eye (`ox_target` / `qb-target`) or press `E`, and the **Impound Lot · Vehicle Terminal** panel opens on the right side of the screen.
+- It lists every VC2 car the player owns, with a search bar, favourites (★), a status badge, the plate and **Body / Engine / Fuel** bars. Press *Retrieve*, then *Confirm*, and the car is delivered to the lot.
+- Statuses:
+  - **Available**: not in the world (after a disconnect, a server restart, or if it was deleted).
+  - **On street**: still spawned. Retrieving it removes the old car first, so it is never duplicated.
   - **Destroyed**: burned or exploded.
-  - **Impounded**: impounded by police. Uses `impoundFee`.
-- Fees are set in `Config.Retrieve`. Saved mods, colours and plate are restored.
+  - **Impounded**: costs `impoundFee`.
+- Fees and repair-on-retrieve are set in `Config.Retrieve`. Body, engine and fuel are saved every 10 seconds while the owner drives.
+
+### Admin commands (`vc2.admin` ACE only)
+- `/vc2own`: registers the car you are sitting in or standing next to **under your own name** (your framework character ID, or your FiveM license in standalone). Works with any car, including addon cars and cars spawned by admins. From then on you can retrieve it from the Impound NPC.
+- `/vc2own <playerId>`: registers the car to another player instead.
+- `/vc2impound`: sends the VC2 car you are in or next to to the impound.
 
 ### How the server knows a car is from VC2
 - Every spawned VC2 car gets the state bag `Entity(veh).state.vc2 = { plate, owner, origin, model }`.
@@ -48,10 +54,11 @@ Managers are set in `Config.Orders.managers`: an ACE permission (`add_ace group.
    ensure VC2
    add_ace group.admin vc2.admin allow
    ```
-3. Edit `config.lua`: kiosk, delivery spots, recovery NPC position, cars, prices.
+   (`vc2.admin` is needed for `/vc2own`, `/vc2impound` and, by default, `/vc2orders`.)
+3. Edit `config.lua`: kiosk, delivery spots, impound NPC position, cars, prices.
 
 `oxmysql` is required in every mode, including standalone. The tables `vc2_vehicles` and `vc2_orders` are created automatically on start (see also `vc2.sql`).
 
 ## Notes
 - Keys and fuel are handled in `Config.OnVehicleSpawned`.
-- Open `html/index.html` in a browser to preview the UI. Add `?mode=garage` or `?mode=manager` to see the other screens.
+- Open `html/index.html` in a browser to preview the UI. Add `?mode=impound` or `?mode=manager` to see the other screens.

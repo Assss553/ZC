@@ -60,8 +60,15 @@ local function loadModel(hash)
     return true
 end
 
+-- spawn code, or '#<hash>' for cars an admin registered without a known spawn code
+local function hashOf(model)
+    if type(model) == 'number' then return model end
+    local n = tostring(model):match('^#(%-?%d+)$')
+    return n and tonumber(n) or joaat(model)
+end
+
 local function spawnVehicle(model, c, plate, colorIdx, vprops)
-    local hash = type(model) == 'number' and model or joaat(model)
+    local hash = hashOf(model)
     if not loadModel(hash) then return nil end
     local veh = CreateVehicle(hash, c.x, c.y, c.z, c.w, true, false)
     SetModelAsNoLongerNeeded(hash)
@@ -79,7 +86,7 @@ local function spawnVehicle(model, c, plate, colorIdx, vprops)
 end
 
 -- spawn a car the player owns and tag it on the server as a VC2 car
-local function spawnOwned(model, spots, plate, colorIdx, vprops)
+local function spawnOwned(model, spots, plate, colorIdx, vprops, health)
     local spot = spots[1]
     for _, c in ipairs(spots) do
         if not IsAnyVehicleNearPoint(c.x, c.y, c.z, 3.0) then spot = c break end
@@ -89,7 +96,11 @@ local function spawnOwned(model, spots, plate, colorIdx, vprops)
         notify('This vehicle model is not available on the server', 'error')
         return
     end
-    Config.OnVehicleSpawned(veh, plate, false)
+    if health and not Config.Retrieve.repair then
+        SetVehicleBodyHealth(veh, math.max(100.0, health.body or 1000.0))
+        SetVehicleEngineHealth(veh, math.max(100.0, health.engine or 1000.0))
+    end
+    Config.OnVehicleSpawned(veh, plate, false, health and health.fuel or nil)
     TriggerServerEvent('vc2:spawned', NetworkGetNetworkIdFromEntity(veh), plate, getProps(veh))
     SetNewWaypoint(spot.x, spot.y)
     return veh
@@ -125,7 +136,7 @@ end
 
 -- name / brand / class of any spawn code, straight from the game
 local function modelInfo(model)
-    local hash = joaat(model)
+    local hash = hashOf(model)
     if not IsModelInCdimage(hash) or not IsModelAVehicle(hash) then return nil end
     local display = GetDisplayNameFromVehicleModel(hash)
     return {
@@ -249,10 +260,13 @@ local function openGarage(index)
     currentGarage = index
     buildCatalog()
     serverCallback('vc2:garage', function(res)
-        mode = 'garage'
-        faceAndOpen(g.coords, nil, {
-            mode = 'garage', kiosk = g.label, money = res.money,
-            owned = enrich(res.vehicles), fees = Config.Retrieve,
+        mode = 'impound'
+        isOpen = true
+        setPrompt(nil)
+        SetNuiFocus(true, true)
+        nui('impound', {
+            title = g.label, subtitle = g.subtitle, money = res.money, currency = Config.Currency,
+            colors = Config.Colors, imageUrl = Config.ImageUrl, owned = enrich(res.vehicles),
         })
     end)
 end
@@ -338,8 +352,10 @@ RegisterNUICallback('retrieve', function(d, cb)
     cb({})
     serverCallback('vc2:retrieve', function(res)
         if not res.ok then return nui('error', { msg = res.msg }) end
-        local veh = spawnOwned(res.model, Config.Garages[currentGarage].spawn, res.plate, res.color, res.props)
-        nui('garage', { owned = enrich(res.vehicles), money = res.money, msg = veh and ('%s is waiting for you outside (paid %s%d)'):format(fullName(res.model), Config.Currency, res.fee) or nil })
+        closeUI()
+        local veh = spawnOwned(res.model, Config.Garages[currentGarage].spawn, res.plate, res.color, res.props,
+            { body = res.body, engine = res.engine, fuel = res.fuel })
+        if veh then notify(('%s is waiting for you in the lot (paid %s%d)'):format(fullName(res.model), Config.Currency, res.fee), 'success') end
     end, d.plate, currentGarage, d.payment)
 end)
 
@@ -467,7 +483,7 @@ local function setupWorld()
     end
 
     for i, g in ipairs(Config.Garages) do
-        addBlip(g.coords, g.blip, 'VC2 Vehicle Recovery')
+        addBlip(g.coords, g.blip, g.label or 'Impound Lot')
         local hash = joaat(g.ped)
         local ped
         if loadModel(hash) then
@@ -480,7 +496,7 @@ local function setupWorld()
             SetModelAsNoLongerNeeded(hash)
             peds[#peds + 1] = ped
         end
-        addPoint('vc2_garage_' .. i, g.coords, ped, 'Retrieve my vehicle', function() openGarage(i) end)
+        addPoint('vc2_garage_' .. i, g.coords, ped, 'Open the impound terminal', function() openGarage(i) end)
     end
 
     if interactionMode() ~= 'key' then return end
@@ -511,6 +527,59 @@ CreateThread(function()
     detect()
     setupWorld()
 end)
+
+---------------------------------------------------------------- health snapshots for the impound terminal
+CreateThread(function()
+    while true do
+        Wait(10000)
+        local ped = PlayerPedId()
+        local veh = GetVehiclePedIsIn(ped, false)
+        if veh ~= 0 and GetPedInVehicleSeat(veh, -1) == ped and Entity(veh).state.vc2 then
+            local ok, fuel = pcall(Config.GetFuel, veh)
+            TriggerServerEvent('vc2:health', NetworkGetNetworkIdFromEntity(veh), GetVehicleBodyHealth(veh), GetVehicleEngineHealth(veh), ok and fuel or nil)
+        end
+    end
+end)
+
+---------------------------------------------------------------- admin commands
+local function targetVehicle()
+    local ped = PlayerPedId()
+    local veh = GetVehiclePedIsIn(ped, false)
+    if veh == 0 then
+        local c = GetEntityCoords(ped)
+        veh = GetClosestVehicle(c.x, c.y, c.z, 5.0, 0, 70)
+    end
+    if veh ~= 0 and NetworkGetEntityIsNetworked(veh) then return veh end
+end
+
+-- spawn code of any car: from the config, from its display name, or '#<hash>'
+local function modelCode(veh)
+    local hash = GetEntityModel(veh)
+    for _, v in ipairs(Config.Vehicles) do
+        if joaat(v.model) == hash then return v.model end
+    end
+    local dn = GetDisplayNameFromVehicleModel(hash):lower()
+    if joaat(dn) == hash then return dn end
+    return '#' .. hash
+end
+
+RegisterCommand(Config.AdminCommands.own, function(_, args)
+    local veh = targetVehicle()
+    if not veh then return notify('Sit in or stand next to the vehicle', 'error') end
+    serverCallback('vc2:adminOwn', function(res)
+        if not res.ok then return notify(res.msg, 'error') end
+        notify(('Vehicle %s is now registered to %s. Retrieve it any time from the impound.'):format(res.plate, res.name), 'success')
+    end, NetworkGetNetworkIdFromEntity(veh), modelCode(veh), getProps(veh), args[1])
+end, false)
+
+RegisterCommand(Config.AdminCommands.impound, function()
+    local veh = targetVehicle()
+    if not veh then return notify('Sit in or stand next to the vehicle', 'error') end
+    serverCallback('vc2:adminImpound', function(res)
+        if not res.ok then return notify(res.msg, 'error') end
+        notify(('Vehicle %s was sent to the impound'):format(res.plate), 'success')
+    end, NetworkGetNetworkIdFromEntity(veh))
+end, false)
 
 ---------------------------------------------------------------- /vc2check + export
 RegisterCommand(Config.CheckCommand, function()

@@ -45,26 +45,43 @@ Config.Kiosks = {
     },
 }
 
--- Vehicle recovery NPCs: owners retrieve their VC2 cars here after they were
--- impounded, destroyed, lost after a disconnect / restart, or are still out on the street
+-- Impound NPCs: look at the NPC (target eye) or press E to open the impound terminal.
+-- Owners get back their VC2 cars after they were impounded, destroyed,
+-- lost after a disconnect / restart, or are still out on the street.
 Config.Retrieve = {
     fee = 500,          -- normal retrieval fee
-    impoundFee = 2500,  -- fee if the car was impounded by police (exports.VC2:ImpoundVehicle)
+    impoundFee = 2500,  -- fee if the car was impounded (police export / /vc2impound)
+    repair = true,      -- true = car comes out fully repaired, false = with its saved body / engine health
 }
 Config.Garages = {
     {
-        label = 'VC2 Vehicle Recovery',
-        ped = 's_m_m_autoshop_01',
-        coords = vector4(-31.50, -1089.40, 25.42, 340.0), -- NPC position (z = ground)
+        label = 'Impound Lot',
+        subtitle = 'Vehicle Terminal',
+        ped = 's_m_m_security_01',
+        coords = vector4(409.09, -1623.37, 28.29, 229.5), -- NPC position (z = ground)
         scenario = 'WORLD_HUMAN_CLIPBOARD',
-        blip = { sprite = 357, color = 47, scale = 0.7 },
+        blip = { sprite = 68, color = 47, scale = 0.75 },
         spawn = {                                          -- where retrieved cars appear
-            vector4(-56.79, -1109.85, 26.43, 71.5),
-            vector4(-51.20, -1111.40, 26.43, 71.5),
-            vector4(-45.60, -1113.00, 26.43, 71.5),
+            vector4(401.76, -1647.90, 29.29, 320.0),
+            vector4(404.43, -1650.00, 29.29, 320.0),
+            vector4(407.16, -1652.20, 29.29, 320.0),
         },
     },
 }
+
+-- Admin commands (ACE permission below, e.g. add_ace group.admin vc2.admin allow)
+Config.AdminAce = 'vc2.admin'
+Config.AdminCommands = {
+    own = 'vc2own',         -- /vc2own [playerId]  register the car you are in / next to under your name (or the player's)
+    impound = 'vc2impound', -- /vc2impound          send the VC2 car you are in / next to to the impound
+}
+
+-- Reads the fuel of a car (shown in the impound terminal). Adjust for your fuel script.
+Config.GetFuel = function(vehicle)
+    if GetResourceState('LegacyFuel') == 'started' then return exports['LegacyFuel']:GetFuel(vehicle) end
+    if GetResourceState('ox_fuel') == 'started' then return Entity(vehicle).state.fuel or GetVehicleFuelLevel(vehicle) end
+    return GetVehicleFuelLevel(vehicle)
+end
 
 -- Custom car orders: players describe the car they want at the kiosk,
 -- workshop owners / admins review it with /vc2orders and build it for them.
@@ -136,13 +153,15 @@ Config.Vehicles = {
 }
 
 -- Runs after a car is spawned (keys / fuel). Adjust it for your own scripts.
-Config.OnVehicleSpawned = function(vehicle, plate, isTestDrive)
+-- fuel = saved fuel level for retrieved cars, nil for new cars (full tank)
+Config.OnVehicleSpawned = function(vehicle, plate, isTestDrive, fuel)
+    fuel = fuel or 100.0
     if GetResourceState('LegacyFuel') == 'started' then
-        exports['LegacyFuel']:SetFuel(vehicle, 100.0)
+        exports['LegacyFuel']:SetFuel(vehicle, fuel)
     elseif GetResourceState('ox_fuel') == 'started' then
-        Entity(vehicle).state.fuel = 100.0
+        Entity(vehicle).state.fuel = fuel
     else
-        SetVehicleFuelLevel(vehicle, 100.0)
+        SetVehicleFuelLevel(vehicle, fuel)
     end
     if GetResourceState('qb-vehiclekeys') == 'started' then
         TriggerEvent('vehiclekeys:client:SetOwner', plate)
