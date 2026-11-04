@@ -2,7 +2,8 @@ local FW, Core = 'standalone', nil
 local isOpen, mode, currentKiosk, currentGarage = false, nil, nil, nil
 local prompting = nil
 local testDrive = nil
-local props, peds, blips = {}, {}, {}
+-- kiosks / impound NPCs (from config + placed in-game), synced from the server: key -> { data, entity, blip }
+local Places = { kiosk = {}, garage = {} }
 
 ---------------------------------------------------------------- framework
 local function detect()
@@ -105,6 +106,19 @@ local function spawnOwned(model, spots, plate, colorIdx, vprops, health)
     SetNewWaypoint(spot.x, spot.y)
     return veh
 end
+
+-- free spots on the nearest road in front of a kiosk / NPC (used when no spots are configured)
+local function autoSpots(c)
+    local h = math.rad(c.w)
+    local px, py = c.x - math.sin(h) * 8.0, c.y + math.cos(h) * 8.0
+    local ok, pos, head = GetClosestVehicleNodeWithHeading(px, py, c.z, 1, 3.0, 0)
+    if not ok or #(pos - c.xyz) > 60.0 then pos, head = vector3(px, py, c.z + 0.5), c.w end
+    local rx, ry = math.cos(math.rad(head)) * 3.2, math.sin(math.rad(head)) * 3.2
+    return { vector4(pos.x, pos.y, pos.z, head), vector4(pos.x + rx, pos.y + ry, pos.z, head), vector4(pos.x - rx, pos.y - ry, pos.z, head) }
+end
+local function kioskData(key) return Places.kiosk[key] and Places.kiosk[key].data end
+local function garageData(key) return Places.garage[key] and Places.garage[key].data end
+local function deliverySpots(k) return k.delivery or autoSpots(k.coords) end
 
 local function nui(action, data)
     data = data or {}
@@ -232,7 +246,7 @@ end
 
 local function openShop(index)
     if isOpen or testDrive then return end
-    local k = Config.Kiosks[index]
+    local k = kioskData(index)
     if not k then return end
     currentKiosk = index
     serverCallback('vc2:money', function(money)
@@ -255,7 +269,7 @@ end
 
 local function openGarage(index)
     if isOpen or testDrive then return end
-    local g = Config.Garages[index]
+    local g = garageData(index)
     if not g then return end
     currentGarage = index
     buildCatalog()
@@ -266,7 +280,7 @@ local function openGarage(index)
         SetNuiFocus(true, true)
         nui('impound', {
             title = g.label, subtitle = g.subtitle, money = res.money, currency = Config.Currency,
-            colors = Config.Colors, imageUrl = Config.ImageUrl, owned = enrich(res.vehicles),
+            colors = Config.Colors, imageUrl = Config.ImageUrl, owned = enrich(res.vehicles), photos = Config.ImpoundPhotos,
         })
     end)
 end
@@ -293,7 +307,8 @@ local function onPurchase(res)
     end
     res.receipt.vehicle = fullName(res.receipt.model)
     nui('receipt', { receipt = res.receipt, money = res.money, orders = res.orders and enrich(res.orders) })
-    spawnOwned(res.receipt.model, Config.Kiosks[currentKiosk].delivery, res.receipt.plate, res.receipt.colorIndex)
+    local k = kioskData(currentKiosk)
+    if k then spawnOwned(res.receipt.model, deliverySpots(k), res.receipt.plate, res.receipt.colorIndex) end
     notify(('Congratulations! Pick up your %s at the delivery spot'):format(res.receipt.vehicle), 'success')
 end
 
@@ -353,7 +368,9 @@ RegisterNUICallback('retrieve', function(d, cb)
     serverCallback('vc2:retrieve', function(res)
         if not res.ok then return nui('error', { msg = res.msg }) end
         closeUI()
-        local veh = spawnOwned(res.model, Config.Garages[currentGarage].spawn, res.plate, res.color, res.props,
+        local g = garageData(currentGarage)
+        if not g then return end
+        local veh = spawnOwned(res.model, g.spawn or autoSpots(g.coords), res.plate, res.color, res.props,
             { body = res.body, engine = res.engine, fuel = res.fuel })
         if veh then notify(('%s is waiting for you in the lot (paid %s%d)'):format(fullName(res.model), Config.Currency, res.fee), 'success') end
     end, d.plate, currentGarage, d.payment)
@@ -377,13 +394,14 @@ local function endTestDrive(reason)
 end
 
 local function startTestDrive(model, colorIdx)
-    local k = Config.Kiosks[currentKiosk]
+    local k = kioskData(currentKiosk)
+    if not k then return end
     closeUI()
     local ped = PlayerPedId()
     local back, heading = GetEntityCoords(ped), GetEntityHeading(ped)
     DoScreenFadeOut(400)
     while not IsScreenFadedOut() do Wait(10) end
-    local veh = spawnVehicle(model, k.testDrive, ('TEST%04d'):format(math.random(0, 9999)), colorIdx)
+    local veh = spawnVehicle(model, k.testDrive or autoSpots(k.coords)[1], ('TEST%04d'):format(math.random(0, 9999)), colorIdx)
     if not veh then
         DoScreenFadeIn(300)
         notify('This model does not exist on the server', 'error')
@@ -423,9 +441,7 @@ RegisterNUICallback('testDrive', function(d, cb)
     end, d.model, currentKiosk)
 end)
 
----------------------------------------------------------------- world points (kiosks + recovery NPCs)
-local points = {}
-
+---------------------------------------------------------------- world (kiosks + impound NPCs)
 local function interactionMode()
     local m = Config.Interaction
     if m == 'auto' then
@@ -446,86 +462,252 @@ local function addBlip(c, b, name)
     BeginTextCommandSetBlipName('STRING')
     AddTextComponentSubstringPlayerName(name)
     EndTextCommandSetBlipName(blip)
-    blips[#blips + 1] = blip
+    return blip
 end
 
-local function addPoint(id, coords, entity, label, onUse)
+local function makeProp(model, c)
+    local hash = joaat(model)
+    if not loadModel(hash) then return nil end
+    local obj = CreateObject(hash, c.x, c.y, c.z, false, false, false)
+    SetEntityHeading(obj, c.w)
+    PlaceObjectOnGroundProperly(obj)
+    FreezeEntityPosition(obj, true)
+    SetEntityInvincible(obj, true)
+    SetModelAsNoLongerNeeded(hash)
+    return obj
+end
+
+local function makePed(model, c, scenario)
+    local hash = joaat(model)
+    if not loadModel(hash) then return nil end
+    local ped = CreatePed(4, hash, c.x, c.y, c.z, c.w, false, true)
+    SetEntityInvincible(ped, true)
+    FreezeEntityPosition(ped, true)
+    SetBlockingOfNonTemporaryEvents(ped, true)
+    SetPedCanRagdoll(ped, false)
+    if scenario then TaskStartScenarioInPlace(ped, scenario, 0, true) end
+    SetModelAsNoLongerNeeded(hash)
+    return ped
+end
+
+local function addTarget(id, p, label, onUse)
     local m = interactionMode()
-    points[#points + 1] = { coords = coords.xyz, label = label, onUse = onUse }
     if m == 'ox_target' then
         local opt = { { name = id, icon = 'fas fa-car', label = label, distance = 2.0, onSelect = onUse } }
-        if entity then exports.ox_target:addLocalEntity(entity, opt)
-        else exports.ox_target:addSphereZone({ coords = coords.xyz, radius = 1.2, options = opt }) end
+        if p.entity then exports.ox_target:addLocalEntity(p.entity, opt)
+        else p.zone = exports.ox_target:addSphereZone({ coords = p.data.coords.xyz, radius = 1.2, options = opt }) end
     elseif m == 'qb-target' then
         local opt = { options = { { icon = 'fas fa-car', label = label, action = onUse } }, distance = 2.0 }
-        if entity then exports['qb-target']:AddTargetEntity(entity, opt)
-        else exports['qb-target']:AddCircleZone(id, coords.xyz, 1.2, { name = id }, opt) end
+        if p.entity then exports['qb-target']:AddTargetEntity(p.entity, opt)
+        else exports['qb-target']:AddCircleZone(id, p.data.coords.xyz, 1.2, { name = id }, opt) p.zone = id end
     end
 end
 
-local function setupWorld()
-    for i, k in ipairs(Config.Kiosks) do
-        addBlip(k.coords, k.blip, 'VC2 Showroom')
-        local obj
-        if k.spawnProp then
-            local hash = joaat(k.model)
-            if loadModel(hash) then
-                obj = CreateObject(hash, k.coords.x, k.coords.y, k.coords.z, false, false, false)
-                SetEntityHeading(obj, k.coords.w)
-                PlaceObjectOnGroundProperly(obj)
-                FreezeEntityPosition(obj, true)
-                SetEntityInvincible(obj, true)
-                SetModelAsNoLongerNeeded(hash)
-                props[#props + 1] = obj
+local function removePlace(kind, key)
+    local p = Places[kind][key]
+    if not p then return end
+    local m = interactionMode()
+    if m == 'ox_target' then
+        if p.entity then pcall(function() exports.ox_target:removeLocalEntity(p.entity) end) end
+        if p.zone then pcall(function() exports.ox_target:removeZone(p.zone) end) end
+    elseif m == 'qb-target' then
+        if p.entity then pcall(function() exports['qb-target']:RemoveTargetEntity(p.entity) end) end
+        if p.zone then pcall(function() exports['qb-target']:RemoveZone(p.zone) end) end
+    end
+    if p.entity and DoesEntityExist(p.entity) then DeleteEntity(p.entity) end
+    if p.blip then RemoveBlip(p.blip) end
+    Places[kind][key] = nil
+end
+
+local function v4(t) return vector4(t.x + 0.0, t.y + 0.0, t.z + 0.0, (t.w or 0) + 0.0) end
+local function fromNet(d)
+    d.coords = v4(d.coords)
+    for _, f in ipairs({ 'delivery', 'spawn' }) do
+        if d[f] then for i, c in ipairs(d[f]) do d[f][i] = v4(c) end end
+    end
+    if d.testDrive then d.testDrive = v4(d.testDrive) end
+    return d
+end
+
+local function addPlace(kind, key, d)
+    removePlace(kind, key)
+    d = fromNet(d)
+    local p = { data = d }
+    if kind == 'kiosk' then
+        p.blip = addBlip(d.coords, d.blip, d.label or 'VC2 Showroom')
+        if d.spawnProp ~= false then p.entity = makeProp(d.model or Config.Placed.kiosk.model, d.coords) end
+        addTarget('vc2_kiosk_' .. key, p, 'Use the showroom kiosk', function() openShop(key) end)
+        p.label = 'Use the showroom kiosk'
+        p.onUse = function() openShop(key) end
+    else
+        p.blip = addBlip(d.coords, d.blip, d.label or 'Impound Lot')
+        p.entity = makePed(d.ped or Config.Placed.impound.ped, d.coords, d.scenario)
+        addTarget('vc2_garage_' .. key, p, 'Open the impound terminal', function() openGarage(key) end)
+        p.label = 'Open the impound terminal'
+        p.onUse = function() openGarage(key) end
+    end
+    Places[kind][key] = p
+end
+
+RegisterNetEvent('vc2:places', function(kiosks, garages)
+    for _, kind in ipairs({ 'kiosk', 'garage' }) do
+        for key in pairs(Places[kind]) do removePlace(kind, key) end
+    end
+    for key, d in pairs(kiosks or {}) do addPlace('kiosk', key, d) end
+    for key, d in pairs(garages or {}) do addPlace('garage', key, d) end
+end)
+RegisterNetEvent('vc2:placeAdd', addPlace)
+RegisterNetEvent('vc2:placeRemove', removePlace)
+
+-- [E] prompt (only when no target script is used)
+CreateThread(function()
+    while true do
+        local sleep, near = 750, nil
+        if interactionMode() == 'key' and not isOpen and not testDrive then
+            local pc = GetEntityCoords(PlayerPedId())
+            for _, kind in ipairs({ 'kiosk', 'garage' }) do
+                for _, p in pairs(Places[kind]) do
+                    local d = #(pc - p.data.coords.xyz)
+                    if d < 10.0 then sleep = 250 end
+                    if d < Config.InteractDistance + 0.4 then near = p break end
+                end
+                if near then break end
             end
         end
-        addPoint('vc2_kiosk_' .. i, k.coords, obj, 'Use the showroom kiosk', function() openShop(i) end)
-    end
-
-    for i, g in ipairs(Config.Garages) do
-        addBlip(g.coords, g.blip, g.label or 'Impound Lot')
-        local hash = joaat(g.ped)
-        local ped
-        if loadModel(hash) then
-            ped = CreatePed(4, hash, g.coords.x, g.coords.y, g.coords.z, g.coords.w, false, true)
-            SetEntityInvincible(ped, true)
-            FreezeEntityPosition(ped, true)
-            SetBlockingOfNonTemporaryEvents(ped, true)
-            SetPedCanRagdoll(ped, false)
-            if g.scenario then TaskStartScenarioInPlace(ped, g.scenario, 0, true) end
-            SetModelAsNoLongerNeeded(hash)
-            peds[#peds + 1] = ped
+        if near then
+            sleep = 0
+            setPrompt(near.label)
+            if IsControlJustReleased(0, 38) then near.onUse() end
+        else
+            setPrompt(nil)
         end
-        addPoint('vc2_garage_' .. i, g.coords, ped, 'Open the impound terminal', function() openGarage(i) end)
+        Wait(sleep)
     end
+end)
 
-    if interactionMode() ~= 'key' then return end
-    CreateThread(function()
-        while true do
-            local sleep, near = 750, nil
-            if not isOpen and not testDrive then
-                local p = GetEntityCoords(PlayerPedId())
-                for _, pt in ipairs(points) do
-                    local d = #(p - pt.coords)
-                    if d < 10.0 then sleep = 250 end
-                    if d < Config.InteractDistance + 0.4 then near = pt break end
+---------------------------------------------------------------- 3D kiosk screen (live VC2 display drawn in the world)
+CreateThread(function()
+    local S = Config.KioskScreen
+    if not S or not S.enabled then return end
+    local dui = CreateDui(('nui://%s/html/screen.html'):format(GetCurrentResourceName()), 1024, 585)
+    while not IsDuiAvailable(dui) do Wait(100) end
+    local txd = CreateRuntimeTxd('vc2_screen')
+    CreateRuntimeTextureFromDuiHandle(txd, 'screen', GetDuiHandle(dui))
+    AddEventHandler('onResourceStop', function(res) if res == GetCurrentResourceName() then DestroyDui(dui) end end)
+
+    local function tri(a, b, c, ua, ub, uc)
+        DrawSpritePoly(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, 255, 255, 255, 255, 'vc2_screen', 'screen',
+            ua[1], ua[2], 1.0, ub[1], ub[2], 1.0, uc[1], uc[2], 1.0)
+    end
+    local up = vector3(0.0, 0.0, 1.0)
+    while true do
+        local pc, any = GetEntityCoords(PlayerPedId()), false
+        for _, p in pairs(Places.kiosk) do
+            local c = p.data.coords
+            if #(pc - c.xyz) < S.drawDistance then
+                any = true
+                local base = (p.entity and DoesEntityExist(p.entity)) and GetEntityCoords(p.entity) or c.xyz
+                local h = math.rad(c.w)
+                local right, fwd = vector3(math.cos(h), math.sin(h), 0.0), vector3(-math.sin(h), math.cos(h), 0.0)
+                local ctr = base + right * S.offset.x + fwd * S.offset.y + up * S.offset.z
+                local hw, hh = right * (S.width / 2), up * (S.height / 2)
+                -- A = left as seen from the front, B = right as seen from the front
+                local At, Ab, Bt, Bb = ctr + hw + hh, ctr + hw - hh, ctr - hw + hh, ctr - hw - hh
+                if not S.flip then
+                    tri(At, Bt, Bb, { 0, 0 }, { 1, 0 }, { 1, 1 }) tri(At, Bb, Ab, { 0, 0 }, { 1, 1 }, { 0, 1 })
+                    tri(Bt, At, Ab, { 0, 0 }, { 1, 0 }, { 1, 1 }) tri(Bt, Ab, Bb, { 0, 0 }, { 1, 1 }, { 0, 1 })
+                else
+                    tri(At, Bb, Bt, { 1, 0 }, { 0, 1 }, { 0, 0 }) tri(At, Ab, Bb, { 1, 0 }, { 1, 1 }, { 0, 1 })
+                    tri(Bt, Ab, At, { 1, 0 }, { 0, 1 }, { 0, 0 }) tri(Bt, Bb, Ab, { 1, 0 }, { 1, 1 }, { 0, 1 })
+                end
+                if S.glow then
+                    local l = ctr + fwd * 0.6
+                    DrawLightWithRange(l.x, l.y, l.z, 228, 80, 28, 3.5, 1.4)
+                    DrawMarker(25, c.x, c.y, c.z + 0.03, 0, 0, 0, 0, 0, 0, 1.6, 1.6, 1.0, 228, 80, 28, 90, false, false, 2, false, nil, nil, false)
                 end
             end
-            if near then
-                sleep = 0
-                setPrompt(near.label)
-                if IsControlJustReleased(0, 38) then near.onUse() end
-            else
-                setPrompt(nil)
-            end
-            Wait(sleep)
         end
+        Wait(any and 0 or 1000)
+    end
+end)
+
+---------------------------------------------------------------- admin placement (/vc2place kiosk | impound)
+local placing = false
+local function startPlacing(kind)
+    if placing or isOpen then return end
+    local isKiosk = kind == 'kiosk'
+    local model = isKiosk and Config.Placed.kiosk.model or Config.Placed.impound.ped
+    local hash = joaat(model)
+    if not loadModel(hash) then return notify('Model ' .. model .. ' could not be loaded', 'error') end
+    placing = true
+    local ped = PlayerPedId()
+    local ghost = isKiosk and CreateObject(hash, 0.0, 0.0, 0.0, false, false, false) or CreatePed(4, hash, 0.0, 0.0, 0.0, 0.0, false, true)
+    SetEntityAlpha(ghost, 160, false)
+    SetEntityCollision(ghost, false, false)
+    FreezeEntityPosition(ghost, true)
+    SetEntityInvincible(ghost, true)
+    if not isKiosk then SetBlockingOfNonTemporaryEvents(ghost, true) end
+    local rot = GetEntityHeading(ped) + 180.0
+    nui('prompt', { show = true, text = 'Arrows ← → rotate · E place · Backspace cancel' })
+    CreateThread(function()
+        while placing do
+            Wait(0)
+            local p, h = GetEntityCoords(ped), math.rad(GetEntityHeading(ped))
+            local x, y = p.x - math.sin(h) * 1.6, p.y + math.cos(h) * 1.6
+            local found, gz = GetGroundZFor_3dCoord(x, y, p.z + 1.0, false)
+            local z = found and gz or p.z - 1.0
+            if IsControlPressed(0, 174) then rot = rot + 1.5 end
+            if IsControlPressed(0, 175) then rot = rot - 1.5 end
+            SetEntityCoordsNoOffset(ghost, x, y, z, false, false, false)
+            SetEntityHeading(ghost, rot)
+            DisableControlAction(0, 174, true) DisableControlAction(0, 175, true) DisableControlAction(0, 177, true)
+            DrawMarker(25, x, y, z + 0.03, 0, 0, 0, 0, 0, 0, 1.4, 1.4, 1.0, 228, 80, 28, 140, false, false, 2, false, nil, nil, false)
+            if IsControlJustReleased(0, 38) then
+                placing = false
+                serverCallback('vc2:place', function(res)
+                    if res.ok then notify(('%s placed and saved (#%d)'):format(isKiosk and 'Kiosk' or 'Impound NPC', res.id), 'success')
+                    else notify(res.msg, 'error') end
+                end, kind, x, y, z, rot % 360.0)
+            elseif IsDisabledControlJustReleased(0, 177) then
+                placing = false
+                notify('Placement cancelled', 'error')
+            end
+        end
+        DeleteEntity(ghost)
+        SetModelAsNoLongerNeeded(hash)
+        nui('prompt', { show = false })
+        prompting = nil
     end)
 end
 
+RegisterCommand(Config.AdminCommands.place, function(_, args)
+    local kind = (args[1] or ''):lower()
+    if kind == 'npc' or kind == 'bot' then kind = 'impound' end
+    if kind ~= 'kiosk' and kind ~= 'impound' then return notify(('Use: /%s kiosk  or  /%s impound'):format(Config.AdminCommands.place, Config.AdminCommands.place), 'error') end
+    startPlacing(kind)
+end, false)
+
+RegisterCommand(Config.AdminCommands.remove, function()
+    local pc, best, bk, bd = GetEntityCoords(PlayerPedId()), nil, nil, 5.0
+    for _, kind in ipairs({ 'kiosk', 'garage' }) do
+        for key, p in pairs(Places[kind]) do
+            local d = #(pc - p.data.coords.xyz)
+            if d < bd then best, bk, bd = key, kind, d end
+        end
+    end
+    if not best then return notify('No kiosk or impound NPC within 5 m', 'error') end
+    serverCallback('vc2:unplace', function(res)
+        if res.ok then notify('Removed', 'success') else notify(res.msg, 'error') end
+    end, bk, best)
+end, false)
+
 CreateThread(function()
     detect()
-    setupWorld()
+    TriggerEvent('chat:addSuggestion', '/' .. Config.AdminCommands.place, 'VC2: place a kiosk or impound NPC (admin)', { { name = 'type', help = 'kiosk | impound' } })
+    TriggerEvent('chat:addSuggestion', '/' .. Config.AdminCommands.remove, 'VC2: remove the closest placed kiosk / NPC (admin)')
+    TriggerEvent('chat:addSuggestion', '/' .. Config.AdminCommands.own, 'VC2: register this vehicle to you or a player (admin)', { { name = 'id', help = 'player id (optional)' } })
+    TriggerEvent('chat:addSuggestion', '/' .. Config.AdminCommands.impound, 'VC2: send this VC2 vehicle to the impound (admin)')
+    TriggerServerEvent('vc2:requestPlaces')
 end)
 
 ---------------------------------------------------------------- health snapshots for the impound terminal
@@ -610,7 +792,10 @@ AddEventHandler('onResourceStop', function(res)
         DeleteEntity(testDrive.veh)
         SetEntityCoords(PlayerPedId(), testDrive.back.x, testDrive.back.y, testDrive.back.z - 1.0, false, false, false, false)
     end
-    for _, o in ipairs(props) do if DoesEntityExist(o) then DeleteEntity(o) end end
-    for _, p in ipairs(peds) do if DoesEntityExist(p) then DeleteEntity(p) end end
-    for _, b in ipairs(blips) do RemoveBlip(b) end
+    for _, kind in ipairs({ 'kiosk', 'garage' }) do
+        for _, p in pairs(Places[kind]) do
+            if p.entity and DoesEntityExist(p.entity) then DeleteEntity(p.entity) end
+            if p.blip then RemoveBlip(p.blip) end
+        end
+    end
 end)

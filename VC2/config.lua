@@ -69,9 +69,32 @@ Config.Garages = {
     },
 }
 
+-- Defaults for kiosks / impound NPCs placed in-game with /vc2place.
+-- Delivery, test-drive and retrieval spots are picked automatically on the nearest road.
+Config.Placed = {
+    kiosk = { label = 'VC2 Showroom', model = 'prop_atm_03', blip = { sprite = 326, color = 47, scale = 0.8 } },
+    impound = { label = 'Impound Lot', subtitle = 'Vehicle Terminal', ped = 's_m_m_security_01', scenario = 'WORLD_HUMAN_CLIPBOARD', blip = { sprite = 68, color = 47, scale = 0.75 } },
+}
+
+-- 3D kiosk: a live VC2 screen drawn in the world on every kiosk, with an orange glow.
+-- If you get a custom kiosk model (.ydr) from a modeller, drop it in /stream and set the model name above.
+Config.KioskScreen = {
+    enabled = true,
+    offset = vector3(0.0, 0.0, 2.15), -- right / forward / up from the kiosk base (metres)
+    width = 1.05, height = 0.6,        -- screen size in metres
+    flip = false,                      -- set true if the screen text looks mirrored
+    drawDistance = 30.0,
+    glow = true,
+}
+
+-- Impound terminal: show an icon on every card (like the classic terminal), or real car photos
+Config.ImpoundPhotos = false
+
 -- Admin commands (ACE permission below, e.g. add_ace group.admin vc2.admin allow)
 Config.AdminAce = 'vc2.admin'
 Config.AdminCommands = {
+    place = 'vc2place',     -- /vc2place kiosk | /vc2place impound   place a kiosk or an impound NPC where you stand (saved)
+    remove = 'vc2remove',   -- /vc2remove                           remove the placed kiosk / NPC closest to you
     own = 'vc2own',         -- /vc2own [playerId]  register the car you are in / next to under your name (or the player's)
     impound = 'vc2impound', -- /vc2impound          send the VC2 car you are in / next to to the impound
 }

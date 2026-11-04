@@ -292,9 +292,12 @@ body.impopen #imp{opacity:1;transform:translate(0,-50%);pointer-events:auto}
 .ic{border-radius:7px;background:#1a1716;border:1px solid #33292590;overflow:hidden;transition:border-color .2s,transform .2s;animation:rise .4s backwards;animation-delay:calc(var(--i)*50ms)}
 .ic:hover{border-color:#5a443b;transform:translateY(-2px)}
 .ic.sel{border-color:var(--o);box-shadow:0 0 0 1px var(--o),0 10px 30px #e4501c22}
-.itop{position:relative;height:96px;background:radial-gradient(ellipse at 50% 80%,#2c2624,#151313 75%);display:flex;align-items:center;justify-content:center}
+.itop{position:relative;height:84px;background:radial-gradient(ellipse at 50% 80%,#2c2624,#151313 75%);display:flex;align-items:center;justify-content:center}
 .itop img{max-width:86%;max-height:84px;object-fit:contain;filter:drop-shadow(0 8px 6px #000a)}
 .itop svg{width:120px;height:52px}
+.itop .icar{width:38px;height:38px;fill:none;stroke:#6f6764;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s,transform .3s}
+.ic:hover .icar,.ic.sel .icar{stroke:#a99f9b;transform:translateX(3px)}
+.ic.sel .icar{stroke:#e4501c}
 .star{position:absolute;left:7px;top:7px;width:24px;height:24px;border-radius:5px;background:#0d0c0c99;display:grid;place-items:center;color:#8b7f7a;font-size:14px;line-height:1;transition:.15s}
 .star:hover{color:#fff}.star.on{color:#f5b73b}
 .ib{position:absolute;right:7px;top:7px;height:18px;padding:0 7px;display:flex;align-items:center;border-radius:3px;font-size:9.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border:1px solid}

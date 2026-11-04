@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>VC2 Screen</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1024px;height:585px;overflow:hidden;background:#0b0b0d;font-family:"Nunito",sans-serif;color:#f2f2f4}
+.f{position:absolute;inset:0;border:6px solid #e4501c;border-radius:18px;box-shadow:inset 0 0 60px #e4501c55}
+.grid{position:absolute;inset:0;background:linear-gradient(#ffffff08 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,#ffffff08 1px,transparent 1px) 0 0/32px 32px}
+.glow{position:absolute;left:50%;top:44%;width:720px;height:320px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(#e4501c40,transparent 65%);animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55;transform:translate(-50%,-50%) scale(1.08)}}
+.top{position:absolute;left:40px;right:40px;top:32px;display:flex;justify-content:space-between;font-size:22px;font-weight:900;letter-spacing:.3em;color:#8a8a92}
+.top b{color:#83e03a}.top b::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#83e03a;margin-right:10px;box-shadow:0 0 10px #83e03a;animation:bl 1.2s steps(2) infinite}
+@keyframes bl{50%{opacity:.2}}
+.logo{position:absolute;left:0;right:0;top:120px;text-align:center;font-size:190px;font-weight:900;line-height:1;letter-spacing:.02em;text-shadow:0 0 40px #ff6a2b77}
+.logo i{font-style:normal;color:#e4501c}
+.sub{position:absolute;left:0;right:0;top:320px;text-align:center;font-size:34px;font-weight:900;letter-spacing:.42em;color:#c9c9cf}
+.road{position:absolute;left:60px;right:60px;top:400px;height:70px;overflow:hidden}
+.road::after{content:"";position:absolute;left:0;right:0;bottom:8px;height:4px;background:repeating-linear-gradient(90deg,#3a3a40 0 40px,transparent 40px 70px);animation:dash .6s linear infinite}
+@keyframes dash{to{background-position:-70px 0}}
+.car{position:absolute;bottom:12px;width:120px;height:56px;animation:drive 4.5s cubic-bezier(.5,0,.5,1) infinite}
+.car svg{width:100%;height:100%;fill:none;stroke:#e4501c;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px #e4501c)}
+@keyframes drive{0%{left:-130px}45%,55%{left:calc(50% - 60px)}100%{left:calc(100% + 10px)}}
+.cta{position:absolute;left:0;right:0;bottom:40px;text-align:center;font-size:30px;font-weight:800;color:#f2f2f4;animation:cta 2s ease-in-out infinite}
+.cta span{display:inline-block;padding:6px 18px;margin:0 6px;border-radius:10px;background:#e4501c;font-weight:900}
+@keyframes cta{50%{opacity:.55}}
+.scan{position:absolute;left:0;right:0;height:140px;top:-140px;background:linear-gradient(transparent,#ff6a2b18 80%,transparent);animation:scan 4s linear infinite}
+@keyframes scan{to{top:600px}}
+</style></head><body>
+<div class="grid"></div><div class="glow"></div>
+<div class="top"><span>AUTO SHOWROOM</span><b>ONLINE</b></div>
+<div class="logo">VC<i>2</i></div>
+<div class="sub">BUY · TEST · ORDER</div>
+<div class="road"><div class="car"><svg viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></div></div>
+<div class="cta">Walk up to the kiosk <span>START</span></div>
+<div class="scan"></div><div class="f"></div>
+</body></html>

@@ -15,7 +15,12 @@ ui_page 'html/index.html'
 
 files {
     'html/index.html',
+    'html/screen.html',
     'html/style.css',
     'html/script.js',
     'html/images/*.png'
 }
+
+-- Custom kiosk model (optional): put vc2_kiosk.ydr + vc2_kiosk.ytyp in /stream,
+-- uncomment the next line and set Config.Placed.kiosk.model = 'vc2_kiosk'
+-- data_file 'DLC_ITYP_REQUEST' 'stream/vc2_kiosk.ytyp'

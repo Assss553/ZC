@@ -1,6 +1,11 @@
 local FW, Core = 'standalone', nil
 local busy, lastTest, pendingSpawn = {}, {}, {}
 local active = {}   -- plate -> entity handle of the VC2 car currently in the world
+-- kiosks / impound NPCs: from config ('c1', 'c2' ...) + placed in-game with /vc2place ('d<id>')
+local Places = { kiosk = {}, garage = {} }
+local placesReady = false
+for i, k in ipairs(Config.Kiosks) do Places.kiosk['c' .. i] = k end
+for i, g in ipairs(Config.Garages) do Places.garage['c' .. i] = g end
 local byModel = {}
 for _, v in ipairs(Config.Vehicles) do byModel[v.model] = v end
 local allowedPay = {}
@@ -12,6 +17,39 @@ local function modelHash(m)
     local n = tostring(m):match('^#(%-?%d+)$')
     return n and tonumber(n) or joaat(m)
 end
+
+---------------------------------------------------------------- places
+function placedData(kind, coords)
+    if kind == 'kiosk' then
+        local d = Config.Placed.kiosk
+        return { label = d.label, model = d.model, spawnProp = true, blip = d.blip, coords = coords, placed = true }
+    end
+    local d = Config.Placed.impound
+    return { label = d.label, subtitle = d.subtitle, ped = d.ped, scenario = d.scenario, blip = d.blip, coords = coords, placed = true }
+end
+
+local function v4t(v) return { x = v.x, y = v.y, z = v.z, w = v.w } end
+local function toNet(d)
+    local o = {}
+    for k, v in pairs(d) do o[k] = v end
+    o.coords = v4t(d.coords)
+    for _, f in ipairs({ 'delivery', 'spawn' }) do
+        if d[f] then o[f] = {} for i, c in ipairs(d[f]) do o[f][i] = v4t(c) end end
+    end
+    if d.testDrive then o.testDrive = v4t(d.testDrive) end
+    return o
+end
+local function netList(list)
+    local o = {}
+    for k, d in pairs(list) do o[k] = toNet(d) end
+    return o
+end
+
+RegisterNetEvent('vc2:requestPlaces', function()
+    local src = source
+    while not placesReady do Wait(200) end
+    TriggerClientEvent('vc2:places', src, netList(Places.kiosk), netList(Places.garage))
+end)
 
 ---------------------------------------------------------------- db
 local function db(fn, q, p)
@@ -65,6 +103,17 @@ CreateThread(function()
         `plate` VARCHAR(12) DEFAULT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX (`owner`))]])
+    db('query', [[CREATE TABLE IF NOT EXISTS `vc2_places` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `kind` VARCHAR(16) NOT NULL,
+        `x` FLOAT NOT NULL, `y` FLOAT NOT NULL, `z` FLOAT NOT NULL, `h` FLOAT NOT NULL,
+        `created_by` VARCHAR(64) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP)]])
+    for _, r in ipairs(db('query', 'SELECT * FROM vc2_places') or {}) do
+        local kind = r.kind == 'kiosk' and 'kiosk' or 'garage'
+        Places[kind]['d' .. r.id] = placedData(kind, vector4(r.x, r.y, r.z, r.h))
+    end
+    placesReady = true
     print(('^2[VC2]^7 started (framework: %s)'):format(FW))
 end)
 
@@ -164,8 +213,8 @@ local function isManager(src)
     return false
 end
 
-local function near(src, point, idx)
-    local p = point[tonumber(idx) or 0]
+local function near(src, list, key)
+    local p = key and list[key]
     if not p then return false end
     return #(GetEntityCoords(GetPlayerPed(src)) - p.coords.xyz) <= Config.MaxServerDistance
 end
@@ -288,7 +337,7 @@ end
 Callbacks['vc2:testdrive'] = function(src, model, kiosk)
     if not Config.TestDrive.enabled then return false, 'Test drives are disabled' end
     if not byModel[model] then return false, 'This vehicle is not available' end
-    if not near(src, Config.Kiosks, kiosk) then return false, 'You must be at the kiosk' end
+    if not near(src, Places.kiosk, kiosk) then return false, 'You must be at the kiosk' end
     local now = os.time()
     local last = lastTest[src]
     if last and now - last < Config.TestDrive.cooldown then
@@ -328,7 +377,7 @@ Callbacks['vc2:buy'] = function(src, model, colorIdx, payment, kiosk)
     local v = byModel[model]
     if not v then return { ok = false, msg = 'This vehicle is not available' } end
     if not allowedPay[payment] then return { ok = false, msg = 'This payment method is not allowed' } end
-    if not near(src, Config.Kiosks, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
+    if not near(src, Places.kiosk, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
     if (getMoney(src)[payment] or 0) < v.price then return { ok = false, msg = 'Not enough money' } end
     local res = purchase(src, model, colorIndex(colorIdx), payment, v.price, 'showroom')
     if res.ok then log(src, 'Vehicle purchased', ('**Vehicle:** %s\n**Price:** %s%s\n**Plate:** %s'):format(model, Config.Currency, v.price, res.receipt.plate)) end
@@ -347,7 +396,7 @@ end
 Callbacks['vc2:orderSubmit'] = function(src, d, kiosk)
     if not Config.Orders.enabled then return { ok = false, msg = 'Custom orders are disabled' } end
     if type(d) ~= 'table' then return { ok = false, msg = 'Invalid order' } end
-    if not near(src, Config.Kiosks, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
+    if not near(src, Places.kiosk, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
     local base, specs = trim(d.base):sub(1, 60), trim(d.specs):sub(1, 500)
     local budget = math.floor(tonumber(d.budget) or 0)
     if #specs < 10 then return { ok = false, msg = 'Describe the car you want (at least 10 characters)' } end
@@ -369,7 +418,7 @@ end
 
 Callbacks['vc2:orderCollect'] = function(src, id, payment, kiosk)
     if not allowedPay[payment] then return { ok = false, msg = 'This payment method is not allowed' } end
-    if not near(src, Config.Kiosks, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
+    if not near(src, Places.kiosk, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
     local o = db('single', 'SELECT * FROM vc2_orders WHERE id = ? AND owner = ?', { tonumber(id), identifier(src) })
     if not o or o.status ~= 'ready' then return { ok = false, msg = 'This order is not ready' } end
     -- lock the order first so it cannot be collected twice
@@ -445,7 +494,7 @@ Callbacks['vc2:garage'] = function(src)
 end
 
 Callbacks['vc2:retrieve'] = function(src, plate, garage, payment)
-    if not near(src, Config.Garages, garage) then return { ok = false, msg = 'You must be at the recovery desk' } end
+    if not near(src, Places.garage, garage) then return { ok = false, msg = 'You must be at the impound' } end
     if busy[src] then return { ok = false, msg = 'A transaction is already in progress' } end
     local row = db('single', 'SELECT * FROM vc2_vehicles WHERE plate = ? AND owner = ?', { plate, identifier(src) })
     if not row then return { ok = false, msg = 'This is not your vehicle' } end
@@ -539,6 +588,31 @@ Callbacks['vc2:adminOwn'] = function(src, netId, model, props, target)
     if target ~= src then notify(target, ('An admin registered the vehicle %s under your name'):format(plate), 'success') end
     log(src, 'Vehicle registered by admin', ('**Plate:** %s\n**Model:** %s\n**New owner:** %s (%s)'):format(plate, model, name, ident))
     return { ok = true, plate = plate, name = name }
+end
+
+Callbacks['vc2:place'] = function(src, kind, x, y, z, h)
+    if not isAdmin(src) then return { ok = false, msg = 'Admins only' } end
+    if kind ~= 'kiosk' and kind ~= 'impound' then return { ok = false, msg = 'Use: kiosk or impound' } end
+    local c = vector4(tonumber(x) or 0.0, tonumber(y) or 0.0, tonumber(z) or 0.0, tonumber(h) or 0.0)
+    if #(GetEntityCoords(GetPlayerPed(src)) - c.xyz) > 15.0 then return { ok = false, msg = 'Too far away' } end
+    local id = db('insert', 'INSERT INTO vc2_places (kind, x, y, z, h, created_by) VALUES (?, ?, ?, ?, ?, ?)', { kind, c.x, c.y, c.z, c.w, playerName(src) })
+    if not id then return { ok = false, msg = 'Database error' } end
+    local list = kind == 'kiosk' and 'kiosk' or 'garage'
+    local data = placedData(list, c)
+    Places[list]['d' .. id] = data
+    TriggerClientEvent('vc2:placeAdd', -1, list, 'd' .. id, toNet(data))
+    return { ok = true, id = id }
+end
+
+Callbacks['vc2:unplace'] = function(src, list, key)
+    if not isAdmin(src) then return { ok = false, msg = 'Admins only' } end
+    local d = Places[list] and Places[list][key]
+    if not d or not d.placed then return { ok = false, msg = 'Only kiosks / NPCs placed with /' .. Config.AdminCommands.place .. ' can be removed (edit config.lua for the others)' } end
+    if #(GetEntityCoords(GetPlayerPed(src)) - d.coords.xyz) > 15.0 then return { ok = false, msg = 'Too far away' } end
+    db('update', 'DELETE FROM vc2_places WHERE id = ?', { tonumber(key:sub(2)) })
+    Places[list][key] = nil
+    TriggerClientEvent('vc2:placeRemove', -1, list, key)
+    return { ok = true }
 end
 
 Callbacks['vc2:adminImpound'] = function(src, netId)

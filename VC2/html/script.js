@@ -243,6 +243,8 @@ const IMP_ST = { stored: 'Available', out: 'On street', impounded: 'Impounded', 
 let iSel = null, iQ = '', favs = {};
 try { favs = JSON.parse(localStorage.getItem('vc2_favs') || '{}') || {}; } catch (e) { favs = {}; }
 const saveFavs = () => { try { localStorage.setItem('vc2_favs', JSON.stringify(favs)); } catch (e) {} };
+const CAR_ICON = '<svg class="icar" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>';
+let iPhotos = false;
 const barCol = v => v > 60 ? '#7cc142' : v > 30 ? '#e9b23b' : '#e5533d';
 function impToast(msg) { const t = $('itoast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 3200); }
 function renderImp() {
@@ -254,7 +256,7 @@ function renderImp() {
     const sel = iSel === v.plate, fee = v.fee ? fmt(v.fee) : 'Free';
     return `<div class="ic ${sel ? 'sel' : ''}" style="--i:${i}" data-p="${esc(v.plate)}">
       <div class="itop"><button class="star ${favs[v.plate] ? 'on' : ''}" data-f="${esc(v.plate)}" title="Favourite">★</button>
-        <span class="ib ${esc(v.status)}">${IMP_ST[v.status] || esc(v.status)}</span>${imgOf(v, colOf(v.color).hex)}</div>
+        <span class="ib ${esc(v.status)}">${IMP_ST[v.status] || esc(v.status)}</span>${iPhotos ? imgOf(v, colOf(v.color).hex) : CAR_ICON}</div>
       <div class="ibody"><h4>${esc(nameOf(v))}</h4><span class="ipl">${esc(v.plate)}</span>
         ${[['Body', v.body], ['Engine', v.engine], ['Fuel', v.fuel]].map(([l, x]) => `<div class="ibar">${l}<i><u data-w="${x ?? 100}" style="background:${l === 'Fuel' ? '#e9a23b' : barCol(x ?? 100)}"></u></i><b>${x ?? 100}%</b></div>`).join('')}
         <div class="iact">${sel
@@ -275,7 +277,7 @@ $('iq').oninput = e => { iQ = e.target.value; renderImp(); };
 $('iclose').onclick = () => closeImp();
 function openImpound(d) {
   D.currency = d.currency || D.currency; D.colors = d.colors || D.colors; D.imageUrl = d.imageUrl ?? D.imageUrl;
-  D.owned = d.owned || []; if (d.money) D.money = d.money;
+  D.owned = d.owned || []; if (d.money) D.money = d.money; iPhotos = !!d.photos;
   $('ititle').textContent = d.title || 'Impound Lot'; $('isub').textContent = d.subtitle || 'Vehicle Terminal';
   iSel = null; iQ = ''; $('iq').value = ''; $('imp').classList.remove('out');
   renderImp(); document.body.classList.add('impopen');
