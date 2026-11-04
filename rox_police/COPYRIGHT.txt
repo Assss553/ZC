@@ -1,0 +1,6 @@
+Copyright (c) ROX Store. All rights reserved.
+
+This resource was made for and is owned by ROX Store.
+You may use it on your own server. Reselling, re-uploading, sharing or
+redistributing these files (in full or in part) without written permission
+from ROX Store is not allowed.
