@@ -14,7 +14,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
-import { Brush, Evaluator, SUBTRACTION, INTERSECTION } from 'three-bvh-csg';
+import { Brush, Evaluator, SUBTRACTION, INTERSECTION, ADDITION } from 'three-bvh-csg';
 
 const q = new URLSearchParams(location.search);
 const W = innerWidth, H = innerHeight;
@@ -114,20 +114,69 @@ const toMesh = (b, name, parent = RV) => { const m = new THREE.Mesh(b.geometry, 
 const WB = 2.45, CAB = 2.24;
 
 // ---------- living box: solid minus interior volume = real hollow shell
+// LOFT: sculpted surface through cross-sections (superellipse rings) -> smooth, real-looking body panels
+function loft(st, segs = 64, o = {}) {
+  const P = [], I = [];
+  const ringAt = s => {
+    const out = [], cy = (s.b + s.t) / 2, h = (s.t - s.b) / 2, e = 2 / s.n;
+    for (let j = 0; j < segs; j++) {
+      const a = j / segs * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
+      let z = s.hw * Math.sign(c) * Math.abs(c) ** e;
+      const y = cy + h * Math.sign(sn) * Math.abs(sn) ** e;
+      if (o.belt !== undefined && y > o.belt && s.t > o.belt) z *= 1 - (1 - o.taper) * Math.min(1, (y - o.belt) / (s.t - o.belt));
+      out.push(s.x, y, z);
+    }
+    return out;
+  };
+  st.forEach(s => P.push(...ringAt(s)));
+  const R0 = 0, RN = st.length - 1;
+  for (let i = 0; i < RN; i++) for (let j = 0; j < segs; j++) {
+    const a = i * segs + j, b = i * segs + (j + 1) % segs, c = (i + 1) * segs + j, d = (i + 1) * segs + (j + 1) % segs;
+    I.push(a, b, c, b, d, c);
+  }
+  // end caps
+  const cap = (ri, flip) => {
+    const s = st[ri], ci = P.length / 3; P.push(s.x, (s.b + s.t) / 2, 0);
+    for (let j = 0; j < segs; j++) { const a = ri * segs + j, b = ri * segs + (j + 1) % segs; flip ? I.push(ci, b, a) : I.push(ci, a, b); }
+  };
+  cap(R0, false); cap(RN, true);
+  let g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I);
+  // make sure the faces point outwards (signed volume > 0)
+  const p = g.attributes.position.array; let vol = 0;
+  for (let k = 0; k < I.length; k += 3) { const [a, b, c] = [I[k] * 3, I[k + 1] * 3, I[k + 2] * 3];
+    vol += p[a] * (p[b + 1] * p[c + 2] - p[b + 2] * p[c + 1]) - p[a + 1] * (p[b] * p[c + 2] - p[b + 2] * p[c]) + p[a + 2] * (p[b] * p[c + 1] - p[b + 1] * p[c]); }
+  if (vol < 0) { for (let k = 0; k < I.length; k += 3) { const t = I[k + 1]; I[k + 1] = I[k + 2]; I[k + 2] = t; } g.setIndex(I); }
+  g.computeVertexNormals();
+  const uv = new Float32Array(P.length / 3 * 2); for (let k = 0; k < P.length / 3; k++) { uv[k * 2] = P[k * 3] / 8; uv[k * 2 + 1] = P[k * 3 + 1] / 4; }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return g;
+}
+const add2 = (a, b) => { const o = ev.evaluate(a, b, ADDITION); o.updateMatrixWorld(); return o; };
+// cab-over cap: full width behind, tapering into a pointed nose; bottom rises, top drops (aerodynamic wedge)
+const CAPST = [
+  { x: 5.45, b: 2.2, t: 3.36, hw: 1.225, n: 9 }, { x: 6.45, b: 2.21, t: 3.35, hw: 1.225, n: 8.5 },
+  { x: 6.85, b: 2.25, t: 3.27, hw: 1.2, n: 7 },   { x: 7.12, b: 2.31, t: 3.15, hw: 1.16, n: 5.5 },
+  { x: 7.32, b: 2.38, t: 3.0, hw: 1.1, n: 4.5 },  { x: 7.46, b: 2.45, t: 2.86, hw: 1.0, n: 3.6 },
+  { x: 7.55, b: 2.52, t: 2.74, hw: 0.86, n: 3.0 }, { x: 7.6, b: 2.58, t: 2.67, hw: 0.62, n: 2.6 },
+];
+const CAPIN = CAPST.slice(0, 6).map((s, i) => ({ x: s.x + (i === 0 ? 0.1 : 0), b: s.b + 0.06, t: s.t - 0.06, hw: s.hw - 0.07, n: s.n }));
+CAPIN[CAPIN.length - 1].x -= 0.08;
+const capTop = x => { for (let i = 0; i < CAPST.length - 1; i++) { const a = CAPST[i], b = CAPST[i + 1]; if (x >= a.x && x <= b.x) { const k = (x - a.x) / (b.x - a.x); return a.t + (b.t - a.t) * k; } } return CAPST[0].t; };
+const capHW = x => { for (let i = 0; i < CAPST.length - 1; i++) { const a = CAPST[i], b = CAPST[i + 1]; if (x >= a.x && x <= b.x) { const k = (x - a.x) / (b.x - a.x); return a.hw + (b.hw - a.hw) * k; } } return CAPST[0].hw; };
 function boxShape(t) {
   const s = new THREE.Shape();
   s.moveTo(0.05 + t, 0.62 + t * 1.6);
   s.lineTo(5.55 - t, 0.62 + t * 1.6);
-  s.lineTo(5.55 - t, 2.2 + t);
-  s.lineTo(6.05, 2.22 + t);
-  s.bezierCurveTo(6.9 - t, 2.24 + t, 7.45 - t * 1.8, 2.45 + t, 7.42 - t * 1.8, 2.78);
-  s.bezierCurveTo(7.38 - t * 1.8, 3.08 - t, 7.0 - t, 3.2 - t, 6.3, 3.25 - t);
+  s.lineTo(5.6 - t, 3.3 - t);
   s.lineTo(0.35, 3.3 - t);
   s.quadraticCurveTo(0.02 + t, 3.3 - t, 0.02 + t, 2.98);
   s.lineTo(0.05 + t, 0.62 + t * 1.6);
   return s;
 }
-let shell = sub(brush(extrude(boxShape(0), WB, 0.06, 0.16), paint), brush(extrude(boxShape(0.05), WB - 0.14, 0), interior));
+let shell = add2(brush(extrude(boxShape(0), WB, 0.06, 0.16), paint), brush(loft(CAPST, 72), paint));
+shell = sub(shell, brush(extrude(boxShape(0.05), WB - 0.14, 0), interior));
+shell = sub(shell, brush(loft(CAPIN, 72), interior));
+shell = sub(shell, brush(RB(0.5, 0.95, WB - 0.34, 0.08), interior, 5.62, 2.78, 0));     // open the body into the cab-over bunk
 // window, door, skylight and cab pass-through openings
 const winList = [
   { n: 'window_lounge_r', x: 2.55, y: 2.33, w: 1.05, h: 0.6, s: 1 }, { n: 'window_lounge_l', x: 2.05, y: 2.33, w: 0.95, h: 0.6, s: -1 },
@@ -161,7 +210,17 @@ function cabInner() {
   const s = new THREE.Shape();
   s.moveTo(5.3, 0.72); s.lineTo(6.9, 0.72); s.lineTo(6.9, 1.27); s.lineTo(6.48, 2.05); s.lineTo(5.3, 2.1); s.lineTo(5.3, 0.72); return s;
 }
-let cab = sub(brush(extrude(cabShape(), CAB, 0.07, 0.13), paint), brush(extrude(cabInner(), CAB - 0.14, 0), interior));
+// sculpted van cab: tumblehome greenhouse, sloping/narrowing hood, rounded nose
+const CABST = [
+  { x: 5.4, b: 0.55, t: 2.18, hw: 1.12, n: 9 }, { x: 6.45, b: 0.55, t: 2.13, hw: 1.12, n: 9 },
+  { x: 6.93, b: 0.55, t: 1.34, hw: 1.1, n: 7.5 }, { x: 7.3, b: 0.55, t: 1.29, hw: 1.07, n: 6 },
+  { x: 7.62, b: 0.55, t: 1.23, hw: 1.03, n: 5 },  { x: 7.84, b: 0.56, t: 1.14, hw: 0.99, n: 4.2 },
+  { x: 7.93, b: 0.6, t: 1.02, hw: 0.95, n: 3.6 },  { x: 7.97, b: 0.66, t: 0.9, hw: 0.86, n: 3.0 },
+];
+const CABIN = [
+  { x: 5.3, b: 0.72, t: 2.1, hw: 1.05, n: 9 }, { x: 6.42, b: 0.72, t: 2.06, hw: 1.05, n: 9 }, { x: 6.86, b: 0.72, t: 1.28, hw: 1.03, n: 7 },
+];
+let cab = sub(brush(loft(CABST, 72, { belt: 1.42, taper: 0.975 }), paint), brush(loft(CABIN, 72), interior));
 const wsAng = Math.atan2(0.45, 0.79), wsC = new THREE.Vector3(6.725 + 0.79 * 0.08, 1.725 + 0.45 * 0.08, 0);
 { const b = new Brush(clean(RB(0.4, 0.76, CAB - 0.24, 0.05)), interior); b.position.copy(wsC); b.rotation.set(0, 0, wsAng); b.updateMatrixWorld(); cab = sub(cab, b); }
 const cabWin = () => { const s = new THREE.Shape(); s.moveTo(5.78, 1.42); s.lineTo(6.83, 1.42); s.lineTo(6.46, 2.04); s.lineTo(5.78, 2.06); s.closePath(); return s; };
@@ -220,7 +279,7 @@ for (const x of [1.2, 2.6, 4.0]) add('ceiling_light_' + x, RB(0.5, 0.025, 0.14, 
 add('ceiling_led_strip_l', RB(5.0, 0.02, 0.02, 0.006), ceilLed, 2.8, 3.22, -1.05);
 add('ceiling_led_strip_r', RB(5.0, 0.02, 0.02, 0.006), ceilLed, 2.8, 3.22, 1.05);
 for (const sd of [-1, 1]) add('wheel_well_' + (sd < 0 ? 'l' : 'r'), RB(1.25, 0.26, 0.5, 0.08), interior, 1.95, 0.82, sd * (WB / 2 - 0.3));
-add('bunk_floor', new THREE.BoxGeometry(1.75, 0.06, WB - 0.16), interior, 6.35, 2.28, 0);    // cab-over bunk deck (empty)
+add('bunk_floor', new THREE.BoxGeometry(1.55, 0.05, WB - 0.36), interior, 6.25, 2.31, 0);    // cab-over bunk deck (empty)
 const insideLights = [];
 for (const x of [1.2, 2.8, 4.4]) { const l = new THREE.PointLight(0xfff2de, q.get('lights') === '0' ? 0 : 1.3, 4.5, 1.6); l.position.set(x, 3.0, 0); scene.add(l); insideLights.push(l); }
 
@@ -332,17 +391,29 @@ add('ac_rear', RB(0.95, 0.3, 0.75, 0.12), graphite, 1.3, 3.47, 0);
 for (let i = 0; i < 2; i++) add('solar', RB(1.2, 0.04, 0.7, 0.01), M('vc2_solar', { color: 0x1a2a55, roughness: 0.12, metalness: 0.7 }), 2.0 + i * 1.35, 3.35, -0.6);
 add('antenna', new THREE.CylinderGeometry(0.015, 0.015, 0.4, 8), trim, 5.8, 3.5, 0.6);
 add('antenna_disk', new THREE.CylinderGeometry(0.12, 0.12, 0.04, 20), trim, 5.8, 3.7, 0.6);
-for (let i = 0; i < 5; i++) add('cab_marker', RB(0.05, 0.04, 0.12, 0.01), amber, 7.0, 3.19, -0.6 + i * 0.3);
-add('cabover_led', RB(0.02, 0.03, 1.9, 0.01), ledStrip, 7.44, 2.62, 0);
+for (let i = 0; i < 5; i++) add('cab_marker', RB(0.07, 0.035, 0.09, 0.012), amber, 6.95, capTop(6.95) + 0.012, -0.6 + i * 0.3);
+// dark chin under the nose (wraps around the cap)
+{ const LIP = [{ x: 7.3, b: 2.38, t: 2.42, hw: 1.08, n: 4.5 }, { x: 7.44, b: 2.44, t: 2.49, hw: 1.0, n: 4 }, { x: 7.52, b: 2.48, t: 2.555, hw: 0.88, n: 3.2 }, { x: 7.585, b: 2.55, t: 2.6, hw: 0.66, n: 2.6 }];
+  add('cabover_chin', loft(LIP, 64), graphite, 0.012, -0.012, 0).castShadow = false; }
+add('cabover_led', RB(0.02, 0.025, 1.4, 0.01), ledStrip, 7.565, 2.6, 0);
 // front end
-add('grille_surround', RB(0.05, 0.5, 1.3, 0.05), chrome, 7.94, 0.92, 0);
-add('grille', RB(0.06, 0.42, 1.2, 0.03), graphite, 7.955, 0.92, 0);
-for (let i = 0; i < 4; i++) add('grille_bar', RB(0.02, 0.025, 1.12, 0.01), chrome, 7.985, 0.77 + i * 0.1, 0);
-add('badge', new THREE.CylinderGeometry(0.075, 0.075, 0.02, 32), orange, 8.0, 0.92, 0, 0, 0, Math.PI / 2);
-add('headlight_l', RB(0.07, 0.2, 0.32, 0.04), lamp, 7.94, 0.98, -0.84); add('headlight_r', RB(0.07, 0.2, 0.32, 0.04), lamp, 7.94, 0.98, 0.84);
-for (const sd of [-1, 1]) { add('headlight_housing', RB(0.05, 0.25, 0.45, 0.05), chrome, 7.915, 0.98, sd * 0.88); add('corner_lamp', RB(0.07, 0.17, 0.08, 0.03), amber, 7.9, 0.98, sd * 1.07); }
-for (const sd of [-1, 1]) { add('indicator_' + (sd < 0 ? 'lf' : 'rf'), RB(0.02, 0.025, 0.34, 0.01), ledStrip, 7.98, 0.86, sd * 0.86); add('fog', new THREE.CylinderGeometry(0.05, 0.05, 0.03, 20), lamp, 8.1, 0.56, sd * 0.8, 0, 0, Math.PI / 2); }
-add('bumper_f', RB(0.2, 0.22, CAB + 0.12, 0.07), chrome, 8.0, 0.58, 0);
+add('grille_surround', RB(0.06, 0.4, 1.0, 0.06), chrome, 7.965, 0.84, 0);
+add('grille', RB(0.06, 0.33, 0.92, 0.04), graphite, 7.975, 0.84, 0);
+for (let i = 0; i < 4; i++) add('grille_bar', RB(0.02, 0.022, 0.86, 0.01), chrome, 8.005, 0.72 + i * 0.08, 0);
+add('grille_bar_v', RB(0.02, 0.3, 0.025, 0.01), chrome, 8.006, 0.84, 0);
+add('badge', new THREE.CylinderGeometry(0.06, 0.06, 0.02, 32), orange, 8.02, 0.84, 0, 0, 0, Math.PI / 2);
+// headlight clusters: dark housing, white lamp, amber turn signal, chrome bezel (flush with the curved nose)
+for (const sd of [-1, 1]) {
+  const n = sd < 0 ? 'l' : 'r', z = sd * 0.66;
+  add('headlight_bezel_' + n, RB(0.07, 0.31, 0.3, 0.05), chrome, 7.925, 0.89, z);
+  add('headlight_housing_' + n, RB(0.075, 0.27, 0.26, 0.045), M('vc2_lamp_housing', { color: 0x15161a, roughness: 0.25, metalness: 0.6 }), 7.935, 0.89, z);
+  add('headlight_' + n, RB(0.05, 0.13, 0.22, 0.04), lamp, 7.965, 0.95, z);
+  add('headlight_projector_' + n, new THREE.CylinderGeometry(0.045, 0.045, 0.02, 24), M('vc2_projector', { color: 0xffffff, emissive: 0xfff4e0, emissiveIntensity: 0.8, roughness: 0.05 }), 7.992, 0.95, z + sd * 0.04, 0, 0, Math.PI / 2);
+  add('headlight_turn_' + n, RB(0.05, 0.07, 0.22, 0.02), amber, 7.965, 0.815, z);
+}
+for (const sd of [-1, 1]) { add('corner_lamp', RB(0.12, 0.08, 0.06, 0.02), amber, 7.75, 0.92, sd * 0.97); }
+for (const sd of [-1, 1]) { add('indicator_' + (sd < 0 ? 'lf' : 'rf'), RB(0.02, 0.02, 0.18, 0.008), ledStrip, 7.955, 1.04, sd * 0.66); add('fog', new THREE.CylinderGeometry(0.05, 0.05, 0.03, 20), lamp, 8.1, 0.56, sd * 0.8, 0, 0, Math.PI / 2); }
+add('bumper_f', RB(0.22, 0.2, CAB - 0.02, 0.08), chrome, 8.02, 0.56, 0);
 add('bumper_valance', RB(0.16, 0.1, CAB, 0.03), trim, 7.98, 0.43, 0);
 add('bumper_trim', RB(0.02, 0.03, 1.6, 0.01), orange, 8.105, 0.63, 0);
 add('plate_f', RB(0.01, 0.13, 0.52, 0.01), M('vc2_plate', { color: 0xf2f2ee, roughness: 0.4 }), 8.11, 0.5, 0);
@@ -354,8 +425,14 @@ add('taillight_l', RB(0.04, 0.75, 0.16, 0.03), tail, 0.0, 1.35, -1.05); add('tai
 // windshield wipers
 for (const zz of [-0.45, 0.35]) { const w = add('wiper', RB(0.02, 0.02, 0.62, 0.008), trim, 6.93, 1.36, zz, 0, 0.12, 0); }
 // hood seam + cab B-pillar trims
-add('hood_seam', RB(0.6, 0.006, 0.006, 0.002), trim, 7.3, 1.285, CAB / 2 - 0.1);
-add('hood_seam', RB(0.6, 0.006, 0.006, 0.002), trim, 7.3, 1.285, -CAB / 2 + 0.1);
+add('hood_crease', RB(0.85, 0.008, 0.012, 0.003), M('vc2_paint_crease', { color: 0xd8dade, roughness: 0.3 }), 7.4, 1.262, 0.42, 0, 0, -0.17);
+add('hood_crease', RB(0.85, 0.008, 0.012, 0.003), M('vc2_paint_crease2', { color: 0xd8dade, roughness: 0.3 }), 7.4, 1.262, -0.42, 0, 0, -0.17);
+// black windshield surround + cowl
+{ ev.useGroups = false; const ring = ev.evaluate(brush(RB(0.03, 0.9, CAB - 0.12, 0.06), rubber), brush(RB(0.3, 0.76, CAB - 0.3, 0.05), rubber), SUBTRACTION); ev.useGroups = true;
+  const fr = new THREE.Mesh(ring.geometry, rubber); fr.name = 'windscreen_frame'; fr.position.set(wsC.x - 0.012, wsC.y - 0.006, 0); fr.rotation.set(0, 0, wsAng); RV.add(fr);
+  add('cowl', RB(0.16, 0.03, CAB - 0.3, 0.012), trim, 6.98, 1.335, 0); }
+// front fender flares (bulge around the wheel)
+for (const sd of [-1, 1]) { const fl = add('fender_flare_f', new THREE.TorusGeometry(0.57, 0.035, 8, 48, Math.PI), M('vc2_flare', { color: 0x1a1b1f, roughness: 0.6 }), 6.95, 0.42, sd * 1.1); fl.scale.set(1, 1, 0.8); }
 for (const sd of [-1, 1]) {
   add('b_pillar', RB(0.08, 0.66, 0.012, 0.01), trim, 5.68, 1.74, sd * (CAB / 2 + 0.006));
   add('mirror_signal', RB(0.02, 0.05, 0.16, 0.01), amber, 6.7, 1.79 - 0.45 + 0.45, sd * (CAB / 2 + 0.34));   // turn signal on the mirror
@@ -374,9 +451,17 @@ add('reverse_light_l', RB(0.04, 0.12, 0.16, 0.02), lamp, 0.0, 0.88, -1.05); add(
 add('rear_camera', RB(0.08, 0.06, 0.12, 0.02), trim, 0.02, 3.12, 0.0);
 add('step_light', RB(0.12, 0.02, 0.03, 0.006), ledStrip, 3.65, 0.45, WB / 2 + 0.02);
 // cab-over side air vents + roof hatch over the bunk
-for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) add('cabover_vent', RB(0.25, 0.018, 0.012, 0.005), trim, 6.95, 2.42 + i * 0.04, sd * (WB / 2 + 0.006));
-add('bunk_hatch', RB(0.5, 0.08, 0.5, 0.06), M('vc2_hatch', { color: 0xd9dbe0, roughness: 0.4 }), 6.3, 3.29, 0.0);
+for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) add('cabover_vent', RB(0.25, 0.018, 0.012, 0.005), trim, 6.4, 2.42 + i * 0.04, sd * (WB / 2 + 0.006));
+add('bunk_hatch', RB(0.5, 0.08, 0.5, 0.06), M('vc2_hatch', { color: 0xd9dbe0, roughness: 0.4 }), 6.2, capTop(6.2) + 0.03, 0.0);
 
+// cab-over side swooshes that follow the tapering surface (thin lofted strips)
+for (const sd of [-1, 1]) {
+  for (const [y0, col, th] of [[2.62, 0x2b2d33, 0.06], [2.52, 0x9a9da4, 0.035]]) {
+    const pts = []; for (let k = 0; k <= 14; k++) { const x = 6.45 + k * 0.055; const yy = y0 + (k / 14) ** 1.6 * 0.12; pts.push(new THREE.Vector3(x, yy, sd * (capHW(x) - th * 0.3))); }
+    const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, th / 2, 6, false); tube.scale(1, 1, 1);
+    const m = add('cabover_swoosh', tube, M('vc2_swoosh_' + col.toString(16), { color: col, roughness: 0.3 }), 0, 0, 0); m.scale.set(1, 1, 1); m.castShadow = false;
+  }
+}
 // ---------- VC2 livery decals (masked around windows, door and cab)
 function livery(frontRight) {
   const c = document.createElement('canvas'); c.width = 3072; c.height = 1200; const g = c.getContext('2d');
@@ -399,7 +484,7 @@ function livery(frontRight) {
   g.strokeStyle = '#e4501c'; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.moveTo(X(0), 560); g.bezierCurveTo(X(380), 520, X(700), 860, X(640), 1200); g.stroke();
   g.beginPath(); g.moveTo(X(880), 1200); g.bezierCurveTo(X(1400), 1090, X(1800), 700, X(3072), 600); g.stroke();
   // cab-over sweep
-  tape('#2b2d33', [2300, 360, 2600, 300, 2850, 240, 3072, 200], [2300, 400, 2620, 360, 2870, 300, 3072, 280]);
+  tape('#2b2d33', [2150, 380, 2400, 330, 2600, 300, 2740, 290], [2150, 440, 2400, 400, 2600, 380, 2740, 380]);
   g.save(); g.font = '900 210px Nunito, Arial Black, sans-serif';
   g.font = '900 150px Nunito, Arial Black, sans-serif'; const lw = g.measureText('VC2').width + 330, lx = frontRight ? 70 : 3072 - 70 - lw;
   g.fillStyle = '#2b2d33'; g.fillText('VC', lx, 245); g.fillStyle = '#e4501c'; g.fillText('2', lx + g.measureText('VC').width, 245);
@@ -407,6 +492,7 @@ function livery(frontRight) {
   const px = x => frontRight ? (x - 0.05) / 7.3 * 3072 : 3072 - (x - 0.05) / 7.3 * 3072, py = y => (3.375 - y) / 2.85 * 1200;
   const clear = (x0, y0, x1, y1) => { const a = px(x0), b = px(x1); g.clearRect(Math.min(a, b), py(y1), Math.abs(b - a), py(y0) - py(y1)); };
   clear(5.5, 0.4, 7.6, 2.18);
+  clear(6.5, 0.4, 7.8, 3.5);
   { const cx = px(1.95), cy = py(0.42), rr = 0.6 / 7.3 * 3072; g.save(); g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.fill(); g.restore(); }
   if (!frontRight) clear(SL.x0 - 0.02, SL.y0 - 0.02, SL.x1 + 0.02, SL.y1 + 0.02);
   for (const w of winList.filter(w => (w.s > 0) === frontRight)) clear(w.x - w.w / 2 - 0.05, w.y - w.h / 2 - 0.05, w.x + w.w / 2 + 0.05, w.y + w.h / 2 + 0.05);
@@ -423,7 +509,7 @@ for (const sd of [1, -1]) {
   const w1 = g.measureText('VC').width, w2 = g.measureText('2').width; g.fillStyle = '#2b2d33'; g.fillText('VC', 512 - (w1 + w2) / 2, 190); g.fillStyle = '#e4501c'; g.fillText('2', 512 - (w1 + w2) / 2 + w1, 190);
   const lt = new THREE.CanvasTexture(lc); lt.colorSpace = THREE.SRGBColorSpace;
   const lm = new THREE.MeshStandardMaterial({ map: lt, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 }); lm.name = 'vc2_logo';
-  add('front_logo', new THREE.PlaneGeometry(0.9, 0.22), lm, 7.49, 2.8, 0, 0, Math.PI / 2, 0).castShadow = false;
+  { const fl = add('front_logo', new THREE.PlaneGeometry(0.7, 0.17), lm, 7.405, 2.95, 0); fl.rotation.set(0, Math.PI / 2, Math.PI / 4.2, 'ZYX'); fl.translateZ(0.012); fl.castShadow = false; }
 }
 
 // ---------- SLIDE-OUTS: hollow boxes, flush with the wall when closed, pushed out when deployed
@@ -506,6 +592,8 @@ const views = {
   rear_close: [[-4.6, 1.8, -3.4], [0.6, 1.2, 0]],
   side: [[3.8, 1.9, 15.5], [3.8, 1.5, 0]],
   wheel: [[2.3, 0.7, 3.2], [1.95, 0.42, 1.0]],
+  nose: [[10.2, 2.0, 4.6], [6.9, 1.7, 0]],
+  nose_front: [[12.5, 1.9, 0.6], [6.5, 1.7, 0]],
   rear: [[-7, 3.4, -9.5], [3.2, 1.6, 0]],
   inside: [[0.55, 1.62, 0.15], [5.8, 1.55, -0.05]],
   inside_side: [[2.2, 1.6, 0.85], [2.4, 1.6, -1.4]],
