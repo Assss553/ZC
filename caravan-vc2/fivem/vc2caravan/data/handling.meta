@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  VC2 Caravan - realistic Class C motorhome
+  Real-world reference: ~8 m long, ~6 t gross weight, 6.8-7.3 L petrol V8/V10,
+  rear-wheel drive with dual rear wheels, governed top speed ~120 km/h, 0-100 km/h ~20 s.
+  Every value below is a starting point and must be fine-tuned in game (see README).
+-->
+<CHandlingDataMgr>
+  <HandlingData>
+    <Item type="CHandlingData">
+      <handlingName>VC2CARAVAN</handlingName>
+      <fMass value="6000.000000" />                       <!-- 6,000 kg -->
+      <fInitialDragCoeff value="14.000000" />             <!-- tall, flat front: lots of air drag -->
+      <fDownforceModifier value="0.000000" />
+      <fPercentSubmerged value="85.000000" />
+      <vecCentreOfMassOffset x="0.000000" y="0.200000" z="0.350000" />  <!-- high centre of mass: leans in corners -->
+      <vecInertiaMultiplier x="1.400000" y="1.800000" z="2.000000" />
+      <fDriveBiasFront value="0.000000" />                <!-- rear-wheel drive -->
+      <nInitialDriveGears value="6" />                    <!-- 6-speed automatic -->
+      <fInitialDriveForce value="0.150000" />             <!-- slow, heavy acceleration -->
+      <fDriveInertia value="0.650000" />
+      <fClutchChangeRateScaleUpShift value="1.200000" />
+      <fClutchChangeRateScaleDownShift value="1.200000" />
+      <fInitialDriveMaxFlatVel value="100.000000" />      <!-- ~115-120 km/h top speed in game -->
+      <fBrakeForce value="0.280000" />                    <!-- long braking distance -->
+      <fBrakeBiasFront value="0.600000" />
+      <fHandBrakeForce value="0.350000" />
+      <fSteeringLock value="38.000000" />
+      <fTractionCurveMax value="1.550000" />
+      <fTractionCurveMin value="1.400000" />
+      <fTractionCurveLateral value="20.000000" />
+      <fTractionSpringDeltaMax value="0.150000" />
+      <fLowSpeedTractionLossMult value="0.300000" />
+      <fCamberStiffnesss value="0.000000" />
+      <fTractionBiasFront value="0.460000" />
+      <fTractionLossMult value="1.000000" />
+      <fSuspensionForce value="1.600000" />               <!-- stiff leaf springs -->
+      <fSuspensionCompDamp value="0.900000" />
+      <fSuspensionReboundDamp value="1.500000" />
+      <fSuspensionUpperLimit value="0.110000" />
+      <fSuspensionLowerLimit value="-0.140000" />
+      <fSuspensionRaise value="0.000000" />
+      <fSuspensionBiasFront value="0.450000" />
+      <fAntiRollBarForce value="0.900000" />
+      <fAntiRollBarBiasFront value="0.550000" />
+      <fRollCentreHeightFront value="0.400000" />
+      <fRollCentreHeightRear value="0.450000" />
+      <fCollisionDamageMult value="1.000000" />
+      <fWeaponDamageMult value="1.000000" />
+      <fDeformationDamageMult value="0.700000" />
+      <fEngineDamageMult value="1.500000" />
+      <fPetrolTankVolume value="150.000000" />            <!-- ~150 L tank -->
+      <fOilVolume value="7.500000" />
+      <fSeatOffsetDistX value="0.000000" />
+      <fSeatOffsetDistY value="0.000000" />
+      <fSeatOffsetDistZ value="0.000000" />
+      <nMonetaryValue value="150000" />
+      <strModelFlags>440010</strModelFlags>
+      <strHandlingFlags>0</strHandlingFlags>
+      <strDamageFlags>0</strDamageFlags>
+      <AIHandling>TRUCK</AIHandling>
+      <SubHandlingData>
+        <Item type="NULL" />
+        <Item type="NULL" />
+        <Item type="NULL" />
+      </SubHandlingData>
+    </Item>
+  </HandlingData>
+</CHandlingDataMgr>
