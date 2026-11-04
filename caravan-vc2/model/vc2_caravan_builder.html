@@ -58,7 +58,7 @@ sun.shadow.mapSize.set(4096, 4096); Object.assign(sun.shadow.camera, { left: -12
 
 // ---------- materials
 const M = (name, o, phys) => { const m = phys ? new THREE.MeshPhysicalMaterial(o) : new THREE.MeshStandardMaterial(o); m.name = name; return m; };
-const paint = M('vc2_paint', { color: 0xf4f5f7, roughness: 0.22, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.08 }, true);
+const paint = M('vc2_paint', { color: 0xe9e6de, roughness: 0.3, metalness: 0.12, clearcoat: 1, clearcoatRoughness: 0.12, sheen: 0.4, sheenColor: 0xfff6e6, sheenRoughness: 0.5 }, true);
 const interior = M('vc2_interior_wall', { color: 0xdcd6cc, roughness: 0.85 });
 const ceiling = M('vc2_interior_ceiling', { color: 0xf6f5f2, roughness: 0.9 });
 const graphite = M('vc2_graphite', { color: 0x2b2d33, roughness: 0.35, metalness: 0.5 });
@@ -221,9 +221,16 @@ const CABIN = [
   { x: 5.3, b: 0.72, t: 2.1, hw: 1.05, n: 9 }, { x: 6.42, b: 0.72, t: 2.06, hw: 1.05, n: 9 }, { x: 6.86, b: 0.72, t: 1.28, hw: 1.03, n: 7 },
 ];
 let cab = sub(brush(loft(CABST, 72, { belt: 1.42, taper: 0.975 }), paint), brush(loft(CABIN, 72), interior));
-const wsAng = Math.atan2(0.45, 0.79), wsC = new THREE.Vector3(6.725 + 0.79 * 0.08, 1.725 + 0.45 * 0.08, 0);
+const wsAng = Math.atan2(0.48, 0.79), wsC = new THREE.Vector3(6.69, 1.735, 0), wsN = new THREE.Vector3(0.855, 0.519, 0);
 { const b = new Brush(clean(RB(0.4, 0.76, CAB - 0.24, 0.05)), interior); b.position.copy(wsC); b.rotation.set(0, 0, wsAng); b.updateMatrixWorld(); cab = sub(cab, b); }
-const cabWin = () => { const s = new THREE.Shape(); s.moveTo(5.78, 1.42); s.lineTo(6.83, 1.42); s.lineTo(6.46, 2.04); s.lineTo(5.78, 2.06); s.closePath(); return s; };
+const cabWinPts = (g) => { // rounded window outline (g = grow, for the frame)
+  const s = new THREE.Shape(), r = 0.06;
+  s.moveTo(5.78 - g, 1.42 - g + r); s.quadraticCurveTo(5.78 - g, 1.42 - g, 5.78 - g + r, 1.42 - g);
+  s.lineTo(6.8 + g - r, 1.42 - g); s.quadraticCurveTo(6.84 + g, 1.42 - g, 6.82 + g, 1.47 - g);
+  s.lineTo(6.5 + g * 0.6, 2.0 + g * 0.5); s.quadraticCurveTo(6.47 + g, 2.05 + g, 6.4 + g, 2.05 + g);
+  s.lineTo(5.78 - g + r, 2.06 + g); s.quadraticCurveTo(5.78 - g, 2.06 + g, 5.78 - g, 2.06 + g - r); s.closePath(); return s;
+};
+const cabWin = () => cabWinPts(0);
 const cabDoorShape = () => { const s = new THREE.Shape(); s.moveTo(5.6, 0.66); s.lineTo(6.92, 0.66); s.lineTo(6.92, 1.3); s.lineTo(6.5, 2.1); s.lineTo(5.6, 2.12); s.closePath(); return s; };
 const cabDoors = {};
 for (const sd of [-1, 1]) {
@@ -238,7 +245,7 @@ cab = sub(cab, brush(new THREE.CylinderGeometry(0.52, 0.52, CAB + 0.4, 48), inte
 for (const sd of [-1, 1]) cabDoors[sd] = sub(cabDoors[sd], brush(new THREE.CylinderGeometry(0.52, 0.52, CAB + 0.4, 48), interior, 6.95, 0.42, 0, Math.PI / 2));
 toMesh(cab, 'cab_shell');
 // windshield glass + rubber seal
-{ const ws = add('windscreen', new THREE.PlaneGeometry(CAB - 0.26, 0.78), glass, wsC.x - 0.79 * 0.03, wsC.y - 0.45 * 0.03, 0); ws.rotation.set(0, Math.PI / 2, wsAng, 'ZYX'); ws.castShadow = false; }
+{ const ws = add('windscreen', new THREE.PlaneGeometry(CAB - 0.24, 0.78), glass, wsC.x - wsN.x * 0.018, wsC.y - wsN.y * 0.018, 0); ws.rotation.set(0, Math.PI / 2, wsAng, 'ZYX'); ws.castShadow = false; }
 
 // cab doors (pivot at the front hinge) with clear glass + handle + mirror
 const mirrorFaces = [];
@@ -247,12 +254,41 @@ for (const sd of [-1, 1]) {
   const piv = new THREE.Group(); piv.name = name; piv.position.set(6.9, 1.0, sd * CAB / 2); RV.add(piv);
   const dm = new THREE.Mesh(cabDoors[sd].geometry, cabDoors[sd].material); dm.name = name + '_panel'; dm.position.set(-6.9, -1.0, -sd * CAB / 2); dm.castShadow = dm.receiveShadow = true; piv.add(dm);
   const gw = new THREE.Mesh(new THREE.ShapeGeometry(cabWin()), glass); gw.name = sd < 0 ? 'window_lf' : 'window_rf'; gw.position.set(-6.9, -1.0, -sd * 0.03); piv.add(gw);
-  add(name + '_handle', RB(0.16, 0.035, 0.03, 0.01), chrome, 5.95 - 6.9, 1.32 - 1.0, sd * 0.012, 0, 0, 0, piv);
+  { const fs = cabWinPts(0.028); fs.holes.push(cabWinPts(0)); const fg = new THREE.Mesh(new THREE.ShapeGeometry(fs, 12), M('vc2_window_trim', { color: 0x111214, roughness: 0.5, side: THREE.DoubleSide }));
+    fg.name = name + '_window_frame'; fg.position.set(-6.9, -1.0, sd * 0.004); piv.add(fg); }
+  // recessed door handle (black pocket + small chrome lever) + key lock
+  add(name + '_handle_pocket', RB(0.17, 0.05, 0.012, 0.02), M('vc2_handle_pocket', { color: 0x15161a, roughness: 0.6 }), 5.92 - 6.9, 1.3 - 1.0, sd * 0.004, 0, 0, 0, piv);
+  add(name + '_handle', RB(0.13, 0.022, 0.016, 0.009), chrome, 5.92 - 6.9, 1.3 - 1.0, sd * 0.01, 0, 0, 0, piv);
+  add(name + '_lock', new THREE.CylinderGeometry(0.012, 0.012, 0.01, 16), chrome, 5.75 - 6.9, 1.3 - 1.0, sd * 0.006, Math.PI / 2, 0, 0, piv);
   // side mirror: arm + housing + REFLECTIVE glass
-  add(name + '_mirror_arm', new THREE.CylinderGeometry(0.018, 0.018, 0.34, 8), trim, 6.62 - 6.9, 1.58 - 1.0, sd * 0.14, Math.PI / 2, 0, 0, piv);
-  const housing = add(name + '_mirror', RB(0.1, 0.42, 0.26, 0.035), graphite, 6.64 - 6.9, 1.6 - 1.0, sd * 0.34, 0, -sd * 0.22, 0, piv);
-  const face = add(name + '_mirror_glass', new THREE.PlaneGeometry(0.22, 0.36), mirrorMat, 6.585 - 6.9, 1.6 - 1.0, sd * 0.34 - sd * 0.012, 0, -Math.PI / 2 - sd * 0.22, 0, piv);
+  // towing mirror: black sail mount at the window corner, two arms, head with main glass + convex spotter
+  const mh = M('vc2_mirror_housing', { color: 0x2a2b2f, roughness: 0.45, metalness: 0.3 });
+  add(name + '_mirror_sail', RB(0.16, 0.12, 0.03, 0.03), mh, 6.7 - 6.9, 1.5 - 1.0, sd * 0.008, 0, 0, 0.5, piv);
+  for (const [ay, len, tilt] of [[1.47, 0.3, 0.1], [1.78, 0.33, -0.25]]) {
+    const arm = add(name + '_mirror_arm', new THREE.CylinderGeometry(0.014, 0.017, len, 10), mh, 6.68 - 6.9, ay - 1.0 + (tilt > 0 ? 0.03 : -0.04), sd * (len / 2 + 0.02), Math.PI / 2 + sd * tilt, 0, 0, piv);
+  }
+  const head = new THREE.Group(); head.name = name + '_mirror_head'; head.position.set(6.66 - 6.9, 1.62 - 1.0, sd * 0.34); head.rotation.y = -sd * 0.2; piv.add(head);
+  add(name + '_mirror', RB(0.1, 0.44, 0.24, 0.045), mh, 0.01, 0, 0, 0, 0, 0, head);
+  add(name + '_mirror_bezel', RB(0.012, 0.42, 0.22, 0.04), M('vc2_mirror_bezel', { color: 0x111214, roughness: 0.4 }), -0.042, 0, 0, 0, 0, 0, head);
+  const face = add(name + '_mirror_glass', new THREE.PlaneGeometry(0.2, 0.27), mirrorMat, -0.05, 0.065, 0, 0, -Math.PI / 2, 0, head);
+  add(name + '_mirror_spotter', new THREE.PlaneGeometry(0.2, 0.1), mirrorMat, -0.05, -0.135, 0, 0, -Math.PI / 2, -0.12, head);
+  add(name + '_mirror_signal', RB(0.03, 0.03, 0.14, 0.01), amber, 0.03, 0.21, 0, 0, 0, 0, head);
   mirrorFaces.push(face);
+}
+// cab door swoosh (taupe + champagne), masked around the window and the wheel arch
+for (const sd of [-1, 1]) {
+  const piv = RV.getObjectByName(sd < 0 ? 'door_dside_f' : 'door_pside_f');
+  const c = document.createElement('canvas'); c.width = 1400; c.height = 800; const g = c.getContext('2d');
+  const U = x => (x - 5.6) / 1.4 * 1400, V = y => (1.5 - y) / 0.8 * 800, FX = u => (sd > 0 ? u : 1400 - u);
+  const tape = (col, a, b) => { g.fillStyle = col; g.beginPath(); g.moveTo(FX(U(a[0])), V(a[1])); g.bezierCurveTo(FX(U(a[2])), V(a[3]), FX(U(a[4])), V(a[5]), FX(U(a[6])), V(a[7]));
+    g.lineTo(FX(U(b[6])), V(b[7])); g.bezierCurveTo(FX(U(b[4])), V(b[5]), FX(U(b[2])), V(b[3]), FX(U(b[0])), V(b[1])); g.closePath(); g.fill(); };
+  tape('#857b6d', [5.6, 1.18, 6.0, 1.15, 6.25, 0.82, 6.95, 0.98], [5.6, 1.02, 5.95, 1.0, 6.2, 0.74, 6.95, 0.9]);
+  tape('#3b3833', [5.6, 1.26, 6.05, 1.24, 6.35, 0.95, 6.95, 1.08], [5.6, 1.2, 6.02, 1.18, 6.3, 0.88, 6.95, 1.01]);
+  tape('#cdc5b6', [5.6, 0.98, 5.9, 0.96, 6.15, 0.7, 6.95, 0.84], [5.6, 0.93, 5.88, 0.92, 6.12, 0.66, 6.95, 0.8]);
+  g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(FX(U(6.95)), V(0.42), 0.6 / 1.4 * 1400, 0, Math.PI * 2); g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.03, roughness: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }); mat.name = 'vc2_door_swoosh';
+  const d = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.8), mat); d.name = piv.name + '_swoosh'; d.position.set(6.3 - 6.9, 1.1 - 1.0, sd * 0.006); d.rotation.y = sd > 0 ? 0 : Math.PI; piv.add(d);
 }
 // cab interior: dashboard, steering wheel, seats, pedals
 add('dashboard', RB(0.42, 0.26, CAB - 0.2, 0.06), dashM, 6.72, 1.18, 0);
@@ -428,14 +464,12 @@ for (const zz of [-0.45, 0.35]) { const w = add('wiper', RB(0.02, 0.02, 0.62, 0.
 add('hood_crease', RB(0.85, 0.008, 0.012, 0.003), M('vc2_paint_crease', { color: 0xd8dade, roughness: 0.3 }), 7.4, 1.262, 0.42, 0, 0, -0.17);
 add('hood_crease', RB(0.85, 0.008, 0.012, 0.003), M('vc2_paint_crease2', { color: 0xd8dade, roughness: 0.3 }), 7.4, 1.262, -0.42, 0, 0, -0.17);
 // black windshield surround + cowl
-{ ev.useGroups = false; const ring = ev.evaluate(brush(RB(0.03, 0.9, CAB - 0.12, 0.06), rubber), brush(RB(0.3, 0.76, CAB - 0.3, 0.05), rubber), SUBTRACTION); ev.useGroups = true;
-  const fr = new THREE.Mesh(ring.geometry, rubber); fr.name = 'windscreen_frame'; fr.position.set(wsC.x - 0.012, wsC.y - 0.006, 0); fr.rotation.set(0, 0, wsAng); RV.add(fr);
-  add('cowl', RB(0.16, 0.03, CAB - 0.3, 0.012), trim, 6.98, 1.335, 0); }
+{ ev.useGroups = false; const ring = ev.evaluate(brush(RB(0.016, 0.81, CAB - 0.2, 0.045), rubber), brush(RB(0.3, 0.765, CAB - 0.245, 0.04), rubber), SUBTRACTION); ev.useGroups = true;
+  const fr = new THREE.Mesh(ring.geometry, rubber); fr.name = 'windscreen_frame'; fr.position.set(wsC.x + wsN.x * 0.002, wsC.y + wsN.y * 0.002, 0); fr.rotation.set(0, 0, wsAng); RV.add(fr);
+}
 // front fender flares (bulge around the wheel)
 for (const sd of [-1, 1]) { const fl = add('fender_flare_f', new THREE.TorusGeometry(0.57, 0.035, 8, 48, Math.PI), M('vc2_flare', { color: 0x1a1b1f, roughness: 0.6 }), 6.95, 0.42, sd * 1.1); fl.scale.set(1, 1, 0.8); }
 for (const sd of [-1, 1]) {
-  add('b_pillar', RB(0.08, 0.66, 0.012, 0.01), trim, 5.68, 1.74, sd * (CAB / 2 + 0.006));
-  add('mirror_signal', RB(0.02, 0.05, 0.16, 0.01), amber, 6.7, 1.79 - 0.45 + 0.45, sd * (CAB / 2 + 0.34));   // turn signal on the mirror
   add('mud_flap', RB(0.02, 0.32, 0.26, 0.01), rubber, 1.35, 0.32, sd * 1.05);                            // mud flaps behind the rear wheels
   add('mud_flap_logo', RB(0.022, 0.06, 0.18, 0.005), orange, 1.35, 0.38, sd * 1.05);
   add('roof_rail', RB(5.3, 0.035, 0.03, 0.012), graphite, 2.9, 3.28, sd * (WB / 2 - 0.02));               // drip rail along the roof edge
@@ -456,7 +490,7 @@ add('bunk_hatch', RB(0.5, 0.08, 0.5, 0.06), M('vc2_hatch', { color: 0xd9dbe0, ro
 
 // cab-over side swooshes that follow the tapering surface (thin lofted strips)
 for (const sd of [-1, 1]) {
-  for (const [y0, col, th] of [[2.62, 0x2b2d33, 0.06], [2.52, 0x9a9da4, 0.035]]) {
+  for (const [y0, col, th] of [[2.62, 0x3b3833, 0.06], [2.52, 0xb3aa9a, 0.035]]) {
     const pts = []; for (let k = 0; k <= 14; k++) { const x = 6.45 + k * 0.055; const yy = y0 + (k / 14) ** 1.6 * 0.12; pts.push(new THREE.Vector3(x, yy, sd * (capHW(x) - th * 0.3))); }
     const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, th / 2, 6, false); tube.scale(1, 1, 1);
     const m = add('cabover_swoosh', tube, M('vc2_swoosh_' + col.toString(16), { color: col, roughness: 0.3 }), 0, 0, 0); m.scale.set(1, 1, 1); m.castShadow = false;
@@ -474,17 +508,17 @@ function livery(frontRight) {
     g.lineTo(X(b[6]), b[7]); g.bezierCurveTo(X(b[4]), b[5], X(b[2]), b[3], X(b[0]), b[1]); g.closePath(); g.fill();
   };
   // big rear swirl
-  tape('#2b2d33', [0, 330, 420, 260, 900, 700, 760, 1200], [0, 520, 300, 470, 640, 800, 520, 1200]);
-  tape('#9a9da4', [0, 250, 520, 160, 1060, 640, 980, 1200], [0, 320, 440, 250, 900, 700, 790, 1200]);
+  tape('#3b3833', [0, 330, 420, 260, 900, 700, 760, 1200], [0, 520, 300, 470, 640, 800, 520, 1200]);
+  tape('#b3aa9a', [0, 250, 520, 160, 1060, 640, 980, 1200], [0, 320, 440, 250, 900, 700, 790, 1200]);
   // main wave from the rear swirl, under the windows, rising to the cab-over
-  tape('#2b2d33', [700, 1200, 1300, 1050, 1700, 640, 3072, 520], [930, 1200, 1450, 1130, 1850, 740, 3072, 660]);
-  tape('#6d7076', [1050, 1200, 1550, 1150, 1950, 820, 3072, 760], [1180, 1200, 1650, 1185, 2050, 900, 3072, 840]);
-  tape('#b5b8be', [1350, 1200, 1800, 1185, 2200, 960, 3072, 930], [1430, 1200, 1880, 1200, 2280, 1010, 3072, 990]);
+  tape('#3b3833', [700, 1200, 1300, 1050, 1700, 640, 3072, 520], [930, 1200, 1450, 1130, 1850, 740, 3072, 660]);
+  tape('#857b6d', [1050, 1200, 1550, 1150, 1950, 820, 3072, 760], [1180, 1200, 1650, 1185, 2050, 900, 3072, 840]);
+  tape('#cdc5b6', [1350, 1200, 1800, 1185, 2200, 960, 3072, 930], [1430, 1200, 1880, 1200, 2280, 1010, 3072, 990]);
   // thin VC2 orange pinstripe
-  g.strokeStyle = '#e4501c'; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.moveTo(X(0), 560); g.bezierCurveTo(X(380), 520, X(700), 860, X(640), 1200); g.stroke();
+  g.strokeStyle = '#9c917f'; g.lineWidth = 12; g.lineCap = 'round'; g.beginPath(); g.moveTo(X(0), 560); g.bezierCurveTo(X(380), 520, X(700), 860, X(640), 1200); g.stroke();
   g.beginPath(); g.moveTo(X(880), 1200); g.bezierCurveTo(X(1400), 1090, X(1800), 700, X(3072), 600); g.stroke();
   // cab-over sweep
-  tape('#2b2d33', [2150, 380, 2400, 330, 2600, 300, 2740, 290], [2150, 440, 2400, 400, 2600, 380, 2740, 380]);
+  tape('#3b3833', [2150, 380, 2400, 330, 2600, 300, 2740, 290], [2150, 440, 2400, 400, 2600, 380, 2740, 380]);
   g.save(); g.font = '900 210px Nunito, Arial Black, sans-serif';
   g.font = '900 150px Nunito, Arial Black, sans-serif'; const lw = g.measureText('VC2').width + 330, lx = frontRight ? 70 : 3072 - 70 - lw;
   g.fillStyle = '#2b2d33'; g.fillText('VC', lx, 245); g.fillStyle = '#e4501c'; g.fillText('2', lx + g.measureText('VC').width, 245);
@@ -500,7 +534,7 @@ function livery(frontRight) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.name = frontRight ? 'vc2_livery_right' : 'vc2_livery_left'; return t;
 }
 for (const sd of [1, -1]) {
-  const mat = new THREE.MeshStandardMaterial({ map: livery(sd > 0), transparent: true, roughness: 0.25, metalness: 0.1, polygonOffset: true, polygonOffsetFactor: -2 });
+  const mat = new THREE.MeshStandardMaterial({ map: livery(sd > 0), transparent: true, alphaTest: 0.03, roughness: 0.25, metalness: 0.1, polygonOffset: true, polygonOffsetFactor: -2 });
   mat.name = sd > 0 ? 'vc2_livery_r' : 'vc2_livery_l';
   add('livery', new THREE.PlaneGeometry(7.3, 2.85), mat, 3.7, 1.95, sd * (WB / 2 + 0.004), 0, sd > 0 ? 0 : Math.PI, 0).castShadow = false;
 }
@@ -508,7 +542,7 @@ for (const sd of [1, -1]) {
   const lc = document.createElement('canvas'); lc.width = 1024; lc.height = 256; const g = lc.getContext('2d'); g.font = '900 170px Nunito, Arial Black, sans-serif';
   const w1 = g.measureText('VC').width, w2 = g.measureText('2').width; g.fillStyle = '#2b2d33'; g.fillText('VC', 512 - (w1 + w2) / 2, 190); g.fillStyle = '#e4501c'; g.fillText('2', 512 - (w1 + w2) / 2 + w1, 190);
   const lt = new THREE.CanvasTexture(lc); lt.colorSpace = THREE.SRGBColorSpace;
-  const lm = new THREE.MeshStandardMaterial({ map: lt, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 }); lm.name = 'vc2_logo';
+  const lm = new THREE.MeshStandardMaterial({ map: lt, transparent: true, alphaTest: 0.03, polygonOffset: true, polygonOffsetFactor: -2 }); lm.name = 'vc2_logo';
   { const fl = add('front_logo', new THREE.PlaneGeometry(0.7, 0.17), lm, 7.405, 2.95, 0); fl.rotation.set(0, Math.PI / 2, Math.PI / 4.2, 'ZYX'); fl.translateZ(0.012); fl.castShadow = false; }
 }
 
@@ -536,11 +570,11 @@ const slideSide = slideBox(SL.L, SL.H, SL.D, 'slideout_side', { w: 1.5, h: 0.62,
 slideSide.position.set(SL.x0 + SL.L / 2, SL.y0, -WB / 2 - (deploy ? SL.out : 0)); RV.add(slideSide);
 { // VC2 stripe decal on the slide-out face
   const c = document.createElement('canvas'); c.width = 1300; c.height = 1085; const g = c.getContext('2d');
-  g.strokeStyle = '#2b2d33'; g.lineWidth = 110; g.lineCap = 'round'; g.beginPath(); g.moveTo(-100, 1000); g.bezierCurveTo(400, 950, 900, 520, 1400, 470); g.stroke();
-  g.strokeStyle = '#e4501c'; g.lineWidth = 40; g.beginPath(); g.moveTo(-100, 870); g.bezierCurveTo(400, 830, 900, 400, 1400, 350); g.stroke();
+  g.strokeStyle = '#3b3833'; g.lineWidth = 110; g.lineCap = 'round'; g.beginPath(); g.moveTo(-100, 1000); g.bezierCurveTo(400, 950, 900, 520, 1400, 470); g.stroke();
+  g.strokeStyle = '#b3aa9a'; g.lineWidth = 40; g.beginPath(); g.moveTo(-100, 870); g.bezierCurveTo(400, 830, 900, 400, 1400, 350); g.stroke();
   g.clearRect(650 - 390, 1085 - (1.55 + 0.36) / SL.H * 1085, 780, 0.72 / SL.H * 1085);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: 0.25, polygonOffset: true, polygonOffsetFactor: -2 }); mat.name = 'vc2_livery_slide';
+  const mat = new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.03, roughness: 0.25, polygonOffset: true, polygonOffsetFactor: -2 }); mat.name = 'vc2_livery_slide';
   const d = new THREE.Mesh(new THREE.PlaneGeometry(SL.L - 0.02, SL.H - 0.02), mat); d.name = 'slideout_side_livery'; d.position.set(0, SL.H / 2, -0.008); d.rotation.y = Math.PI; slideSide.add(d);
 }
 // rear slide-out: local x = width (z of vehicle), depth goes +x into the vehicle
@@ -552,7 +586,7 @@ slideRear.rotation.y = Math.PI / 2; slideRear.position.set(SR.x - (deploy ? SR.o
 // stabilizer jacks: housings stay on the chassis, the legs extend to the ground when deployed
 const jackHousings = [], jackLegs = [];
 for (const [x, z] of [[0.45, -0.95], [0.45, 0.95], [5.15, -0.95], [5.15, 0.95]]) {
-  add('jack_housing', RB(0.14, 0.16, 0.14, 0.02), graphite, x, 0.49, z);
+  add('jack_housing', RB(0.1, 0.12, 0.1, 0.015), graphite, x, 0.5, z);
   const leg = new THREE.Group(); leg.name = 'jack_leg'; leg.position.set(x, deploy ? 0.56 : 0.9, z); RV.add(leg);
   add('jack_tube', RB(0.07, 0.5, 0.07, 0.01), chrome, 0, -0.25, 0, 0, 0, 0, leg);
   add('jack_pad', RB(0.26, 0.035, 0.26, 0.01), trim, 0, -0.51, 0, 0, 0, 0, leg);
@@ -593,6 +627,8 @@ const views = {
   side: [[3.8, 1.9, 15.5], [3.8, 1.5, 0]],
   wheel: [[2.3, 0.7, 3.2], [1.95, 0.42, 1.0]],
   nose: [[10.2, 2.0, 4.6], [6.9, 1.7, 0]],
+  cabside: [[6.6, 1.5, 4.4], [6.2, 1.35, 1.0]],
+  windshield: [[8.6, 2.0, 1.6], [6.7, 1.7, 0.1]],
   nose_front: [[12.5, 1.9, 0.6], [6.5, 1.7, 0]],
   rear: [[-7, 3.4, -9.5], [3.2, 1.6, 0]],
   inside: [[0.55, 1.62, 0.15], [5.8, 1.55, -0.05]],
@@ -605,7 +641,7 @@ const views = {
 };
 const v = views[q.get('v') || 'front']; cam.position.set(...v[0]); cam.lookAt(...v[1]);
 r.render(scene, cam); r.render(scene, cam);
-document.title = 'ready';
+window.RVobj = RV; window.THREE = THREE; document.title = 'ready';
 
 window.stats = () => { let vtx = 0, t = 0; RV.traverse(o => { if (o.isMesh && !o.isReflector) { vtx += o.geometry.attributes.position.count; t += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } }); return { vertices: vtx, triangles: Math.round(t) }; };
 window.exportPart = (which) => new Promise((res, rej) => {
