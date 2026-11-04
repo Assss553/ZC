@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>VC2 Caravan</title>
+<style>html,body{margin:0;height:100%;background:#eef0f3;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+const q = new URLSearchParams(location.search);
+const W = innerWidth, H = innerHeight;
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+r.setPixelRatio(devicePixelRatio); r.setSize(W, H);
+r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
+document.body.appendChild(r.domElement);
+const night = q.get('night') === '1';
+const scene = new THREE.Scene(); scene.background = new THREE.Color(night ? 0x0b0c10 : 0xeef0f3);
+const cam = new THREE.PerspectiveCamera(30, W / H, 0.1, 200);
+const views = {
+  side: [[3.6, 1.9, 15.5], [3.6, 1.5, 0]],
+  front: [[13.5, 2.6, 8.5], [3.8, 1.5, 0]],
+  rear: [[-6.5, 3.2, -9.5], [3.2, 1.6, 0]],
+  top: [[10.5, 9.5, 9.5], [3.6, 1.2, 0]],
+};
+const v = views[q.get('v') || 'front']; cam.position.set(...v[0]); cam.lookAt(...v[1]);
+
+// ---------- studio
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: night ? 0.6 : 0.22 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+if (night) { const f = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x1a1b20, roughness: 0.8 })); f.rotation.x = -Math.PI / 2; f.position.y = -0.001; f.receiveShadow = true; scene.add(f); }
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9ca3, night ? 0.25 : 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, night ? 0.4 : 2.4); sun.position.set(8, 14, 10); sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10 }); scene.add(sun);
+const back = new THREE.DirectionalLight(0xdfe6ff, night ? 0.2 : 0.9); back.position.set(-8, 6, -10); scene.add(back);
+
+// ---------- materials
+const M = (name, o) => { const m = new THREE.MeshStandardMaterial(o); m.name = name; return m; };
+const paint = M('vc2_paint', { color: 0xf3f4f6, roughness: 0.28, metalness: 0.15 });
+const graphite = M('vc2_graphite', { color: 0x2b2d33, roughness: 0.35, metalness: 0.5 });
+const trim = M('vc2_trim', { color: 0x1a1b1f, roughness: 0.6, metalness: 0.2 });
+const glass = M('vc2_glass', { color: 0x15181d, roughness: 0.05, metalness: 0.9 });
+const glassDS = M('vc2_glass_cab', { color: 0x15181d, roughness: 0.05, metalness: 0.9, side: THREE.DoubleSide });
+const chrome = M('vc2_chrome', { color: 0xd6d8dc, roughness: 0.15, metalness: 1.0 });
+const trimDS = M('vc2_fender', { color: 0x1a1b1f, roughness: 0.6, side: THREE.DoubleSide });
+const tyre = M('vc2_tyre', { color: 0x141414, roughness: 0.9 });
+const rim = M('vc2_rim', { color: 0xbfc2c7, roughness: 0.25, metalness: 0.9 });
+const orange = M('vc2_accent', { color: 0xe4501c, roughness: 0.35, metalness: 0.2 });
+const lamp = M('vc2_lamp', { color: 0xfff4e0, emissive: 0xfff1d6, emissiveIntensity: night ? 3 : 0.6 });
+const tail = M('vc2_tail', { color: 0xb3141b, emissive: 0xc0141b, emissiveIntensity: night ? 2.5 : 0.4 });
+const amber = M('vc2_marker', { color: 0xff8a2a, emissive: 0xff7a1a, emissiveIntensity: night ? 3 : 0.8 });
+const ledStrip = M('vc2_led', { color: 0xff6a2b, emissive: 0xe4501c, emissiveIntensity: night ? 3 : 1.2 });
+
+const RV = new THREE.Group(); RV.name = 'vc2_caravan'; scene.add(RV);
+const add = (name, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, parent = RV) => {
+  const m = new THREE.Mesh(geo, mat); m.name = name; m.position.set(x, y, z); m.rotation.set(rx, ry, rz);
+  m.castShadow = m.receiveShadow = true; parent.add(m); return m;
+};
+const RB = (w, h, d, rad = 0.04, s = 2) => new RoundedBoxGeometry(w, h, d, s, rad);
+const extrude = (shape, width, bevel = 0.04) => {
+  const g = new THREE.ExtrudeGeometry(shape, { depth: width - bevel * 2, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 18 });
+  g.translate(0, 0, -(width - bevel * 2) / 2); return g;
+};
+// x = length (front at +x, ~7.9 m), y = up, z = width (2.45 m)
+const WB = 2.45, CAB = 2.24;
+
+// ---------- living box with rounded cab-over (side profile extruded across the width)
+const box = new THREE.Shape();
+box.moveTo(0.05, 0.62);
+box.lineTo(5.55, 0.62);
+box.lineTo(5.55, 2.2);                          // behind the cab
+box.lineTo(6.05, 2.22);
+box.bezierCurveTo(6.9, 2.24, 7.45, 2.45, 7.42, 2.78);  // cab-over nose
+box.bezierCurveTo(7.38, 3.08, 7.0, 3.2, 6.3, 3.25);
+box.lineTo(0.35, 3.3);
+box.quadraticCurveTo(0.02, 3.3, 0.02, 2.98);    // rounded rear top
+box.lineTo(0.05, 0.62);
+add('body', extrude(box, WB, 0.06), paint, 0, 0, 0);
+
+// ---------- cab (generic van front, original design)
+const cab = new THREE.Shape();
+cab.moveTo(5.45, 0.55);
+cab.lineTo(7.78, 0.55);
+cab.quadraticCurveTo(7.9, 0.58, 7.9, 0.75);
+cab.lineTo(7.86, 1.12);
+cab.quadraticCurveTo(7.82, 1.22, 7.6, 1.24);   // hood front
+cab.lineTo(6.95, 1.33);
+cab.lineTo(6.5, 2.12);                          // windshield
+cab.lineTo(5.45, 2.18);
+cab.lineTo(5.45, 0.55);
+add('cab', extrude(cab, CAB, 0.07), paint, 0, 0, 0);
+// windshield + side windows
+const ws = new THREE.PlaneGeometry(2.0, 0.9);
+{ const w = add('windshield', new THREE.PlaneGeometry(2.02, 0.86), glass, 6.725 + 0.79 * 0.08, 1.725 + 0.45 * 0.08, 0); w.rotation.set(0, Math.PI / 2, Math.atan2(0.45, 0.79), 'ZYX'); }
+for (const s of [-1, 1]) {
+  const wshape = new THREE.Shape(); wshape.moveTo(5.75, 1.42); wshape.lineTo(6.86, 1.42); wshape.lineTo(6.46, 2.08); wshape.lineTo(5.75, 2.1); wshape.closePath();
+  const gw = new THREE.Mesh(new THREE.ShapeGeometry(wshape), glassDS); gw.name = 'cab_window_' + s; gw.position.z = s * (CAB / 2 + 0.003); RV.add(gw);
+  // door seam + handle + mirror
+  add('cab_door_seam_' + s, new THREE.BoxGeometry(0.012, 1.1, 0.01), trim, 5.72, 1.15, s * (CAB / 2 + 0.004));
+  add('cab_handle_' + s, RB(0.16, 0.035, 0.03, 0.01), chrome, 5.95, 1.32, s * (CAB / 2 + 0.01));
+  add('mirror_arm_' + s, new THREE.CylinderGeometry(0.018, 0.018, 0.3, 8), trim, 6.62, 1.55, s * (CAB / 2 + 0.12), Math.PI / 2, 0, 0);
+  add('mirror_' + s, RB(0.08, 0.38, 0.24, 0.03), graphite, 6.62, 1.6, s * (CAB / 2 + 0.3));
+}
+// front end: VC2 grille, lights, bumper
+add('grille', RB(0.06, 0.42, 1.2, 0.03), graphite, 7.95, 0.92, 0);
+for (let i = 0; i < 4; i++) add('grille_bar_' + i, RB(0.02, 0.025, 1.12, 0.01), chrome, 7.985, 0.77 + i * 0.1, 0);
+add('badge', new THREE.CylinderGeometry(0.075, 0.075, 0.02, 32), orange, 8.0, 0.92, 0, 0, 0, Math.PI / 2);
+for (const s of [-1, 1]) {
+  add('headlight_' + s, RB(0.07, 0.2, 0.36, 0.04), lamp, 7.94, 0.98, s * 0.86);
+  add('drl_' + s, RB(0.02, 0.025, 0.34, 0.01), ledStrip, 7.98, 0.86, s * 0.86);
+  add('fog_' + s, new THREE.CylinderGeometry(0.05, 0.05, 0.03, 20), lamp, 8.1, 0.56, s * 0.8, 0, 0, Math.PI / 2);
+}
+add('bumper', RB(0.2, 0.24, CAB + 0.12, 0.06), trim, 8.0, 0.56, 0);
+add('bumper_trim', RB(0.02, 0.03, 1.6, 0.01), orange, 8.105, 0.63, 0);
+add('plate', RB(0.01, 0.13, 0.52, 0.01), M('vc2_plate', { color: 0xf2f2ee, roughness: 0.4 }), 8.11, 0.5, 0);
+
+// ---------- chassis, step, arches, skirts
+add('chassis', new THREE.BoxGeometry(7.4, 0.22, 1.6), trim, 3.9, 0.48, 0);
+add('skirt', RB(5.4, 0.16, WB - 0.02, 0.03), graphite, 2.8, 0.62, 0);
+for (const s of [-1, 1]) {
+  add('step_' + s, RB(0.5, 0.05, 0.26, 0.02), chrome, 3.65, 0.42, s * (WB / 2 + 0.05));
+  for (const x of [1.95, 6.95]) {
+    const f = new THREE.Mesh(new THREE.RingGeometry(0.47, 0.57, 40, 1, 0, Math.PI), trimDS);
+    f.name = 'fender_' + s + '_' + x; f.position.set(x, 0.42, s * ((x > 5 ? CAB : WB) / 2 + 0.006)); RV.add(f);
+  }
+}
+// ---------- wheels (single front, dual rear)
+function wheel(name, x, z, dual) {
+  const g = new THREE.Group(); g.name = name; g.position.set(x, 0.42, z); RV.add(g);
+  const widths = dual ? [-0.13, 0.13] : [0];
+  for (const o of widths) {
+    add(name + '_tyre', new THREE.TorusGeometry(0.3, 0.12, 16, 40), tyre, 0, 0, o, 0, 0, 0, g);
+    add(name + '_tread', new THREE.CylinderGeometry(0.42, 0.42, 0.24, 40, 1, true), tyre, 0, 0, o, Math.PI / 2, 0, 0, g);
+  }
+  const side = Math.sign(z);
+  add(name + '_rim', new THREE.CylinderGeometry(0.27, 0.27, 0.05, 32), rim, 0, 0, side * (dual ? 0.25 : 0.12), Math.PI / 2, 0, 0, g);
+  add(name + '_hub', new THREE.CylinderGeometry(0.09, 0.11, 0.08, 20), chrome, 0, 0, side * (dual ? 0.28 : 0.15), Math.PI / 2, 0, 0, g);
+  for (let i = 0; i < 8; i++) add(name + '_lug' + i, new THREE.CylinderGeometry(0.014, 0.014, 0.04, 8), chrome, Math.cos(i / 8 * Math.PI * 2) * 0.17, Math.sin(i / 8 * Math.PI * 2) * 0.17, side * (dual ? 0.28 : 0.15), Math.PI / 2, 0, 0, g);
+}
+for (const s of [-1, 1]) { wheel('wheel_front_' + s, 6.95, s * 1.0, false); wheel('wheel_rear_' + s, 1.95, s * 0.98, true); }
+
+// ---------- side details: windows, entry door, compartments, awning, marker lights
+const sides = [1, -1];
+for (const s of sides) {
+  const z = s * (WB / 2 + 0.004), face = s > 0 ? 0 : Math.PI;
+  const win = (n, x, y, w, h) => { add(n + '_frame', RB(w + 0.08, h + 0.08, 0.03, 0.04), trim, x, y, z); add(n, RB(w, h, 0.035, 0.035), glass, x, y, z + s * 0.004); };
+  win('win_lounge_' + s, s > 0 ? 2.55 : 2.2, 2.35, 1.0, 0.55);
+  win('win_rear_' + s, 0.95, 2.4, 0.7, 0.5);
+  win('win_bunk_' + s, 6.6, 2.75, 0.55, 0.28);
+  if (s > 0) {
+    // entry door with window + grab handle
+    add('door', RB(0.72, 1.85, 0.03, 0.05), paint, 3.65, 1.55, z + 0.01);
+    add('door_frame', RB(0.8, 1.93, 0.02, 0.05), trim, 3.65, 1.55, z);
+    add('door_window', RB(0.42, 0.62, 0.035, 0.04), glass, 3.65, 2.02, z + 0.02);
+    add('door_handle', RB(0.05, 0.16, 0.04, 0.015), chrome, 3.35, 1.45, z + 0.04);
+    add('grab_handle', new THREE.CylinderGeometry(0.02, 0.02, 0.7, 10), chrome, 4.08, 1.55, z + 0.08);
+    add('porch_light', RB(0.12, 0.08, 0.05, 0.02), lamp, 3.65, 2.6, z + 0.03);
+    // awning (rolled) + arms
+    add('awning_case', new THREE.CylinderGeometry(0.085, 0.085, 4.6, 24), graphite, 2.75, 3.1, z + 0.12, 0, 0, Math.PI / 2);
+    add('awning_cap_l', new THREE.CylinderGeometry(0.095, 0.095, 0.06, 24), trim, 0.42, 3.1, z + 0.12, 0, 0, Math.PI / 2);
+    add('awning_cap_r', new THREE.CylinderGeometry(0.095, 0.095, 0.06, 24), trim, 5.08, 3.1, z + 0.12, 0, 0, Math.PI / 2);
+    for (const x of [0.6, 4.9]) add('awning_arm_' + x, RB(0.06, 2.3, 0.04, 0.015), graphite, x, 1.9, z + 0.04);
+  }
+  // storage compartments along the bottom
+  const bays = s > 0 ? [0.7, 1.45, 2.6, 4.55] : [0.7, 1.45, 2.6, 3.4, 4.2, 4.95];
+  for (const [i, x] of bays.entries()) {
+    add('bay_' + s + '_' + i, RB(0.6, 0.42, 0.02, 0.03), paint, x, 0.98, z + 0.006);
+    add('bay_line_' + s + '_' + i, RB(0.64, 0.46, 0.01, 0.03), trim, x, 0.98, z);
+    add('bay_lock_' + s + '_' + i, new THREE.CylinderGeometry(0.02, 0.02, 0.02, 12), chrome, x + 0.22, 0.98, z + 0.02, Math.PI / 2);
+  }
+  // utility panel + vents
+  for (let i = 0; i < 4; i++) add('vent_' + s + '_' + i, RB(0.36, 0.025, 0.02, 0.008), trim, 4.55, 1.55 + i * 0.05, z + 0.004);
+  // amber side markers + LED underglow strip
+  for (const x of [0.3, 2.8, 5.3]) add('marker_' + s + '_' + x, RB(0.08, 0.04, 0.03, 0.01), amber, x, 0.8, z + 0.01);
+  add('underglow_' + s, RB(5.0, 0.02, 0.015, 0.006), ledStrip, 2.8, 0.55, z + 0.005);
+}
+
+// ---------- roof: AC units, vents, solar panels, antenna, cab-over marker lights
+add('ac_front', RB(0.95, 0.3, 0.75, 0.12), M('vc2_ac', { color: 0x2f3136, roughness: 0.5 }), 4.6, 3.45, 0);
+add('ac_rear', RB(0.95, 0.3, 0.75, 0.12), M('vc2_ac2', { color: 0x2f3136, roughness: 0.5 }), 1.3, 3.45, 0);
+add('roof_vent', RB(0.45, 0.14, 0.45, 0.05), trim, 3.0, 3.37, 0.45);
+for (let i = 0; i < 2; i++) add('solar_' + i, RB(1.2, 0.04, 0.7, 0.01), M('vc2_solar', { color: 0x1a2a55, roughness: 0.15, metalness: 0.7 }), 2.4 + i * 1.3, 3.33, -0.55);
+add('antenna', new THREE.CylinderGeometry(0.015, 0.015, 0.4, 8), trim, 5.8, 3.5, 0.6);
+add('antenna_disk', new THREE.CylinderGeometry(0.12, 0.12, 0.04, 20), trim, 5.8, 3.7, 0.6);
+for (let i = 0; i < 5; i++) add('cab_marker_' + i, RB(0.05, 0.04, 0.12, 0.01), amber, 7.0, 3.17, -0.6 + i * 0.3);
+add('cabover_led', RB(0.02, 0.03, 1.9, 0.01), ledStrip, 7.43, 2.62, 0);
+// ---------- rear: tail lights, ladder, spare, bumper
+add('rear_bumper', RB(0.18, 0.18, WB, 0.04), trim, -0.02, 0.6, 0);
+for (const s of [-1, 1]) {
+  add('tail_' + s, RB(0.04, 0.75, 0.16, 0.03), tail, 0.0, 1.35, s * 1.05);
+  add('tail_led_' + s, RB(0.045, 0.6, 0.02, 0.01), ledStrip, 0.0, 1.35, s * 0.94);
+}
+add('ladder_l', new THREE.CylinderGeometry(0.018, 0.018, 2.4, 8), chrome, -0.06, 2.05, -0.45);
+add('ladder_r', new THREE.CylinderGeometry(0.018, 0.018, 2.4, 8), chrome, -0.06, 2.05, -0.05);
+for (let i = 0; i < 7; i++) add('rung_' + i, new THREE.CylinderGeometry(0.014, 0.014, 0.4, 8), chrome, -0.06, 1.0 + i * 0.32, -0.25, Math.PI / 2);
+add('spare', new THREE.TorusGeometry(0.3, 0.11, 14, 32), tyre, -0.1, 1.25, 0.45, 0, Math.PI / 2, 0);
+add('rear_window', RB(0.03, 0.45, 0.9, 0.04), glass, -0.0, 2.55, 0.45);
+
+// ---------- VC2 livery (side decals, one per side so the text always reads correctly)
+function livery(frontRight) {
+  const c = document.createElement('canvas'); c.width = 3072; c.height = 1200; const g = c.getContext('2d');
+  const X = x => (frontRight ? x : 3072 - x);
+  const sweep = (col, w, pts) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(X(pts[0]), pts[1]); g.bezierCurveTo(X(pts[2]), pts[3], X(pts[4]), pts[5], X(pts[6]), pts[7]); g.stroke(); };
+  sweep('#2b2d33', 120, [-200, 1150, 700, 1100, 1300, 300, 2900, 380]);
+  sweep('#e4501c', 46, [-200, 1010, 760, 980, 1350, 230, 3000, 270]);
+  sweep('#8d9096', 26, [-200, 1250, 820, 1220, 1500, 470, 3100, 520]);
+  sweep('#2b2d33', 70, [1900, 1200, 2200, 900, 2500, 760, 3200, 700]);
+  g.fillStyle = '#e4501c'; g.beginPath(); g.moveTo(X(2380), 1200); g.lineTo(X(3072), 820); g.lineTo(X(3072), 900); g.lineTo(X(2520), 1200); g.fill();
+  // logo
+  g.save(); g.font = '900 210px Nunito, Arial Black, sans-serif'; g.textBaseline = 'alphabetic';
+  const lw = g.measureText('VC2').width, lx = frontRight ? 120 : 3072 - 120 - lw;
+  g.fillStyle = '#2b2d33'; g.fillText('VC', lx, 735); g.fillStyle = '#e4501c'; g.fillText('2', lx + g.measureText('VC').width, 735);
+  g.font = '800 62px Nunito, Arial, sans-serif'; g.fillStyle = '#5a5d64'; g.fillText('C A R A V A N', lx + 8, 812); g.restore();
+  // nothing next to the (narrower) cab: x > 5.55 m and below the cab-over
+  const px = x => (x - 0.05) / 7.3 * 3072, py = y => (3.375 - y) / 2.85 * 1200;
+  if (frontRight) g.clearRect(px(5.5), py(2.18), 3072, 1200); else g.clearRect(0, py(2.18), 3072 - px(5.5), 1200);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.name = frontRight ? 'vc2_livery_right' : 'vc2_livery_left'; return t;
+}
+for (const s of [1, -1]) {
+  const mat = new THREE.MeshStandardMaterial({ map: livery(s > 0), transparent: true, roughness: 0.3, metalness: 0.1, polygonOffset: true, polygonOffsetFactor: -2 });
+  mat.name = s > 0 ? 'vc2_livery_r' : 'vc2_livery_l';
+  const p = add('livery_' + s, new THREE.PlaneGeometry(7.3, 2.85), mat, 3.7, 1.95, s * (WB / 2 + 0.003), 0, s > 0 ? 0 : Math.PI, 0);
+  p.castShadow = false;
+}
+// cab-over front logo
+const lc = document.createElement('canvas'); lc.width = 1024; lc.height = 256; { const g = lc.getContext('2d'); g.font = '900 170px Nunito, Arial Black, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; const w1 = g.measureText('VC').width, w2 = g.measureText('2').width; g.textAlign = 'left'; g.fillStyle = '#2b2d33'; g.fillText('VC', 512 - (w1 + w2) / 2, 140); g.fillStyle = '#e4501c'; g.fillText('2', 512 - (w1 + w2) / 2 + w1, 140); }
+const lt = new THREE.CanvasTexture(lc); lt.colorSpace = THREE.SRGBColorSpace;
+const lm = new THREE.MeshStandardMaterial({ map: lt, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 }); lm.name = 'vc2_logo';
+add('front_logo', new THREE.PlaneGeometry(0.9, 0.22), lm, 7.49, 2.8, 0, 0, Math.PI / 2, 0).castShadow = false;
+
+// night extras: porch + underglow light
+if (night) {
+  const pl = new THREE.PointLight(0xffe2b8, 6, 6, 1.6); pl.position.set(3.65, 2.5, 2.1); scene.add(pl);
+  const ug = new THREE.PointLight(0xe4501c, 5, 4, 1.8); ug.position.set(2.8, 0.25, 1.8); scene.add(ug);
+  const hl = new THREE.SpotLight(0xfff1d6, 30, 25, 0.5, 0.6, 1.2); hl.position.set(8.0, 0.96, 0); hl.target.position.set(18, 0, 0); scene.add(hl, hl.target);
+}
+
+r.render(scene, cam); document.title = 'ready';
+window.stats = () => { let v = 0, t = 0; RV.traverse(o => { if (o.isMesh) { v += o.geometry.attributes.position.count; t += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } }); return { vertices: v, triangles: Math.round(t) }; };
+window.exportGLB = () => new Promise((res, rej) => {
+  const out = RV.clone(true); out.position.x = -3.95; out.updateMatrixWorld(true); // centre the model on its origin
+  const root = new THREE.Scene(); root.add(out);
+  new GLTFExporter().parse(root, buf => { const b = new Uint8Array(buf); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); res(btoa(s)); }, rej, { binary: true });
+});
+</script></body></html>
