@@ -30,6 +30,25 @@ local function getJob()
     return nil
 end
 
+local currentJob = nil
+
+local function canUse(name)
+    local menu = Config.Menus[name]
+    if not menu then return false end
+    if menu.jobs then
+        local ok = false
+        for _, j in ipairs(menu.jobs) do
+            if j == currentJob then ok = true break end
+        end
+        if not ok then return false end
+    end
+    if menu.canOpen then
+        local ok, res = pcall(menu.canOpen)
+        if not (ok and res) then return false end
+    end
+    return true
+end
+
 local function prepare(items, prefix)
     local out = {}
     for _, item in ipairs(items) do
@@ -37,6 +56,9 @@ local function prepare(items, prefix)
         if item.canInteract then
             local ok, res = pcall(item.canInteract)
             visible = ok and res
+        end
+        if visible and item.type == 'menu' then
+            visible = canUse(item.menu)
         end
         if visible then
             local id = prefix .. (#out + 1)
@@ -49,17 +71,6 @@ local function prepare(items, prefix)
     return out
 end
 
-local function buildMenu()
-    lookup = {}
-    local items = {}
-    local job = getJob()
-    if job and Config.JobItems[job] then
-        for _, v in ipairs(Config.JobItems[job]) do items[#items + 1] = v end
-    end
-    for _, v in ipairs(Config.MenuItems) do items[#items + 1] = v end
-    return prepare(items, 'i')
-end
-
 local function closeMenu()
     if not isOpen then return end
     isOpen = false
@@ -68,55 +79,85 @@ local function closeMenu()
     SendNUIMessage({ action = 'close' })
 end
 
-local function openMenu()
-    if isOpen or IsPauseMenuActive() then return end
-    local ped = PlayerPedId()
-    if IsEntityDead(ped) then return end
-    isOpen = true
+local function blockControls()
+    CreateThread(function()
+        while isOpen do
+            DisableControlAction(0, 1, true)    -- look LR
+            DisableControlAction(0, 2, true)    -- look UD
+            DisableControlAction(0, 24, true)   -- attack
+            DisableControlAction(0, 25, true)   -- aim
+            DisableControlAction(0, 37, true)   -- weapon wheel
+            DisableControlAction(0, 68, true)   -- veh aim
+            DisableControlAction(0, 69, true)   -- veh attack
+            DisableControlAction(0, 70, true)
+            DisableControlAction(0, 91, true)
+            DisableControlAction(0, 92, true)
+            DisableControlAction(0, 106, true)  -- veh mouse control
+            DisableControlAction(0, 140, true)  -- melee
+            DisableControlAction(0, 141, true)
+            DisableControlAction(0, 142, true)
+            DisableControlAction(0, 199, true)  -- pause (P)
+            DisableControlAction(0, 200, true)  -- pause (ESC)
+            DisableControlAction(0, 257, true)
+            DisableControlAction(0, 263, true)
+            if IsDisabledControlJustPressed(0, 200) then closeMenu() end
+            Wait(0)
+        end
+    end)
+end
+
+local function openMenu(name)
+    if IsPauseMenuActive() or IsEntityDead(PlayerPedId()) then return end
+    currentJob = getJob()
+    if not canUse(name) then return end
+    local menu = Config.Menus[name]
+
+    lookup = {}
     SendNUIMessage({
         action = 'open',
-        title = Config.Title,
-        color = Config.Color,
+        title = menu.title or name:upper(),
+        color = menu.color or Config.Color,
         keepInput = Config.KeepInput,
         sound = Config.Sound,
-        items = buildMenu(),
+        items = prepare(menu.items or {}, 'i'),
     })
-    SetNuiFocus(true, true)
-    SetNuiFocusKeepInput(Config.KeepInput)
-    SetCursorLocation(0.5, 0.5)
 
-    if Config.KeepInput then
-        CreateThread(function()
-            while isOpen do
-                DisableControlAction(0, 1, true)    -- look LR
-                DisableControlAction(0, 2, true)    -- look UD
-                DisableControlAction(0, 24, true)   -- attack
-                DisableControlAction(0, 25, true)   -- aim
-                DisableControlAction(0, 37, true)   -- weapon wheel
-                DisableControlAction(0, 68, true)   -- veh aim
-                DisableControlAction(0, 69, true)   -- veh attack
-                DisableControlAction(0, 70, true)
-                DisableControlAction(0, 91, true)
-                DisableControlAction(0, 92, true)
-                DisableControlAction(0, 106, true)  -- veh mouse control
-                DisableControlAction(0, 140, true)  -- melee
-                DisableControlAction(0, 141, true)
-                DisableControlAction(0, 142, true)
-                DisableControlAction(0, 199, true)  -- pause (P)
-                DisableControlAction(0, 200, true)  -- pause (ESC)
-                DisableControlAction(0, 257, true)
-                DisableControlAction(0, 263, true)
-                if IsDisabledControlJustPressed(0, 200) then closeMenu() end
-                Wait(0)
-            end
-        end)
+    if not isOpen then
+        isOpen = true
+        SetNuiFocus(true, true)
+        SetNuiFocusKeepInput(Config.KeepInput)
+        SetCursorLocation(0.5, 0.5)
+        if Config.KeepInput then blockControls() end
     end
 end
 
-RegisterCommand('zcradial', function()
-    if isOpen then closeMenu() else openMenu() end
+-- one key mapping per key; menus sharing a key (police / ems) pick the first one the player can use
+local byKey = {}
+for name, menu in pairs(Config.Menus) do
+    if menu.key then
+        local k = menu.key:upper()
+        byKey[k] = byKey[k] or {}
+        table.insert(byKey[k], name)
+    end
+end
+for key, names in pairs(byKey) do
+    table.sort(names, function(a, b) return a == 'main' or (b ~= 'main' and a < b) end)
+    local cmd = 'zcradial_' .. key:lower()
+    RegisterCommand(cmd, function()
+        if isOpen then return closeMenu() end
+        currentJob = getJob()
+        for _, name in ipairs(names) do
+            if canUse(name) then return openMenu(name) end
+        end
+    end, false)
+    RegisterKeyMapping(cmd, ('Radial Menu (%s)'):format(table.concat(names, ' / ')), 'keyboard', key)
+end
+
+-- /radial <name>  (e.g. /radial vehicle)
+RegisterCommand('radial', function(_, args)
+    if isOpen then closeMenu() end
+    openMenu(args[1] or 'main')
 end, false)
-RegisterKeyMapping('zcradial', 'Open Radial Menu', 'keyboard', Config.Key)
 
 RegisterNUICallback('close', function(_, cb)
     closeMenu()
@@ -127,9 +168,11 @@ RegisterNUICallback('select', function(data, cb)
     cb('ok')
     local item = data and lookup[data.id]
     if not item then return end
-    if not item.keepOpen then closeMenu() end
+    if not item.keepOpen and item.type ~= 'menu' then closeMenu() end
 
-    if item.type == 'client' and item.event then
+    if item.type == 'menu' and item.menu then
+        openMenu(item.menu)
+    elseif item.type == 'client' and item.event then
         TriggerEvent(item.event, item.args)
     elseif item.type == 'server' and item.event then
         TriggerServerEvent(item.event, item.args)
@@ -144,6 +187,7 @@ end)
 
 exports('IsOpen', function() return isOpen end)
 exports('Close', closeMenu)
+exports('Open', openMenu)
 
 ---------------------------------------------------------------------------
 -- Built-in vehicle actions
@@ -179,6 +223,26 @@ RegisterNetEvent('zc_radial:client:vehicle', function(args)
             if down then RollUpWindow(veh, i) else RollDownWindow(veh, i) end
         end
         Entity(veh).state:set('zcWindowsDown', not down, false)
+    elseif args.action == 'alldoors' then
+        local open = false
+        for i = 0, 5 do
+            if GetVehicleDoorAngleRatio(veh, i) > 0.0 then open = true break end
+        end
+        for i = 0, 5 do
+            if open then SetVehicleDoorShut(veh, i, false) else SetVehicleDoorOpen(veh, i, false, false) end
+        end
+    elseif args.action == 'window' and args.window then
+        local key = 'zcWin' .. args.window
+        local down = Entity(veh).state[key]
+        if down then RollUpWindow(veh, args.window) else RollDownWindow(veh, args.window) end
+        Entity(veh).state:set(key, not down, false)
+    elseif args.action == 'seat' and args.seat then
+        if IsVehicleSeatFree(veh, args.seat) then
+            SetPedIntoVehicle(ped, veh, args.seat)
+        end
+    elseif args.action == 'lights' then
+        local _, lightsOn, highOn = GetVehicleLightsState(veh)
+        SetVehicleLights(veh, (lightsOn == 1 or highOn == 1) and 1 or 3)
     elseif args.action == 'shuffle' then
         if GetPedInVehicleSeat(veh, -1) == ped then
             TaskShuffleToNextVehicleSeat(ped, veh)

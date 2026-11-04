@@ -1,5 +1,5 @@
 const RES = typeof GetParentResourceName === 'function' ? GetParentResourceName() : null;
-const post = (name, data = {}) => {
+let post = (name, data = {}) => {
     if (!RES) { console.log('[post]', name, data); return Promise.resolve(); }
     return fetch(`https://${RES}/${name}`, {
         method: 'POST',
@@ -268,6 +268,7 @@ function setColor(hex) {
 }
 
 function open(data) {
+    const wasOpen = state.open;
     setColor(data.color);
     state.title = data.title || 'ZC MENU';
     state.keepInput = !!data.keepInput;
@@ -275,9 +276,9 @@ function open(data) {
     state.stack = [{ title: state.title, items: data.items || [] }];
     state.open = true; state.tTarget = 1;
     state.rx = state.trx = 10; state.ry = state.try = 0;
-    render(false);
+    render(wasOpen);
     stage.classList.add('open');
-    sfx.open();
+    if (wasOpen) sfx.select(); else sfx.open();
     startLoop();
 }
 
@@ -297,27 +298,69 @@ window.addEventListener('message', (e) => {
 /* ---------- browser preview (outside FiveM) ---------- */
 if (!RES) {
     document.body.classList.add('preview');
-    const demo = [
-        { id: 'p', label: 'Police', icon: 'shield-halved', items: [
+    const demo = {
+        main: { title: 'ZC MENU', items: [
+            { id: 'a', label: 'Citizen', icon: 'user', items: [{ id: 'a1', label: 'Show ID', icon: 'id-card' }] },
+            { id: 'b', label: 'Emotes', icon: 'person-walking' },
+            { id: 'c', label: 'Clothing', icon: 'shirt' },
+            { id: 'm1', label: 'Vehicle', icon: 'car', menu: 'vehicle' },
+            { id: 'm2', label: 'Police', icon: 'shield-halved', menu: 'police' },
+            { id: 'e', label: 'GPS', icon: 'map-location-dot' },
+            { id: 'f', label: 'Phone', icon: 'mobile-screen' },
+            { id: 'g', label: 'Music', icon: 'music' },
+            { id: 'i', label: 'Settings', icon: 'bars' },
+        ] },
+        police: { title: 'POLICE', items: [
             { id: 'p1', label: 'Police Radar', icon: 'satellite-dish' },
             { id: 'p2', label: 'Cuff', icon: 'handcuffs' },
             { id: 'p3', label: 'Escort', icon: 'people-arrows' },
             { id: 'p4', label: 'Search', icon: 'magnifying-glass' },
-            { id: 'p5', label: 'MDT', icon: 'tablet-screen-button' },
-            { id: 'p6', label: 'Spike Strip', icon: 'road-spikes' },
+            { id: 'p5', label: 'Vehicle', icon: 'car-side', items: [
+                { id: 'p51', label: 'Put In Vehicle', icon: 'right-to-bracket' },
+                { id: 'p52', label: 'Take Out', icon: 'right-from-bracket' },
+                { id: 'p53', label: 'Impound', icon: 'truck-pickup' },
+                { id: 'p54', label: 'Plate Check', icon: 'rectangle-list' },
+            ] },
+            { id: 'p6', label: 'Objects', icon: 'road-barrier', items: [
+                { id: 'p61', label: 'Cone', icon: 'traffic-light' },
+                { id: 'p62', label: 'Barrier', icon: 'road-barrier' },
+                { id: 'p63', label: 'Spike Strip', icon: 'road-spikes' },
+            ] },
+            { id: 'p7', label: 'Fine', icon: 'file-invoice-dollar' },
+            { id: 'p8', label: 'Jail', icon: 'building-shield' },
+            { id: 'p9', label: 'MDT', icon: 'tablet-screen-button' },
+            { id: 'p10', label: 'Duty', icon: 'user-shield' },
+            { id: 'p11', label: 'Backup', icon: 'tower-broadcast' },
         ] },
-        { id: 'a', label: 'Citizen', icon: 'user', items: [{ id: 'a1', label: 'Show ID', icon: 'id-card' }] },
-        { id: 'b', label: 'Emotes', icon: 'person-walking' },
-        { id: 'c', label: 'Clothing', icon: 'shirt' },
-        { id: 'd', label: 'Vehicle', icon: 'car', items: [{ id: 'd1', label: 'Engine', icon: 'power-off' }] },
-        { id: 'e', label: 'GPS', icon: 'map-location-dot' },
-        { id: 'f', label: 'Phone', icon: 'mobile-screen' },
-        { id: 'g', label: 'Music', icon: 'music' },
-        { id: 'h', label: 'Keys', icon: 'key' },
-        { id: 'i', label: 'Settings', icon: 'bars' },
-    ];
-    const demoOpen = () => open({ title: 'ZC MENU', items: demo, keepInput: false, sound: true });
-    setTimeout(demoOpen, 100);
+        vehicle: { title: 'VEHICLE', items: [
+            { id: 'v1', label: 'Engine', icon: 'power-off' },
+            { id: 'v2', label: 'Hood', icon: 'car-side' },
+            { id: 'v3', label: 'Trunk', icon: 'box-open' },
+            { id: 'v4', label: 'Doors', icon: 'door-open', items: [
+                { id: 'v41', label: 'Front Left', icon: 'door-open' }, { id: 'v42', label: 'Front Right', icon: 'door-open' },
+                { id: 'v43', label: 'Rear Left', icon: 'door-open' }, { id: 'v44', label: 'Rear Right', icon: 'door-open' },
+                { id: 'v45', label: 'All Doors', icon: 'car' },
+            ] },
+            { id: 'v5', label: 'Windows', icon: 'wind', items: [{ id: 'v51', label: 'All Windows', icon: 'wind' }] },
+            { id: 'v6', label: 'Seats', icon: 'chair', items: [{ id: 'v61', label: 'Driver', icon: 'gauge-high' }] },
+            { id: 'v7', label: 'Lights', icon: 'lightbulb' },
+            { id: 'v8', label: 'Lock', icon: 'lock' },
+            { id: 'v9', label: 'Keys', icon: 'key' },
+        ] },
+    };
+    const idMenu = {};
+    Object.values(demo).forEach(m => m.items.forEach(it => { if (it.menu) idMenu[it.id] = it.menu; }));
+    let last = 'main';
+    const demoOpen = (name) => { last = name; open({ title: demo[name].title, items: demo[name].items, keepInput: false, sound: true }); };
+    window.demoOpen = demoOpen;
+    setTimeout(() => demoOpen(new URLSearchParams(location.search).get('menu') || 'main'), 100);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'F1' || e.key === '1') { e.preventDefault(); demoOpen('main'); }
+        if (e.key === 'F6' || e.key === '2') { e.preventDefault(); demoOpen('police'); }
+        if (e.key === 'F3' || e.key === '3') { e.preventDefault(); demoOpen('vehicle'); }
+    });
+    const _post = post;
+    post = (name, data) => { if (name === 'select' && idMenu[data.id]) demoOpen(idMenu[data.id]); return _post(name, data); };
     const _close = close;
-    close = (g) => { _close(g); setTimeout(demoOpen, 700); };
+    close = (g) => { _close(g); setTimeout(() => demoOpen(last), 700); };
 }
