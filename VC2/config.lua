@@ -33,7 +33,6 @@ Config.Kiosks = {
     {
         label = 'VC2 Showroom - Downtown',
         coords = vector4(-57.35, -1096.85, 25.42, 25.0), -- kiosk position (z = ground)
-        model = 'prop_atm_03',   -- in-game prop used as the machine
         spawnProp = true,        -- false = use an object that already exists on the map
         blip = { sprite = 326, color = 47, scale = 0.8 },
         delivery = {             -- parking spots where bought cars are delivered
@@ -45,61 +44,51 @@ Config.Kiosks = {
     },
 }
 
--- Impound NPCs: look at the NPC (target eye) or press E to open the impound terminal.
--- Owners get back their VC2 cars after they were impounded, destroyed,
--- lost after a disconnect / restart, or are still out on the street.
+-- "My cars" (button on the kiosk): owners see every VC2 car they own and can retrieve any of them,
+-- after it was impounded, destroyed, lost after a disconnect / restart, or is still out on the street.
+-- Retrieved cars are delivered to the kiosk's delivery spots.
 Config.Retrieve = {
     fee = 500,          -- normal retrieval fee
     impoundFee = 2500,  -- fee if the car was impounded (police export / /vc2impound)
     repair = true,      -- true = car comes out fully repaired, false = with its saved body / engine health
 }
-Config.Garages = {
-    {
-        label = 'Impound Lot',
-        subtitle = 'Vehicle Terminal',
-        ped = 's_m_m_security_01',
-        coords = vector4(409.09, -1623.37, 28.29, 229.5), -- NPC position (z = ground)
-        scenario = 'WORLD_HUMAN_CLIPBOARD',
-        blip = { sprite = 68, color = 47, scale = 0.75 },
-        spawn = {                                          -- where retrieved cars appear
-            vector4(401.76, -1647.90, 29.29, 320.0),
-            vector4(404.43, -1650.00, 29.29, 320.0),
-            vector4(407.16, -1652.20, 29.29, 320.0),
-        },
-    },
-}
+Config.CarsPhotos = false -- My cars: false = car icon on every card, true = real car photos
 
--- Defaults for kiosks / impound NPCs placed in-game with /vc2place.
--- Delivery, test-drive and retrieval spots are picked automatically on the nearest road.
+-- Kiosk model. 'vc2_kiosk' is the custom VC2 model (see /model/README.md to build it).
+-- Until it is streamed, the script automatically falls back to the GTA prop below.
+Config.KioskModel = 'vc2_kiosk'
+Config.KioskFallbackModel = 'prop_atm_03'
+
+-- Defaults for kiosks placed in-game with /vc2place.
+-- Delivery and test-drive spots are picked automatically on the nearest road.
 Config.Placed = {
-    kiosk = { label = 'VC2 Showroom', model = 'prop_atm_03', blip = { sprite = 326, color = 47, scale = 0.8 } },
-    impound = { label = 'Impound Lot', subtitle = 'Vehicle Terminal', ped = 's_m_m_security_01', scenario = 'WORLD_HUMAN_CLIPBOARD', blip = { sprite = 68, color = 47, scale = 0.75 } },
+    kiosk = { label = 'VC2 Showroom', blip = { sprite = 326, color = 47, scale = 0.8 } },
 }
 
--- 3D kiosk: a live VC2 screen drawn in the world on every kiosk, with an orange glow.
--- If you get a custom kiosk model (.ydr) from a modeller, drop it in /stream and set the model name above.
+-- Live VC2 hologram screen drawn above every kiosk (featured cars, prices, clock)
 Config.KioskScreen = {
     enabled = true,
-    offset = vector3(0.0, 0.0, 2.15), -- right / forward / up from the kiosk base (metres)
-    width = 1.05, height = 0.6,        -- screen size in metres
+    offset = vector3(0.0, 0.0, 2.25), -- right / forward / up from the kiosk base (metres)
+    fallbackOffset = vector3(0.0, 0.0, 2.15), -- used on the GTA fallback prop
+    width = 1.15, height = 0.65,       -- screen size in metres
     flip = false,                      -- set true if the screen text looks mirrored
-    drawDistance = 30.0,
-    glow = true,
+    bob = 0.025,                       -- gentle floating animation (metres, 0 = off)
+    beam = true,                       -- light beam between the kiosk and the hologram
+    glow = true,                       -- orange light + floor ring
+    drawDistance = 35.0,
+    featured = 6,                      -- how many cars rotate on the screen
 }
-
--- Impound terminal: show an icon on every card (like the classic terminal), or real car photos
-Config.ImpoundPhotos = false
 
 -- Admin commands (ACE permission below, e.g. add_ace group.admin vc2.admin allow)
 Config.AdminAce = 'vc2.admin'
 Config.AdminCommands = {
-    place = 'vc2place',     -- /vc2place kiosk | /vc2place impound   place a kiosk or an impound NPC where you stand (saved)
-    remove = 'vc2remove',   -- /vc2remove                           remove the placed kiosk / NPC closest to you
+    place = 'vc2place',     -- /vc2place           place a kiosk where you stand (saved)
+    remove = 'vc2remove',   -- /vc2remove          remove the placed kiosk closest to you
     own = 'vc2own',         -- /vc2own [playerId]  register the car you are in / next to under your name (or the player's)
     impound = 'vc2impound', -- /vc2impound          send the VC2 car you are in / next to to the impound
 }
 
--- Reads the fuel of a car (shown in the impound terminal). Adjust for your fuel script.
+-- Reads the fuel of a car (shown in My cars). Adjust for your fuel script.
 Config.GetFuel = function(vehicle)
     if GetResourceState('LegacyFuel') == 'started' then return exports['LegacyFuel']:GetFuel(vehicle) end
     if GetResourceState('ox_fuel') == 'started' then return Entity(vehicle).state.fuel or GetVehicleFuelLevel(vehicle) end

@@ -90,14 +90,14 @@ function grid() {
     <span class="vcat">${esc(catOf(v.category).label)}</span><div class="vimg">${imgOf(v, D.colors[(i + 3) % D.colors.length]?.hex || c0)}</div>
     <h4>${esc(v.label)}</h4><div class="vb">${esc(v.brand)}</div><div class="vpr">${fmt(v.price)}</div></button>`).join('')
     : `<div class="empty">No cars match your search</div>`;
-  $('count').textContent = list.length ? `${list.length} cars available · pick the one you want` : 'Try another category';
+  $('count').textContent = list.length ? `${list.length} cars available` : 'Try another category';
   document.querySelectorAll('.vc').forEach(b => b.onclick = () => detail(D.vehicles.find(v => v.model === b.dataset.m)));
 }
 
 /* ---------------- screen 2 ---------------- */
 function view(n) {
-  ['s1', 's2', 's3', 's4', 's6'].forEach(s => $(s).classList.toggle('on', s === 's' + n));
-  $('title').textContent = ['Car showroom', 'Vehicle details', 'Purchase receipt', 'Custom car order', '', 'Custom orders'][n - 1];
+  ['s1', 's2', 's3', 's4', 's5', 's6'].forEach(s => $(s).classList.toggle('on', s === 's' + n));
+  $('title').textContent = ['Car showroom', 'Vehicle details', 'Purchase receipt', 'Custom car order', 'My cars', 'Custom orders'][n - 1];
   $('chips').style.display = n === 6 ? 'none' : '';
 }
 function go(n) {
@@ -238,16 +238,15 @@ $('osend').onclick = () => {
   if (!RES) setTimeout(() => { D.orders.unshift({ id: 13, status: 'pending', ...d }); resetForm(); renderOrders(); toast('Order #13 sent! The workshop will build your car.', true); }, 600);
 };
 
-/* ---------------- impound terminal ---------------- */
+/* ---------------- 5: my cars ---------------- */
 const IMP_ST = { stored: 'Available', out: 'On street', impounded: 'Impounded', destroyed: 'Destroyed' };
 let iSel = null, iQ = '', favs = {};
 try { favs = JSON.parse(localStorage.getItem('vc2_favs') || '{}') || {}; } catch (e) { favs = {}; }
 const saveFavs = () => { try { localStorage.setItem('vc2_favs', JSON.stringify(favs)); } catch (e) {} };
 const CAR_ICON = '<svg class="icar" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>';
-let iPhotos = false;
+let iPhotos = false, cfgPhotos = false;
 const barCol = v => v > 60 ? '#7cc142' : v > 30 ? '#e9b23b' : '#e5533d';
-function impToast(msg) { const t = $('itoast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 3200); }
-function renderImp() {
+function renderCars() {
   const q = iQ.trim().toLowerCase();
   const list = (D.owned || []).filter(v => !q || (nameOf(v) + ' ' + v.plate).toLowerCase().includes(q))
     .sort((a, b) => (favs[b.plate] ? 1 : 0) - (favs[a.plate] ? 1 : 0));
@@ -264,32 +263,31 @@ function renderImp() {
           : `<button class="ibtn" data-s="${esc(v.plate)}">${v.status === 'out' ? 'Bring back' : 'Retrieve'} · ${fee}</button>`}</div></div></div>`;
   }).join('') : `<div class="inone">${q ? 'No vehicle matches your search.' : 'You have no vehicles registered here.<br>Cars bought at VC2 show up automatically.'}</div>`;
   requestAnimationFrame(() => $('igrid').querySelectorAll('.ibar u').forEach(u => u.style.width = u.dataset.w + '%'));
-  $('igrid').querySelectorAll('.star').forEach(b => b.onclick = e => { e.stopPropagation(); const p = b.dataset.f; favs[p] ? delete favs[p] : favs[p] = 1; saveFavs(); renderImp(); });
-  $('igrid').querySelectorAll('[data-s]').forEach(b => b.onclick = () => { iSel = b.dataset.s; renderImp(); });
-  $('igrid').querySelectorAll('.ix').forEach(b => b.onclick = () => { iSel = null; renderImp(); });
+  $('igrid').querySelectorAll('.star').forEach(b => b.onclick = e => { e.stopPropagation(); const p = b.dataset.f; favs[p] ? delete favs[p] : favs[p] = 1; saveFavs(); renderCars(); });
+  $('igrid').querySelectorAll('[data-s]').forEach(b => b.onclick = () => { iSel = b.dataset.s; renderCars(); });
+  $('igrid').querySelectorAll('.ix').forEach(b => b.onclick = () => { iSel = null; renderCars(); });
   $('igrid').querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
     b.classList.add('ld'); b.textContent = 'Retrieving...';
-    send('retrieve', { plate: b.dataset.go, payment: (D.payments || ['bank'])[0] });
-    if (!RES) setTimeout(() => closeImp(), 900);
+    $('nfc').classList.add('on'); $('printer').classList.add('printing');
+    send('retrieve', { plate: b.dataset.go, payment: pay });
+    if (!RES) setTimeout(() => { const v = D.owned.find(x => x.plate === b.dataset.go); v.status = 'out'; onCars({ owned: D.owned, msg: `${nameOf(v)} is waiting for you at the delivery spot` }); }, 900);
   });
+  payPicker('cpay');
 }
-$('iq').oninput = e => { iQ = e.target.value; renderImp(); };
-$('iclose').onclick = () => closeImp();
-function openImpound(d) {
-  D.currency = d.currency || D.currency; D.colors = d.colors || D.colors; D.imageUrl = d.imageUrl ?? D.imageUrl;
-  D.owned = d.owned || []; if (d.money) D.money = d.money; iPhotos = !!d.photos;
-  $('ititle').textContent = d.title || 'Impound Lot'; $('isub').textContent = d.subtitle || 'Vehicle Terminal';
-  iSel = null; iQ = ''; $('iq').value = ''; $('imp').classList.remove('out');
-  renderImp(); document.body.classList.add('impopen');
+function onCars(d) {
+  $('nfc').classList.remove('on'); setTimeout(() => $('printer').classList.remove('printing'), 1200);
+  D.owned = d.owned || []; if (d.money) money(d.money); iSel = null; renderCars();
+  if (d.msg) toast(d.msg, true);
 }
-let impClosing = false;
-function closeImp(fromGame) {
-  if (!document.body.classList.contains('impopen') || impClosing) return;
-  impClosing = true; $('imp').classList.add('out');
-  if (!fromGame) send('close');
-  setTimeout(() => { document.body.classList.remove('impopen'); $('imp').classList.remove('out'); impClosing = false; if (!RES) setTimeout(() => openImpound(window.DEMO_IMP), 900); }, 260);
-}
-
+$('mycars').onclick = () => {
+  iSel = null; iQ = ''; $('iq').value = ''; D.owned = []; iPhotos = cfgPhotos;
+  $('igrid').innerHTML = '<div class="inone">Loading your vehicles...</div>'; payPicker('cpay');
+  go(5); send('myCars');
+  if (!RES) setTimeout(() => onCars({ owned: window.DEMO_CARS }), 400);
+};
+$('cback').onclick = () => go(1);
+$('close5').onclick = () => closeUI();
+$('iq').oninput = e => { iQ = e.target.value; renderCars(); };
 /* ---------------- 6: workshop panel ---------------- */
 let mFilter = 'pending', mSel = null;
 function renderMgr() {
@@ -333,13 +331,14 @@ $('mrej').onclick = () => {
 /* ---------------- open / close ---------------- */
 const P = $('panel');
 function bootIn() { P.classList.remove('off', 'boot'); void P.offsetWidth; P.classList.add('boot'); }
-function reset() { unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); cat = 'all'; query = ''; $('q').value = ''; ['s1', 's2', 's3', 's4', 's6'].forEach(s => $(s).classList.remove('out')); view({ shop: 1, manager: 6 }[D.mode] || 1); }
+function reset() { unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); cat = 'all'; query = ''; $('q').value = ''; ['s1', 's2', 's3', 's4', 's5', 's6'].forEach(s => $(s).classList.remove('out')); view({ shop: 1, manager: 6 }[D.mode] || 1); }
 function openUI(d) {
   Object.assign(D, d);
   pay = D.payments[0] || 'bank';
   $('kname').textContent = D.kiosk || 'VC2 Showroom';
   D.orders = d.orders ?? D.orders ?? []; D.owned = d.owned ?? D.owned ?? [];
   money(d.money); reset();
+  cfgPhotos = !!d.photos;
   if (D.mode === 'shop') { tabs(); grid(); resetForm(); renderOrders(); $('custom').style.display = D.ordersEnabled ? '' : 'none'; }
   if (D.mode === 'manager') { mFilter = 'pending'; mSel = null; renderMgr(); }
   document.body.classList.add('open'); bootIn();
@@ -357,14 +356,14 @@ addEventListener('message', e => {
   const d = e.data || {};
   switch (d.action) {
     case 'open': openUI(d); break;
-    case 'hide': closeUI(true); closeImp(true); break;
+    case 'hide': closeUI(true); break;
     case 'money': money(d.money); break;
     case 'receipt': onReceipt(d.receipt, d.money, d.orders); break;
     case 'error': unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); $('osend').classList.remove('ld');
-      if (document.body.classList.contains('impopen')) { renderImp(); impToast(d.msg || 'Something went wrong'); break; }
+      if ($('s5').classList.contains('on')) renderCars();
       if (D.mode === 'shop') renderOrders(); toast(d.msg || 'Something went wrong'); break;
     case 'orders': D.orders = d.orders || []; resetForm(); renderOrders(); if (d.msg) toast(d.msg, true); break;
-    case 'impound': openImpound(d); break;
+    case 'cars': onCars(d); break;
     case 'mgr': D.orders = d.orders || []; renderMgr(); if (d.msg) toast(d.msg, true); break;
     case 'prompt': $('prompt').classList.toggle('on', !!d.show); if (d.text) $('ptxt').textContent = d.text; break;
     case 'timer': {
@@ -374,7 +373,7 @@ addEventListener('message', e => {
     }
   }
 });
-addEventListener('keydown', e => { if (e.key === 'Escape') { if (document.body.classList.contains('impopen')) closeImp(); else closeUI(); } });
+addEventListener('keydown', e => { if (e.key === 'Escape') closeUI(); });
 addEventListener('pointerdown', e => {
   const b = e.target.closest('.btn'); if (!b) return;
   const r = b.getBoundingClientRect(), s = document.createElement('span'), d = Math.max(r.width, r.height) * 2 / K;
@@ -421,11 +420,11 @@ if (!RES) {
       V('bati', 'Bati 801', 'Pegassi', 8, 'motos', 25000, 2, 180, [72, 88, 60, 70])
     ]
   });
-  window.DEMO_IMP = { title: 'Impound Lot', subtitle: 'Vehicle Terminal', owned: [
+  window.DEMO_CARS = [
     { plate: '3831510A', model: 'urus', label: 'MT Urus', brand: '', class: 2, color: 1, origin: 'admin', status: 'impounded', fee: 2500, body: 100, engine: 100, fuel: 61 },
     { plate: 'VC2 4821', model: 'zentorno', label: 'Zentorno', brand: 'Pegassi', class: 7, color: 5, origin: 'showroom', status: 'destroyed', fee: 500, body: 12, engine: 0, fuel: 34 },
     { plate: 'VC2 0335', model: 'baller2', label: 'Baller', brand: 'Gallivanter', class: 2, color: 1, origin: 'showroom', status: 'stored', fee: 500, body: 88, engine: 95, fuel: 100 },
     { plate: 'VC2 7702', model: 'bati', label: 'Bati 801', brand: 'Pegassi', class: 8, color: 7, origin: 'showroom', status: 'out', fee: 500, body: 54, engine: 70, fuel: 22 }
-  ] };
-  if (demoMode === 'impound') { document.body.classList.remove('open'); openImpound(window.DEMO_IMP); }
+  ];
+  if (demoMode === 'cars') $('mycars').click();
 }

@@ -1,11 +1,10 @@
 local FW, Core = 'standalone', nil
 local busy, lastTest, pendingSpawn = {}, {}, {}
 local active = {}   -- plate -> entity handle of the VC2 car currently in the world
--- kiosks / impound NPCs: from config ('c1', 'c2' ...) + placed in-game with /vc2place ('d<id>')
-local Places = { kiosk = {}, garage = {} }
+-- kiosks: from config ('c1', 'c2' ...) + placed in-game with /vc2place ('d<id>')
+local Places = { kiosk = {} }
 local placesReady = false
 for i, k in ipairs(Config.Kiosks) do Places.kiosk['c' .. i] = k end
-for i, g in ipairs(Config.Garages) do Places.garage['c' .. i] = g end
 local byModel = {}
 for _, v in ipairs(Config.Vehicles) do byModel[v.model] = v end
 local allowedPay = {}
@@ -19,13 +18,9 @@ local function modelHash(m)
 end
 
 ---------------------------------------------------------------- places
-function placedData(kind, coords)
-    if kind == 'kiosk' then
-        local d = Config.Placed.kiosk
-        return { label = d.label, model = d.model, spawnProp = true, blip = d.blip, coords = coords, placed = true }
-    end
-    local d = Config.Placed.impound
-    return { label = d.label, subtitle = d.subtitle, ped = d.ped, scenario = d.scenario, blip = d.blip, coords = coords, placed = true }
+function placedData(coords)
+    local d = Config.Placed.kiosk
+    return { label = d.label, spawnProp = true, blip = d.blip, coords = coords, placed = true }
 end
 
 local function v4t(v) return { x = v.x, y = v.y, z = v.z, w = v.w } end
@@ -48,7 +43,7 @@ end
 RegisterNetEvent('vc2:requestPlaces', function()
     local src = source
     while not placesReady do Wait(200) end
-    TriggerClientEvent('vc2:places', src, netList(Places.kiosk), netList(Places.garage))
+    TriggerClientEvent('vc2:places', src, netList(Places.kiosk))
 end)
 
 ---------------------------------------------------------------- db
@@ -109,9 +104,8 @@ CreateThread(function()
         `x` FLOAT NOT NULL, `y` FLOAT NOT NULL, `z` FLOAT NOT NULL, `h` FLOAT NOT NULL,
         `created_by` VARCHAR(64) DEFAULT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP)]])
-    for _, r in ipairs(db('query', 'SELECT * FROM vc2_places') or {}) do
-        local kind = r.kind == 'kiosk' and 'kiosk' or 'garage'
-        Places[kind]['d' .. r.id] = placedData(kind, vector4(r.x, r.y, r.z, r.h))
+    for _, r in ipairs(db('query', "SELECT * FROM vc2_places WHERE kind = 'kiosk'") or {}) do
+        Places.kiosk['d' .. r.id] = placedData(vector4(r.x, r.y, r.z, r.h))
     end
     placesReady = true
     print(('^2[VC2]^7 started (framework: %s)'):format(FW))
@@ -469,7 +463,7 @@ Callbacks['vc2:mgrReject'] = function(src, id, note)
     return { ok = true }
 end
 
--------- recovery (NPC garages)
+-------- my cars (retrieve from the kiosk)
 local function feeFor(status)
     return status == 'impounded' and Config.Retrieve.impoundFee or Config.Retrieve.fee
 end
@@ -493,8 +487,8 @@ Callbacks['vc2:garage'] = function(src)
     return { vehicles = myVehicles(src), money = getMoney(src) }
 end
 
-Callbacks['vc2:retrieve'] = function(src, plate, garage, payment)
-    if not near(src, Places.garage, garage) then return { ok = false, msg = 'You must be at the impound' } end
+Callbacks['vc2:retrieve'] = function(src, plate, kiosk, payment)
+    if not near(src, Places.kiosk, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
     if busy[src] then return { ok = false, msg = 'A transaction is already in progress' } end
     local row = db('single', 'SELECT * FROM vc2_vehicles WHERE plate = ? AND owner = ?', { plate, identifier(src) })
     if not row then return { ok = false, msg = 'This is not your vehicle' } end
@@ -525,7 +519,7 @@ Callbacks['vc2:check'] = function(src, netId, plate)
     return { row = row, tagged = st ~= nil }
 end
 
--------- health snapshots (shown in the impound terminal)
+-------- health snapshots (shown in My cars)
 local lastHealth = {}
 RegisterNetEvent('vc2:health', function(netId, body, engine, fuel)
     local src = source
@@ -590,28 +584,26 @@ Callbacks['vc2:adminOwn'] = function(src, netId, model, props, target)
     return { ok = true, plate = plate, name = name }
 end
 
-Callbacks['vc2:place'] = function(src, kind, x, y, z, h)
+Callbacks['vc2:place'] = function(src, x, y, z, h)
     if not isAdmin(src) then return { ok = false, msg = 'Admins only' } end
-    if kind ~= 'kiosk' and kind ~= 'impound' then return { ok = false, msg = 'Use: kiosk or impound' } end
     local c = vector4(tonumber(x) or 0.0, tonumber(y) or 0.0, tonumber(z) or 0.0, tonumber(h) or 0.0)
     if #(GetEntityCoords(GetPlayerPed(src)) - c.xyz) > 15.0 then return { ok = false, msg = 'Too far away' } end
-    local id = db('insert', 'INSERT INTO vc2_places (kind, x, y, z, h, created_by) VALUES (?, ?, ?, ?, ?, ?)', { kind, c.x, c.y, c.z, c.w, playerName(src) })
+    local id = db('insert', "INSERT INTO vc2_places (kind, x, y, z, h, created_by) VALUES ('kiosk', ?, ?, ?, ?, ?)", { c.x, c.y, c.z, c.w, playerName(src) })
     if not id then return { ok = false, msg = 'Database error' } end
-    local list = kind == 'kiosk' and 'kiosk' or 'garage'
-    local data = placedData(list, c)
-    Places[list]['d' .. id] = data
-    TriggerClientEvent('vc2:placeAdd', -1, list, 'd' .. id, toNet(data))
+    local data = placedData(c)
+    Places.kiosk['d' .. id] = data
+    TriggerClientEvent('vc2:placeAdd', -1, 'd' .. id, toNet(data))
     return { ok = true, id = id }
 end
 
-Callbacks['vc2:unplace'] = function(src, list, key)
+Callbacks['vc2:unplace'] = function(src, key)
     if not isAdmin(src) then return { ok = false, msg = 'Admins only' } end
-    local d = Places[list] and Places[list][key]
-    if not d or not d.placed then return { ok = false, msg = 'Only kiosks / NPCs placed with /' .. Config.AdminCommands.place .. ' can be removed (edit config.lua for the others)' } end
+    local d = Places.kiosk[key]
+    if not d or not d.placed then return { ok = false, msg = 'Only kiosks placed with /' .. Config.AdminCommands.place .. ' can be removed (edit config.lua for the others)' } end
     if #(GetEntityCoords(GetPlayerPed(src)) - d.coords.xyz) > 15.0 then return { ok = false, msg = 'Too far away' } end
     db('update', 'DELETE FROM vc2_places WHERE id = ?', { tonumber(key:sub(2)) })
-    Places[list][key] = nil
-    TriggerClientEvent('vc2:placeRemove', -1, list, key)
+    Places.kiosk[key] = nil
+    TriggerClientEvent('vc2:placeRemove', -1, key)
     return { ok = true }
 end
 
@@ -657,7 +649,7 @@ end)
 exports('GetVC2Vehicle', function(plate)
     return db('single', 'SELECT * FROM vc2_vehicles WHERE plate = ?', { trim(plate) })
 end)
--- police: exports.VC2:ImpoundVehicle(plate) -> owner must pay the impound fee at a recovery NPC
+-- police: exports.VC2:ImpoundVehicle(plate) -> owner pays the impound fee to retrieve it from My cars
 exports('ImpoundVehicle', function(plate)
     plate = trim(plate)
     local ent = activeEntity(plate)
