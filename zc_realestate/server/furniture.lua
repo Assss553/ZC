@@ -60,7 +60,7 @@ RegisterCallback('orderFurniture', function(src, propertyId, cart)
     for _, w in ipairs(wanted) do
         for _ = 1, w.qty do DB.InsertFurniture(prop.id, w.item.model, w.item.price) end
     end
-    Bridge.Notify(src, L('order_done', count), 'success')
+    Bridge.Notify(src, LP(src, 'order_done', count), 'success')
     return true, { money = Bridge.GetMoney(src) }
 end)
 
@@ -80,7 +80,7 @@ RegisterCallback('placeFurniture', function(src, propertyId, fid, pos, rot)
 
     local x, y, z = tonumber(pos.x), tonumber(pos.y), tonumber(pos.z)
     if not (x and y and z) then return false, L('invalid_data') end
-    local spawn = Interiors[prop.interior].spawn
+    local spawn = GetInteriorSpawn(prop.interior, prop.door)
     if #(vector3(x, y, z) - vector3(spawn.x, spawn.y, spawn.z)) > Config.Furniture.PlaceRadius then
         return false, L('too_far_place')
     end
@@ -92,7 +92,7 @@ RegisterCallback('placeFurniture', function(src, propertyId, fid, pos, rot)
     DB.UpdateFurniture(piece)
     row.placed, row.x, row.y, row.z, row.rx, row.ry, row.rz = 1, piece.x, piece.y, piece.z, piece.rx, piece.ry, piece.rz
     broadcastInside(prop.id, 'place', pieceForClient(row))
-    Bridge.Notify(src, L('furniture_placed'), 'success')
+    Bridge.Notify(src, LP(src, 'furniture_placed'), 'success')
     return true
 end)
 
@@ -103,7 +103,7 @@ RegisterCallback('storeFurniture', function(src, propertyId, fid)
     if not row then return false, L('invalid_data') end
     DB.UpdateFurniture({ id = row.id, placed = false })
     broadcastInside(prop.id, 'remove', { id = row.id })
-    Bridge.Notify(src, L('furniture_stored'), 'info')
+    Bridge.Notify(src, LP(src, 'furniture_stored'), 'info')
     return true
 end)
 
@@ -116,6 +116,6 @@ RegisterCallback('sellFurniture', function(src, propertyId, fid)
     DB.DeleteFurniture(row.id)
     Bridge.AddMoney(src, refund, 'realestate-furniture-sell')
     broadcastInside(prop.id, 'remove', { id = row.id })
-    Bridge.Notify(src, L('furniture_sold', FormatMoney(refund)), 'success')
+    Bridge.Notify(src, LP(src, 'furniture_sold', FormatMoney(refund)), 'success')
     return true
 end)

@@ -1,5 +1,8 @@
 const I18N = {
     ar: {
+        app_settings: 'الإعدادات', set_sub: 'خصّص الايباد', set_wallpaper: 'الخلفية', set_wallpaper_sub: 'اختر خلفية الشاشة الرئيسية', set_custom_ph: 'أو حط رابط صورة https://...',
+        set_size: 'حجم الايباد', set_size_sub: 'كبّر أو صغّر الايباد على الشاشة', set_small: 'صغير', set_large: 'كبير', set_reset: 'افتراضي',
+        set_lang: 'اللغة', set_lang_sub: 'لغة الايباد والتنبيهات', set_about: 'حول', confirm_title: 'تأكيد', prompt_title: 'إدخال',
         hello: 'أهلاً', bank: 'الرصيد', realtor_badge: 'عقاري · رتبة {0}',
         sec_citizen: 'التطبيقات', sec_realtor: 'تطبيقات العقاري',
         app_estate: 'العقارات', app_furniture: 'الأثاث', app_contracts: 'العقود', app_create: 'إنشاء عقار', app_manage: 'إدارة العقارات', app_map: 'الخريطة',
@@ -50,6 +53,9 @@ const I18N = {
         card_view: 'عقار', unknown: '—', tier_low: 'اقتصادي', tier_mid: 'متوسط', tier_high: 'فاخر', tier_luxury: 'لوكس',
     },
     en: {
+        app_settings: 'Settings', set_sub: 'Personalise your iPad', set_wallpaper: 'Wallpaper', set_wallpaper_sub: 'Pick the home screen background', set_custom_ph: 'Or paste an image URL https://...',
+        set_size: 'iPad size', set_size_sub: 'Make the iPad bigger or smaller on screen', set_small: 'Small', set_large: 'Large', set_reset: 'Default',
+        set_lang: 'Language', set_lang_sub: 'iPad and notification language', set_about: 'About', confirm_title: 'Are you sure?', prompt_title: 'Input required',
         hello: 'Hello', bank: 'Bank', realtor_badge: 'Realtor · grade {0}',
         sec_citizen: 'Apps', sec_realtor: 'Realtor apps',
         app_estate: 'Real Estate', app_furniture: 'Furniture', app_contracts: 'Contracts', app_create: 'Create Property', app_manage: 'Manage', app_map: 'Map',
@@ -96,7 +102,7 @@ const I18N = {
     },
 };
 
-let LANG = 'ar';
+let LANG = 'en';
 function t(key, ...args) {
     const dict = I18N[LANG] || I18N.en;
     let s = dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);

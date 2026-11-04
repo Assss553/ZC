@@ -68,16 +68,17 @@ local function playerCoords(src)
     return GetEntityCoords(ped)
 end
 
-function NotifyIdentifier(identifier, msg, kind)
+-- NotifyIdentifier(identifier, kind, localeKey, ...) translated in the target's language
+function NotifyIdentifier(identifier, kind, key, ...)
     local src = Bridge.GetSourceByIdentifier(identifier)
-    if src then Bridge.Notify(src, msg, kind) end
+    if src then Bridge.Notify(src, LP(src, key, ...), kind) end
     return src
 end
 
 local function interiorLabel(key)
     local i = Interiors[key]
     if not i then return key end
-    return (Config.Locale == 'ar' and i.labelAr) or i.label
+    return (CurrentLang() == 'ar' and i.labelAr) or i.label
 end
 
 local function propImage(prop)
@@ -110,7 +111,7 @@ function ContractForClient(c, identifier)
         signature = c.signature, createdAt = c.created_at, signedAt = c.signed_at,
         expiresAt = c.created_at + Config.ContractExpireMinutes * 60,
         dueNow = c.ctype == 'rent' and c.rent_price or c.price,
-        label = prop and prop.label or ('#' .. c.property_id),
+        label = prop and prop.label or ('#' .. c.property_id), interior = prop and prop.interior,
         interiorLabel = prop and interiorLabel(prop.interior), image = prop and propImage(prop),
         street = prop and prop.street, rooms = prop and Interiors[prop.interior] and Interiors[prop.interior].rooms,
         isMine = identifier ~= nil and c.buyer == identifier,
@@ -166,7 +167,7 @@ RegisterNetEvent('zc_re:requestSync', function()
     if identifier then
         for _, p in ipairs(DB.TakePayouts(identifier)) do
             Bridge.AddMoney(src, p.amount, 'realestate-payout')
-            Bridge.Notify(src, L('payout', FormatMoney(p.amount)), 'success')
+            Bridge.Notify(src, LP(src, 'payout', FormatMoney(p.amount)), 'success')
         end
         -- show still-pending contracts on login
         for _, c in pairs(Contracts) do
@@ -254,12 +255,12 @@ RegisterCallback('createProperty', function(src, data)
     }
     prop.id = DB.InsertProperty(prop)
     Properties[prop.id] = prop
-    Bridge.Notify(src, L('property_created', prop.id), 'success')
+    Bridge.Notify(src, LP(src, 'property_created', prop.id), 'success')
 
     if buyerSrc then
         createContract(prop, buyerSrc, ptype, src)
-        Bridge.Notify(src, L('contract_sent', Bridge.GetName(buyerSrc)), 'success')
-        Bridge.Notify(buyerSrc, L('contract_received', Bridge.GetName(src)), 'info')
+        Bridge.Notify(src, LP(src, 'contract_sent', Bridge.GetName(buyerSrc)), 'success')
+        Bridge.Notify(buyerSrc, LP(buyerSrc, 'contract_received', Bridge.GetName(src)), 'info')
     end
     SyncAll()
     return true, prop.id
@@ -277,8 +278,8 @@ RegisterCallback('sendContract', function(src, propId, buyerId, ctype)
         if c.property_id == prop.id and c.status == 'pending' then c.status = 'cancelled'; DB.UpdateContract(c) end
     end
     createContract(prop, buyerId, ctype == 'rent' and 'rent' or (ctype == 'sale' and 'sale' or prop.ptype), src)
-    Bridge.Notify(src, L('contract_sent', Bridge.GetName(buyerId)), 'success')
-    Bridge.Notify(buyerId, L('contract_received', Bridge.GetName(src)), 'info')
+    Bridge.Notify(src, LP(src, 'contract_sent', Bridge.GetName(buyerId)), 'success')
+    Bridge.Notify(buyerId, LP(buyerId, 'contract_received', Bridge.GetName(src)), 'info')
     SyncAll()
     return true
 end)
@@ -352,14 +353,14 @@ RegisterCallback('signContract', function(src, id, signature)
         local rsrc = Bridge.GetSourceByIdentifier(c.realtor)
         if rsrc then
             Bridge.AddMoney(rsrc, commission, 'realestate-commission')
-            Bridge.Notify(rsrc, L('contract_signed_r', prop.owner_name, prop.label, FormatMoney(commission)), 'success')
+            Bridge.Notify(rsrc, LP(rsrc, 'contract_signed_r', prop.owner_name, prop.label, FormatMoney(commission)), 'success')
         elseif commission > 0 then
             DB.AddPayout(c.realtor, commission, 'commission #' .. c.id)
         end
     end
     pcall(Config.PaySociety, amount - commission, prop.id)
 
-    Bridge.Notify(src, L('contract_signed'), 'success')
+    Bridge.Notify(src, LP(src, 'contract_signed'), 'success')
     SyncAll()
     return true, ContractForClient(c, identifier)
 end)
@@ -374,9 +375,9 @@ RegisterCallback('declineContract', function(src, id)
     local prop = Properties[c.property_id]
     releaseIfPending(prop)
     if isBuyer and c.realtor then
-        NotifyIdentifier(c.realtor, L('contract_declined_r', c.buyer_name, prop and prop.label or ''), 'error')
+        NotifyIdentifier(c.realtor, 'error', 'contract_declined_r', c.buyer_name, prop and prop.label or '')
     end
-    Bridge.Notify(src, L('contract_declined'), 'info')
+    Bridge.Notify(src, LP(src, 'contract_declined'), 'info')
     SyncAll()
     return true
 end)
@@ -401,7 +402,7 @@ end)
 -- Owner actions
 ---------------------------------------------------------------------
 function Evict(prop, reason)
-    if prop.owner then NotifyIdentifier(prop.owner, L('evicted', prop.label), 'error') end
+    if prop.owner then NotifyIdentifier(prop.owner, 'error', 'evicted', prop.label) end
     -- kick everybody inside
     for s, pid in pairs(Inside) do
         if pid == prop.id then TriggerClientEvent('zc_re:forceExit', s) end
@@ -433,8 +434,8 @@ RegisterCallback('giveKey', function(src, id, target)
     for _, k in ipairs(prop.keyholders) do if k.identifier == ident then return true end end
     prop.keyholders[#prop.keyholders + 1] = { identifier = ident, name = Bridge.GetName(target) }
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('key_given', Bridge.GetName(target)), 'success')
-    Bridge.Notify(target, L('key_received', prop.label), 'success')
+    Bridge.Notify(src, LP(src, 'key_given', Bridge.GetName(target)), 'success')
+    Bridge.Notify(target, LP(target, 'key_received', prop.label), 'success')
     SyncAll()
     return true
 end)
@@ -446,7 +447,7 @@ RegisterCallback('removeKey', function(src, id, identifier)
         if k.identifier == identifier then table.remove(prop.keyholders, i) break end
     end
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('key_removed'), 'info')
+    Bridge.Notify(src, LP(src, 'key_removed'), 'info')
     SyncAll()
     return true
 end)
@@ -454,7 +455,7 @@ end)
 RegisterCallback('endLease', function(src, id)
     local prop = GetProp(id)
     if not prop or GetAccess(src, prop) ~= 'owner' or prop.status ~= 'rented' then return false, L('no_access') end
-    Bridge.Notify(src, L('lease_ended'), 'info')
+    Bridge.Notify(src, LP(src, 'lease_ended'), 'info')
     Evict(prop)
     return true
 end)
@@ -468,7 +469,7 @@ RegisterCallback('listForSale', function(src, id, price)
     if not price then return false, L('invalid_data') end
     prop.sale_price = price
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('listed', FormatMoney(price)), 'success')
+    Bridge.Notify(src, LP(src, 'listed', FormatMoney(price)), 'success')
     SyncAll()
     return true
 end)
@@ -478,7 +479,7 @@ RegisterCallback('cancelListing', function(src, id)
     if not prop or GetAccess(src, prop) ~= 'owner' then return false, L('no_access') end
     prop.sale_price = nil
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('unlisted'), 'info')
+    Bridge.Notify(src, LP(src, 'unlisted'), 'info')
     SyncAll()
     return true
 end)
@@ -496,7 +497,7 @@ RegisterCallback('marketBuy', function(src, id)
     local sellerSrc = Bridge.GetSourceByIdentifier(seller)
     if sellerSrc then
         Bridge.AddMoney(sellerSrc, payout, 'realestate-market')
-        Bridge.Notify(sellerSrc, L('market_sold', prop.label, FormatMoney(payout)), 'success')
+        Bridge.Notify(sellerSrc, LP(sellerSrc, 'market_sold', prop.label, FormatMoney(payout)), 'success')
     else
         DB.AddPayout(seller, payout, 'market #' .. prop.id)
     end
@@ -507,7 +508,7 @@ RegisterCallback('marketBuy', function(src, id)
     prop.owner, prop.owner_name, prop.keyholders, prop.sale_price, prop.locked = identifier, Bridge.GetName(src), {}, nil, true
     prop.price = price
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('market_bought', prop.label), 'success')
+    Bridge.Notify(src, LP(src, 'market_bought', prop.label), 'success')
     SyncAll()
     return true
 end)
@@ -527,7 +528,7 @@ RegisterCallback('updateProperty', function(src, id, data)
     if data.interior and Interiors[data.interior] and not prop.owner then prop.interior = data.interior end
     if data.image ~= nil then prop.image = sanitizeImage(data.image) end
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('property_updated'), 'success')
+    Bridge.Notify(src, LP(src, 'property_updated'), 'success')
     SyncAll()
     return true
 end)
@@ -542,7 +543,7 @@ RegisterCallback('setDoor', function(src, id, door, street)
     prop.door = d
     prop.street = sanitizeText(street, 120) or prop.street
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('property_updated'), 'success')
+    Bridge.Notify(src, LP(src, 'property_updated'), 'success')
     SyncAll()
     return true
 end)
@@ -552,7 +553,7 @@ RegisterCallback('evictProperty', function(src, id)
     local prop = GetProp(id)
     if not prop then return false end
     Evict(prop)
-    Bridge.Notify(src, L('property_evicted'), 'success')
+    Bridge.Notify(src, LP(src, 'property_evicted'), 'success')
     return true
 end)
 
@@ -563,13 +564,13 @@ RegisterCallback('deleteProperty', function(src, id)
     for s, pid in pairs(Inside) do
         if pid == prop.id then TriggerClientEvent('zc_re:forceExit', s) end
     end
-    if prop.owner then NotifyIdentifier(prop.owner, L('evicted', prop.label), 'error') end
+    if prop.owner then NotifyIdentifier(prop.owner, 'error', 'evicted', prop.label) end
     DB.DeleteProperty(prop.id)
     Properties[prop.id] = nil
     for _, c in pairs(Contracts) do
         if c.property_id == prop.id and c.status == 'pending' then c.status = 'cancelled' end
     end
-    Bridge.Notify(src, L('property_deleted'), 'success')
+    Bridge.Notify(src, LP(src, 'property_deleted'), 'success')
     SyncAll()
     return true
 end)
@@ -589,7 +590,7 @@ RegisterCallback('enter', function(src, id)
     if not allowed then
         -- knock
         for s, pid in pairs(Inside) do
-            if pid == prop.id then Bridge.Notify(s, L('knock', prop.label), 'info') end
+            if pid == prop.id then Bridge.Notify(s, LP(s, 'knock', prop.label), 'info') end
         end
         return false, L('locked')
     end
@@ -597,13 +598,15 @@ RegisterCallback('enter', function(src, id)
     local interior = Interiors[prop.interior]
     if not interior then return false, L('invalid_data') end
 
+    local spawn, shellPos = GetInteriorSpawn(prop.interior, prop.door)
     Inside[src] = prop.id
     local bucket = Config.BucketOffset + prop.id
     SetPlayerRoutingBucket(src, bucket)
     SetRoutingBucketPopulationEnabled(bucket, false)
 
     return true, {
-        id = prop.id, label = prop.label, spawn = interior.spawn, ipl = interior.ipl,
+        id = prop.id, label = prop.label, spawn = spawn, ipl = interior.ipl,
+        shell = interior.shell, shellPos = shellPos,
         furniture = GetPlacedFurniture(prop.id), canFurnish = access ~= nil,
     }
 end)

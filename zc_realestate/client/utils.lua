@@ -46,12 +46,12 @@ function StreetAt(coords)
     return street
 end
 
-function Teleport(x, y, z, h)
+function Teleport(x, y, z, h, exact)
     local ped = PlayerPedId()
     DoScreenFadeOut(400)
     while not IsScreenFadedOut() do Wait(0) end
     RequestCollisionAtCoord(x, y, z)
-    SetEntityCoords(ped, x, y, z - 0.98, false, false, false, false)
+    SetEntityCoords(ped, x, y, exact and z or z - 0.98, false, false, false, false)
     SetEntityHeading(ped, h or 0.0)
     local t = GetGameTimer() + 3000
     while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < t do Wait(0) end

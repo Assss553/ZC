@@ -5,6 +5,11 @@
              can also be a full https:// url
     ipl    = optional IPL to request (executive apartments need bob74_ipl or the IPL loaded)
     tier   = low / mid / high / luxury  (only for display)
+
+    SHELLS (k4mb1 "Free Props & Starter Shells" – https://forum.cfx.re/t/free-props-starter-shells-for-housing-scripts/4826922)
+    shell  = shell prop model. The shell is spawned under the house door (Config.ShellZOffset)
+    offset = entry/exit point relative to the shell origin (x, y, z, heading)
+    You must download the shells resource from the forum post and `ensure` it BEFORE this resource.
 ]]
 
 Interiors = {
@@ -83,7 +88,99 @@ Interiors = {
         tier = 'luxury', rooms = 3, image = 'img/houses/penthouse_vibrant.jpg',
         spawn = vec4(-786.96, 315.62, 187.91, 270.0), ipl = 'apa_v_mp_h_03_c',
     },
+
+    ------------------------------------------------------------------
+    -- k4mb1 starter shells (offsets from qb-interior)
+    ------------------------------------------------------------------
+    shell_container = {
+        label = 'Container Room', labelAr = 'غرفة كونتينر',
+        tier = 'low', rooms = 1, image = 'img/houses/shell_container.jpg',
+        shell = 'container_shell', offset = vec4(0.08, -5.73, 1.24, 359.32),
+    },
+    shell_trailer = {
+        label = 'Caravan (Shell)', labelAr = 'كرفان',
+        tier = 'low', rooms = 1, image = 'img/houses/shell_trailer.jpg',
+        shell = 'shell_trailer', offset = vec4(-1.40, -2.10, 3.30, 358.63),
+    },
+    shell_v16low = {
+        label = 'Starter Apartment', labelAr = 'شقة بداية',
+        tier = 'low', rooms = 1, image = 'img/houses/shell_v16low.jpg',
+        shell = 'shell_v16low', offset = vec4(4.69, -6.02, 1.11, 358.63),
+    },
+    shell_motel = {
+        label = 'Modern Motel Room', labelAr = 'غرفة موتيل مودرن',
+        tier = 'low', rooms = 1, image = 'img/houses/shell_motel.jpg',
+        shell = 'modernhotel_shell', offset = vec4(4.98, 4.35, 1.16, 179.79),
+    },
+    shell_v16mid = {
+        label = 'Mid Apartment (Shell)', labelAr = 'شقة متوسطة (شل)',
+        tier = 'mid', rooms = 2, image = 'img/houses/shell_v16mid.jpg',
+        shell = 'shell_v16mid', offset = vec4(1.56, -14.31, 1.15, 2.26),
+    },
+    shell_furnished = {
+        label = 'Furnished Apartment', labelAr = 'شقة مفروشة',
+        tier = 'mid', rooms = 2, image = 'img/houses/shell_furnished.jpg',
+        shell = 'furnitured_midapart', offset = vec4(1.46, -10.33, 1.06, 0.39),
+    },
+    shell_trevor = {
+        label = 'Trevor House', labelAr = 'بيت تريفور',
+        tier = 'low', rooms = 2, image = 'img/houses/shell_trevor.jpg',
+        shell = 'shell_trevor', offset = vec4(0.37, -3.79, 2.43, 358.63),
+    },
+    shell_lester = {
+        label = 'Lester House', labelAr = 'بيت ليستر',
+        tier = 'mid', rooms = 2, image = 'img/houses/shell_lester.jpg',
+        shell = 'shell_lester', offset = vec4(-1.78, -0.80, 1.10, 270.30),
+    },
+    shell_frankaunt = {
+        label = 'Family House', labelAr = 'بيت عائلي',
+        tier = 'mid', rooms = 3, image = 'img/houses/shell_frankaunt.jpg',
+        shell = 'shell_frankaunt', offset = vec4(-0.36, -5.89, 1.70, 358.21),
+    },
+    shell_ranch = {
+        label = 'Ranch House', labelAr = 'بيت مزرعة',
+        tier = 'mid', rooms = 3, image = 'img/houses/shell_ranch.jpg',
+        shell = 'shell_ranch', offset = vec4(-1.26, -5.47, 2.50, 270.57),
+    },
+    shell_michael = {
+        label = 'Grand Mansion (Shell)', labelAr = 'قصر فخم (شل)',
+        tier = 'luxury', rooms = 5, image = 'img/houses/shell_michael.jpg',
+        shell = 'shell_michael', offset = vec4(-9.49, 5.54, 9.91, 270.86),
+    },
+    shell_garage = {
+        label = 'Medium Garage', labelAr = 'كراج متوسط',
+        tier = 'mid', rooms = 1, image = 'img/houses/shell_garage.jpg',
+        shell = 'shell_garagemed', offset = vec4(13.90, 1.63, 1.00, 87.05),
+    },
+    shell_office = {
+        label = 'Office', labelAr = 'مكتب',
+        tier = 'mid', rooms = 2, image = 'img/houses/shell_office.jpg',
+        shell = 'shell_office1', offset = vec4(1.88, 5.06, 2.05, 180.07),
+    },
+    shell_store = {
+        label = 'Shop / Store', labelAr = 'محل تجاري',
+        tier = 'mid', rooms = 1, image = 'img/houses/shell_store.jpg',
+        shell = 'shell_store1', offset = vec4(-2.61, -4.73, 1.08, 1.0),
+    },
+    shell_warehouse = {
+        label = 'Warehouse', labelAr = 'مستودع',
+        tier = 'high', rooms = 1, image = 'img/houses/shell_warehouse.jpg',
+        shell = 'shell_warehouse1', offset = vec4(-8.95, 0.51, 1.04, 268.82),
+    },
 }
+
+-- Where the player appears inside a property.
+-- Returns spawn (vec4, ped position) and shellPos (vector3) for shell interiors.
+function GetInteriorSpawn(interiorKey, door)
+    local i = Interiors[interiorKey]
+    if not i then return nil end
+    if i.shell then
+        local pos = vector3(door.x + 0.0, door.y + 0.0, door.z + Config.ShellZOffset)
+        local o = i.offset
+        return vec4(pos.x + o.x, pos.y + o.y, pos.z + o.z, o.w), pos
+    end
+    return i.spawn, nil
+end
 
 -- Plain table version for the NUI / network
 function InteriorsForUI()
@@ -91,7 +188,7 @@ function InteriorsForUI()
     for key, v in pairs(Interiors) do
         list[#list + 1] = {
             key = key, label = v.label, labelAr = v.labelAr, tier = v.tier,
-            rooms = v.rooms, image = v.image,
+            rooms = v.rooms, image = v.image, shell = v.shell and true or false,
         }
     end
     table.sort(list, function(a, b) return a.label < b.label end)

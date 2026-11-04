@@ -3,8 +3,9 @@ Config = {}
 -- 'auto' | 'esx' | 'qb' | 'standalone'
 Config.Framework = 'auto'
 
--- 'ar' (العربية) | 'en'
-Config.Locale = 'ar'
+-- Default language: 'en' (primary) | 'ar' (alternative).
+-- Every player can switch language from the iPad Settings app.
+Config.Locale = 'en'
 
 Config.Currency = '$'
 
@@ -15,6 +16,7 @@ Config.PayAccount = 'bank'
 -- iPad / Tablet
 ---------------------------------------------------------------------
 Config.Tablet = {
+    DefaultWallpaper = 'img/wallpapers/street.jpg',
     Command   = 'ipad',          -- /ipad  يفتح الايباد
     Key       = 'F6',            -- default key (players can change it in GTA settings)
     Item      = 'realestate_ipad', -- usable item (set to false to disable)
@@ -86,7 +88,9 @@ Config.Furniture = {
 ---------------------------------------------------------------------
 -- World
 ---------------------------------------------------------------------
-Config.BucketOffset   = 5000   -- routing bucket = offset + property id (each house is its own instance)
+Config.BucketOffset   = 5000
+-- Shell interiors (k4mb1 starter shells) are spawned under the door at this height offset
+Config.ShellZOffset   = -35.0   -- routing bucket = offset + property id (each house is its own instance)
 Config.DoorDistance   = 1.8
 Config.DrawMarker     = true
 

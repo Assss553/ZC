@@ -11,13 +11,13 @@ local function processRent()
             if Config.Rent.AutoPay and src and (prop.overdue or 0) == 0 then
                 paid = Bridge.RemoveMoney(src, prop.rent_price, 'realestate-rent')
                 if paid then
-                    Bridge.Notify(src, L('rent_auto', prop.label, FormatMoney(prop.rent_price)), 'info')
+                    Bridge.Notify(src, LP(src, 'rent_auto', prop.label, FormatMoney(prop.rent_price)), 'info')
                     pcall(Config.PaySociety, prop.rent_price, prop.id)
                 end
             end
             if not paid then
                 prop.overdue = (prop.overdue or 0) + 1
-                if src then Bridge.Notify(src, L('rent_overdue', prop.label), 'error') end
+                if src then Bridge.Notify(src, LP(src, 'rent_overdue', prop.label), 'error') end
             end
             prop.rent_due = prop.rent_due + period(prop)
             changed = true
@@ -53,7 +53,7 @@ RegisterCallback('payRent', function(src, id)
     end
     pcall(Config.PaySociety, amount, prop.id)
     DB.SaveProperty(prop)
-    Bridge.Notify(src, L('rent_paid', FormatMoney(amount)), 'success')
+    Bridge.Notify(src, LP(src, 'rent_paid', FormatMoney(amount)), 'success')
     SyncAll()
     return true
 end)

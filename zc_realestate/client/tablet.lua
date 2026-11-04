@@ -4,7 +4,8 @@ local contractOpen = false
 
 local function staticData()
     return {
-        locale = Config.Locale, currency = Config.Currency, interiors = InteriorsForUI(),
+        locale = CurrentLang(), defaultLocale = Config.Locale, currency = Config.Currency, interiors = InteriorsForUI(),
+        wallpaper = Config.Tablet.DefaultWallpaper,
         furniture = FurnitureCatalog, categories = FurnitureCategories,
         maxFurniture = Config.Furniture.MaxPieces, furnitureImage = Config.Furniture.ImageUrl,
         map = Config.Map, rentDays = Config.Rent.DefaultDays, directPurchase = Config.AllowDirectPurchase,
@@ -87,6 +88,15 @@ RegisterNUICallback('close', function(_, cb)
     CloseTablet()
 end)
 
+-- language chosen in the iPad settings (also sent once when the UI loads)
+RegisterNUICallback('setLang', function(data, cb)
+    cb(1)
+    if data.lang == 'en' or data.lang == 'ar' then
+        ClientLang = data.lang
+        TriggerServerEvent('zc_re:setLang', data.lang)
+    end
+end)
+
 RegisterNUICallback('closeOverlay', function(_, cb)
     cb(1)
     contractOpen = false
@@ -123,7 +133,7 @@ RegisterNUICallback('waypoint', function(data, cb)
     cb(1)
     if data.x and data.y then
         SetNewWaypoint(data.x + 0.0, data.y + 0.0)
-        Notify(Config.Locale == 'ar' and 'تم تحديد الموقع على الخريطة' or 'Waypoint set', 'success')
+        Notify(L('waypoint_set'), 'success')
     end
 end)
 

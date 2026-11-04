@@ -1,6 +1,9 @@
 -- Re-sync the property list once the character is loaded
 local function loaded()
-    SetTimeout(1500, function() TriggerServerEvent('zc_re:requestSync') end)
+    SetTimeout(1500, function()
+        if ClientLang then TriggerServerEvent('zc_re:setLang', ClientLang) end
+        TriggerServerEvent('zc_re:requestSync')
+    end)
 end
 
 RegisterNetEvent('esx:playerLoaded', loaded)

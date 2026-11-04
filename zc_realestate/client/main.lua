@@ -1,5 +1,11 @@
 PropertyList = {}       -- synced from server (personalised)
 CurrentHouse = nil      -- { id, label, spawn, door, canFurnish }
+ShellObject = nil       -- spawned shell prop for shell interiors
+
+local function deleteShell()
+    if ShellObject and DoesEntityExist(ShellObject) then DeleteEntity(ShellObject) end
+    ShellObject = nil
+end
 local blips = {}
 
 ---------------------------------------------------------------------
@@ -30,9 +36,9 @@ local function refreshBlips()
         elseif p.hasKey then
             addBlip(p, Config.Blips.Key, p.label)
         elseif p.status == 'available' and Config.Blips.Available.show then
-            addBlip(p, Config.Blips.Available, Config.Locale == 'ar' and 'عقار متاح' or 'Property Available')
+            addBlip(p, Config.Blips.Available, L('blip_available'))
         elseif p.salePrice and Config.Blips.Market.show then
-            addBlip(p, Config.Blips.Market, Config.Locale == 'ar' and 'عقار للبيع' or 'Property For Sale')
+            addBlip(p, Config.Blips.Market, L('blip_market'))
         end
     end
 end
@@ -109,7 +115,24 @@ function EnterProperty(id)
         id = data.id, label = data.label, spawn = data.spawn, canFurnish = data.canFurnish,
         door = prop and prop.door,
     }
-    Teleport(data.spawn.x, data.spawn.y, data.spawn.z, data.spawn.w)
+    if data.shell and data.shellPos then
+        DoScreenFadeOut(300)
+        while not IsScreenFadedOut() do Wait(0) end
+        local hash = LoadModel(data.shell)
+        if not hash then
+            DoScreenFadeIn(300)
+            Notify(('Shell "%s" is not streamed (install the starter shells resource)'):format(data.shell), 'error')
+            ServerCall('exit')
+            CurrentHouse = nil
+            return
+        end
+        local p = data.shellPos
+        ShellObject = CreateObject(hash, p.x, p.y, p.z, false, false, false)
+        FreezeEntityPosition(ShellObject, true)
+        SetEntityHeading(ShellObject, 0.0)
+        SetModelAsNoLongerNeeded(hash)
+    end
+    Teleport(data.spawn.x, data.spawn.y, data.spawn.z, data.spawn.w, data.shell ~= nil)
     SpawnAllFurniture(data.furniture or {})
 end
 
@@ -122,6 +145,9 @@ function ExitProperty()
     DeleteAllFurniture()
     CurrentHouse = nil
     if door then
+        DoScreenFadeOut(300)
+        while not IsScreenFadedOut() do Wait(0) end
+        deleteShell()
         local found, gz = GetGroundZFor_3dCoord(door.x, door.y, door.z + 1.0, false)
         Teleport(door.x, door.y, found and gz + 1.0 or door.z, door.h)
     end
@@ -192,6 +218,7 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     clearBlips()
     DeleteAllFurniture()
+    deleteShell()
     SetNuiFocus(false, false)
     if CurrentHouse and CurrentHouse.door then
         local d = CurrentHouse.door

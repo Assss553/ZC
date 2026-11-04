@@ -54,7 +54,7 @@ function OpenFurniturePanel()
     SendNUIMessage({
         action = 'furniturePanel', propertyId = CurrentHouse.id, label = CurrentHouse.label,
         pieces = res.pieces, max = res.max,
-        static = { locale = Config.Locale, currency = Config.Currency, furniture = FurnitureCatalog,
+        static = { locale = CurrentLang(), currency = Config.Currency, furniture = FurnitureCatalog,
                    categories = FurnitureCategories, furnitureImage = Config.Furniture.ImageUrl, sellBack = Config.Furniture.SellBack },
     })
     SetNuiFocus(true, true)

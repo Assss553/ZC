@@ -65,7 +65,26 @@
 - أثاث جديد: أضفه في `shared/furniture.lua` (`model`, `label`, `cat`, `price`).
 
 ## اللغة
-`Config.Locale = 'ar'` أو `'en'` (الواجهة والرسائل).
+اللغة الأساسية **إنجليزي** (`Config.Locale = 'en'`) والبديلة **عربي**. كل لاعب يقدر يغيّر اللغة من تطبيق **الإعدادات** في الايباد، وتتغير معها الواجهة وتنبيهات السيرفر.
+
+## الايباد (التصميم الجديد)
+- الشاشة الرئيسية: خلفية كاملة + **Dock** تحت فيه التطبيقات: الأثاث · العقاري (إنشاء عقار) · العقود · العقارات · الإعدادات · إدارة العقارات.
+  تطبيقات العقاري (إنشاء / إدارة) ما تطلع إلا لصاحب الوظيفة والرتبة.
+- تطبيق **الإعدادات**: تغيير الخلفية (3 خلفيات + رابط صورة خاص)، **حجم الايباد** (70% – 115%)، واللغة. الإعدادات تنحفظ لكل لاعب.
+- الأيقونات في `html/img/icons/` والخلفيات في `html/img/wallpapers/` — تقدر تستبدلها بنفس الأسماء.
+- الخلفية الافتراضية: `Config.Tablet.DefaultWallpaper`.
+
+## البيوت الجاهزة (Shells)
+أضفت 15 تصميم من **k4mb1 Free Props & Starter Shells**
+(https://forum.cfx.re/t/free-props-starter-shells-for-housing-scripts/4826922):
+`container_shell`, `shell_trailer`, `shell_v16low`, `modernhotel_shell`, `shell_v16mid`, `furnitured_midapart`, `shell_trevor`,
+`shell_lester`, `shell_frankaunt`, `shell_ranch`, `shell_michael`, `shell_garagemed`, `shell_office1`, `shell_store1`, `shell_warehouse1`.
+
+1. حمّل ريسورس الشِلز من رابط المنتدى (يحتاج تسجيل دخول في cfx).
+2. حطه في `resources` وشغّله **قبل** السكربت: `ensure k4mb1-shells` (أو اسم المجلد عندك).
+3. التصاميم تطلع تلقائياً في خطوة "التصميم" وقت إنشاء عقار.
+
+الشل ينرسم تحت باب البيت بـ `Config.ShellZOffset` (افتراضي -35)، وكل بيت Instance مستقل. إذا الشل مو موجود يطلع تنبيه وما يدخل اللاعب.
 
 ## ملاحظة للمطور
 تقدر تفتح `html/index.html` في المتصفح مباشرة لمعاينة الواجهة ببيانات تجريبية:

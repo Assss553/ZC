@@ -47,6 +47,9 @@ Locales = {
         help_exit          = '~INPUT_CONTEXT~ خروج  ~INPUT_DETONATE~ الأثاث',
         aim_help           = 'صوّب على الباب ~INPUT_CONTEXT~ تأكيد  ~INPUT_FRONTEND_RRIGHT~ إلغاء',
         knock              = 'أحد يطرق باب %s',
+        blip_available     = 'عقار متاح',
+        blip_market        = 'عقار للبيع',
+        waypoint_set       = 'تم تحديد الموقع على الخريطة',
     },
     en = {
         no_access          = 'You have no access',
@@ -96,17 +99,35 @@ Locales = {
         help_exit          = '~INPUT_CONTEXT~ Exit  ~INPUT_DETONATE~ Furniture',
         aim_help           = 'Aim at the door ~INPUT_CONTEXT~ confirm  ~INPUT_FRONTEND_RRIGHT~ cancel',
         knock              = 'Someone is knocking at %s',
+        blip_available     = 'Property Available',
+        blip_market        = 'Property For Sale',
+        waypoint_set       = 'Waypoint set',
     },
 }
 
-function L(key, ...)
-    local lang = Locales[Config.Locale] or Locales.en
-    local str = lang[key] or Locales.en[key] or key
-    if select('#', ...) > 0 then
-        return str:format(...)
+PlayerLang = {}      -- server: [src] = 'en' | 'ar'
+CurrentLangSrc = nil -- server: set while a callback runs
+ClientLang = nil     -- client: chosen in the iPad settings
+
+function CurrentLang(src)
+    if IsDuplicityVersion() then
+        src = src or CurrentLangSrc
+        return (src and PlayerLang[src]) or Config.Locale
     end
+    return ClientLang or Config.Locale
+end
+
+local function translate(lang, key, ...)
+    local dict = Locales[lang] or Locales.en
+    local str = dict[key] or Locales.en[key] or key
+    if select('#', ...) > 0 then return str:format(...) end
     return str
 end
+
+function L(key, ...) return translate(CurrentLang(), key, ...) end
+
+-- server: translate for a specific player
+function LP(src, key, ...) return translate(CurrentLang(src), key, ...) end
 
 function FormatMoney(n)
     n = math.floor(tonumber(n) or 0)

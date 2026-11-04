@@ -49,6 +49,11 @@ const IC = {
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
     alert: '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',
     door_open: '<path d="M13 4h5a1 1 0 0 1 1 1v16M3 21h18M13 4v17L5 19V6z"/><circle cx="10" cy="12" r=".8"/>',
+    briefcase: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18M11 13v2h2v-2"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+    resize: '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
     eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
 };
 const icon = (n) => `<svg viewBox="0 0 24 24">${IC[n] || IC.info}</svg>`;
@@ -61,7 +66,27 @@ const S = {
     create: null, pickTarget: null,
     map: { z: 1, x: 0, y: 0, ready: false, hasImg: true },
     overlay: null, fp: null,
+    settings: { wallpaper: null, scale: 1, lang: null },
 };
+
+/* ------------------------------------------------------------------ settings (saved per player in the NUI storage) */
+const WALLPAPERS = ['img/wallpapers/street.jpg', 'img/wallpapers/pond.jpg', 'img/wallpapers/forest.jpg'];
+function loadSettings() {
+    try { Object.assign(S.settings, JSON.parse(localStorage.getItem('zc_re_settings') || '{}')); } catch (e) { /* storage unavailable */ }
+}
+function saveSettings() {
+    try { localStorage.setItem('zc_re_settings', JSON.stringify(S.settings)); } catch (e) { /* storage unavailable */ }
+}
+function applySettings() {
+    const wall = S.settings.wallpaper || (S.st && S.st.wallpaper) || WALLPAPERS[0];
+    $('#screen').style.setProperty('--wall', `url('${String(wall).replace(/'/g, '%27')}')`);
+    $('#tablet').style.setProperty('--scale', S.settings.scale || 1);
+    LANG = S.settings.lang || (S.st && (S.st.defaultLocale || S.st.locale)) || 'en';
+    document.documentElement.lang = LANG;
+    document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
+}
+loadSettings();
+if (S.settings.lang && IS_GAME) post('setLang', { lang: S.settings.lang });
 
 const resetCreate = () => {
     S.create = { step: 1, interior: null, label: '', ptype: 'sale', price: '', rentPrice: '', rentDays: (S.st && S.st.rentDays) || 7, buyerId: '', image: '', door: null, street: '' };
@@ -160,28 +185,50 @@ Views.home = () => {
     const now = new Date();
     const pending = (d.contracts || []).filter((c) => c.status === 'pending' && c.isMine).length;
     const overdue = props().filter((p) => p.isOwner && p.overdue > 0).length;
-    const app = (view, label, ic, grad, badge) => `<div class="app" data-act="go" data-view="${view}">
-        <div class="ic ${grad}">${icon(ic)}</div><span>${label}</span>${badge ? `<i class="badge">${badge}</i>` : ''}</div>`;
-    return `<div class="home">
-        <div class="home-head">
-            <div><div class="time">${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
-            <div class="date">${t('hello')} <b>${esc(d.name)}</b> · ${now.toLocaleDateString(LANG === 'ar' ? 'ar' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
-            <div class="wallet"><div class="w-ic">${icon('cash')}</div><div><small>${t('bank')}</small><b>${moneyText(d.money)}</b></div></div>
+    const img = (f) => `<img class="aicon" src="img/icons/${f}.jpg" alt="">`;
+    const css = (cls, ic) => `<span class="aicon ${cls}">${icon(ic)}</span>`;
+    const app = (view, label, art, badge) => `<button class="dock-app" data-act="go" data-view="${view}">${art}
+        ${badge ? `<i class="badge">${badge}</i>` : ''}<span class="dock-tip">${label}</span></button>`;
+    return `<div class="home2">
+        <div class="home-clock"><b>${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</b>
+            <span>${now.toLocaleDateString(LANG === 'ar' ? 'ar' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+        <div class="home-wallet">${icon('cash')}<span>${moneyText(d.money)}</span></div>
+        <div class="dock">
+            ${app('shop', t('app_furniture'), img('furniture'))}
+            ${d.isRealtor ? app('create', t('app_create'), css('ai-blue', 'briefcase')) : ''}
+            ${app('contracts', t('app_contracts'), css('ai-dark', 'file'), pending)}
+            ${app('dashboard', t('app_estate'), img('realestate'), overdue)}
+            ${app('settings', t('app_settings'), img('settings'))}
+            ${d.isRealtor ? app('manage', t('app_manage'), css('ai-orange', 'building')) : ''}
         </div>
-        <div class="home-section">${t('sec_citizen')}</div>
-        <div class="apps">
-            ${app('dashboard', t('app_estate'), 'home', 'g-orange', overdue)}
-            ${app('shop', t('app_furniture'), 'sofa', 'g-purple')}
-            ${app('contracts', t('app_contracts'), 'file', 'g-blue', pending)}
-            ${app('list', t('mine_title'), 'key', 'g-green')}
-        </div>
-        ${d.isRealtor ? `<div class="home-section">${t('sec_realtor')} · ${t('realtor_badge', d.grade)}</div>
-        <div class="apps">
-            ${app('create', t('app_create'), 'plus', 'g-gold')}
-            ${app('manage', t('app_manage'), 'building', 'g-dark')}
-            ${app('contracts', t('contracts_title'), 'pen', 'g-dark')}
-        </div>` : ''}
     </div>`;
+};
+
+Views.settings = () => {
+    const cur = S.settings.wallpaper || S.st.wallpaper || WALLPAPERS[0];
+    const custom = S.settings.wallpaper && !WALLPAPERS.includes(S.settings.wallpaper) ? S.settings.wallpaper : '';
+    const pct = Math.round((S.settings.scale || 1) * 100);
+    return `<div class="page">${appbar(t('app_settings'), t('set_sub'))}
+        <div class="scroll settings">
+            <section class="set-card">
+                <div class="set-head">${icon('image')}<div><b>${t('set_wallpaper')}</b><small>${t('set_wallpaper_sub')}</small></div></div>
+                <div class="walls">${WALLPAPERS.map((w) => `<button class="wall ${w === cur ? 'on' : ''}" data-act="setwall" data-src="${w}" style="background-image:url('${w}')">${w === cur ? `<i>${icon('check')}</i>` : ''}</button>`).join('')}</div>
+                <div class="set-row"><input class="input" id="customWall" placeholder="${t('set_custom_ph')}" value="${esc(custom)}"><button class="btn ghost" data-act="setwallurl">${t('save')}</button></div>
+            </section>
+            <section class="set-card">
+                <div class="set-head">${icon('resize')}<div><b>${t('set_size')}</b><small>${t('set_size_sub')}</small></div><span class="set-val" id="scaleVal">${pct}%</span></div>
+                <div class="set-row"><span class="muted">${t('set_small')}</span><input type="range" class="range" id="scaleRange" min="70" max="115" step="1" value="${pct}"><span class="muted">${t('set_large')}</span>
+                <button class="btn ghost" data-act="resetscale">${t('set_reset')}</button></div>
+            </section>
+            <section class="set-card">
+                <div class="set-head">${icon('globe')}<div><b>${t('set_lang')}</b><small>${t('set_lang_sub')}</small></div></div>
+                <div class="seg" style="max-width:360px"><button class="${LANG === 'en' ? 'on' : ''}" data-act="setlang" data-v="en">English</button><button class="${LANG === 'ar' ? 'on' : ''}" data-act="setlang" data-v="ar">العربية</button></div>
+            </section>
+            <section class="set-card">
+                <div class="set-head">${icon('info')}<div><b>${t('set_about')}</b><small>ZC Realty OS · v1.1 · ${esc(S.data.name)} · ID ${S.data.serverId}</small></div>
+                ${S.data.isRealtor ? `<span class="chip orange">${t('realtor_badge', S.data.grade)}</span>` : ''}</div>
+            </section>
+        </div></div>`;
 };
 
 Views.dashboard = () => {
@@ -423,7 +470,7 @@ Views.create = () => {
     let body = '';
     if (c.step === 1) {
         body = `<div class="igrid">${S.st.interiors.map((i) => `<div class="card icard ${c.interior === i.key ? 'on' : ''}" data-act="pickinterior" data-key="${i.key}">
-            <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span></div>
+            <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span>${i.shell ? '<span class="chip shell-chip">SHELL</span>' : ''}</div>
             <div class="ib"><b>${esc(interiorName(i))}</b><small>${t('rooms', i.rooms)}</small></div></div>`).join('')}</div>`;
     } else if (c.step === 2) {
         body = `<div class="form">
@@ -528,12 +575,12 @@ function contractPaper(c, preview) {
     const canSign = !preview && c.status === 'pending' && c.isMine;
     const left = c.expiresAt ? Math.max(0, c.expiresAt - Math.floor(Date.now() / 1000)) : 0;
     return `<div class="paper">
-        <div class="c-head"><div class="c-logo">${icon('file')}</div><div><h2>${t(rent ? 'c_title_rent' : 'c_title_sale')}</h2><p>${t('c_no', c.id || '—', fmtDate(c.createdAt))}</p></div><div class="grow"></div><span class="stamp ${c.status}">${t('st_' + c.status)}</span></div>
+        <div class="c-head"><div class="c-logo">${icon('file')}</div><div><h2>${t(rent ? 'c_title_rent' : 'c_title_sale')}</h2><p>${t('c_no', c.id || '—', fmtDate(c.createdAt))}</p></div><div class="grow"></div><span class="stamp ${c.status}">${t('st_' + c.status)}</span>${preview ? '' : `<button class="modal-x static" data-act="closeov">${icon('close')}</button>`}</div>
         <div class="c-body">
             <div class="c-top"><div ${bgImage(c.image, 'mid')}></div>
                 <div class="c-grid">
                     <div><small>${t('card_view')}</small><b>${esc(c.label)}</b></div>
-                    <div><small>${t('interior')}</small><b>${esc(c.interiorLabel || '')}</b></div>
+                    <div><small>${t('interior')}</small><b>${esc(c.interior && interiorOf(c.interior) ? interiorName(interiorOf(c.interior)) : (c.interiorLabel || ''))}</b></div>
                     <div><small>${t('location')}</small><b>${esc(c.street || t('unknown'))}</b></div>
                     <div><small>${t('rooms', '').trim() || 'Rooms'}</small><b>${c.rooms || 1}</b></div>
                     <div><small>${t('type')}</small><b>${t(rent ? 't_rent' : 't_sale')}</b></div>
@@ -569,8 +616,8 @@ function showContract(c) {
     const canSign = c.status === 'pending' && c.isMine;
     const realtorCancel = c.status === 'pending' && !c.isMine && S.data && S.data.isRealtor;
     showOverlay(`<div class="contract">${contractPaper(c)}
-        <div class="dialog-actions">${canSign ? `<button class="btn ghost cond" data-act="cdecline" data-id="${c.id}">${t('c_decline')}</button><button class="btn primary cond" data-act="csign" data-id="${c.id}">${t('c_sign')}</button>`
-            : `<button class="btn ghost cond" data-act="closeov" ${realtorCancel ? '' : 'style="grid-column:span 2"'}>${t('close')}</button>${realtorCancel ? `<button class="btn danger cond" data-act="cdecline" data-id="${c.id}">${t('cancel')}</button>` : ''}`}</div></div>`, 'contract');
+        <div class="modal-actions">${canSign ? `<button class="btn outline" data-act="cdecline" data-id="${c.id}">${icon('x')}${t('c_decline')}</button><button class="btn primary" data-act="csign" data-id="${c.id}">${icon('pen')}${t('c_sign')}</button>`
+            : `<button class="btn outline" data-act="closeov" ${realtorCancel ? '' : 'style="grid-column:span 2"'}>${t('close')}</button>${realtorCancel ? `<button class="btn danger" data-act="cdecline" data-id="${c.id}">${t('cancel')}</button>` : ''}`}</div></div>`, 'contract');
     clearInterval(contractTimer);
     if (canSign) contractTimer = setInterval(() => {
         const el = $('#cTimer'); if (!el) return clearInterval(contractTimer);
@@ -580,26 +627,31 @@ function showContract(c) {
 }
 
 let dialogCb = null;
-function confirmDialog(msg, okLabel, cb) {
-    dialogCb = cb;
-    showOverlay(`<div class="dialog"><div class="msg">${esc(msg)}</div><div class="dialog-actions">
-        <button class="btn ghost cond" data-act="dlgno">${t('cancel')}</button><button class="btn primary cond" data-act="dlgyes">${okLabel || t('confirm')}</button></div></div>`, 'dialog');
+function modal(title, body, actions) {
+    return `<div class="modal"><button class="modal-x" data-act="dlgno">${icon('close')}</button>
+        <h3>${esc(title)}</h3>${body}<div class="modal-actions">${actions}</div></div>`;
 }
-function promptDialog(msg, type, cb) {
+function confirmDialog(msg, okLabel, cb, title) {
     dialogCb = cb;
-    showOverlay(`<div class="dialog"><div class="msg">${esc(msg)}<input class="input" id="dlgInput" type="${type || 'text'}"></div><div class="dialog-actions">
-        <button class="btn ghost cond" data-act="dlgno">${t('cancel')}</button><button class="btn primary cond" data-act="dlgyes">${t('confirm')}</button></div></div>`, 'dialog');
+    showOverlay(modal(title || t('confirm_title'), `<p>${esc(msg)}</p>`,
+        `<button class="btn outline" data-act="dlgno">${t('cancel')}</button><button class="btn primary" data-act="dlgyes">${okLabel || t('confirm')}</button>`), 'dialog');
+}
+function promptDialog(msg, type, cb, title) {
+    dialogCb = cb;
+    showOverlay(modal(title || t('prompt_title'), `<p>${esc(msg)}</p><input class="input" id="dlgInput" type="${type || 'text'}">`,
+        `<button class="btn outline" data-act="dlgno">${t('cancel')}</button><button class="btn primary" data-act="dlgyes">${t('confirm')}</button>`), 'dialog');
 }
 
 function showPropertyCard(p) {
-    const buy = p.status === 'available' ? (S.st.directPurchase ? `<button class="btn primary cond" data-act="request" data-id="${p.id}">${p.ptype === 'rent' ? t('a_rentit', moneyText(p.rentPrice)) : t('a_buy', moneyText(p.price))}</button>` : '')
-        : p.salePrice ? `<button class="btn primary cond" data-act="marketbuy" data-id="${p.id}">${t('a_buy', moneyText(p.salePrice))}</button>` : '';
-    const visit = p.status === 'available' && S.st.visit ? `<button class="btn ghost cond" data-act="visit" data-id="${p.id}">${t('a_visit')}</button>` : '';
-    showOverlay(`<div class="dialog pcard-dialog"><div class="paper"><div ${propImg(p)}></div>
-        <div class="pc-body"><div style="display:flex;justify-content:space-between;align-items:center"><h2>${esc(p.label)}</h2>${statusChip(p)}</div>
-        <div class="meta"><span>${icon('pin')}${esc(p.street || '')}</span><span>${icon('door')}${t('rooms', p.rooms)}</span></div>
-        <div>${priceLine(p)}</div><div class="muted" style="font-size:12px">${esc(interiorName(interiorOf(p.interior)))}</div></div></div>
-        <div class="dialog-actions" style="grid-template-columns:repeat(${[buy, visit].filter(Boolean).length + 1},1fr)"><button class="btn ghost cond" data-act="closeov">${t('close')}</button>${visit}${buy}</div></div>`, 'card');
+    const buy = p.status === 'available' ? (S.st.directPurchase ? `<button class="btn primary" data-act="request" data-id="${p.id}">${p.ptype === 'rent' ? t('a_rentit', moneyText(p.rentPrice)) : t('a_buy', moneyText(p.price))}</button>` : '')
+        : p.salePrice ? `<button class="btn primary" data-act="marketbuy" data-id="${p.id}">${t('a_buy', moneyText(p.salePrice))}</button>` : '';
+    const visit = p.status === 'available' && S.st.visit ? `<button class="btn outline" data-act="visit" data-id="${p.id}">${icon('eye')}${t('a_visit')}</button>` : '';
+    showOverlay(`<div class="modal modal-card"><button class="modal-x" data-act="closeov">${icon('close')}</button>
+        <div ${propImg(p, 'modal-img')}></div>
+        <div class="modal-pad"><div class="modal-title-row"><h3>${esc(p.label)}</h3>${statusChip(p)}</div>
+        <div class="meta"><span>${icon('pin')}${esc(p.street || '')}</span><span>${icon('door')}${t('rooms', p.rooms)}</span><span>${esc(interiorName(interiorOf(p.interior)))}</span></div>
+        <div class="modal-price">${priceLine(p)}</div>
+        <div class="modal-actions" style="grid-template-columns:repeat(${Math.max(1, [buy, visit].filter(Boolean).length)},1fr)">${visit}${buy || `<button class="btn outline" data-act="closeov">${t('close')}</button>`}</div></div></div>`, 'card');
 }
 
 /* ------------------------------------------------------------------ furniture panel (inside house) */
@@ -631,6 +683,7 @@ async function refreshFP() {
 function render() {
     if (!S.open || !S.data) return;
     const v = Views[S.view] || Views.home;
+    $('#screen').classList.toggle('in-app', S.view !== 'home');
     $('#view').innerHTML = v();
     if (S.view === 'dashboard') requestAnimationFrame(setupMap);
 }
@@ -732,6 +785,11 @@ const A = {
     msend: (el) => promptDialog(t('q_sendcontract'), 'number', async (v) => { await call('sendContract', Number(el.dataset.id), Number(v)); }),
     mevict: (el) => confirmDialog(t('q_evict'), t('yes'), async () => { await call('evictProperty', Number(el.dataset.id)); }),
     mdelete: (el) => confirmDialog(t('q_delete'), t('yes'), async () => { const r = await call('deleteProperty', Number(el.dataset.id)); if (r.ok) back(); }),
+    // settings
+    setwall: (el) => { S.settings.wallpaper = el.dataset.src; saveSettings(); applySettings(); render(); },
+    setwallurl: () => { const v = ($('#customWall').value || '').trim(); if (v && !/^https:\/\//.test(v)) return toast('https://...', 'error'); S.settings.wallpaper = v || null; saveSettings(); applySettings(); render(); },
+    resetscale: () => { S.settings.scale = 1; saveSettings(); applySettings(); render(); },
+    setlang: (el) => { S.settings.lang = el.dataset.v; saveSettings(); applySettings(); post('setLang', { lang: S.settings.lang }); render(); },
     // furniture panel
     fpclose: () => { S.fp = null; $('#furniturePanel').classList.add('hidden'); post('furnitureClose'); },
     fptab: (el) => { S.fp.tab = el.dataset.tab; renderFP(); },
@@ -756,6 +814,11 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('input', (e) => {
     const el = e.target;
+    if (el.id === 'scaleRange') {
+        S.settings.scale = Number(el.value) / 100; saveSettings(); applySettings();
+        const v = $('#scaleVal'); if (v) v.textContent = el.value + '%';
+        return;
+    }
     if (!el.dataset || !el.dataset.bind) return;
     const path = el.dataset.bind.split('.');
     let obj = S;
@@ -785,9 +848,7 @@ document.addEventListener('keydown', (e) => {
 function applyStatic(st) {
     if (!st) return;
     S.st = Object.assign(S.st || {}, st);
-    LANG = st.locale || LANG;
-    document.documentElement.lang = LANG;
-    document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
+    applySettings();
 }
 
 window.addEventListener('message', (ev) => {
@@ -884,12 +945,16 @@ if (!IS_GAME) {
         properties: [P(1, 'Alta Street 12', 'integrity_way', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [] }),
             P(2, 'Vinewood Villa', 'franklin_vinewood', 'available', 7, 538), P(3, 'Grove Room', 'low_apartment', 'rented', -14, -1440, { ptype: 'rent', isOwner: true, hasKey: true, ownerName: 'Jaber Ali', overdue: 1, rentDue: Date.now() / 1000 + 86400 }),
             P(4, 'Conker Hills', 'north_conker', 'owned', 342, 437, { ownerName: 'Omar', salePrice: 650000 }), P(5, 'Mirror Park 4', 'medium_apartment', 'available', 1100, -500, { ptype: 'rent' })],
-        contracts: [{ id: 7, propertyId: 2, ctype: 'sale', price: 230000, rentPrice: 0, rentDays: 7, buyerName: 'Jaber Ali', realtorName: 'Saad Realty', status: 'pending', isMine: true, createdAt: Date.now() / 1000, expiresAt: Date.now() / 1000 + 1700, label: 'Vinewood Villa', interiorLabel: 'فيلا فاينوود هيلز', street: 'Wild Oats Dr', rooms: 4 }],
+        contracts: [{ id: 7, propertyId: 2, ctype: 'sale', price: 230000, rentPrice: 0, rentDays: 7, buyerName: 'Jaber Ali', realtorName: 'Saad Realty', status: 'pending', isMine: true, createdAt: Date.now() / 1000, expiresAt: Date.now() / 1000 + 1700, label: 'Vinewood Villa', interior: 'franklin_vinewood', street: 'Wild Oats Dr', rooms: 4 }],
     };
-    const st = { locale: new URLSearchParams(location.search).get('lang') || 'ar', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true };
+    const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true };
     const q = new URLSearchParams(location.search);
+    if (q.get('lang')) S.settings.lang = q.get('lang');
+    if (q.get('wall')) S.settings.wallpaper = `img/wallpapers/${q.get('wall')}.jpg`;
     setTimeout(() => {
         window.postMessage({ action: 'open', data: Mock.data, static: st, app: q.get('app') || 'home' }, '*');
+        if (q.get('dialog')) setTimeout(() => confirmDialog('Someone wants to buy your property. Do you want to allow it?', null, null, 'Sale Request'), 100);
+        if (q.get('card')) setTimeout(() => window.postMessage({ action: 'propertyCard', property: Mock.data.properties[1], static: st }, '*'), 100);
         if (q.get('contract')) setTimeout(() => window.postMessage({ action: 'contract', contract: Mock.data.contracts[0], static: st }, '*'), 100);
         if (q.get('fp')) setTimeout(() => { window.postMessage({ action: 'close' }, '*'); window.postMessage({ action: 'furniturePanel', propertyId: 1, label: 'Alta Street 12', max: 25, pieces: [{ id: 1, model: 'prop_couch_01', label: 'Leather Couch', cat: 'chair', placed: false, price: 1200 }, { id: 2, model: 'prop_tv_flat_01', label: 'Flat TV', cat: 'electronic', placed: true, price: 1500 }], static: st }, '*'); }, 100);
         if (q.get('step')) setTimeout(() => { S.create.interior = 'integrity_way'; S.create.label = 'Alta Street 12'; S.create.price = '250000'; S.create.buyerId = '12'; S.create.door = { x: -47.3, y: -585.9, z: 37.95, h: 70 }; S.create.street = 'Alta St, Pillbox Hill'; S.create.step = Number(q.get('step')); render(); }, 150);

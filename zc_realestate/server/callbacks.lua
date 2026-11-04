@@ -22,7 +22,9 @@ RegisterNetEvent('zc_re:cb', function(name, reqId, ...)
         return TriggerClientEvent('zc_re:cbr', src, reqId, false, 'slow down')
     end
 
+    CurrentLangSrc = src
     local ok, a, b = pcall(fn, src, ...)
+    CurrentLangSrc = nil
     if not ok then
         print(('^1[zc_realestate] callback %s error:^7 %s'):format(name, a))
         a, b = false, 'error'
@@ -30,6 +32,11 @@ RegisterNetEvent('zc_re:cb', function(name, reqId, ...)
     TriggerClientEvent('zc_re:cbr', src, reqId, a, b)
 end)
 
+RegisterNetEvent('zc_re:setLang', function(lang)
+    if lang == 'en' or lang == 'ar' then PlayerLang[source] = lang end
+end)
+
 AddEventHandler('playerDropped', function()
     lastCall[source] = nil
+    PlayerLang[source] = nil
 end)
