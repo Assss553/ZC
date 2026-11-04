@@ -3,80 +3,101 @@ Config = {}
 -- 'auto' | 'qb' | 'esx' | 'standalone'
 Config.Framework = 'auto'
 
--- طريقة التفاعل مع الجهاز: 'auto' | 'ox_target' | 'qb-target' | 'key'
+-- How players use the kiosk: 'auto' | 'ox_target' | 'qb-target' | 'key'
 Config.Interaction = 'auto'
-Config.InteractDistance = 1.6   -- مسافة الضغط على E
-Config.MaxServerDistance = 8.0  -- السيرفر يرفض أي عملية لو اللاعب بعيد عن الجهاز
+Config.InteractDistance = 1.6   -- distance for the [E] prompt
+Config.MaxServerDistance = 8.0  -- server rejects any action if the player is farther than this from the kiosk
 
 Config.Currency = '$'
-Config.Payments = { 'bank', 'cash' }   -- طرق الدفع المسموحة (أول وحدة = الافتراضية)
-Config.PlateFormat = 'VC2 ####'        -- # = رقم ، @ = حرف (8 خانات كحد أقصى)
-Config.QBGarage = 'pillboxgarage'      -- قراج السيارة بعد الشراء (QBCore)
-Config.Webhook = ''                    -- رابط ديسكورد لتسجيل عمليات الشراء (اختياري)
+Config.Payments = { 'bank', 'cash' }   -- allowed payment methods (first = default)
+Config.PlateFormat = 'VC2 ####'        -- # = digit, @ = letter (max 8 characters)
+Config.QBGarage = 'pillboxgarage'      -- garage the car is assigned to after purchase (QBCore)
+Config.Webhook = ''                    -- Discord webhook for purchase logs (optional)
+
+-- Vehicle pictures. The UI tries, in order:
+--   1) the vehicle's own `image` (if set below)
+--   2) html/images/<model>.png   (drop your own pictures here, great for addon cars)
+--   3) Config.ImageUrl with %s replaced by the spawn code (real GTA pictures for base-game cars)
+--   4) a drawn silhouette in the selected colour
+Config.ImageUrl = 'https://docs.fivem.net/vehicles/%s.webp'
 
 Config.TestDrive = {
     enabled = true,
-    duration = 60,      -- ثواني
-    cooldown = 120,     -- ثواني بين كل تجربة وتجربة لنفس اللاعب
-    maxDistance = 600.0 -- لو ابتعد عن الجهاز أكثر من كذا تنتهي التجربة
+    duration = 60,      -- seconds
+    cooldown = 120,     -- seconds between test drives for the same player
+    maxDistance = 600.0 -- test drive ends if the player drives farther than this from the kiosk
 }
 
--- أجهزة المعرض (الكشك الخارجي)
+-- Kiosks (the standalone machine)
 Config.Kiosks = {
     {
-        label = 'معرض VC2 - وسط المدينة',
-        coords = vector4(-57.35, -1096.85, 25.42, 25.0), -- مكان الجهاز (z = الأرض)
-        model = 'prop_atm_03',   -- شكل الجهاز في اللعبة
-        spawnProp = true,        -- false لو تبي تستخدم جهاز موجود بالماب
+        label = 'VC2 Showroom - Downtown',
+        coords = vector4(-57.35, -1096.85, 25.42, 25.0), -- kiosk position (z = ground)
+        model = 'prop_atm_03',   -- in-game prop used as the machine
+        spawnProp = true,        -- false = use an object that already exists on the map
         blip = { sprite = 326, color = 47, scale = 0.8 },
-        delivery = {             -- مواقف استلام السيارة بعد الشراء
+        delivery = {             -- parking spots where bought cars are delivered
             vector4(-56.79, -1109.85, 26.43, 71.5),
             vector4(-51.20, -1111.40, 26.43, 71.5),
             vector4(-45.60, -1113.00, 26.43, 71.5),
         },
-        testDrive = vector4(-46.99, -1095.47, 26.42, 200.0) -- موقع بداية تجربة القيادة
+        testDrive = vector4(-46.99, -1095.47, 26.42, 200.0) -- test drive start point
     },
 }
 
--- الألوان (primary = رقم لون GTA)
+-- Paint colours (primary = GTA colour index)
 Config.Colors = {
-    { label = 'أسود',     hex = '#15161a', primary = 0 },
-    { label = 'أبيض',     hex = '#eceef0', primary = 111 },
-    { label = 'فضي',      hex = '#a9adb3', primary = 4 },
-    { label = 'أحمر',     hex = '#b3141b', primary = 27 },
-    { label = 'برتقالي',  hex = '#e4501c', primary = 38 },
-    { label = 'أصفر',     hex = '#f2c21b', primary = 88 },
-    { label = 'أزرق',     hex = '#1f4fae', primary = 64 },
-    { label = 'أخضر',     hex = '#1f6b3a', primary = 53 },
+    { label = 'Black',  hex = '#15161a', primary = 0 },
+    { label = 'White',  hex = '#eceef0', primary = 111 },
+    { label = 'Silver', hex = '#a9adb3', primary = 4 },
+    { label = 'Red',    hex = '#b3141b', primary = 27 },
+    { label = 'Orange', hex = '#e4501c', primary = 38 },
+    { label = 'Yellow', hex = '#f2c21b', primary = 88 },
+    { label = 'Blue',   hex = '#1f4fae', primary = 64 },
+    { label = 'Green',  hex = '#1f6b3a', primary = 53 },
 }
 
--- الأقسام (shape = شكل رسمة السيارة بالواجهة: sedan | sport | super | suv | moto)
+-- Categories. A car is placed automatically by its GTA vehicle class
+-- (0 Compacts, 1 Sedans, 2 SUVs, 3 Coupes, 4 Muscle, 5 Sports Classics, 6 Sports,
+--  7 Super, 8 Motorcycles, 9 Off-road, 12 Vans ...). Unlisted classes go to 'other'.
 Config.Categories = {
-    { id = 'sedan',  label = 'سيدان',     shape = 'sedan' },
-    { id = 'suv',    label = 'دفع رباعي', shape = 'suv' },
-    { id = 'sports', label = 'رياضية',    shape = 'sport' },
-    { id = 'super',  label = 'سوبر',      shape = 'super' },
-    { id = 'moto',   label = 'دراجات',    shape = 'moto' },
+    { id = 'compacts', label = 'Compacts', classes = { 0 } },
+    { id = 'sedans',   label = 'Sedans',   classes = { 1 } },
+    { id = 'suvs',     label = 'SUVs',     classes = { 2 } },
+    { id = 'coupes',   label = 'Coupes',   classes = { 3 } },
+    { id = 'muscle',   label = 'Muscle',   classes = { 4 } },
+    { id = 'classics', label = 'Classics', classes = { 5 } },
+    { id = 'sports',   label = 'Sports',   classes = { 6 } },
+    { id = 'super',    label = 'Super',    classes = { 7 } },
+    { id = 'motos',    label = 'Bikes',    classes = { 8 } },
+    { id = 'offroad',  label = 'Off-road', classes = { 9 } },
+    { id = 'vans',     label = 'Vans',     classes = { 12 } },
+    { id = 'other',    label = 'Other',    classes = {} },
 }
 
--- السيارات: stats من 0 إلى 100 ، image اختياري (رابط صورة)
+-- Cars for sale: just the spawn code and the price.
+-- Name, brand, class, seats, top speed and stats are read from the game automatically,
+-- so addon cars work too. Optional overrides: label, brand, category, image, stats = { speed, accel, brake, handling }
 Config.Vehicles = {
-    { model = 'asea',      label = 'Asea',       brand = 'Declasse', category = 'sedan',  price = 18000,  seats = 4, stats = { speed = 52, accel = 45, brake = 50, handling = 55 } },
-    { model = 'tailgater', label = 'Tailgater',  brand = 'Obey',     category = 'sedan',  price = 45000,  seats = 4, stats = { speed = 66, accel = 62, brake = 60, handling = 64 } },
-    { model = 'schafter2', label = 'Schafter',   brand = 'Benefactor', category = 'sedan', price = 62000, seats = 4, stats = { speed = 70, accel = 66, brake = 62, handling = 66 } },
-    { model = 'baller2',   label = 'Baller',     brand = 'Gallivanter', category = 'suv', price = 90000,  seats = 4, stats = { speed = 64, accel = 58, brake = 55, handling = 52 } },
-    { model = 'granger',   label = 'Granger',    brand = 'Declasse', category = 'suv',    price = 55000,  seats = 8, stats = { speed = 58, accel = 50, brake = 48, handling = 46 } },
-    { model = 'dubsta2',   label = 'Dubsta',     brand = 'Benefactor', category = 'suv',  price = 110000, seats = 4, stats = { speed = 60, accel = 55, brake = 52, handling = 50 } },
-    { model = 'elegy2',    label = 'Elegy RH8',  brand = 'Annis',    category = 'sports', price = 150000, seats = 2, stats = { speed = 80, accel = 78, brake = 70, handling = 82 } },
-    { model = 'sultan',    label = 'Sultan',     brand = 'Karin',    category = 'sports', price = 85000,  seats = 4, stats = { speed = 74, accel = 72, brake = 66, handling = 76 } },
-    { model = 'comet2',    label = 'Comet',      brand = 'Pfister',  category = 'sports', price = 175000, seats = 2, stats = { speed = 82, accel = 80, brake = 72, handling = 80 } },
-    { model = 'zentorno',  label = 'Zentorno',   brand = 'Pegassi',  category = 'super',  price = 725000, seats = 2, stats = { speed = 94, accel = 92, brake = 82, handling = 86 } },
-    { model = 't20',       label = 'T20',        brand = 'Progen',   category = 'super',  price = 850000, seats = 2, stats = { speed = 95, accel = 94, brake = 84, handling = 88 } },
-    { model = 'bati',      label = 'Bati 801',   brand = 'Pegassi',  category = 'moto',   price = 25000,  seats = 2, stats = { speed = 86, accel = 90, brake = 60, handling = 70 } },
-    { model = 'akuma',     label = 'Akuma',      brand = 'Dinka',    category = 'moto',   price = 22000,  seats = 2, stats = { speed = 84, accel = 88, brake = 58, handling = 68 } },
+    { model = 'asea',      price = 18000 },
+    { model = 'tailgater', price = 45000 },
+    { model = 'schafter2', price = 62000 },
+    { model = 'baller2',   price = 90000 },
+    { model = 'granger',   price = 55000 },
+    { model = 'dubsta2',   price = 110000 },
+    { model = 'elegy2',    price = 150000 },
+    { model = 'sultan',    price = 85000 },
+    { model = 'comet2',    price = 175000 },
+    { model = 'dominator', price = 95000 },
+    { model = 'zentorno',  price = 725000 },
+    { model = 't20',       price = 850000 },
+    { model = 'adder',     price = 1000000 },
+    { model = 'bati',      price = 25000 },
+    { model = 'akuma',     price = 22000 },
+    -- addon example: { model = 'myaddoncar', price = 250000, image = 'https://i.imgur.com/xxxx.png' },
 }
 
--- يتنفذ بعد ما تنزل السيارة (مفاتيح / بنزين) عدله حسب سكربتاتك
+-- Runs after a car is spawned (keys / fuel). Adjust it for your own scripts.
 Config.OnVehicleSpawned = function(vehicle, plate, isTestDrive)
     if GetResourceState('LegacyFuel') == 'started' then
         exports['LegacyFuel']:SetFuel(vehicle, 100.0)

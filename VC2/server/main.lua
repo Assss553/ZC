@@ -104,10 +104,10 @@ local function log(src, v, plate, payment)
     PerformHttpRequest(Config.Webhook, function() end, 'POST', json.encode({
         username = 'VC2 Showroom',
         embeds = { {
-            title = 'شراء سيارة',
+            title = 'Vehicle purchased',
             color = 15028252,
-            description = ('**اللاعب:** %s (%s)\n**السيارة:** %s %s\n**السعر:** %s%s\n**اللوحة:** %s\n**الدفع:** %s')
-                :format(GetPlayerName(src), src, v.brand, v.label, Config.Currency, v.price, plate, payment)
+            description = ('**Player:** %s (%s)\n**Vehicle:** %s\n**Price:** %s%s\n**Plate:** %s\n**Payment:** %s')
+                :format(GetPlayerName(src), src, v.label or v.model, Config.Currency, v.price, plate, payment)
         } }
     }), { ['Content-Type'] = 'application/json' })
 end
@@ -120,13 +120,13 @@ Callbacks['vc2:money'] = function(src)
 end
 
 Callbacks['vc2:testdrive'] = function(src, model, kiosk)
-    if not Config.TestDrive.enabled then return false, 'تجربة القيادة مقفلة' end
-    if not byModel[model] then return false, 'السيارة غير متوفرة' end
-    if not nearKiosk(src, kiosk) then return false, 'لازم تكون عند الجهاز' end
+    if not Config.TestDrive.enabled then return false, 'Test drives are disabled' end
+    if not byModel[model] then return false, 'This vehicle is not available' end
+    if not nearKiosk(src, kiosk) then return false, 'You must be at the kiosk' end
     local now = os.time()
     local last = lastTest[src]
     if last and now - last < Config.TestDrive.cooldown then
-        return false, ('انتظر %d ثانية قبل تجربة ثانية'):format(Config.TestDrive.cooldown - (now - last))
+        return false, ('Please wait %d seconds before another test drive'):format(Config.TestDrive.cooldown - (now - last))
     end
     lastTest[src] = now
     return true
@@ -134,27 +134,27 @@ end
 
 Callbacks['vc2:buy'] = function(src, model, colorIdx, payment, kiosk)
     local v = byModel[model]
-    if not v then return { ok = false, msg = 'السيارة غير متوفرة' } end
-    if not allowedPay[payment] then return { ok = false, msg = 'طريقة الدفع غير مسموحة' } end
-    if not nearKiosk(src, kiosk) then return { ok = false, msg = 'لازم تكون عند الجهاز' } end
+    if not v then return { ok = false, msg = 'This vehicle is not available' } end
+    if not allowedPay[payment] then return { ok = false, msg = 'This payment method is not allowed' } end
+    if not nearKiosk(src, kiosk) then return { ok = false, msg = 'You must be at the kiosk' } end
     local color = Config.Colors[tonumber(colorIdx) or 1] and tonumber(colorIdx) or 1
-    if busy[src] then return { ok = false, msg = 'فيه عملية شغالة، انتظر شوي' } end
+    if busy[src] then return { ok = false, msg = 'A transaction is already in progress' } end
     busy[src] = true
 
     local money = getMoney(src)
     if (money[payment] or 0) < v.price then
         busy[src] = nil
-        return { ok = false, msg = 'رصيدك غير كافٍ' }
+        return { ok = false, msg = 'Not enough money' }
     end
     local plate = newPlate()
-    if not plate then busy[src] = nil return { ok = false, msg = 'تعذر إنشاء لوحة، حاول مرة ثانية' } end
-    if not removeMoney(src, payment, v.price) then busy[src] = nil return { ok = false, msg = 'رصيدك غير كافٍ' } end
+    if not plate then busy[src] = nil return { ok = false, msg = 'Could not create a plate, please try again' } end
+    if not removeMoney(src, payment, v.price) then busy[src] = nil return { ok = false, msg = 'Not enough money' } end
 
     local ok, saved = pcall(saveVehicle, src, v, plate)
     if not ok or not saved then
         addMoney(src, payment, v.price)
         busy[src] = nil
-        return { ok = false, msg = 'خطأ بقاعدة البيانات، تم إرجاع المبلغ' }
+        return { ok = false, msg = 'Database error, your money was refunded' }
     end
 
     local order = GetResourceKvpInt('vc2_order') + 1
@@ -170,7 +170,7 @@ Callbacks['vc2:buy'] = function(src, model, colorIdx, payment, kiosk)
             order = order,
             plate = plate,
             model = v.model,
-            vehicle = v.brand .. ' ' .. v.label,
+            vehicle = v.label or v.model,
             color = Config.Colors[color].label,
             colorIndex = color,
             price = v.price,

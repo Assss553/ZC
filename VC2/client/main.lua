@@ -86,6 +86,58 @@ local function setPrompt(state)
     nui('prompt', { show = state })
 end
 
+---------------------------------------------------------------- catalogue (read from the game)
+local catalog, byModel = nil, {}
+local classToCat = {}
+for _, c in ipairs(Config.Categories) do
+    for _, cl in ipairs(c.classes or {}) do classToCat[cl] = c.id end
+end
+
+local function pct(v, max) return math.floor(math.max(5, math.min(100, v / max * 100)) + 0.5) end
+
+local function text(key)
+    if not key or key == '' then return nil end
+    local t = GetLabelText(key)
+    if t == 'NULL' then return nil end
+    return t
+end
+
+local function buildCatalog()
+    if catalog then return catalog end
+    catalog = {}
+    for _, v in ipairs(Config.Vehicles) do
+        local hash = joaat(v.model)
+        if IsModelInCdimage(hash) and IsModelAVehicle(hash) then
+            local display = GetDisplayNameFromVehicleModel(hash)
+            local class = GetVehicleClassFromName(hash)
+            local speed = GetVehicleModelEstimatedMaxSpeed(hash)
+            local s = v.stats or {}
+            local item = {
+                model = v.model,
+                price = v.price,
+                label = v.label or text(display) or display or v.model,
+                brand = v.brand or text(GetMakeNameFromVehicleModel(hash)) or '',
+                class = class,
+                category = v.category or classToCat[class] or 'other',
+                seats = GetVehicleModelNumberOfSeats(hash),
+                topSpeed = math.floor(speed * 3.6 + 0.5),
+                image = v.image,
+                stats = {
+                    speed = s.speed or pct(speed, 50.0),
+                    accel = s.accel or pct(GetVehicleModelAcceleration(hash), 0.45),
+                    brake = s.brake or pct(GetVehicleModelMaxBraking(hash), 1.2),
+                    handling = s.handling or pct(GetVehicleModelMaxTraction(hash), 3.2),
+                }
+            }
+            catalog[#catalog + 1] = item
+            byModel[v.model] = item
+        else
+            print(('^3[VC2]^7 vehicle model "%s" was not found - is the addon car streamed?'):format(v.model))
+        end
+    end
+    return catalog
+end
+
 ---------------------------------------------------------------- UI
 local function closeUI()
     if not isOpen then return end
@@ -116,7 +168,8 @@ local function openUI(index)
             testDrive = Config.TestDrive.enabled,
             categories = Config.Categories,
             colors = Config.Colors,
-            vehicles = Config.Vehicles,
+            vehicles = buildCatalog(),
+            imageUrl = Config.ImageUrl,
         })
     end)
 end
@@ -130,9 +183,11 @@ RegisterNUICallback('buy', function(d, cb)
     cb({})
     serverCallback('vc2:buy', function(res)
         if not res or not res.ok then
-            nui('error', { msg = res and res.msg or 'صار خطأ، حاول مرة ثانية' })
+            nui('error', { msg = res and res.msg or 'Something went wrong, please try again' })
             return
         end
+        local info = byModel[res.receipt.model]
+        if info then res.receipt.vehicle = (info.brand ~= '' and info.brand .. ' ' or '') .. info.label end
         nui('receipt', { receipt = res.receipt, money = res.money })
         local k = Config.Kiosks[currentKiosk]
         local spot = freeSpot(k.delivery)
@@ -143,7 +198,7 @@ RegisterNUICallback('buy', function(d, cb)
             if p then TriggerServerEvent('vc2:setProps', res.receipt.plate, p) end
             SetNewWaypoint(spot.x, spot.y)
         end
-        notify(('مبروك! استلم سيارتك %s من موقف التسليم'):format(res.receipt.vehicle), 'success')
+        notify(('Congratulations! Pick up your %s at the delivery spot'):format(res.receipt.vehicle), 'success')
     end, d.model, tonumber(d.color) or 1, d.payment, currentKiosk)
 end)
 
@@ -161,7 +216,7 @@ local function endTestDrive(reason)
     SetEntityHeading(ped, td.heading)
     Wait(300)
     DoScreenFadeIn(500)
-    notify(reason or 'انتهت تجربة القيادة', 'primary')
+    notify(reason or 'Test drive finished', 'primary')
 end
 
 local function startTestDrive(model, colorIdx)
@@ -174,7 +229,7 @@ local function startTestDrive(model, colorIdx)
     local veh = spawnVehicle(model, k.testDrive, ('TEST%04d'):format(math.random(0, 9999)), colorIdx)
     if not veh then
         DoScreenFadeIn(300)
-        notify('الموديل غير موجود بالسيرفر', 'error')
+        notify('This model does not exist on the server', 'error')
         return
     end
     Config.OnVehicleSpawned(veh, GetVehicleNumberPlateText(veh), true)
@@ -192,11 +247,11 @@ local function startTestDrive(model, colorIdx)
             nui('timer', { show = true, seconds = math.max(left, 0) })
             local p = PlayerPedId()
             if left <= 0 then endTestDrive() break end
-            if not DoesEntityExist(veh) or IsEntityDead(p) or GetEntityHealth(veh) <= 0 then endTestDrive('انتهت تجربة القيادة') break end
-            if #(GetEntityCoords(p) - testDrive.kiosk) > Config.TestDrive.maxDistance then endTestDrive('ابتعدت كثير عن المعرض') break end
+            if not DoesEntityExist(veh) or IsEntityDead(p) or GetEntityHealth(veh) <= 0 then endTestDrive('Test drive finished') break end
+            if #(GetEntityCoords(p) - testDrive.kiosk) > Config.TestDrive.maxDistance then endTestDrive('You drove too far from the showroom') break end
             if GetVehiclePedIsIn(p, false) ~= veh then
                 outSince = outSince or now
-                if now - outSince > 5000 then endTestDrive('نزلت من السيارة') break end
+                if now - outSince > 5000 then endTestDrive('You left the vehicle') break end
             else outSince = nil end
             Wait(500)
         end
@@ -250,11 +305,11 @@ local function setupKiosks()
             end
         end
         if mode == 'ox_target' then
-            local opt = { { name = 'vc2_kiosk_' .. i, icon = 'fas fa-car', label = 'جهاز المعرض', distance = 2.0, onSelect = function() openUI(i) end } }
+            local opt = { { name = 'vc2_kiosk_' .. i, icon = 'fas fa-car', label = 'Showroom kiosk', distance = 2.0, onSelect = function() openUI(i) end } }
             if obj then exports.ox_target:addLocalEntity(obj, opt)
             else exports.ox_target:addSphereZone({ coords = k.coords.xyz, radius = 1.2, options = opt }) end
         elseif mode == 'qb-target' then
-            local opt = { options = { { icon = 'fas fa-car', label = 'جهاز المعرض', action = function() openUI(i) end } }, distance = 2.0 }
+            local opt = { options = { { icon = 'fas fa-car', label = 'Showroom kiosk', action = function() openUI(i) end } }, distance = 2.0 }
             if obj then exports['qb-target']:AddTargetEntity(obj, opt)
             else exports['qb-target']:AddCircleZone('vc2_kiosk_' .. i, k.coords.xyz, 1.2, { name = 'vc2_kiosk_' .. i }, opt) end
         end

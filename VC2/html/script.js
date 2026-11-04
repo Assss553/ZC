@@ -1,12 +1,12 @@
 const $ = i => document.getElementById(i);
 const RES = typeof GetParentResourceName === 'function' ? GetParentResourceName() : null;
 const PAY = {
-  bank: { label: 'البنك', icon: '<path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M2 10l10-6 10 6"/>' },
-  cash: { label: 'كاش', icon: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>' }
+  bank: { label: 'Bank', icon: '<path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M2 10l10-6 10 6"/>' },
+  cash: { label: 'Cash', icon: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>' }
 };
-const STATS = [['speed', 'السرعة'], ['accel', 'التسارع'], ['brake', 'الفرامل'], ['handling', 'التحكم']];
+const STATS = [['speed', 'Top speed'], ['accel', 'Acceleration'], ['brake', 'Braking'], ['handling', 'Handling']];
 
-let D = { vehicles: [], categories: [], colors: [], money: { cash: 0, bank: 0 }, currency: '$', payments: ['bank', 'cash'], testDrive: true, kiosk: '' };
+let D = { vehicles: [], categories: [], colors: [], money: { cash: 0, bank: 0 }, currency: '$', payments: ['bank', 'cash'], testDrive: true, kiosk: '', imageUrl: '' };
 let cat = 'all', query = '', cur = null, col = 1, pay = 'bank', K = 1, confirmT = null, buying = false;
 
 /* ---------------- utils ---------------- */
@@ -16,7 +16,7 @@ function send(n, d = {}) {
 }
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => D.currency + Number(n || 0).toLocaleString('en-US');
-const catOf = id => D.categories.find(c => c.id === id) || { label: id, shape: 'sedan' };
+const catOf = id => D.categories.find(c => c.id === id) || { label: id };
 function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 3200); }
 
@@ -35,7 +35,7 @@ function carSVG(shape, color) {
     ${[[64, 72], [180, 72]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="20" fill="#0d0d0f"/><circle cx="${x}" cy="${y}" r="11" fill="none" stroke="#6b6d74" stroke-width="3"/><circle cx="${x}" cy="${y}" r="3" fill="#9a9ca3"/>`).join('')}</svg>`;
   const s = SHAPES[shape] || SHAPES.sedan;
   return `<svg viewBox="0 0 240 100"><ellipse cx="122" cy="${s.wheels[0][1] + 14}" rx="112" ry="6" fill="#000" opacity=".5"/>
-    <path d="${s.body}" fill="${color}"/>
+    <path d="${s.body}" fill="${color}" stroke="#ffffff30" stroke-width="1.2"/>
     <path d="${s.body}" fill="url(#shine)" opacity=".55"/>
     ${s.win.map(w => `<path d="${w}" fill="#101318" opacity=".92"/>`).join('')}
     <path d="M20 60 H228" stroke="#000" stroke-opacity=".25" stroke-width="2"/>
@@ -43,8 +43,27 @@ function carSVG(shape, color) {
     ${s.wheels.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + 3}" fill="#0d0d0f"/><circle cx="${x}" cy="${y}" r="${r - 3}" fill="#45474d"/><circle cx="${x}" cy="${y}" r="${r - 7}" fill="none" stroke="#8a8c93" stroke-width="2" stroke-dasharray="3 3"/><circle cx="${x}" cy="${y}" r="3" fill="#b5b7bd"/>`).join('')}
     <defs><linearGradient id="shine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs></svg>`;
 }
-const shapeOf = v => v.shape || catOf(v.category).shape;
-const imgOf = (v, color) => v.image ? `<img src="${esc(v.image)}" alt="">` : carSVG(shapeOf(v), color);
+const CLASS_SHAPE = { 2: 'suv', 9: 'suv', 12: 'suv', 7: 'super', 6: 'sport', 5: 'sport', 4: 'sport', 3: 'sport', 8: 'moto' };
+const shapeOf = v => v.shape || CLASS_SHAPE[v.class] || 'sedan';
+
+/* real pictures: own image -> images/<model>.png -> Config.ImageUrl -> drawn silhouette */
+const imgOk = {}, imgNone = {};
+function sources(v) {
+  if (imgOk[v.model]) return [imgOk[v.model]];
+  return [v.image, `images/${v.model}.png`, D.imageUrl ? D.imageUrl.replace('%s', v.model) : null].filter(Boolean);
+}
+function imgOf(v, color) {
+  if (imgNone[v.model]) return carSVG(shapeOf(v), color);
+  const c = sources(v);
+  return `<img src="${esc(c[0])}" data-n="1" data-m="${esc(v.model)}" data-col="${esc(color)}" onload="imgLoad(this)" onerror="imgFail(this)" alt="">`;
+}
+window.imgLoad = el => { imgOk[el.dataset.m] = el.getAttribute('src'); };
+window.imgFail = el => {
+  const v = D.vehicles.find(x => x.model === el.dataset.m); if (!v) return;
+  const c = sources(v), n = +el.dataset.n;
+  if (n < c.length) { el.dataset.n = n + 1; el.src = c[n]; }
+  else { imgNone[v.model] = true; el.outerHTML = carSVG(shapeOf(v), el.dataset.col); }
+};
 
 /* ---------------- header ---------------- */
 function money(m) {
@@ -56,7 +75,7 @@ function money(m) {
 
 /* ---------------- screen 1 ---------------- */
 function tabs() {
-  const all = [{ id: 'all', label: 'الكل' }, ...D.categories];
+  const all = [{ id: 'all', label: 'All' }, ...D.categories.filter(c => D.vehicles.some(v => v.category === c.id))];
   $('tabs').innerHTML = all.map(c => {
     const n = c.id === 'all' ? D.vehicles.length : D.vehicles.filter(v => v.category === c.id).length;
     return `<button class="tab ${cat === c.id ? 'sel' : ''}" data-c="${esc(c.id)}">${esc(c.label)}<b>${n}</b></button>`;
@@ -70,15 +89,15 @@ function grid() {
   $('grid').innerHTML = list.length ? list.map((v, i) => `<button class="vc" style="--i:${i}" data-m="${esc(v.model)}">
     <span class="vcat">${esc(catOf(v.category).label)}</span><div class="vimg">${imgOf(v, D.colors[(i + 3) % D.colors.length]?.hex || c0)}</div>
     <h4>${esc(v.label)}</h4><div class="vb">${esc(v.brand)}</div><div class="vpr">${fmt(v.price)}</div></button>`).join('')
-    : `<div class="empty">ما فيه سيارات تطابق بحثك</div>`;
-  $('count').textContent = list.length ? `${list.length} سيارة متوفرة · اختر اللي تبيها` : 'جرّب قسم ثاني';
+    : `<div class="empty">No cars match your search</div>`;
+  $('count').textContent = list.length ? `${list.length} cars available · pick the one you want` : 'Try another category';
   document.querySelectorAll('.vc').forEach(b => b.onclick = () => detail(D.vehicles.find(v => v.model === b.dataset.m)));
 }
 
 /* ---------------- screen 2 ---------------- */
 function view(n) {
   ['s1', 's2', 's3'].forEach((s, i) => $(s).classList.toggle('on', i + 1 === n));
-  $('title').textContent = ['معرض السيارات', 'تفاصيل السيارة', 'إيصال الشراء'][n - 1];
+  $('title').textContent = ['Car showroom', 'Vehicle details', 'Purchase receipt'][n - 1];
 }
 function go(n) {
   const on = document.querySelector('.scr.on');
@@ -99,14 +118,14 @@ function payRender() {
   }).join('');
   document.querySelectorAll('.pm').forEach(b => b.onclick = () => { pay = b.dataset.p; payRender(); });
   const low = (D.money[pay] ?? 0) < cur.price;
-  $('warn').textContent = low ? `رصيدك في ${PAY[pay]?.label || pay} غير كافٍ، ينقصك ${fmt(cur.price - (D.money[pay] || 0))}` : '';
+  $('warn').textContent = low ? `Not enough money in ${PAY[pay]?.label || pay} · you need ${fmt(cur.price - (D.money[pay] || 0))} more` : '';
   $('buy').disabled = low;
 }
 function detail(v) {
   if (!v) return;
   cur = v; col = 1; unconfirm();
   $('dname').textContent = v.label; $('dbrand').textContent = v.brand; $('dprice').textContent = fmt(v.price);
-  $('dcat').textContent = catOf(v.category).label; $('dseats').textContent = `${v.seats || 2} مقاعد`;
+  $('dcat').textContent = catOf(v.category).label; $('dseats').textContent = `${v.seats || 2} seats`; $('dtop').textContent = v.topSpeed ? `${v.topSpeed} km/h` : '';
   $('sw').innerHTML = D.colors.map((c, i) => `<button style="background:${esc(c.hex)}" data-i="${i + 1}" title="${esc(c.label)}"></button>`).join('');
   document.querySelectorAll('.sw button').forEach(b => b.onclick = () => { col = +b.dataset.i; paint(); });
   const st = v.stats || {};
@@ -119,15 +138,15 @@ function detail(v) {
     document.querySelectorAll('.stat u').forEach(u => u.style.width = u.dataset.w + '%');
   }, 300);
 }
-function unconfirm() { clearTimeout(confirmT); $('buy').classList.remove('cf', 'ld'); $('btxt').textContent = 'شراء السيارة'; buying = false; }
+function unconfirm() { clearTimeout(confirmT); $('buy').classList.remove('cf', 'ld'); $('btxt').textContent = 'Buy this car'; buying = false; }
 $('buy').onclick = () => {
   if (buying || !cur) return;
   if (!$('buy').classList.contains('cf')) {
-    $('buy').classList.add('cf'); $('btxt').textContent = `اضغط للتأكيد · ${fmt(cur.price)}`;
+    $('buy').classList.add('cf'); $('btxt').textContent = `Tap again to confirm · ${fmt(cur.price)}`;
     confirmT = setTimeout(unconfirm, 3500); return;
   }
   clearTimeout(confirmT); buying = true;
-  $('buy').classList.remove('cf'); $('buy').classList.add('ld'); $('btxt').textContent = 'جاري تنفيذ العملية...';
+  $('buy').classList.remove('cf'); $('buy').classList.add('ld'); $('btxt').textContent = 'Processing payment...';
   $('nfc').classList.add('on'); $('printer').classList.add('printing');
   send('buy', { model: cur.model, color: col, payment: pay });
   if (!RES) setTimeout(() => {
@@ -135,7 +154,7 @@ $('buy').onclick = () => {
     onReceipt({ order: 27, plate: 'VC2 ' + String(Math.floor(Math.random() * 1e4)).padStart(4, '0'), vehicle: cur.brand + ' ' + cur.label, color: D.colors[col - 1].label, price: cur.price, payment: pay }, m);
   }, 1200);
 };
-$('test').onclick = () => { if (cur) send('testDrive', { model: cur.model, color: col }); if (!RES) toast('وضع المعاينة: تجربة القيادة تشتغل داخل اللعبة'); };
+$('test').onclick = () => { if (cur) send('testDrive', { model: cur.model, color: col }); if (!RES) toast('Preview mode: test drives run in-game'); };
 $('back').onclick = () => { unconfirm(); go(1); };
 
 /* ---------------- screen 3 ---------------- */
@@ -151,7 +170,7 @@ function onReceipt(r, m) {
   money(m);
   $('rorder').textContent = '#' + r.order; $('rprice').textContent = fmt(r.price); $('rpay').textContent = PAY[r.payment]?.label || r.payment;
   $('rcar').textContent = r.vehicle; $('rcol').textContent = r.color; $('rplate').textContent = '--------';
-  $('okmsg').textContent = `تم الشراء بنجاح! لوحتك ${r.plate}`;
+  $('okmsg').textContent = `Purchase complete! Your plate is ${r.plate}`;
   go(3); setTimeout(() => roll($('rplate'), r.plate), 700);
   setTimeout(() => { buying = false; }, 300);
 }
@@ -167,7 +186,7 @@ function reset() { unconfirm(); $('printer').classList.remove('printing'); $('nf
 function openUI(d) {
   Object.assign(D, d);
   pay = D.payments[0] || 'bank';
-  $('kname').textContent = D.kiosk || 'معرض VC2';
+  $('kname').textContent = D.kiosk || 'VC2 Showroom';
   money(d.money); reset(); tabs(); grid();
   document.body.classList.add('open'); bootIn();
 }
@@ -187,7 +206,7 @@ addEventListener('message', e => {
     case 'hide': closeUI(true); break;
     case 'money': money(d.money); break;
     case 'receipt': onReceipt(d.receipt, d.money); break;
-    case 'error': unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); toast(d.msg || 'صار خطأ'); break;
+    case 'error': unconfirm(); $('printer').classList.remove('printing'); $('nfc').classList.remove('on'); toast(d.msg || 'Something went wrong'); break;
     case 'prompt': $('prompt').classList.toggle('on', !!d.show); break;
     case 'timer': {
       const t = $('timer'); t.classList.toggle('on', !!d.show);
@@ -209,20 +228,22 @@ addEventListener('resize', fit); fit();
 /* ---------------- browser preview (outside FiveM) ---------------- */
 if (!RES) {
   document.body.classList.add('web');
+  const V = (model, label, brand, cls, category, price, seats, top, st) => ({ model, label, brand, class: cls, category, price, seats, topSpeed: top, stats: { speed: st[0], accel: st[1], brake: st[2], handling: st[3] } });
   openUI({
-    kiosk: 'معرض VC2 - وسط المدينة', currency: '$', payments: ['bank', 'cash'], testDrive: true, money: { cash: 42500, bank: 960000 },
-    categories: [{ id: 'sedan', label: 'سيدان', shape: 'sedan' }, { id: 'suv', label: 'دفع رباعي', shape: 'suv' }, { id: 'sports', label: 'رياضية', shape: 'sport' }, { id: 'super', label: 'سوبر', shape: 'super' }, { id: 'moto', label: 'دراجات', shape: 'moto' }],
-    colors: [{ label: 'أسود', hex: '#15161a' }, { label: 'أبيض', hex: '#eceef0' }, { label: 'فضي', hex: '#a9adb3' }, { label: 'أحمر', hex: '#b3141b' }, { label: 'برتقالي', hex: '#e4501c' }, { label: 'أصفر', hex: '#f2c21b' }, { label: 'أزرق', hex: '#1f4fae' }, { label: 'أخضر', hex: '#1f6b3a' }],
+    kiosk: 'VC2 Showroom - Downtown', currency: '$', payments: ['bank', 'cash'], testDrive: true, money: { cash: 42500, bank: 960000 },
+    imageUrl: 'https://docs.fivem.net/vehicles/%s.webp',
+    categories: [{ id: 'sedans', label: 'Sedans' }, { id: 'suvs', label: 'SUVs' }, { id: 'sports', label: 'Sports' }, { id: 'super', label: 'Super' }, { id: 'motos', label: 'Bikes' }],
+    colors: [{ label: 'Black', hex: '#15161a' }, { label: 'White', hex: '#eceef0' }, { label: 'Silver', hex: '#a9adb3' }, { label: 'Red', hex: '#b3141b' }, { label: 'Orange', hex: '#e4501c' }, { label: 'Yellow', hex: '#f2c21b' }, { label: 'Blue', hex: '#1f4fae' }, { label: 'Green', hex: '#1f6b3a' }],
     vehicles: [
-      { model: 'asea', label: 'Asea', brand: 'Declasse', category: 'sedan', price: 18000, seats: 4, stats: { speed: 52, accel: 45, brake: 50, handling: 55 } },
-      { model: 'tailgater', label: 'Tailgater', brand: 'Obey', category: 'sedan', price: 45000, seats: 4, stats: { speed: 66, accel: 62, brake: 60, handling: 64 } },
-      { model: 'baller2', label: 'Baller', brand: 'Gallivanter', category: 'suv', price: 90000, seats: 4, stats: { speed: 64, accel: 58, brake: 55, handling: 52 } },
-      { model: 'granger', label: 'Granger', brand: 'Declasse', category: 'suv', price: 55000, seats: 8, stats: { speed: 58, accel: 50, brake: 48, handling: 46 } },
-      { model: 'elegy2', label: 'Elegy RH8', brand: 'Annis', category: 'sports', price: 150000, seats: 2, stats: { speed: 80, accel: 78, brake: 70, handling: 82 } },
-      { model: 'comet2', label: 'Comet', brand: 'Pfister', category: 'sports', price: 175000, seats: 2, stats: { speed: 82, accel: 80, brake: 72, handling: 80 } },
-      { model: 'zentorno', label: 'Zentorno', brand: 'Pegassi', category: 'super', price: 725000, seats: 2, stats: { speed: 94, accel: 92, brake: 82, handling: 86 } },
-      { model: 't20', label: 'T20', brand: 'Progen', category: 'super', price: 850000, seats: 2, stats: { speed: 95, accel: 94, brake: 84, handling: 88 } },
-      { model: 'bati', label: 'Bati 801', brand: 'Pegassi', category: 'moto', price: 25000, seats: 2, stats: { speed: 86, accel: 90, brake: 60, handling: 70 } }
+      V('asea', 'Asea', 'Declasse', 1, 'sedans', 18000, 4, 151, [60, 38, 42, 66]),
+      V('tailgater', 'Tailgater', 'Obey', 1, 'sedans', 45000, 4, 166, [66, 52, 50, 74]),
+      V('baller2', 'Baller', 'Gallivanter', 2, 'suvs', 90000, 4, 158, [63, 50, 48, 70]),
+      V('granger', 'Granger', 'Declasse', 2, 'suvs', 55000, 8, 152, [61, 40, 42, 68]),
+      V('elegy2', 'Elegy RH8', 'Annis', 6, 'sports', 150000, 2, 184, [74, 72, 66, 82]),
+      V('comet2', 'Comet', 'Pfister', 6, 'sports', 175000, 2, 183, [73, 70, 70, 84]),
+      V('zentorno', 'Zentorno', 'Pegassi', 7, 'super', 725000, 2, 197, [79, 82, 84, 90]),
+      V('t20', 'T20', 'Progen', 7, 'super', 850000, 2, 198, [80, 84, 84, 92]),
+      V('bati', 'Bati 801', 'Pegassi', 8, 'motos', 25000, 2, 180, [72, 88, 60, 70])
     ]
   });
 }

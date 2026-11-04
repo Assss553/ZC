@@ -1,30 +1,35 @@
-# VC2 — جهاز معرض السيارات (Kiosk)
+# VC2 — Car Showroom Kiosk
 
-جهاز خارجي بتصميم عصري زي جهاز الصراف (ATM)، يقدر اللاعب منه يتصفح السيارات ويجربها ويشتريها **بدون ما يحتاج موظف**.
+A standalone self-service machine (like an ATM) where players browse, test drive and buy cars without needing a dealer.
 
-## المميزات
-- جهاز (كشك) يتحط بالماب مع Blip، والتفاعل بـ `E` أو `ox_target` / `qb-target` (يكتشفها تلقائي)
-- واجهة عربية كاملة بنفس ستايل التصميم المرفق (Boot animation، طابعة إيصال، NFC، أنيميشن للكروت)
-- أقسام + بحث + بطاقات سيارات مع رسمة تتلون حسب اللون المختار
-- صفحة تفاصيل: السعر، المقاعد، السرعة/التسارع/الفرامل/التحكم، اختيار اللون، الدفع (بنك / كاش) مع تنبيه لو الرصيد ما يكفي
-- تجربة قيادة بوقت محدد + Cooldown + ترجعك للجهاز تلقائي
-- شراء بتأكيد مرتين ← إيصال فيه رقم اللوحة ورقم الطلب ← السيارة تنزل بموقف التسليم مع علامة بالخريطة
-- يدعم **QBCore** و **ESX** و **Standalone**
-- حماية من السيرفر: السعر يُقرأ من الكونفق مو من الواجهة، تحقق من المسافة عن الجهاز، قفل ضد الضغط المكرر، إرجاع المبلغ لو فشل الحفظ
-- لوق ديسكورد (اختياري)
+## Features
+- Kiosk prop placed on the map with a blip. Use it with `E`, `ox_target` or `qb-target` (detected automatically).
+- Modern kiosk UI: boot animation, receipt printer, NFC pad, animated cards.
+- **Cars are detected from their spawn codes.** Add `{ model = 'code', price = 1000 }` and the script reads the name, brand, class/category, seats, top speed and stats from the game, so addon cars work too.
+- **Real vehicle pictures**, tried in this order:
+  1. the vehicle's own `image = 'https://...'`
+  2. `html/images/<model>.png` (put your own pictures here, ideal for addon cars)
+  3. `Config.ImageUrl` (default: FiveM's vehicle pictures for base-game cars)
+  4. a drawn silhouette in the selected colour
+- Categories, search, colour picker, bank/cash payment with a not-enough-money warning.
+- Timed test drive with a cooldown. You are returned to the kiosk automatically.
+- Two-tap purchase confirmation, then a receipt with plate and order number. The car is delivered to a parking spot and marked on the map.
+- **QBCore**, **ESX** and **Standalone**.
+- Server-side safety: price comes from the config, distance-to-kiosk check, double-click lock, refund if saving fails.
+- Optional Discord purchase log.
 
-## التركيب
-1. انسخ مجلد `VC2` لـ `resources`
-2. في `server.cfg` (بعد الفريمورك و oxmysql):
+## Install
+1. Copy the `VC2` folder into `resources`.
+2. In `server.cfg` (after your framework and oxmysql):
    ```
    ensure oxmysql
    ensure VC2
    ```
-3. عدّل `config.lua` (مكان الجهاز، مواقف التسليم، السيارات، الأسعار، الألوان)
+3. Edit `config.lua`: kiosk position, delivery spots, cars and prices, colours.
 
-> يستخدم الجداول الأساسية: `player_vehicles` (QBCore) أو `owned_vehicles` (ESX) — ما يحتاج SQL إضافي.
+Uses the default tables `player_vehicles` (QBCore) or `owned_vehicles` (ESX), so no extra SQL is needed.
 
-## ملاحظات
-- المفاتيح والبنزين تقدر تعدلها من `Config.OnVehicleSpawned` حسب سكربتاتك.
-- لكل سيارة تقدر تضيف `image = 'https://...png'` بدل الرسمة الافتراضية.
-- تقدر تفتح `html/index.html` بالمتصفح لمعاينة الواجهة ببيانات تجريبية.
+## Notes
+- If a spawn code is not found (for example, the addon car isn't streamed), it is skipped and a warning is printed in the F8 console.
+- Keys and fuel are handled in `Config.OnVehicleSpawned`. Adjust it for your scripts.
+- Open `html/index.html` in a browser to preview the UI with demo data.
