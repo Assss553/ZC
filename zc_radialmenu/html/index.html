@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ZC Radial</title>
+    <link rel="stylesheet" href="fa/css/fontawesome.min.css">
+    <link rel="stylesheet" href="fa/css/solid.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="wheel" class="wheel">
+        <svg id="svg" viewBox="0 0 460 460" width="460" height="460">
+            <defs>
+                <radialGradient id="segHover" cx="230" cy="230" r="208" gradientUnits="userSpaceOnUse">
+                    <stop offset="55%" stop-color="var(--accent)" stop-opacity="0.05"/>
+                    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.55"/>
+                </radialGradient>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="b"/>
+                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+            </defs>
+            <!-- decorative outer tick ring -->
+            <circle class="ticks" cx="230" cy="230" r="222"/>
+            <!-- ring body -->
+            <circle class="ring" cx="230" cy="230" r="166"/>
+            <g id="segments"></g>
+            <!-- active outer arc -->
+            <path id="activeArc" class="active-arc" filter="url(#glow)"/>
+            <!-- inner disc -->
+            <circle class="disc-glow" cx="230" cy="230" r="108"/>
+            <circle class="disc" cx="230" cy="230" r="104"/>
+            <circle class="disc-inner" cx="230" cy="230" r="92"/>
+            <g id="needle" class="needle"><path d="M230 116 l-7 -10 h14 z"/></g>
+        </svg>
+        <div id="icons" class="icons"></div>
+        <div class="center">
+            <div id="crumb" class="crumb">ZC MENU</div>
+            <div id="label" class="label">ZC MENU</div>
+            <button id="closeBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
