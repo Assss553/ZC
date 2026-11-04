@@ -60,6 +60,7 @@ h1{font-size:32px;font-weight:900}
 .li .ic{width:44px;height:44px;border-radius:8px;background:#232328;display:grid;place-items:center;flex:none}
 .li .ic svg{width:24px;height:24px;fill:none;stroke:#a99f9b;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .li div{flex:1}.li b{display:block;font-size:16px}.li small{font-size:13px;color:var(--mu);font-weight:700}
+.li button.mv{background:#1c2430;border-color:#2f4a6b;color:#9cc4ff;margin-right:6px}
 .li button{height:34px;padding:0 14px;border-radius:7px;background:#2e1414;border:1px solid #6b2424;color:#ff9b9b;font-size:13px;font-weight:900}
 .none{padding:80px 20px;text-align:center;color:var(--mu);font-size:17px;font-weight:700;line-height:1.5}
 .exts{flex:1;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}

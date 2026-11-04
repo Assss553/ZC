@@ -15,7 +15,7 @@ An original, realistic Class C motorhome designed for VC2, built for FiveM. The 
 - **Clear glass everywhere** (no tint): windshield, cab windows, all side windows, door window, skylight, rear window.
 - **Mirrors**: two side mirrors with real mirror glass, angled toward the vehicle like real mirrors.
 - **Opening doors**: both cab doors and the entry door are separate parts, each with its pivot on the hinge.
-- **Cab**: dashboard, instrument cluster, steering wheel and two seats.
+- **Cab**: dashboard and lit instrument cluster, a leather-wrapped steering wheel (stitching, aluminium spokes, VC2 airbag pad, buttons), two-tone leather captain seats (perforated pleated inserts, bolsters, armrests, headrest on chrome posts, swivel base), and a centre console with a leather-booted gear shifter, PRNDL indicator and cup holders.
 - **Realistic wheels**: tyres with a sidewall profile and tread grooves, alloy front rims, steel/alloy **dual rear wheels**, hub caps and lug nuts.
 - **Outside**: VC2 livery, awning, storage bays, roof AC units, solar panels, ladder, spare wheel, and lights: headlights, DRLs, fog, tail, marker and LED underglow.
 - **Size**: ~8.1 m long, 2.45 m wide, ~3.75 m tall.
@@ -37,7 +37,10 @@ An original, realistic Class C motorhome designed for VC2, built for FiveM. The 
 4. **Wall screen** next to the door (target eye or E) opens the **VC2 Caravan Control** tablet:
    - **Home**: status, interior lights, step outside.
    - **Furniture**: beds, sofas, chairs, tables, kitchen, bathroom, TV, decor and storage.
-     - Pick an item and aim with your eyes: **← →** rotate, **↑ ↓** height, **E** place, **Backspace** cancel.
+     - Press **O** anywhere in or next to your caravan to open the furniture menu directly. Players can rebind it in *Settings > Key Bindings > FiveM*.
+     - Placing: **aim** to move it · **arrow keys** fine move (hold Shift for faster) · **G** follow your aim again · **mouse wheel** rotate · **PgUp / PgDn** height · **Enter** place · **Backspace** cancel.
+     - **Placed** list: **Move** (pick it up and place it again, free) or **Remove**.
+     - Furniture is welded to the caravan: rigid attachment, no physics and no damage. Its collision turns off while the caravan drives, so it never shakes or glitches, and turns back on when it stops.
      - Items are paid for (QBCore / ESX), saved, and everyone sees them.
    - **Placed**: list of your furniture, with remove.
    - **Exterior**: body colour, stripes / trim, pearl, wheel colour, underglow (on/off + colour), livery.

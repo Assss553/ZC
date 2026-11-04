@@ -156,6 +156,22 @@ RegisterNetEvent('vc2rv:addFurniture', function(netId, model, off, h)
     notify(src, ('%s placed'):format(item.label), 'success')
 end)
 
+RegisterNetEvent('vc2rv:moveFurniture', function(netId, id, off, h)
+    local src = source
+    local veh, plate = caravanFromNet(netId)
+    if not veh or not nearVeh(src, veh) or not canEdit(src, plate) or type(off) ~= 'table' then return end
+    local b = Config.InteriorBounds
+    local x, y, z = tonumber(off.x) or 0, tonumber(off.y) or 0, tonumber(off.z) or 0
+    if x < b.minX or x > b.maxX or y < b.minY or y > b.maxY or z < b.minZ - 0.1 or z > b.maxZ then return notify(src, 'Furniture must stay inside the caravan', 'error') end
+    local c = load(plate)
+    for _, f in ipairs(c.furniture) do
+        if f.id == tonumber(id) then f.x, f.y, f.z, f.h = x, y, z, (tonumber(h) or 0) % 360 break end
+    end
+    save(plate)
+    broadcast(plate)
+    notify(src, 'Moved', 'success')
+end)
+
 RegisterNetEvent('vc2rv:removeFurniture', function(netId, id)
     local src = source
     local veh, plate = caravanFromNet(netId)

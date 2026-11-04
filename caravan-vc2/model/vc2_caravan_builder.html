@@ -58,7 +58,7 @@ sun.shadow.mapSize.set(4096, 4096); Object.assign(sun.shadow.camera, { left: -12
 
 // ---------- materials
 const M = (name, o, phys) => { const m = phys ? new THREE.MeshPhysicalMaterial(o) : new THREE.MeshStandardMaterial(o); m.name = name; return m; };
-const paint = M('vc2_paint', { color: 0xe9e6de, roughness: 0.3, metalness: 0.12, clearcoat: 1, clearcoatRoughness: 0.12, sheen: 0.4, sheenColor: 0xfff6e6, sheenRoughness: 0.5 }, true);
+const paint = M('vc2_paint', { color: 0xdcdbd6, roughness: 0.38, metalness: 0.05, clearcoat: 0.6, clearcoatRoughness: 0.25 }, true);
 const interior = M('vc2_interior_wall', { color: 0xdcd6cc, roughness: 0.85 });
 const ceiling = M('vc2_interior_ceiling', { color: 0xf6f5f2, roughness: 0.9 });
 const graphite = M('vc2_graphite', { color: 0x2b2d33, roughness: 0.35, metalness: 0.5 });
@@ -293,18 +293,110 @@ for (const sd of [-1, 1]) {
 // cab interior: dashboard, steering wheel, seats, pedals
 add('dashboard', RB(0.42, 0.26, CAB - 0.2, 0.06), dashM, 6.72, 1.18, 0);
 add('dash_top', RB(0.3, 0.05, CAB - 0.26, 0.02), dashM, 6.66, 1.33, 0);
-add('instrument_cluster', RB(0.04, 0.12, 0.38, 0.02), M('vc2_cluster', { color: 0x0f1013, emissive: 0xe4501c, emissiveIntensity: 0.25 }), 6.5, 1.32, -0.5);
+{ const gc = document.createElement('canvas'); gc.width = 512; gc.height = 160; const g = gc.getContext('2d'); g.fillStyle = '#0b0c0e'; g.fillRect(0, 0, 512, 160);
+  for (const cx of [130, 382]) { g.strokeStyle = '#3a3c42'; g.lineWidth = 6; g.beginPath(); g.arc(cx, 85, 62, 0, 7); g.stroke();
+    for (let k = 0; k <= 10; k++) { const a = Math.PI * 0.75 + k / 10 * Math.PI * 1.5; g.strokeStyle = k > 7 && cx > 200 ? '#ff5a3a' : '#e8e8ec'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx + Math.cos(a) * 48, 85 + Math.sin(a) * 48); g.lineTo(cx + Math.cos(a) * 58, 85 + Math.sin(a) * 58); g.stroke(); }
+    g.strokeStyle = '#ff8a50'; g.lineWidth = 4; g.beginPath(); g.moveTo(cx, 85); g.lineTo(cx + Math.cos(2.6) * 44, 85 + Math.sin(2.6) * 44); g.stroke(); }
+  g.fillStyle = '#e8e8ec'; g.font = '800 22px Nunito, Arial'; g.fillText('km/h', 108, 130); g.fillText('rpm', 365, 130); g.fillStyle = '#83e03a'; g.fillText('D', 250, 90);
+  const gt = new THREE.CanvasTexture(gc); gt.colorSpace = THREE.SRGBColorSpace;
+  add('instrument_cluster', RB(0.05, 0.13, 0.4, 0.03), dashM, 6.52, 1.33, -0.5, 0, 0, 0.35);
+  add('instrument_gauges', new THREE.PlaneGeometry(0.36, 0.11), M('vc2_gauges', { map: gt, emissive: 0xffffff, emissiveMap: gt, emissiveIntensity: 0.7 }), 6.492, 1.333, -0.5, 0, -Math.PI / 2, 0).rotation.set(0, -Math.PI / 2, 0.35, 'ZYX'); }
+// ---------- LEATHER: generated grain + stitching + perforation textures (colour map + bump map)
+function leather(name, hex, opt = {}) {
+  const S = 512, c = document.createElement('canvas'), b = document.createElement('canvas'); c.width = b.width = S; c.height = b.height = S;
+  const g = c.getContext('2d'), h = b.getContext('2d');
+  g.fillStyle = hex; g.fillRect(0, 0, S, S); h.fillStyle = '#808080'; h.fillRect(0, 0, S, S);
+  // grain: many tiny irregular cells
+  for (let i = 0; i < 9000; i++) {
+    const x = rnd() * S, y = rnd() * S, r = 1 + rnd() * 3.2, v = rnd();
+    g.fillStyle = `rgba(${v > 0.5 ? '255,255,255' : '0,0,0'},${0.01 + rnd() * 0.012})`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+    h.fillStyle = `rgba(${v > 0.5 ? '255,255,255' : '0,0,0'},${0.05 + rnd() * 0.06})`; h.beginPath(); h.arc(x, y, r, 0, 7); h.fill();
+  }
+  if (opt.perf) for (let y = 14; y < S; y += 18) for (let x = 14 + (y / 18 % 2) * 9; x < S; x += 18) {
+    g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.arc(x, y, 2.4, 0, 7); g.fill();
+    h.fillStyle = '#000'; h.beginPath(); h.arc(x, y, 2.6, 0, 7); h.fill();
+  }
+  if (opt.pleats) for (let y = S / opt.pleats; y < S; y += S / opt.pleats) {
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, y - 3, S, 6); h.fillStyle = '#000'; h.fillRect(0, y - 4, S, 8);
+  }
+  if (opt.stitch) { // contrast double stitching near the edges (+ along pleats)
+    const st = (y, horiz = true) => { for (let k = 0; k < S; k += 16) { g.fillStyle = opt.stitch; h.fillStyle = '#fff';
+      if (horiz) { g.fillRect(k, y, 9, 3); h.fillRect(k, y - 1, 9, 4); } else { g.fillRect(y, k, 3, 9); h.fillRect(y - 1, k, 4, 9); } } };
+    for (const e of [14, S - 17]) { st(e); st(e, false); }
+    if (opt.pleats) for (let y = S / opt.pleats; y < S; y += S / opt.pleats) st(y - 11);
+  }
+  const map = new THREE.CanvasTexture(c); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;
+  const bump = new THREE.CanvasTexture(b); bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
+  const m = new THREE.MeshPhysicalMaterial({ map, bumpMap: bump, bumpScale: opt.bump ?? 0.6, roughness: opt.rough ?? 0.55, sheen: 0.6, sheenColor: 0xffffff, sheenRoughness: 0.6, clearcoat: 0.15, clearcoatRoughness: 0.6 });
+  m.name = name; return m;
+}
+const lthDark = leather('vc2_leather_espresso', '#3b2d25', { stitch: '#d9c7a6' });
+const lthInsert = leather('vc2_leather_cream_perforated', '#cdbfa6', { perf: true, pleats: 5, stitch: '#8a6d52' });
+const lthWheel = leather('vc2_leather_wheel', '#1d1b1a', { stitch: '#c9a676', rough: 0.5 });
+const lthBoot = leather('vc2_leather_boot', '#22201e', { pleats: 7, stitch: '#c9a676', bump: 2 });
+const alu = M('vc2_brushed_alu', { color: 0xb9bcc2, roughness: 0.32, metalness: 0.95 });
+
+// ---------- STEERING WHEEL: leather-wrapped rim with stitching, thumb grips, aluminium spokes, VC2 airbag pad, buttons
 { const sw = new THREE.Group(); sw.name = 'steeringw'; sw.position.set(6.3, 1.32, -0.5); sw.rotation.set(0, 0, 0.55); RV.add(sw);
-  add('steeringw_rim', new THREE.TorusGeometry(0.19, 0.022, 10, 40), dashM, 0, 0, 0, 0, Math.PI / 2, 0, sw);
-  add('steeringw_hub', new THREE.CylinderGeometry(0.06, 0.06, 0.05, 20), dashM, 0, 0, 0, 0, 0, Math.PI / 2, sw);
-  for (const a of [0, 2.1, 4.2]) add('steeringw_spoke', RB(0.02, 0.17, 0.03, 0.01), dashM, 0, Math.cos(a) * 0.09, Math.sin(a) * 0.09, a, 0, 0, sw);
-  add('steering_column', new THREE.CylinderGeometry(0.035, 0.035, 0.4, 12), dashM, 6.5, 1.2, -0.5, 0, 0, Math.PI / 2 + 0.55); }
-for (const sd of [-1, 1]) {
-  const n = sd < 0 ? 'seat_dside_f' : 'seat_pside_f', z = sd * 0.5;
-  add(n, RB(0.52, 0.14, 0.52, 0.05), seatM, 5.75, 0.98, z);
-  add(n + '_back', RB(0.14, 0.72, 0.52, 0.06), seatM, 5.48, 1.38, z, 0, 0, -0.12);
-  add(n + '_head', RB(0.1, 0.2, 0.3, 0.05), seatM, 5.42, 1.84, z, 0, 0, -0.12);
-  add(n + '_base', RB(0.4, 0.24, 0.4, 0.02), trim, 5.75, 0.8, z);
+  add('steeringw_rim', new THREE.TorusGeometry(0.19, 0.024, 16, 72), lthWheel, 0, 0, 0, 0, Math.PI / 2, 0, sw);
+  add('steeringw_rim_stitch', new THREE.TorusGeometry(0.19, 0.0035, 6, 72), M('vc2_stitch', { color: 0xc9a676, roughness: 0.7 }), -0.022, 0, 0, 0, Math.PI / 2, 0, sw);
+  add('steeringw_spoke_l', RB(0.03, 0.04, 0.13, 0.014), lthWheel, -0.012, -0.005, 0.11, 0, 0, 0, sw);
+  add('steeringw_spoke_r', RB(0.03, 0.04, 0.13, 0.014), lthWheel, -0.012, -0.005, -0.11, 0, 0, 0, sw);
+  add('steeringw_spoke_b', RB(0.03, 0.12, 0.05, 0.016), lthWheel, -0.012, -0.11, 0, 0, 0, 0, sw);
+  for (const zz of [0.11, -0.11]) add('steeringw_spoke_trim', RB(0.006, 0.01, 0.1, 0.004), alu, -0.028, 0.012, zz, 0, 0, 0, sw);
+  add('steeringw_hub', RB(0.07, 0.14, 0.16, 0.05), lthWheel, -0.02, 0.0, 0, 0, 0, 0, sw);
+  { const lc = document.createElement('canvas'); lc.width = 256; lc.height = 128; const g = lc.getContext('2d'); g.font = '900 80px Nunito, Arial Black'; g.fillStyle = '#cfd2d8'; g.fillText('VC', 52, 92); g.fillStyle = '#e4501c'; g.fillText('2', 52 + g.measureText('VC').width, 92);
+    const t = new THREE.CanvasTexture(lc); t.colorSpace = THREE.SRGBColorSpace; const lm = new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.05, metalness: 0.6, roughness: 0.3 }); lm.name = 'vc2_wheel_logo';
+    add('steeringw_logo', new THREE.PlaneGeometry(0.09, 0.045), lm, -0.056, 0.005, 0, 0, -Math.PI / 2, 0, sw); }
+  for (const [zz, yy] of [[0.075, 0.02], [0.075, -0.015], [-0.075, 0.02], [-0.075, -0.015]]) add('steeringw_button', RB(0.01, 0.02, 0.02, 0.006), M('vc2_button', { color: 0x2c2d31, roughness: 0.3, metalness: 0.4 }), -0.03, yy, zz, 0, 0, 0, sw);
+  add('steering_column', new THREE.CylinderGeometry(0.04, 0.05, 0.4, 16), dashM, 6.5, 1.2, -0.5, 0, 0, Math.PI / 2 + 0.55);
+  add('column_shroud', RB(0.18, 0.1, 0.12, 0.04), dashM, 6.45, 1.22, -0.5, 0, 0, 0.55); }
+
+// ---------- CAPTAIN SEATS: two-tone leather, perforated pleated inserts, side bolsters, armrests, headrest on chrome posts, swivel base
+function captainSeat(n, x, z) {
+  const g = new THREE.Group(); g.name = n; g.position.set(x, 0, z); RV.add(g);
+  add(n + '_pedestal', RB(0.34, 0.2, 0.34, 0.03), trim, 0, 0.8, 0, 0, 0, 0, g);
+  add(n + '_swivel', new THREE.CylinderGeometry(0.2, 0.2, 0.03, 32), alu, 0, 0.915, 0, 0, 0, 0, g);
+  // cushion
+  add(n + '_cushion', RB(0.52, 0.12, 0.52, 0.05), lthDark, 0, 0.99, 0, 0, 0, 0, g);
+  add(n + '_cushion_insert', RB(0.4, 0.03, 0.3, 0.015), lthInsert, 0.01, 1.055, 0, 0, 0, 0, g);
+  for (const e of [-1, 1]) add(n + '_cushion_bolster', RB(0.46, 0.07, 0.09, 0.035), lthDark, 0, 1.07, e * 0.21, e * 0.12, 0, 0, g);
+  add(n + '_cushion_front', RB(0.07, 0.08, 0.46, 0.035), lthDark, 0.24, 1.05, 0, 0, 0, -0.25, g);
+  // backrest (leans back)
+  const back = new THREE.Group(); back.name = n + '_backrest'; back.position.set(-0.24, 1.05, 0); back.rotation.z = 0.13; g.add(back);
+  add(n + '_back', RB(0.14, 0.74, 0.52, 0.06), lthDark, 0, 0.37, 0, 0, 0, 0, back);
+  add(n + '_back_insert', RB(0.03, 0.54, 0.3, 0.015), lthInsert, 0.075, 0.37, 0, 0, 0, 0, back);
+  for (const e of [-1, 1]) add(n + '_back_bolster', RB(0.12, 0.62, 0.09, 0.04), lthDark, 0.06, 0.36, e * 0.215, 0, e * 0.25, 0, back);
+  add(n + '_lumbar', RB(0.04, 0.1, 0.32, 0.03), lthDark, 0.08, 0.12, 0, 0, 0, 0, back);
+  // headrest on chrome posts
+  for (const e of [-1, 1]) add(n + '_head_post', new THREE.CylinderGeometry(0.008, 0.008, 0.12, 10), chrome, 0.01, 0.78, e * 0.08, 0, 0, 0, back);
+  add(n + '_head', RB(0.11, 0.2, 0.3, 0.05), lthDark, 0.01, 0.9, 0, 0, 0, 0, back);
+  add(n + '_head_insert', RB(0.02, 0.12, 0.2, 0.01), lthInsert, 0.062, 0.9, 0, 0, 0, 0, back);
+  // fold-down armrests on both sides (captain chair)
+  for (const e of [-1, 1]) {
+    add(n + '_armrest', RB(0.32, 0.065, 0.075, 0.03), lthDark, 0.12, 1.22, e * 0.3, 0, 0, 0, g);
+    add(n + '_armrest_hinge', new THREE.CylinderGeometry(0.03, 0.03, 0.02, 16), trim, -0.04, 1.22, e * 0.27, Math.PI / 2, 0, 0, g);
+  }
+  // seat belt buckle + recline lever
+  add(n + '_buckle', RB(0.05, 0.03, 0.03, 0.01), chrome, -0.18, 1.08, -Math.sign(z) * 0.29, 0, 0, 0, g);
+  add(n + '_lever', RB(0.12, 0.02, 0.025, 0.01), trim, 0.05, 0.95, Math.sign(z) * 0.28, 0, 0, 0, g);
+  return g;
+}
+captainSeat('seat_dside_f', 5.75, -0.5); captainSeat('seat_pside_f', 5.75, 0.5);
+
+// ---------- CENTRE CONSOLE + GEAR SHIFTER (leather boot, chrome ring, leather knob, PRNDL plate) + cup holders
+add('console', RB(0.55, 0.32, 0.26, 0.05), dashM, 6.05, 0.9, 0);
+add('console_top', RB(0.5, 0.03, 0.22, 0.02), lthDark, 6.05, 1.07, 0);
+{ const boot = new THREE.LatheGeometry([new THREE.Vector2(0.065, 0), new THREE.Vector2(0.06, 0.02), new THREE.Vector2(0.045, 0.06), new THREE.Vector2(0.03, 0.1), new THREE.Vector2(0.02, 0.13)], 32);
+  add('gear_boot', boot, lthBoot, 6.2, 1.085, 0);
+  add('gear_ring', new THREE.TorusGeometry(0.066, 0.008, 10, 36), chrome, 6.2, 1.088, 0, Math.PI / 2, 0, 0);
+  add('gear_stick', new THREE.CylinderGeometry(0.012, 0.014, 0.1, 12), alu, 6.2, 1.26, 0, 0, 0, -0.12);
+  add('gear_knob', new THREE.SphereGeometry(0.038, 24, 16), lthWheel, 6.21, 1.33, 0).scale.set(1, 1.25, 1);
+  add('gear_knob_cap', new THREE.CylinderGeometry(0.026, 0.026, 0.006, 24), alu, 6.215, 1.375, 0);
+  const pc = document.createElement('canvas'); pc.width = 256; pc.height = 64; const g = pc.getContext('2d'); g.fillStyle = '#101113'; g.fillRect(0, 0, 256, 64); g.font = '900 40px Nunito, Arial'; g.fillStyle = '#d9d9de'; ['P', 'R', 'N', 'D', 'L'].forEach((ch, i) => { g.fillStyle = ch === 'D' ? '#ff8a50' : '#d9d9de'; g.fillText(ch, 18 + i * 48, 46); });
+  const pt = new THREE.CanvasTexture(pc); pt.colorSpace = THREE.SRGBColorSpace; const pm = M('vc2_prndl', { map: pt, emissive: 0xffffff, emissiveMap: pt, emissiveIntensity: 0.5 });
+  add('gear_indicator', new THREE.PlaneGeometry(0.16, 0.04), pm, 6.0, 1.087, 0, -Math.PI / 2, 0, Math.PI / 2);
+  for (const zz of [-0.055, 0.055]) { add('cup_holder', new THREE.CylinderGeometry(0.04, 0.04, 0.012, 24), M('vc2_cup', { color: 0x0c0c0e, roughness: 0.8 }), 5.86, 1.084, zz); add('cup_ring', new THREE.TorusGeometry(0.04, 0.004, 8, 32), alu, 5.86, 1.088, zz, Math.PI / 2, 0, 0); }
 }
 add('cab_floor', new THREE.BoxGeometry(1.5, 0.02, CAB - 0.16), M('vc2_cab_floor', { color: 0x1d1e21, roughness: 0.95 }), 6.1, 0.73, 0);
 
@@ -638,6 +730,8 @@ const views = {
   mirror: [[5.8, 1.74, -0.42], [6.64, 1.6, -1.46]],
   dooropen: [[0.2, 1.8, 6.2], [3.9, 1.45, 0.6]],
   cabin: [[5.25, 1.75, 0.35], [7.2, 1.35, -0.3]],
+  seats: [[6.75, 1.55, 0.7], [5.6, 1.15, -0.25]],
+  wheel_in: [[5.95, 1.55, -0.5], [6.35, 1.3, -0.5]],
 };
 const v = views[q.get('v') || 'front']; cam.position.set(...v[0]); cam.lookAt(...v[1]);
 r.render(scene, cam); r.render(scene, cam);

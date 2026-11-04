@@ -50,8 +50,9 @@ function grid() {
 function placed() {
   const name = m => (D.catalog.find(f => f.model === m) || { label: m, cat: 'Decor' });
   $('plist').innerHTML = D.furniture.length ? D.furniture.map((f, i) => { const c = name(f.model); return `<div class="li" style="--i:${i}"><div class="ic">${ic(c.cat)}</div>
-    <div><b>${esc(c.label)}</b><small>${esc(c.cat)} · #${f.id}</small></div><button data-id="${f.id}">REMOVE</button></div>`; }).join('')
+    <div><b>${esc(c.label)}</b><small>${esc(c.cat)} · #${f.id}</small></div><button class="mv" data-mv="${f.id}">MOVE</button><button data-id="${f.id}">REMOVE</button></div>`; }).join('')
     : '<div class="none">Nothing placed yet.<br>Open <b>Furniture</b> to start decorating.</div>';
+  $('plist').querySelectorAll('[data-mv]').forEach(b => b.onclick = () => { send('move', { id: +b.dataset.mv }); if (!RES) toast('Preview: moving happens in game'); });
   $('plist').querySelectorAll('[data-id]').forEach(b => b.onclick = () => {
     send('remove', { id: +b.dataset.id });
     if (!RES) { D.furniture = D.furniture.filter(f => f.id !== +b.dataset.id); placed(); home(); }
@@ -78,7 +79,7 @@ $('lights').onclick = () => { D.lights = !D.lights; home(); send('lights', { on:
 $('exit').onclick = () => send('exit');
 
 function render() { home(); cats(); grid(); placed(); exterior(); }
-function open(d) { Object.assign(D, d); D.exterior = Object.assign({}, d.exterior || {}); cat = 'All'; render(); page('home'); document.body.classList.add('open'); $('tab').classList.remove('out'); }
+function open(d) { Object.assign(D, d); D.exterior = Object.assign({}, d.exterior || {}); cat = 'All'; render(); page(d.tab || 'home'); document.body.classList.add('open'); $('tab').classList.remove('out'); }
 function close() { if (!document.body.classList.contains('open')) return; $('tab').classList.add('out'); setTimeout(() => document.body.classList.remove('open'), 230); }
 
 addEventListener('message', ev => {

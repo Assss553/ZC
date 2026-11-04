@@ -98,18 +98,51 @@ local function clearFurniture(rv)
     rv.furn = {}
 end
 
+-- Furniture is welded to the caravan (rigid attach, fixed rotation, no physics, no damage).
+-- While the caravan moves its collision is switched off so it can never push / shake the vehicle;
+-- when it stops (or is set up) collision comes back so you can walk around and sit on it.
+local function weld(o, veh, f, collide)
+    AttachEntityToEntity(o, veh, 0, f.x, f.y, f.z, 0.0, 0.0, f.h, false, false, collide, false, 2, true)
+    SetEntityCollision(o, collide, collide)
+end
+
 local function buildFurniture(veh, rv)
     clearFurniture(rv)
     local d = Data[rv.plate]
     if not d then return end
+    rv.furnData = {}
     for _, f in ipairs(d.furniture or {}) do
         local o = spawnProp(f.model, veh)
         if o then
-            AttachEntityToEntity(o, veh, 0, f.x, f.y, f.z, 0.0, 0.0, f.h, false, false, true, false, 2, true)
+            SetEntityInvincible(o, true)
+            SetEntityCanBeDamaged(o, false)
+            SetEntityNoCollisionEntity(o, veh, false)
+            if SetDisableFragDamage then SetDisableFragDamage(o, true) end
+            SetEntityDynamic(o, false)
+            weld(o, veh, f, not rv.moving)
             rv.furn[f.id] = o
+            rv.furnData[f.id] = f
         end
     end
 end
+
+-- watch every caravan: moving -> furniture collision off, parked -> on
+CreateThread(function()
+    while true do
+        for veh, rv in pairs(RV) do
+            if DoesEntityExist(veh) then
+                local moving = GetEntitySpeed(veh) > 0.6 and not isDeployed(veh)
+                if moving ~= rv.moving then
+                    rv.moving = moving
+                    for id, o in pairs(rv.furn) do
+                        if DoesEntityExist(o) and rv.furnData and rv.furnData[id] then weld(o, veh, rv.furnData[id], not moving) end
+                    end
+                end
+            end
+        end
+        Wait(300)
+    end
+end)
 
 local function addTargetScreen(veh, rv)
     local o = rv.parts.screen
@@ -293,7 +326,7 @@ local function catalogForUI()
     return out
 end
 
-function OpenTablet(veh)
+function OpenTablet(veh, tab)
     local rv = RV[veh]
     if not rv or uiOpen or placing then return end
     local d = Data[rv.plate] or {}
@@ -302,7 +335,7 @@ function OpenTablet(veh)
     local p, s = GetVehicleColours(veh)
     local pearl, wheel = GetVehicleExtraColours(veh)
     SendNUIMessage({
-        action = 'open', plate = rv.plate, deployed = isDeployed(veh) and true or false, canEdit = d.canEdit ~= false,
+        action = 'open', tab = tab, plate = rv.plate, deployed = isDeployed(veh) and true or false, canEdit = d.canEdit ~= false,
         currency = Config.Currency, catalog = catalogForUI(), furniture = d.furniture or {}, max = Config.MaxFurniture,
         colors = Config.Colors, neon = Config.Neon, liveries = GetVehicleLiveryCount(veh),
         exterior = next(d.exterior or {}) and d.exterior or { primary = p, secondary = s, pearl = pearl, wheel = wheel },
@@ -355,11 +388,8 @@ local function camRay(ignore)
     return hit == 1 and pos or to
 end
 
-RegisterNUICallback('place', function(d, cb)
-    cb({})
-    local veh, item = uiVeh, catalog[d.model]
-    if not veh or not item then return end
-    closeTablet()
+-- aim with the camera, fine-tune with the arrow keys, rotate with the mouse wheel, place with ENTER
+local function startPlacement(veh, item, moveId)
     local h = loadModel(item.model)
     if not h then return notify('This item is not available on this server', 'error') end
     placing = true
@@ -367,34 +397,100 @@ RegisterNUICallback('place', function(d, cb)
     SetEntityAlpha(ghost, 170, false)
     SetEntityCollision(ghost, false, false)
     FreezeEntityPosition(ghost, true)
-    local rot, lift = 0.0, 0.0
+    local rot, lift, nudge, locked, base = 0.0, 0.0, vector3(0.0, 0.0, 0.0), false, nil
+    local b = Config.InteriorBounds
+    local step = Config.Placement.moveStep
     CreateThread(function()
         while placing do
             Wait(0)
-            local pos = camRay(ghost)
-            local off = GetOffsetFromEntityGivenWorldCoords(veh, pos.x, pos.y, pos.z)
-            local b = Config.InteriorBounds
-            off = vector3(math.max(b.minX, math.min(b.maxX, off.x)), math.max(b.minY, math.min(b.maxY, off.y)), math.max(b.minZ, math.min(b.maxZ, off.z)) + lift)
+            for _, c in ipairs({ 10, 11, 14, 15, 16, 17, 24, 25, 37, 44, 45, 47, 140, 141, 142, 172, 173, 174, 175, 177, 191, 200, 201, 257, 263 }) do DisableControlAction(0, c, true) end
+            if not locked then
+                local pos = camRay(ghost)
+                base = GetOffsetFromEntityGivenWorldCoords(veh, pos.x, pos.y, pos.z)
+            end
+            -- arrows: move (locks the position so it stops following your aim), G: follow aim again
+            local fast = IsControlPressed(0, 21) and 3.0 or 1.0
+            if IsDisabledControlPressed(0, 172) then nudge = nudge + vector3(0.0, step * fast, 0.0) locked = true end
+            if IsDisabledControlPressed(0, 173) then nudge = nudge - vector3(0.0, step * fast, 0.0) locked = true end
+            if IsDisabledControlPressed(0, 174) then nudge = nudge - vector3(step * fast, 0.0, 0.0) locked = true end
+            if IsDisabledControlPressed(0, 175) then nudge = nudge + vector3(step * fast, 0.0, 0.0) locked = true end
+            if IsDisabledControlJustPressed(0, 47) then locked, nudge = false, vector3(0.0, 0.0, 0.0) end
+            -- mouse wheel: rotate · page up / down: height
+            if IsDisabledControlJustPressed(0, 14) then rot = rot + Config.Placement.rotateStep end
+            if IsDisabledControlJustPressed(0, 15) then rot = rot - Config.Placement.rotateStep end
+            if IsDisabledControlPressed(0, 10) then lift = math.min(1.5, lift + 0.004 * fast) end
+            if IsDisabledControlPressed(0, 11) then lift = math.max(-0.3, lift - 0.004 * fast) end
+            local o = base + nudge
+            local off = vector3(math.max(b.minX, math.min(b.maxX, o.x)), math.max(b.minY, math.min(b.maxY, o.y)), math.max(b.minZ, math.min(b.maxZ, o.z + lift)))
             local w = GetOffsetFromEntityInWorldCoords(veh, off.x, off.y, off.z)
             SetEntityCoordsNoOffset(ghost, w.x, w.y, w.z, false, false, false)
-            SetEntityHeading(ghost, GetEntityHeading(veh) + rot)
-            for _, c in ipairs({ 14, 15, 174, 175, 172, 173, 177, 200 }) do DisableControlAction(0, c, true) end
-            if IsDisabledControlPressed(0, 174) or IsDisabledControlJustPressed(0, 14) then rot = rot + 2.0 end
-            if IsDisabledControlPressed(0, 175) or IsDisabledControlJustPressed(0, 15) then rot = rot - 2.0 end
-            if IsDisabledControlPressed(0, 172) then lift = math.min(1.5, lift + 0.005) end
-            if IsDisabledControlPressed(0, 173) then lift = math.max(-0.3, lift - 0.005) end
-            help(('Placing: %s (%s%d)~n~~INPUT_CELLPHONE_LEFT~ ~INPUT_CELLPHONE_RIGHT~ rotate   ~INPUT_CELLPHONE_UP~ ~INPUT_CELLPHONE_DOWN~ height~n~~INPUT_CONTEXT~ place   ~INPUT_FRONTEND_RRIGHT~ cancel'):format(item.label, Config.Currency, item.price or 0))
-            if IsControlJustReleased(0, 38) then
+            SetEntityRotation(ghost, 0.0, 0.0, GetEntityHeading(veh) + rot, 2, true)
+            help(('%s %s~n~Aim to move · ~INPUT_CELLPHONE_UP~~INPUT_CELLPHONE_DOWN~~INPUT_CELLPHONE_LEFT~~INPUT_CELLPHONE_RIGHT~ fine move (Shift = faster) · ~INPUT_DETONATE~ follow aim~n~Mouse wheel rotate · ~INPUT_SCRIPTED_FLY_ZUP~ ~INPUT_SCRIPTED_FLY_ZDOWN~ height~n~~INPUT_FRONTEND_ACCEPT~ place   ~INPUT_FRONTEND_CANCEL~ cancel'):format(
+                moveId and 'Moving:' or 'Placing:', item.label .. (moveId and '' or (' (%s%d)'):format(Config.Currency, item.price or 0))))
+            if IsDisabledControlJustReleased(0, 191) or IsDisabledControlJustReleased(0, 201) then
                 placing = false
-                TriggerServerEvent('vc2rv:addFurniture', VehToNet(veh), item.model, { x = off.x, y = off.y, z = off.z }, rot)
+                local data = { x = off.x, y = off.y, z = off.z }
+                if moveId then TriggerServerEvent('vc2rv:moveFurniture', VehToNet(veh), moveId, data, rot)
+                else TriggerServerEvent('vc2rv:addFurniture', VehToNet(veh), item.model, data, rot) end
             elseif IsDisabledControlJustReleased(0, 177) or IsDisabledControlJustReleased(0, 200) then
                 placing = false
+                notify('Cancelled', 'error')
             end
         end
         DeleteEntity(ghost)
         SetModelAsNoLongerNeeded(h)
     end)
+end
+
+RegisterNUICallback('place', function(d, cb)
+    cb({})
+    local veh, item = uiVeh, catalog[d.model]
+    if not veh or not item then return end
+    closeTablet()
+    startPlacement(veh, item, nil)
 end)
+
+RegisterNUICallback('move', function(d, cb)
+    cb({})
+    local veh = uiVeh
+    local rv = veh and RV[veh]
+    local f = rv and rv.furnData and rv.furnData[tonumber(d.id)]
+    if not f then return end
+    closeTablet()
+    -- hide the original while it is being moved
+    local o = rv.furn[f.id]
+    if o and DoesEntityExist(o) then SetEntityVisible(o, false, false) end
+    startPlacement(veh, catalog[f.model] or { model = f.model, label = f.model, price = 0 }, f.id)
+    CreateThread(function()
+        while placing do Wait(100) end
+        if o and DoesEntityExist(o) then SetEntityVisible(o, true, false) end
+    end)
+end)
+
+---------------------------------------------------------------- O: furniture menu anywhere in / next to your caravan
+local function caravanForPlayer()
+    local ped = PlayerPedId()
+    local inVeh = GetVehiclePedIsIn(ped, false)
+    if inVeh ~= 0 and RV[inVeh] then return inVeh end
+    local pc, best, bd = GetEntityCoords(ped), nil, 8.0
+    local b = Config.InteriorBounds
+    for veh in pairs(RV) do
+        local off = GetOffsetFromEntityGivenWorldCoords(veh, pc.x, pc.y, pc.z)
+        local inside = off.x > b.minX - 0.3 and off.x < b.maxX + 0.3 and off.y > b.minY - 0.3 and off.y < b.maxY + 0.3
+        local d = #(GetEntityCoords(veh) - pc)
+        if inside then return veh end
+        if d < bd then best, bd = veh, d end
+    end
+    return best
+end
+
+RegisterCommand('vc2furniture', function()
+    if uiOpen or placing then return end
+    local veh = caravanForPlayer()
+    if not veh then return notify('Go inside (or next to) your caravan first', 'error') end
+    OpenTablet(veh, 'furn')
+end, false)
+RegisterKeyMapping('vc2furniture', 'VC2 Caravan: furniture menu', 'keyboard', Config.Placement.menuKey)
 
 ---------------------------------------------------------------- names + cleanup
 CreateThread(function()

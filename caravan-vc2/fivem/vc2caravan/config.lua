@@ -41,6 +41,12 @@ Config.ExitOffset = vector3(2.1, -0.75, 0.0)
 -- Furniture can only be placed inside this box (vehicle offsets, incl. the slide-outs)
 Config.InteriorBounds = { minX = -1.9, maxX = 1.15, minY = -4.55, maxY = 1.45, minZ = 0.55, maxZ = 3.2 }
 Config.MaxFurniture = 40
+-- Furniture menu + placement
+Config.Placement = {
+    menuKey = 'O',     -- opens the furniture menu (players can rebind it in GTA settings > Key Bindings > FiveM)
+    moveStep = 0.01,   -- metres per frame with the arrow keys (hold Shift = 3x)
+    rotateStep = 7.5,  -- degrees per mouse-wheel notch
+}
 
 ---------------------------------------------------------------- exterior
 Config.Colors = {
