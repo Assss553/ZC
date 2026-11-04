@@ -55,7 +55,8 @@ function OpenFurniturePanel()
         action = 'furniturePanel', propertyId = CurrentHouse.id, label = CurrentHouse.label,
         pieces = res.pieces, max = res.max,
         static = { locale = CurrentLang(), currency = Config.Currency, furniture = FurnitureCatalog,
-                   categories = FurnitureCategories, furnitureImage = Config.Furniture.ImageUrl, sellBack = Config.Furniture.SellBack },
+                   categories = FurnitureCategories, furnitureImage = Config.Furniture.ImageUrl, sellBack = Config.Furniture.SellBack,
+                   furnitureImages = ClientRegistry and ClientRegistry.furnitureImages or {} },
     })
     SetNuiFocus(true, true)
 end

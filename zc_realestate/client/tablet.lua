@@ -2,9 +2,30 @@ local tabletOpen = false
 local tabletProp
 local contractOpen = false
 
+ClientRegistry = nil   -- detected interiors + pictures (from the server)
+
+RegisterNetEvent('zc_re:registry', function(reg)
+    ClientRegistry = reg
+    SendNUIMessage({ action = 'registry', static = { interiors = UIInteriors(), furnitureImages = reg.furnitureImages } })
+end)
+
+-- interior list with a client-side check that each shell is really streamed
+function UIInteriors()
+    local list = (ClientRegistry and ClientRegistry.interiors) or InteriorsForUI()
+    local out = {}
+    for _, i in ipairs(list) do
+        local copy = {}
+        for k, v in pairs(i) do copy[k] = v end
+        if i.shell then copy.available = IsModelInCdimage(joaat(i.shell)) and true or false end
+        if copy.available ~= false or not i.auto then out[#out + 1] = copy end -- hide detected-but-missing
+    end
+    return out
+end
+
 local function staticData()
     return {
-        locale = CurrentLang(), defaultLocale = Config.Locale, currency = Config.Currency, interiors = InteriorsForUI(),
+        locale = CurrentLang(), defaultLocale = Config.Locale, currency = Config.Currency, interiors = UIInteriors(),
+        furnitureImages = ClientRegistry and ClientRegistry.furnitureImages or {},
         wallpaper = Config.Tablet.DefaultWallpaper,
         furniture = FurnitureCatalog, categories = FurnitureCategories,
         maxFurniture = Config.Furniture.MaxPieces, furnitureImage = Config.Furniture.ImageUrl,
@@ -47,8 +68,11 @@ end
 
 function OpenTablet(app)
     if tabletOpen or CurrentPlacement then return end
-    local data = ServerCall('bootstrap') -- returns the table as first value
-    if type(data) ~= 'table' then return end
+    local data, err = ServerCall('bootstrap') -- returns the table as first value
+    if type(data) ~= 'table' then
+        if err then Notify(err, 'error') end
+        return
+    end
     tabletOpen = true
     startTabletAnim()
     SendNUIMessage({ action = 'open', data = data, static = staticData(), app = app })
@@ -116,13 +140,13 @@ RegisterNUICallback('call', function(data, cb)
     end)
 end)
 
-RegisterNUICallback('pickLocation', function(_, cb)
+RegisterNUICallback('pickLocation', function(data, cb)
     cb(1)
     CreateThread(function()
         SendNUIMessage({ action = 'hide' })
         SetNuiFocus(false, false)
         stopTabletAnim()
-        local loc, street = PickLocation()
+        local loc, street = PickLocation(data and data.mode)
         startTabletAnim()
         SendNUIMessage({ action = 'locationPicked', location = loc, street = street })
         updateFocus()

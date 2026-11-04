@@ -1,5 +1,9 @@
 const I18N = {
     ar: {
+        no_access_title: 'ما عندك صلاحية', no_access_sub: 'هذا التطبيق يحتاج رتبة أعلى في العقار', f_ipl: 'تصاميم اللعبة', f_shells: 'شل', f_detected: 'مكتشف تلقائي', rescan: 'إعادة الفحص',
+        detected: 'مكتشف', not_installed: 'غير محمّل في السيرفر', auto_entry_short: 'نقطة دخول تلقائية', custom_hint: 'تحدد نقطة الدخول بالتصويب',
+        aim_inside: 'صوّب على مكان الدخول من داخل', aim_inside_desc: 'ادخل الـ MLO أو المكان، صوّب على الأرض اللي يطلع فيها اللاعب واضغط E', inside_point: 'نقطة الدخول (داخل)',
+        err_inside: 'حدد نقطة الدخول من داخل', a_inside: 'تغيير نقطة الدخول (داخل)',
         app_settings: 'الإعدادات', set_sub: 'خصّص الايباد', set_wallpaper: 'الخلفية', set_wallpaper_sub: 'اختر خلفية الشاشة الرئيسية', set_custom_ph: 'أو حط رابط صورة https://...',
         set_size: 'حجم الايباد', set_size_sub: 'كبّر أو صغّر الايباد على الشاشة', set_small: 'صغير', set_large: 'كبير', set_reset: 'افتراضي',
         set_lang: 'اللغة', set_lang_sub: 'لغة الايباد والتنبيهات', set_about: 'حول', confirm_title: 'تأكيد', prompt_title: 'إدخال',
@@ -53,6 +57,10 @@ const I18N = {
         card_view: 'عقار', unknown: '—', tier_low: 'اقتصادي', tier_mid: 'متوسط', tier_high: 'فاخر', tier_luxury: 'لوكس',
     },
     en: {
+        no_access_title: 'No access', no_access_sub: 'This app needs a higher real estate grade', f_ipl: 'GTA interiors', f_shells: 'Shells', f_detected: 'Detected', rescan: 'Rescan',
+        detected: 'DETECTED', not_installed: 'Not installed on the server', auto_entry_short: 'Automatic entry point', custom_hint: 'Entry point picked by aiming',
+        aim_inside: 'Aim at the inside spawn', aim_inside_desc: 'Go inside the MLO / place, aim at the floor where players should appear and press E', inside_point: 'Inside point',
+        err_inside: 'Pick the inside point', a_inside: 'Change inside point',
         app_settings: 'Settings', set_sub: 'Personalise your iPad', set_wallpaper: 'Wallpaper', set_wallpaper_sub: 'Pick the home screen background', set_custom_ph: 'Or paste an image URL https://...',
         set_size: 'iPad size', set_size_sub: 'Make the iPad bigger or smaller on screen', set_small: 'Small', set_large: 'Large', set_reset: 'Default',
         set_lang: 'Language', set_lang_sub: 'iPad and notification language', set_about: 'About', confirm_title: 'Are you sure?', prompt_title: 'Input required',

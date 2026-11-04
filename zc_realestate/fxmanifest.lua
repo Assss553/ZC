@@ -5,7 +5,11 @@ lua54 'yes'
 name 'zc_realestate'
 author 'ZC'
 description 'Real estate system: realtor iPad, aim-based property creation, contracts, rent, marketplace and furniture'
-version '1.0.0'
+version '1.2.0'
+
+-- shells / maps dropped in stream/houses are streamed automatically
+this_is_a_map 'yes'
+data_file 'DLC_ITYP_REQUEST' 'stream/**/*.ytyp'
 
 shared_scripts {
     'config.lua',
@@ -22,6 +26,7 @@ server_scripts {
     'server/main.lua',
     'server/furniture.lua',
     'server/rent.lua',
+    'server/detect.lua',
 }
 
 client_scripts {
@@ -42,6 +47,9 @@ files {
     'html/app.js',
     'html/img/*.*',
     'html/img/houses/*.*',
+    'html/img/furniture/*.*',
+    'html/img/icons/*.*',
+    'html/img/wallpapers/*.*',
 }
 
 dependencies {

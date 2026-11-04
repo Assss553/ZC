@@ -56,6 +56,12 @@ local schema = {
         PRIMARY KEY (`id`),
         KEY `property_id` (`property_id`)
     )]],
+    [[CREATE TABLE IF NOT EXISTS `zc_shells` (
+        `model` VARCHAR(64) NOT NULL,
+        `label` VARCHAR(64) DEFAULT NULL,
+        `offset` LONGTEXT DEFAULT NULL,
+        PRIMARY KEY (`model`)
+    )]],
     [[CREATE TABLE IF NOT EXISTS `zc_payouts` (
         `id` INT NOT NULL AUTO_INCREMENT,
         `identifier` VARCHAR(64) NOT NULL,
@@ -68,6 +74,20 @@ local schema = {
 
 function DB.Init()
     for _, q in ipairs(schema) do MySQL.query.await(q) end
+    -- v1.2: custom / MLO interiors store the inside point
+    local col = MySQL.query.await("SHOW COLUMNS FROM `zc_properties` LIKE 'inside'")
+    if not col or #col == 0 then
+        MySQL.query.await('ALTER TABLE `zc_properties` ADD COLUMN `inside` LONGTEXT DEFAULT NULL')
+    end
+end
+
+function DB.LoadShells()
+    return MySQL.query.await('SELECT * FROM zc_shells') or {}
+end
+
+function DB.SaveShell(model, label, offset)
+    MySQL.query.await('INSERT INTO zc_shells (`model`, `label`, `offset`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `label` = VALUES(`label`), `offset` = VALUES(`offset`)',
+        { model, label, offset and json.encode(offset) or nil })
 end
 
 function DB.LoadProperties()
@@ -81,20 +101,20 @@ end
 
 function DB.InsertProperty(p)
     return MySQL.insert.await([[INSERT INTO zc_properties
-        (label, interior, image, ptype, price, rent_price, rent_days, status, realtor, realtor_name, door, street, locked, keyholders, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, '[]', ?)]],
+        (label, interior, image, ptype, price, rent_price, rent_days, status, realtor, realtor_name, door, street, locked, keyholders, created_at, inside)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, '[]', ?, ?)]],
         { p.label, p.interior, p.image, p.ptype, p.price, p.rent_price, p.rent_days, p.status,
-          p.realtor, p.realtor_name, json.encode(p.door), p.street, p.created_at })
+          p.realtor, p.realtor_name, json.encode(p.door), p.street, p.created_at, p.inside and json.encode(p.inside) or nil })
 end
 
 -- Persist the whole in-memory row
 function DB.SaveProperty(p)
     MySQL.update.await([[UPDATE zc_properties SET label=?, interior=?, image=?, ptype=?, price=?, rent_price=?, rent_days=?,
         status=?, owner=?, owner_name=?, realtor=?, realtor_name=?, door=?, street=?, locked=?, keyholders=?, sale_price=?,
-        rent_due=?, overdue=? WHERE id=?]],
+        rent_due=?, overdue=?, inside=? WHERE id=?]],
         { p.label, p.interior, p.image, p.ptype, p.price, p.rent_price, p.rent_days, p.status, p.owner, p.owner_name,
           p.realtor, p.realtor_name, json.encode(p.door), p.street, p.locked and 1 or 0, json.encode(p.keyholders or {}),
-          p.sale_price, p.rent_due, p.overdue or 0, p.id })
+          p.sale_price, p.rent_due, p.overdue or 0, p.inside and json.encode(p.inside) or nil, p.id })
 end
 
 function DB.DeleteProperty(id)

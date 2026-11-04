@@ -36,12 +36,25 @@ end
 
 function GetProp(id) return Properties[tonumber(id) or -1] end
 
+function ParsePoint(t)
+    if type(t) ~= 'table' then return nil end
+    local d = { x = tonumber(t.x), y = tonumber(t.y), z = tonumber(t.z), h = tonumber(t.h) or 0.0 }
+    if not (d.x and d.y and d.z) then return nil end
+    return d
+end
+
 function IsRealtor(src)
     if IsPlayerAceAllowed(src, Config.Realtor.AcePermission) then return true, 99 end
     local job, grade = Bridge.GetJob(src)
     local min = Config.Realtor.Jobs[job]
     if min and grade >= min then return true, grade end
     return false, 0
+end
+
+-- realtor app access per grade (Config.Realtor.Apps)
+function HasApp(src, app)
+    local ok, grade = IsRealtor(src)
+    return ok and grade >= (Config.Realtor.Apps[app] or 0)
 end
 
 function CanManage(src)
@@ -100,6 +113,7 @@ local function propForClient(prop, src, identifier, realtor)
         keys = access == 'owner' and prop.keyholders or nil,
         rentDue = private and prop.rent_due or nil, overdue = private and prop.overdue or nil,
         rooms = Interiors[prop.interior] and Interiors[prop.interior].rooms or 1,
+        inside = realtor and prop.inside or nil,
     }
 end
 
@@ -152,11 +166,13 @@ MySQL.ready(function()
         count = count + 1
         row.door = decode(row.door, { x = 0, y = 0, z = 0, h = 0 })
         row.keyholders = decode(row.keyholders, {})
+        row.inside = decode(row.inside, nil)
         row.locked = row.locked == 1 or row.locked == true
         Properties[row.id] = row
     end
     for _, c in ipairs(DB.LoadContracts()) do Contracts[c.id] = c end
     print(('^2[zc_realestate]^7 loaded %d properties'):format(count))
+    if Detect then Detect.Run() end
     SyncAll()
 end)
 
@@ -185,12 +201,14 @@ end)
 RegisterCallback('bootstrap', function(src)
     local identifier = Bridge.GetIdentifier(src)
     local realtor, grade = IsRealtor(src)
+    if not realtor and not Config.Tablet.CitizenAccess then return false, L('not_realtor') end
+    local apps = { create = HasApp(src, 'create'), manage = HasApp(src, 'manage'), contracts = HasApp(src, 'contracts') }
     local contracts = {}
-    local rows = realtor and DB.RecentContracts() or DB.ContractsForBuyer(identifier)
+    local rows = apps.contracts and DB.RecentContracts() or DB.ContractsForBuyer(identifier)
     for _, c in ipairs(rows) do contracts[#contracts + 1] = ContractForClient(c, identifier) end
     return {
         name = Bridge.GetName(src), money = Bridge.GetMoney(src), serverId = src,
-        isRealtor = realtor, canManage = CanManage(src), grade = grade,
+        isRealtor = realtor, canManage = CanManage(src), grade = grade, apps = apps,
         properties = BuildClientData(src), contracts = contracts,
     }
 end)
@@ -220,7 +238,7 @@ end
 
 -- Realtor: create a new property (+ optional contract to a buyer)
 RegisterCallback('createProperty', function(src, data)
-    if not IsRealtor(src) then return false, L('not_realtor') end
+    if not HasApp(src, 'create') then return false, L('not_realtor') end
     if type(data) ~= 'table' or type(data.door) ~= 'table' then return false, L('invalid_data') end
 
     local label = sanitizeText(data.label, 48)
@@ -240,6 +258,12 @@ RegisterCallback('createProperty', function(src, data)
         return false, L('too_far_door')
     end
 
+    local inside = nil
+    if Interiors[interior].custom then
+        inside = ParsePoint(data.inside)
+        if not inside then return false, L('invalid_data') end
+    end
+
     local buyerSrc = tonumber(data.buyerId)
     if buyerSrc and buyerSrc > 0 then
         if not GetPlayerName(buyerSrc) or not Bridge.GetIdentifier(buyerSrc) then return false, L('target_offline') end
@@ -252,6 +276,7 @@ RegisterCallback('createProperty', function(src, data)
         price = price, rent_price = rentPrice, rent_days = rentDays, status = 'available',
         realtor = Bridge.GetIdentifier(src), realtor_name = Bridge.GetName(src), door = door,
         street = sanitizeText(data.street, 120), locked = true, keyholders = {}, overdue = 0, created_at = now(),
+        inside = inside,
     }
     prop.id = DB.InsertProperty(prop)
     Properties[prop.id] = prop
@@ -268,7 +293,7 @@ end)
 
 -- Realtor: send a contract for an existing available property
 RegisterCallback('sendContract', function(src, propId, buyerId, ctype)
-    if not IsRealtor(src) then return false, L('not_realtor') end
+    if not HasApp(src, 'manage') then return false, L('not_realtor') end
     local prop = GetProp(propId)
     if not prop or prop.owner then return false, L('not_available') end
     buyerId = tonumber(buyerId)
@@ -297,7 +322,7 @@ end)
 RegisterCallback('getContract', function(src, id)
     local c = Contracts[tonumber(id) or -1]
     if not c then return false end
-    if c.buyer ~= Bridge.GetIdentifier(src) and not IsRealtor(src) then return false end
+    if c.buyer ~= Bridge.GetIdentifier(src) and not HasApp(src, 'contracts') then return false end
     return ContractForClient(c, Bridge.GetIdentifier(src))
 end)
 
@@ -369,7 +394,7 @@ RegisterCallback('declineContract', function(src, id)
     local c = Contracts[tonumber(id) or -1]
     if not c or c.status ~= 'pending' then return false end
     local isBuyer = c.buyer == Bridge.GetIdentifier(src)
-    if not isBuyer and not IsRealtor(src) then return false end
+    if not isBuyer and not HasApp(src, 'contracts') then return false end
     c.status = isBuyer and 'declined' or 'cancelled'
     DB.UpdateContract(c)
     local prop = Properties[c.property_id]
@@ -517,7 +542,7 @@ end)
 -- Realtor management
 ---------------------------------------------------------------------
 RegisterCallback('updateProperty', function(src, id, data)
-    if not IsRealtor(src) then return false, L('not_realtor') end
+    if not HasApp(src, 'manage') then return false, L('not_realtor') end
     local prop = GetProp(id)
     if not prop or type(data) ~= 'table' then return false, L('invalid_data') end
     prop.label = sanitizeText(data.label, 48) or prop.label
@@ -533,8 +558,21 @@ RegisterCallback('updateProperty', function(src, id, data)
     return true
 end)
 
+RegisterCallback('setInside', function(src, id, inside)
+    if not HasApp(src, 'manage') then return false, L('not_realtor') end
+    local prop = GetProp(id)
+    local d = ParsePoint(inside)
+    if not prop or not d then return false, L('invalid_data') end
+    if #(playerCoords(src) - vector3(d.x, d.y, d.z)) > Config.Realtor.MaxDoorDistance then return false, L('too_far_door') end
+    prop.inside = d
+    DB.SaveProperty(prop)
+    Bridge.Notify(src, LP(src, 'property_updated'), 'success')
+    SyncAll()
+    return true
+end)
+
 RegisterCallback('setDoor', function(src, id, door, street)
-    if not IsRealtor(src) then return false, L('not_realtor') end
+    if not HasApp(src, 'manage') then return false, L('not_realtor') end
     local prop = GetProp(id)
     if not prop or type(door) ~= 'table' then return false, L('invalid_data') end
     local d = { x = tonumber(door.x), y = tonumber(door.y), z = tonumber(door.z), h = tonumber(door.h) or 0.0 }
@@ -598,7 +636,8 @@ RegisterCallback('enter', function(src, id)
     local interior = Interiors[prop.interior]
     if not interior then return false, L('invalid_data') end
 
-    local spawn, shellPos = GetInteriorSpawn(prop.interior, prop.door)
+    local spawn, shellPos, auto = GetInteriorSpawn(prop.interior, prop.door, prop.inside)
+    if not spawn then return false, L('invalid_data') end
     Inside[src] = prop.id
     local bucket = Config.BucketOffset + prop.id
     SetPlayerRoutingBucket(src, bucket)
@@ -606,7 +645,8 @@ RegisterCallback('enter', function(src, id)
 
     return true, {
         id = prop.id, label = prop.label, spawn = spawn, ipl = interior.ipl,
-        shell = interior.shell, shellPos = shellPos,
+        shell = interior.shell, shellPos = shellPos, autoEntry = auto, interior = prop.interior,
+        isRealtor = IsRealtor(src),
         furniture = GetPlacedFurniture(prop.id), canFurnish = access ~= nil,
     }
 end)

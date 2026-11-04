@@ -169,17 +169,29 @@ Interiors = {
     },
 }
 
+-- Custom / MLO: the realtor aims at the inside point (use it for MLO maps or any place in the world)
+Interiors.custom = {
+    label = 'Custom location / MLO', labelAr = 'موقع مخصص / MLO',
+    tier = 'mid', rooms = 1, image = 'img/houses/custom.jpg', custom = true, order = -1,
+}
+
 -- Where the player appears inside a property.
--- Returns spawn (vec4, ped position) and shellPos (vector3) for shell interiors.
-function GetInteriorSpawn(interiorKey, door)
+-- Returns spawn (vec4, ped position), shellPos (vector3, shells only) and autoEntry (true when the
+-- shell has no saved entry offset yet: the client then finds the floor in the middle of the shell).
+function GetInteriorSpawn(interiorKey, door, inside)
     local i = Interiors[interiorKey]
-    if not i then return nil end
+    if not i or not door then return nil end
+    if i.custom then
+        if not inside then return nil end
+        return vec4(inside.x + 0.0, inside.y + 0.0, inside.z + 0.0, (inside.h or 0.0) + 0.0), nil, false
+    end
     if i.shell then
         local pos = vector3(door.x + 0.0, door.y + 0.0, door.z + Config.ShellZOffset)
         local o = i.offset
-        return vec4(pos.x + o.x, pos.y + o.y, pos.z + o.z, o.w), pos
+        if not o then return vec4(pos.x, pos.y, pos.z + 1.0, 0.0), pos, true end
+        return vec4(pos.x + o.x, pos.y + o.y, pos.z + o.z, o.w), pos, false
     end
-    return i.spawn, nil
+    return i.spawn, nil, false
 end
 
 -- Plain table version for the NUI / network
@@ -188,9 +200,13 @@ function InteriorsForUI()
     for key, v in pairs(Interiors) do
         list[#list + 1] = {
             key = key, label = v.label, labelAr = v.labelAr, tier = v.tier,
-            rooms = v.rooms, image = v.image, shell = v.shell and true or false,
+            rooms = v.rooms, image = v.image, shell = v.shell, custom = v.custom or false,
+            auto = v.auto or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
         }
     end
-    table.sort(list, function(a, b) return a.label < b.label end)
+    table.sort(list, function(a, b)
+        if a.order ~= b.order then return a.order < b.order end
+        return a.label < b.label
+    end)
     return list
 end

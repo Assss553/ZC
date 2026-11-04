@@ -21,6 +21,7 @@ Config.Tablet = {
     Key       = 'F6',            -- default key (players can change it in GTA settings)
     Item      = 'realestate_ipad', -- usable item (set to false to disable)
     UseProp   = true,            -- hold a tablet prop + animation
+    CitizenAccess = true,        -- false = only realtors can open the iPad at all
 }
 
 ---------------------------------------------------------------------
@@ -33,6 +34,13 @@ Config.Realtor = {
         realtor    = 0,
     },
     ManageGrade     = 2,     -- grade needed to delete / evict properties
+    -- Minimum grade for each realtor app. The app is hidden from the iPad dock below that grade
+    -- (and the server refuses the action too). Grades are checked against the job's grade in Config.Realtor.Jobs.
+    Apps = {
+        create    = 0,  -- Create Property
+        manage    = 1,  -- Manage Properties (edit, change door, send contract)
+        contracts = 0,  -- See every contract of the agency
+    },
     AcePermission   = 'zc_realestate.realtor', -- players with this ace are realtors too (admins)
     Commission      = 0.10,  -- 10% of each deal goes to the realtor who made the contract
     MaxDoorDistance = 25.0,  -- realtor must be this close to the door he aimed at
@@ -80,8 +88,9 @@ Config.Furniture = {
     MaxPieces   = 25,
     SellBack    = 0.5,   -- 50% refund when selling a piece back
     PlaceRadius = 45.0,  -- max distance from the interior spawn where furniture can be placed
-    OpenKey     = 'G',   -- inside the house near the exit: open furniture panel
-    -- Thumbnail url, %s = prop model. Set to false to use category icons only.
+    OpenKey     = 'O',   -- press anywhere inside your house to open the furniture panel
+    -- Thumbnails: html/img/furniture/<model>.png|jpg|webp is detected automatically and used first.
+    -- Otherwise this url is tried (%s = prop model). Set to false to use category icons only.
     ImageUrl    = 'https://gta-objects.xyz/gallery/objects/%s.jpg',
 }
 
@@ -107,4 +116,21 @@ Config.Map = {
     -- world bounds that the image covers
     minX = -4140.0, maxX = 4860.0,
     minY = -4300.0, maxY = 8400.0,
+}
+
+---------------------------------------------------------------------
+-- House detection (auto)
+---------------------------------------------------------------------
+-- Drop shell files (.ydr / .ytyp) into zc_realestate/stream/houses/  (or ensure any shell resource)
+-- and pictures into html/img/houses/<model or interior key>.jpg|png|webp.
+-- On start the server scans for shells + pictures, every client checks the model is really streamed,
+-- and the shell appears in the "Create Property" interior list automatically.
+Config.Detect = {
+    Enabled      = true,
+    ScanFiles    = true,               -- scan resource folders for .ydr files (needs io.popen, falls back silently)
+    NamePatterns = { 'shell', 'k4mb1', 'furnitured', 'house', 'apart', 'mlo' }, -- .ydr names containing one of these
+    OwnFolder    = 'stream/houses',    -- everything in this folder counts as a shell, whatever its name
+    Extra        = {},                 -- extra shell model names, e.g. { 'my_villa_shell' }
+    Command      = 'realestate_scan',  -- ace 'zc_realestate.realtor' or realtor: rescan without restart
+    EntryCommand = 'houseentry',       -- realtor inside a detected shell: save the entry point where you stand
 }

@@ -56,7 +56,7 @@ end
 ---------------------------------------------------------------------
 -- Aim / raycast location picker (used when creating a property)
 ---------------------------------------------------------------------
-function PickLocation()
+function PickLocation(mode)
     local ped = PlayerPedId()
     local result
     Wait(200)
@@ -88,6 +88,11 @@ function PickLocation()
                     x = pos.x + 0.0, y = pos.y + 0.0, z = pos.z + 0.0,
                     h = (GetEntityHeading(ped) + 180.0) % 360.0,
                 }
+                if mode == 'floor' then
+                    -- inside point: stand on the floor where you aimed, facing the way you look
+                    local found, gz = GetGroundZFor_3dCoord(coords.x, coords.y, coords.z + 1.5, false)
+                    result = { x = coords.x + 0.0, y = coords.y + 0.0, z = (found and gz or coords.z) + 1.0, h = GetEntityHeading(ped) }
+                end
                 PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
                 break
             end
@@ -103,6 +108,21 @@ end
 ---------------------------------------------------------------------
 -- Enter / exit
 ---------------------------------------------------------------------
+-- centre of the shell, on its floor (ray straight down inside the model bounds)
+function FindShellFloor(obj, hash, p)
+    local min, max = GetModelDimensions(hash)
+    local cx, cy = p.x + (min.x + max.x) / 2, p.y + (min.y + max.y) / 2
+    local t = GetGameTimer() + 1500
+    local floorZ
+    while GetGameTimer() < t do
+        local ray = StartExpensiveSynchronousShapeTestLosProbe(cx, cy, p.z + max.z - 0.3, cx, cy, p.z + min.z - 1.0, 1 + 16, PlayerPedId(), 4)
+        local _, hit, coords = GetShapeTestResult(ray)
+        if hit == 1 then floorZ = coords.z break end
+        Wait(50)
+    end
+    return vec4(cx, cy, (floorZ or (p.z + min.z + 0.2)) + 1.0, 0.0)
+end
+
 function EnterProperty(id)
     local ok, data = ServerCall('enter', id)
     if not ok then
@@ -121,7 +141,7 @@ function EnterProperty(id)
         local hash = LoadModel(data.shell)
         if not hash then
             DoScreenFadeIn(300)
-            Notify(('Shell "%s" is not streamed (install the starter shells resource)'):format(data.shell), 'error')
+            Notify(L('shell_missing', data.shell), 'error')
             ServerCall('exit')
             CurrentHouse = nil
             return
@@ -130,10 +150,18 @@ function EnterProperty(id)
         ShellObject = CreateObject(hash, p.x, p.y, p.z, false, false, false)
         FreezeEntityPosition(ShellObject, true)
         SetEntityHeading(ShellObject, 0.0)
+        if data.autoEntry then
+            -- detected shell without a saved entry: stand in the middle of the floor
+            local spawn = FindShellFloor(ShellObject, hash, p)
+            data.spawn = spawn
+            CurrentHouse.spawn = spawn
+            if data.isRealtor then Notify(L('auto_entry', Config.Detect.EntryCommand), 'info') end
+        end
         SetModelAsNoLongerNeeded(hash)
     end
     Teleport(data.spawn.x, data.spawn.y, data.spawn.z, data.spawn.w, data.shell ~= nil)
     SpawnAllFurniture(data.furniture or {})
+    if data.canFurnish then Notify(L('furniture_hint'), 'info') end
 end
 
 function ExitProperty()
@@ -173,7 +201,7 @@ CreateThread(function()
                     DrawMarker(2, s.x, s.y, s.z, 0, 0, 0, 0, 0, 0, 0.25, 0.25, 0.2, 255, 90, 31, 160, false, true, 2, false)
                 end
                 if dist < 1.5 and not IsNuiFocused() then
-                    HelpText(L('help_exit'))
+                    HelpText(L('help_exit_only'))
                     if IsControlJustPressed(0, 38) then ExitProperty() end
                 end
             end
@@ -209,9 +237,22 @@ CreateThread(function()
 end)
 
 -- Keep G free for our use inside houses
-RegisterKeyMapping('zc_re_furniture', 'Real estate: furniture panel (inside)', 'keyboard', Config.Furniture.OpenKey)
-RegisterCommand('zc_re_furniture', function()
+-- O (default) anywhere inside your house opens the furniture panel
+RegisterKeyMapping('zc_re_furni', 'Real estate: furniture panel (inside your house)', 'keyboard', Config.Furniture.OpenKey)
+RegisterCommand('zc_re_furni', function()
     if CurrentHouse and CurrentHouse.canFurnish and not IsNuiFocused() then OpenFurniturePanel() end
+end, false)
+
+-- realtor inside a shell: save the entry point where you stand (+ optional label)
+RegisterCommand(Config.Detect.EntryCommand, function(_, args)
+    if not CurrentHouse then return Notify(L('not_inside'), 'error') end
+    local ok, err = ServerCall('saveEntry', table.concat(args or {}, ' '))
+    if ok then
+        local c, h = GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId())
+        CurrentHouse.spawn = vec4(c.x, c.y, c.z, h)
+    elseif err then
+        Notify(err, 'error')
+    end
 end, false)
 
 AddEventHandler('onResourceStop', function(res)

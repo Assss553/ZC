@@ -80,8 +80,9 @@ RegisterCallback('placeFurniture', function(src, propertyId, fid, pos, rot)
 
     local x, y, z = tonumber(pos.x), tonumber(pos.y), tonumber(pos.z)
     if not (x and y and z) then return false, L('invalid_data') end
-    local spawn = GetInteriorSpawn(prop.interior, prop.door)
-    if #(vector3(x, y, z) - vector3(spawn.x, spawn.y, spawn.z)) > Config.Furniture.PlaceRadius then
+    local spawn, shellPos = GetInteriorSpawn(prop.interior, prop.door, prop.inside)
+    local center = shellPos or (spawn and vector3(spawn.x, spawn.y, spawn.z))
+    if not center or #(vector3(x, y, z) - center) > Config.Furniture.PlaceRadius then
         return false, L('too_far_place')
     end
 

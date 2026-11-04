@@ -38,12 +38,15 @@ const IC = {
     send: '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',
     bath: '<path d="M4 12h16v3a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM6 12V5a2 2 0 0 1 4 0M6 20l-1 2M18 20l1 2"/>',
     bed: '<path d="M2 18V6M2 14h20v4M22 18v-5a3 3 0 0 0-3-3H10v4"/><circle cx="6" cy="11" r="2"/>',
-    chair: '<path d="M6 21v-7h12v7M6 14V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9M4 14h16"/>',
+    chair: '<path d="M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3"/><path d="M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM6 17v2M18 17v2"/>',
+    chair_old: '<path d="M6 21v-7h12v7M6 14V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9M4 14h16"/>',
     table: '<path d="M3 8h18M5 8v12M19 8v12M3 8l2-4h14l2 4"/>',
     plant: '<path d="M7 15h10l-1.5 6h-7zM12 15V9M12 9c0-3 2-5 5-5 0 3-2 5-5 5zM12 11c0-2.5-1.7-4-4-4 0 2.5 1.7 4 4 4z"/>',
     tv: '<rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8M12 18v3"/>',
-    kitchen: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M4 10h16M8 6h.01M8 14v3"/>',
-    light: '<path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 2z"/>',
+    kitchen: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M6 9h12M9 5v2M9 12v4"/>',
+    kitchen_old: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M4 10h16M8 6h.01M8 14v3"/>',
+    light: '<path d="M8 3h8l3 7H5zM12 10v9M8 21h8"/>',
+    light_old: '<path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 2z"/>',
     box: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
     move: '<path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
@@ -67,6 +70,7 @@ const S = {
     map: { z: 1, x: 0, y: 0, ready: false, hasImg: true },
     overlay: null, fp: null,
     settings: { wallpaper: null, scale: 1, lang: null },
+    interiorFilter: 'all',
 };
 
 /* ------------------------------------------------------------------ settings (saved per player in the NUI storage) */
@@ -89,7 +93,7 @@ loadSettings();
 if (S.settings.lang && IS_GAME) post('setLang', { lang: S.settings.lang });
 
 const resetCreate = () => {
-    S.create = { step: 1, interior: null, label: '', ptype: 'sale', price: '', rentPrice: '', rentDays: (S.st && S.st.rentDays) || 7, buyerId: '', image: '', door: null, street: '' };
+    S.create = { step: 1, interior: null, label: '', ptype: 'sale', price: '', rentPrice: '', rentDays: (S.st && S.st.rentDays) || 7, buyerId: '', image: '', door: null, street: '', inside: null };
 };
 
 /* ------------------------------------------------------------------ helpers */
@@ -125,11 +129,34 @@ function bgImage(src, tier, cls = '', style = '') {
 }
 function propImg(p, cls, style) { const i = interiorOf(p.interior); return bgImage(p.image || (i && i.image), i && i.tier, cls, style); }
 
+// picture chain: html/img/furniture/<model>.* (detected) -> Config.Furniture.ImageUrl -> category icon
 function furnImg(model) {
+    const local = S.st && S.st.furnitureImages && S.st.furnitureImages[model];
     const tpl = S.st && S.st.furnitureImage;
-    return tpl ? `<img src="${esc(tpl.replace('%s', model))}" onerror="this.remove()">` : '';
+    const remote = tpl ? tpl.replace('%s', model) : '';
+    const first = local || remote;
+    if (!first) return '';
+    return `<img src="${esc(first)}" data-fb="${local && remote ? esc(remote) : ''}" onerror="imgFallback(this)" onload="this.parentNode.classList.add('has-img')">`;
 }
-function furnIcon(cat) { const c = ((S.st && S.st.categories) || []).find((x) => x.key === cat); return icon((c && c.icon) || 'box'); }
+window.imgFallback = (img) => {
+    const fb = img.dataset.fb;
+    if (fb) { img.dataset.fb = ''; img.src = fb; } else img.remove();
+};
+const CAT_COLORS = {
+    all: ['#ff8a4c', '#ff4a12'], bathroom: ['#4fc3e8', '#1f7fb0'], bed: ['#a08bff', '#5a3fd6'], chair: ['#e8925a', '#b65a22'],
+    table: ['#d3aa6c', '#8d6a35'], decorations: ['#6bd889', '#2b9a4c'], electronic: ['#5aa9ff', '#2f5bff'], kitchen: ['#f5bf4f', '#c9831a'],
+    light: ['#ffe07a', '#e3a313'], storage: ['#a7a7b3', '#5e5e6a'],
+};
+const catColor = (cat) => CAT_COLORS[cat] || CAT_COLORS.storage;
+function catIconTile(cat, ic) {
+    const [a, b] = catColor(cat);
+    return `<span class="ci" style="background:linear-gradient(160deg,${a},${b})">${icon(ic)}</span>`;
+}
+function furnIcon(cat) {
+    const c = ((S.st && S.st.categories) || []).find((x) => x.key === cat);
+    const [a] = catColor(cat);
+    return `<span class="ph-ic" style="--c:${a}">${icon((c && c.icon) || 'box')}</span>`;
+}
 
 function statusChip(p) {
     if (p.salePrice && p.status === 'owned') return `<span class="chip">${t('st_sale')}</span>`;
@@ -195,11 +222,11 @@ Views.home = () => {
         <div class="home-wallet">${icon('cash')}<span>${moneyText(d.money)}</span></div>
         <div class="dock">
             ${app('shop', t('app_furniture'), img('furniture'))}
-            ${d.isRealtor ? app('create', t('app_create'), css('ai-blue', 'briefcase')) : ''}
+            ${d.apps && d.apps.create ? app('create', t('app_create'), css('ai-blue', 'briefcase')) : ''}
             ${app('contracts', t('app_contracts'), css('ai-dark', 'file'), pending)}
             ${app('dashboard', t('app_estate'), img('realestate'), overdue)}
             ${app('settings', t('app_settings'), img('settings'))}
-            ${d.isRealtor ? app('manage', t('app_manage'), css('ai-orange', 'building')) : ''}
+            ${d.apps && d.apps.manage ? app('manage', t('app_manage'), css('ai-orange', 'building')) : ''}
         </div>
     </div>`;
 };
@@ -408,7 +435,7 @@ Views.shop = () => {
     if (q) items = items.filter((f) => f.label.toLowerCase().includes(q) || f.model.includes(q));
     const cartCount = S.cart.reduce((a, c) => a + c.qty, 0);
     const total = S.cart.reduce((a, c) => a + c.qty * c.price, 0);
-    const catBtn = (key, label, count, ic) => `<button class="cat ${S.shopCat === key ? 'on' : ''}" data-act="shopcat" data-cat="${key}"><span class="ci">${icon(ic)}</span><span><b>${label}</b><small>${t('pieces', count)}</small></span></button>`;
+    const catBtn = (key, label, count, ic) => `<button class="cat ${S.shopCat === key ? 'on' : ''}" data-act="shopcat" data-cat="${key}">${catIconTile(key, ic)}<span><b>${label}</b><small>${t('pieces', count)}</small></span></button>`;
     const curCat = cats.find((c) => c.key === S.shopCat);
     return `<div class="page"><div class="appbar"><button class="icon-btn flip" data-act="back">${icon('back')}</button><div class="grow"></div></div>
     <div class="shop" style="margin-top:-46px">
@@ -462,16 +489,28 @@ Views.contracts = () => {
 };
 
 /* create property (realtor) ------------------------------------------- */
+const noAccess = () => `<div class="page">${appbar(t('no_access_title'), '')}<div class="empty">${icon('lock')}<b>${t('no_access_title')}</b>${t('no_access_sub')}</div></div>`;
+
 Views.create = () => {
+    if (!(S.data.apps && S.data.apps.create)) return noAccess();
     if (!S.create) resetCreate();
     const c = S.create;
     const steps = ['s_interior', 's_details', 's_location', 's_confirm'];
     const stepper = `<div class="steps">${steps.map((s, i) => `<div class="step ${c.step === i + 1 ? 'on' : ''} ${c.step > i + 1 ? 'done' : ''}"><i>${c.step > i + 1 ? '✓' : i + 1}</i>${t(s)}</div>`).join('')}</div>`;
     let body = '';
     if (c.step === 1) {
-        body = `<div class="igrid">${S.st.interiors.map((i) => `<div class="card icard ${c.interior === i.key ? 'on' : ''}" data-act="pickinterior" data-key="${i.key}">
-            <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span>${i.shell ? '<span class="chip shell-chip">SHELL</span>' : ''}</div>
-            <div class="ib"><b>${esc(interiorName(i))}</b><small>${t('rooms', i.rooms)}</small></div></div>`).join('')}</div>`;
+        const list = S.st.interiors.filter((i) => S.interiorFilter === 'all' || (S.interiorFilter === 'shell' ? i.shell : S.interiorFilter === 'auto' ? i.auto : (!i.shell && !i.custom) || i.custom));
+        const n = { all: S.st.interiors.length, ipl: S.st.interiors.filter((i) => !i.shell).length, shell: S.st.interiors.filter((i) => i.shell).length, auto: S.st.interiors.filter((i) => i.auto).length };
+        const fb = (k, l) => `<button class="${S.interiorFilter === k ? 'on' : ''}" data-act="ifilter" data-f="${k}">${l} <span class="muted">${n[k]}</span></button>`;
+        body = `<div class="toolbar" style="margin-bottom:10px"><div class="filters">${fb('all', t('all'))}${fb('ipl', t('f_ipl'))}${fb('shell', t('f_shells'))}${fb('auto', t('f_detected'))}</div>
+            <div class="grow" style="flex:1"></div><button class="btn ghost" data-act="rescan" style="height:34px">${icon('search')}${t('rescan')}</button></div>
+            <div class="igrid">${list.map((i) => {
+            const off = i.available === false;
+            const tags = [i.custom ? `<span class="chip blue">MLO</span>` : '', i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
+            return `<div class="card icard ${c.interior === i.key ? 'on' : ''} ${off ? 'off' : ''}" ${off ? '' : `data-act="pickinterior" data-key="${i.key}"`}>
+            <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span>${tags}</div>
+            <div class="ib"><b>${esc(interiorName(i))}</b><small>${off ? `<span style="color:var(--red)">${t('not_installed')}</span>` : i.needsEntry ? t('auto_entry_short') : i.custom ? t('custom_hint') : t('rooms', i.rooms)}</small></div></div>`;
+        }).join('') || `<div class="empty">${icon('building')}${t('empty_list')}</div>`}</div>`;
     } else if (c.step === 2) {
         body = `<div class="form">
             <div class="field full"><label>${t('f_name')}</label><input class="input" data-bind="create.label" maxlength="48" placeholder="${t('f_name_ph')}" value="${esc(c.label)}"></div>
@@ -483,12 +522,18 @@ Views.create = () => {
             <div class="field full"><label>${t('f_image')}</label><input class="input" data-bind="create.image" value="${esc(c.image)}" placeholder="https://..."><span class="hint">${t('f_image_hint')}</span></div>
         </div>`;
     } else if (c.step === 3) {
+        const ci = interiorOf(c.interior);
+        const insideBox = ci && ci.custom ? `<div class="locbox" style="margin-top:14px">
+            <div class="aim" data-act="aiminside"><div class="aim-ic">${icon('door_open')}</div><b>${c.inside ? t('aim_repick') : t('aim_inside')}</b><p>${t('aim_inside_desc')}</p></div>
+            <div class="card locinfo"><div class="section-title">${t('inside_point')}</div>
+                ${c.inside ? `<div class="coords">x ${c.inside.x.toFixed(2)} · y ${c.inside.y.toFixed(2)} · z ${c.inside.z.toFixed(2)} · h ${c.inside.h.toFixed(0)}°</div><span class="chip green" style="align-self:flex-start">${icon('check')} OK</span>`
+                : `<div class="empty" style="padding:10px">${icon('door_open')}${t('aim_none')}</div>`}</div></div>` : '';
         body = `<div class="locbox">
             <div class="aim" data-act="aim"><div class="aim-ic">${icon('crosshair')}</div><b>${c.door ? t('aim_repick') : t('aim_title')}</b><p>${t('aim_desc')}</p>
                 <div class="keys-help"><kbd>E</kbd>${t('k_confirm')} <kbd>⌫</kbd>${t('k_cancel')}</div></div>
             <div class="card locinfo"><div class="section-title">${t('location')}</div>
                 ${c.door ? `<b style="font-size:16px">${esc(c.street || '')}</b><div class="coords">x ${c.door.x.toFixed(2)} · y ${c.door.y.toFixed(2)} · z ${c.door.z.toFixed(2)} · h ${c.door.h.toFixed(0)}°</div><span class="chip green" style="align-self:flex-start">${icon('check')} OK</span>`
-                : `<div class="empty" style="padding:10px">${icon('door')}${t('aim_none')}</div>`}</div></div>`;
+                : `<div class="empty" style="padding:10px">${icon('door')}${t('aim_none')}</div>`}</div></div>${insideBox}`;
     } else {
         const i = interiorOf(c.interior);
         const fake = { id: 0, ctype: c.ptype, price: Number(c.price) || 0, rentPrice: Number(c.rentPrice) || 0, rentDays: Number(c.rentDays) || 7, buyerName: c.buyerId ? `ID ${c.buyerId}` : t('unknown'),
@@ -511,11 +556,13 @@ function validateStep() {
         if (c.ptype === 'rent' && !(Number(c.rentPrice) > 0)) return t('err_price');
     }
     if (c.step === 3 && !c.door) return t('err_location');
+    if (c.step === 3 && interiorOf(c.interior) && interiorOf(c.interior).custom && !c.inside) return t('err_inside');
     return null;
 }
 
 /* manage (realtor) ----------------------------------------------------- */
 Views.manage = () => {
+    if (!(S.data.apps && S.data.apps.manage)) return noAccess();
     const f = S.manageFilter;
     let list = props();
     if (f === 'market') list = list.filter((p) => p.salePrice);
@@ -560,6 +607,7 @@ Views.mdetail = () => {
                 <div class="actions">
                     <button class="btn ghost" data-act="waypoint" data-id="${p.id}">${icon('pin')}${t('a_waypoint')}</button>
                     <button class="btn ghost" data-act="mdoor" data-id="${p.id}">${icon('crosshair')}${t('a_door')}</button>
+                    ${interiorOf(p.interior) && interiorOf(p.interior).custom ? `<button class="btn ghost wide" data-act="minside" data-id="${p.id}">${icon('door_open')}${t('a_inside')}</button>` : ''}
                     ${free ? `<button class="btn primary wide" data-act="msend" data-id="${p.id}">${icon('send')}${t('a_send')}</button>` : ''}
                     ${S.data.canManage && !free ? `<button class="btn danger" data-act="mevict" data-id="${p.id}">${icon('door_open')}${t('a_evict')}</button>` : ''}
                     ${S.data.canManage ? `<button class="btn danger ${free ? 'wide' : ''}" data-act="mdelete" data-id="${p.id}">${icon('trash')}${t('a_delete')}</button>` : ''}
@@ -763,12 +811,16 @@ const A = {
     cprev: () => { if (S.create.step > 1) { S.create.step--; render(); } },
     cnext: () => { const err = validateStep(); if (err) return toast(err, 'error'); S.create.step++; render(); },
     aim: () => { S.pickTarget = { type: 'create' }; post('pickLocation'); },
+    aiminside: () => { S.pickTarget = { type: 'createInside' }; post('pickLocation', { mode: 'floor' }); },
+    ifilter: (el) => { S.interiorFilter = el.dataset.f; render(); },
+    rescan: async () => { await call('rescan'); },
+    minside: (el) => { S.pickTarget = { type: 'inside', id: Number(el.dataset.id) }; post('pickLocation', { mode: 'floor' }); },
     csubmit: async (el) => {
         const c = S.create;
         el.disabled = true;
         const r = await call('createProperty', {
             label: c.label.trim(), interior: c.interior, ptype: c.ptype, price: Number(c.price) || 0, rentPrice: Number(c.rentPrice) || 0,
-            rentDays: Number(c.rentDays) || 7, buyerId: c.buyerId ? Number(c.buyerId) : null, image: c.image.trim() || null, door: c.door, street: c.street,
+            rentDays: Number(c.rentDays) || 7, buyerId: c.buyerId ? Number(c.buyerId) : null, image: c.image.trim() || null, door: c.door, street: c.street, inside: c.inside || null,
         });
         el.disabled = false;
         if (r.ok) { resetCreate(); await refresh(); S.history = [{ view: 'home', params: {} }]; S.view = 'mdetail'; S.params = { id: r.data }; render(); }
@@ -871,10 +923,17 @@ window.addEventListener('message', (ev) => {
         case 'sync':
             if (S.data) { S.data.properties = m.properties; if (S.open && !document.activeElement.matches('input,select')) render(); }
             break;
+        case 'registry':
+            if (S.st) { if (m.static.interiors) S.st.interiors = m.static.interiors; S.st.furnitureImages = m.static.furnitureImages || {}; }
+            else S.st = m.static;
+            if (S.open && (S.view === 'create' || S.view === 'shop')) render();
+            break;
         case 'locationPicked':
             if (S.open) $('#tablet').classList.remove('hidden');
             if (m.location && S.pickTarget) {
                 if (S.pickTarget.type === 'create') { S.create.door = m.location; S.create.street = m.street || ''; render(); }
+                else if (S.pickTarget.type === 'createInside') { S.create.inside = m.location; render(); }
+                else if (S.pickTarget.type === 'inside') call('setInside', S.pickTarget.id, m.location);
                 else if (S.pickTarget.type === 'door') call('setDoor', S.pickTarget.id, m.location, m.street || '');
             }
             S.pickTarget = null;
@@ -936,12 +995,16 @@ const Mock = {
 if (!IS_GAME) {
     document.body.style.background = 'linear-gradient(160deg,#3a4c5c,#1b2530)';
     const ints = [['low_apartment', 'Low-End Apartment', 'شقة اقتصادية', 'low', 1], ['medium_apartment', 'Medium Apartment', 'شقة متوسطة', 'mid', 2], ['integrity_way', '4 Integrity Way Apt', 'شقة انتغريتي واي', 'high', 2], ['north_conker', 'North Conker Villa', 'فيلا نورث كونكر', 'high', 3], ['franklin_vinewood', 'Vinewood Hills Villa', 'فيلا فاينوود هيلز', 'luxury', 4], ['penthouse_modern', 'Eclipse Penthouse - Modern', 'بنتهاوس إكلبس - مودرن', 'luxury', 3]]
-        .map(([key, label, labelAr, tier, rooms]) => ({ key, label, labelAr, tier, rooms, image: `img/houses/${key}.jpg` }));
+        .map(([key, label, labelAr, tier, rooms]) => ({ key, label, labelAr, tier, rooms, image: `img/houses/${key}.jpg` }))
+        .concat([{ key: 'custom', label: 'Custom location / MLO', labelAr: 'موقع مخصص / MLO', tier: 'mid', rooms: 1, custom: true },
+            { key: 'shell_ranch', label: 'Ranch House', labelAr: 'بيت مزرعة', tier: 'mid', rooms: 3, shell: 'shell_ranch', available: true },
+            { key: 'shell_highend', label: 'Highend', labelAr: 'Highend', tier: 'mid', rooms: 1, shell: 'shell_highend', auto: true, needsEntry: true, available: true },
+            { key: 'shell_michael', label: 'Grand Mansion (Shell)', labelAr: 'قصر فخم', tier: 'luxury', rooms: 5, shell: 'shell_michael', available: false }]);
     const cats = [['bathroom', 'Bathroom', 'الحمام', 'bath'], ['bed', 'Bed', 'غرف النوم', 'bed'], ['chair', 'Chair & Sofa', 'كراسي وكنب', 'chair'], ['electronic', 'Electronic', 'إلكترونيات', 'tv'], ['kitchen', 'Kitchen', 'المطبخ', 'kitchen'], ['light', 'Light', 'إضاءة', 'light']].map(([key, label, labelAr, icon]) => ({ key, label, labelAr, icon }));
     const furn = [['prop_sink_02', 'Bathroom Sink (Rounded)', 'bathroom', 280], ['prop_sink_04', 'Bathroom Sink (Pedestal)', 'bathroom', 250], ['prop_toilet_01', 'Toilet', 'bathroom', 350], ['p_mbbed_s', 'Master Bed', 'bed', 2500], ['prop_couch_01', 'Leather Couch', 'chair', 1200], ['prop_tv_flat_01', 'Flat TV (Large)', 'electronic', 1500], ['prop_fridge_01', 'Fridge', 'kitchen', 900], ['apa_mp_h_floorlamp_a', 'Floor Lamp', 'light', 180]].map(([model, label, cat, price]) => ({ model, label, cat, price }));
     const P = (id, label, interior, status, x, y, extra = {}) => ({ id, label, interior, status, ptype: 'sale', price: 180000 + id * 25000, rentPrice: 2500, rentDays: 7, door: { x, y, z: 30, h: 0 }, street: 'Alta St, Pillbox Hill', locked: true, rooms: 2, realtorName: 'Saad Realty', ...extra });
     Mock.data = {
-        name: 'Jaber Ali', money: 42347, serverId: 1, isRealtor: true, canManage: true, grade: 3,
+        name: 'Jaber Ali', money: 42347, serverId: 1, isRealtor: true, canManage: true, grade: 3, apps: { create: true, manage: true, contracts: true },
         properties: [P(1, 'Alta Street 12', 'integrity_way', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [] }),
             P(2, 'Vinewood Villa', 'franklin_vinewood', 'available', 7, 538), P(3, 'Grove Room', 'low_apartment', 'rented', -14, -1440, { ptype: 'rent', isOwner: true, hasKey: true, ownerName: 'Jaber Ali', overdue: 1, rentDue: Date.now() / 1000 + 86400 }),
             P(4, 'Conker Hills', 'north_conker', 'owned', 342, 437, { ownerName: 'Omar', salePrice: 650000 }), P(5, 'Mirror Park 4', 'medium_apartment', 'available', 1100, -500, { ptype: 'rent' })],
