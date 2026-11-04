@@ -21,4 +21,6 @@ files {
     'html/app.js',
     'html/fa/css/*.css',
     'html/fa/webfonts/*',
+    'html/img/wallpapers/*.jpg',
+    'html/img/icons/*.jpg',
 }

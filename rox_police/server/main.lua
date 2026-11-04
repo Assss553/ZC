@@ -382,6 +382,11 @@ H.searchVehicle = function(src, d)
     for p, v in pairs(db.vehicles) do
         if p:find(plate, 1, true) and not seen[p] then rows[#rows + 1] = { plate = p, model = v.model or '?', owner = v.owner or 'Unknown' } end
     end
+    if #rows == 0 then
+        local im
+        for i = #db.impounds, 1, -1 do if db.impounds[i].plate == plate then im = db.impounds[i] break end end
+        rows[1] = { plate = plate, model = (im and im.model ~= '' and im.model) or 'Unknown', owner = (im and im.owner ~= '' and im.owner) or 'Not registered', unregistered = true }
+    end
     for _, r in ipairs(rows) do
         local key = r.plate:gsub('%s+', ''):upper()
         local v = db.vehicles[key]
@@ -390,10 +395,16 @@ H.searchVehicle = function(src, d)
         r.bolo = false
         for _, b in ipairs(db.bolos) do if b.active and b.plate and b.plate ~= '' and b.plate:upper():gsub('%s+', '') == key then r.bolo = true end end
         r.hold = db.holds[key]
+        if r.hold then r.hold.remaining = math.max(0, r.hold.releaseAt - os.time()) end
+        r.history = {}
+        for i = #db.impounds, 1, -1 do
+            local im = db.impounds[i]
+            if im.plate == key then r.history[#r.history + 1] = im end
+            if #r.history >= 6 then break end
+        end
         r.fines = 0
         for _, f in ipairs(db.fines) do if f.plate and f.plate:upper():gsub('%s+', '') == key then r.fines = r.fines + 1 end end
     end
-    if #rows == 0 then rows[1] = { plate = plate, model = 'Unknown', owner = 'Not registered', unregistered = true, stolen = db.vehicles[plate] and db.vehicles[plate].stolen or false, notes = db.vehicles[plate] and db.vehicles[plate].notes or '' } end
     return { rows = rows }
 end
 
@@ -728,9 +739,11 @@ H.impound = function(src, d)
 
     Bridge.ImpoundVehicleDB(plate, mode, price)
     if mode == 'depot' then
-        db.holds[plate] = { plate = plate, price = price, hours = hours, releaseAt = os.time() + hours * 3600, reason = tostring(d.reason or ''):sub(1, 200), officer = officerName(src), t = os.time() }
+        db.holds[plate] = { plate = plate, price = price, hours = hours, releaseAt = os.time() + hours * 3600, reason = tostring(d.reason or ''):sub(1, 200),
+            model = tostring(d.model or ''):sub(1, 40), owner = tostring(d.owner or ''):sub(1, 60), officer = officerName(src), t = os.time() }
     end
-    db.impounds[#db.impounds + 1] = { plate = plate, mode = mode, price = price, hours = hours, reason = tostring(d.reason or ''):sub(1, 200), officer = officerName(src), t = os.time() }
+    db.impounds[#db.impounds + 1] = { plate = plate, mode = mode, price = price, hours = hours, reason = tostring(d.reason or ''):sub(1, 200),
+        model = tostring(d.model or ''):sub(1, 40), owner = tostring(d.owner or ''):sub(1, 60), officer = officerName(src), t = os.time() }
     trimList(db.impounds, 1000)
     if Config.OnImpound then pcall(Config.OnImpound, src, { plate = plate, mode = mode, price = price, hours = hours, reason = d.reason }) end
     log('vehicle', mode == 'depot' and ('%s held at depot (%dh, $%d)'):format(plate, hours, price) or ('%s sent to impound'):format(plate), officerName(src))
@@ -746,6 +759,22 @@ H.holds = function()
     end
     table.sort(out, function(a, b) return a.t > b.t end)
     return out
+end
+
+H.vehicleOverview = function()
+    local now, dayStart = os.time(), os.time() - 86400
+    local recent, today = {}, 0
+    for i = #db.impounds, 1, -1 do
+        local im = db.impounds[i]
+        if im.t >= dayStart then today = today + 1 end
+        if #recent < 25 then recent[#recent + 1] = im end
+    end
+    local flagged = {}
+    for plate, v in pairs(db.vehicles) do
+        if v.stolen then flagged[#flagged + 1] = { plate = plate, model = v.model, owner = v.owner, notes = v.notes } end
+    end
+    local holds = H.holds()
+    return { recent = recent, today = today, holds = holds, flagged = flagged, total = #db.impounds }
 end
 
 H.releaseHold = function(src, d)

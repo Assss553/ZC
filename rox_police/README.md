@@ -6,6 +6,7 @@
 يشتغل مع QBCore / Qbox / ESX، والبيانات تنحفظ في `data/db.json` (ما يحتاج قاعدة بيانات).
 
 ![home](docs/home.png)
+![home2](docs/home-forest.png)
 
 ## طرق الفتح
 | من وين | وش يفتح |
@@ -17,6 +18,15 @@
 | أوامر | `/mdt` `/jail` `/fine` `/impound` `/unmask` `/policeboss` `/tablet` `/paybail` |
 
 لما تفتح الـ iPad، الشخصية تمسك تابلت بحركة حقيقية.
+
+### تصميم الـ iPad
+- إطار iPad قوي (براغي، كاميرا، أزرار جانبية)، والشاشة الرئيسية فيها **خلفية** + ساعة + بطاقات زجاجية (الشرطة في الدوام، المساجين، أوامر القبض، BOLO) + **Live Activity**
+- **Dock** تحت فيه كل التطبيقات: MDT، Citizens، Vehicles، Impound، Prison، Citations، Warrants، Reports، BOLO، Management، Settings
+- داخل التطبيقات الخلفية تصير زجاج مغبش
+- تطبيق **Settings**: تغيير الخلفية (3 خلفيات أو رابط https)، وحجم الـ iPad — ينحفظ لكل لاعب
+
+![vehicles](docs/vehicles.png)
+**Vehicles** في الـ MDT: كم سيارة انحجزت آخر 24 ساعة، اللي على حجز الشرطة، المبلغ عنها مسروقة، وآخر السيارات المحجوزة. وتبحث عن أي لوحة يطلع لك سجل الحجز كامل والوقت الباقي وزر الإفراج.
 
 ## 1. Management — Boss Menu (كابتن وفوق)
 ![boss](docs/boss.png)
@@ -35,11 +45,12 @@
 
 ## 2. Impound / Depot — حجز السيارات
 ![impound](docs/imp1.png) ![depot](docs/imp2.png)
+![vehicle](docs/vehicle.png)
 - **Impound**: تروح الحجز العادي، وصاحبها يطلعها بالسعر المحدد
 - **Depot**: حجز شرطة، تحدد السعر ومدة الحجز بالساعات، والسبب
 - الشرطي يكتب على لوح قبل الحجز، والسيارة تختفي
 - السكربتات الثانية (القراج) تقدر تسأل: `exports.rox_police:IsVehicleHeld(plate)`
-- صفحة **Impound** في الـ MDT فيها السيارات المحجوزة، الوقت الباقي، وزر الإفراج
+- صفحة **Vehicles** و **Impound** في الـ MDT فيها كل السيارات اللي حجزتها، سجل كل لوحة، الوقت الباقي، وزر الإفراج
 
 ## 3. Remove Accessories — نزع الماسك
 ![strip](docs/strip.png)

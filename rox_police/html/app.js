@@ -69,8 +69,8 @@ function header(eyebrow, title, icon, extra = '') {
     </div>`;
 }
 
-const TABLET = new Set(['home', 'mdt', 'jail', 'fine', 'boss']);
-const PANELS = () => ({ home: Home, jail: Jail, fine: Fine, mdt: MDT, boss: Boss, impound: Impound, strip: Strip });
+const TABLET = new Set(['home', 'mdt', 'jail', 'fine', 'boss', 'settings']);
+const PANELS = () => ({ home: Home, jail: Jail, fine: Fine, mdt: MDT, boss: Boss, impound: Impound, strip: Strip, settings: SettingsApp });
 
 function openPanel(name, opts = {}, fromPanel) {
     if (name === 'boss' && App.init && !App.init.boss) { toast('Management only (Captain and above)', 'error'); return; }
@@ -81,11 +81,28 @@ function openPanel(name, opts = {}, fromPanel) {
     P && P.reset && P.reset(opts);
     render();
 }
+/* iPad settings (saved per player in NUI storage) */
+const WALLPAPERS = ['img/wallpapers/street.jpg', 'img/wallpapers/forest.jpg', 'img/wallpapers/pond.jpg'];
+const Settings = { wallpaper: null, scale: 1 };
+try { Object.assign(Settings, JSON.parse(localStorage.getItem('rox_police_ipad') || '{}')); } catch (e) { /* storage unavailable */ }
+const saveSettings = () => { try { localStorage.setItem('rox_police_ipad', JSON.stringify(Settings)); } catch (e) { /* storage unavailable */ } };
+function applySettings() {
+    const scr = $('#screen'), bz = $('.bezel');
+    if (scr) scr.style.setProperty('--wall', `url("${(Settings.wallpaper || WALLPAPERS[0]).replace(/"/g, '')}")`);
+    if (bz) bz.style.setProperty('--scale', Settings.scale || 1);
+}
 function tabletFrame() {
-    return `<div class="tablet"><div class="screen">
-        <div class="statusbar"><span id="sbTime"></span><span class="brand-s">ROX STORE</span><span class="r"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><span>100%</span><i class="fa-solid fa-battery-full"></i></span></div>
-        <div class="app" id="app"></div>
-        <div class="homebar" data-a="home"></div>
+    return `<div class="tablet"><div class="bezel">
+        <span class="screw s1"></span><span class="screw s2"></span><span class="screw s3"></span><span class="screw s4"></span>
+        <span class="cam"></span>
+        <span class="side-btn b1"></span><span class="side-btn b2"></span><span class="side-btn b3"></span><span class="side-btn b4"></span>
+        <div class="screen" id="screen">
+            <div class="app-layer"></div>
+            <div class="statusbar"><span id="sbTime"></span><span class="sb-brand">ROX STORE</span>
+                <span class="sb-icons"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><span class="battery"><i></i></span></span></div>
+            <div class="app" id="app"></div>
+            <div class="homebar" data-a="home"></div>
+        </div>
     </div></div>`;
 }
 function render() {
@@ -97,7 +114,9 @@ function render() {
             clearInterval(App.sbTick);
             const sb = () => { const e = $('#sbTime'); if (e) e.textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
             sb(); App.sbTick = setInterval(sb, 5000);
+            applySettings();
         }
+        $('#screen').classList.toggle('in-app', App.panel !== 'home');
         $('#app').innerHTML = P.html();
     } else {
         root.innerHTML = P.html();
@@ -424,6 +443,7 @@ const MDT = {
         if (S.page === 'reports') S.reports = await call('reports', { q: S.rq }) || [];
         if (S.page === 'bolo') S.bolos = await call('bolos') || [];
         if (S.page === 'impound') S.holds = await call('holds') || [];
+        if (S.page === 'vehicles' && !S.vehicles.length) S.vov = await call('vehicleOverview');
         if (App.panel === 'mdt') render();
     },
     html() {
@@ -519,24 +539,57 @@ const MDT = {
     },
     vehicles() {
         const S = this.S;
-        return `<div class="search-bar" style="max-width:640px"><div class="input grow"><i class="fa-solid fa-car"></i><input placeholder="License plate..." value="${esc(S.vq)}" data-in="vq" data-enter="vsearch" style="text-transform:uppercase"></div>
-                <button class="btn" data-a="vnearest"><i class="fa-solid fa-car-side"></i> Nearest</button><button class="btn primary" data-a="vsearch"><i class="fa-solid fa-magnifying-glass"></i> Search</button></div>
-            <div class="list-rows">${S.vehicles.map((v, i) => `<div class="card" style="margin-bottom:0">
+        const search = `<div class="search-bar"><div class="input grow"><i class="fa-solid fa-car"></i><input placeholder="Search a license plate..." value="${esc(S.vq)}" data-in="vq" data-enter="vsearch" style="text-transform:uppercase"></div>
+            <button class="btn" data-a="vnearest"><i class="fa-solid fa-car-side"></i> Nearest</button><button class="btn primary" data-a="vsearch"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+            ${S.vehicles.length ? '<button class="btn ghost" data-a="vclear"><i class="fa-solid fa-xmark"></i></button>' : ''}</div>`;
+        const modeBadge = (m) => m === 'depot' ? '<span class="badge accent"><i class="fa-solid fa-warehouse"></i> depot</span>' : '<span class="badge warn"><i class="fa-solid fa-truck-pickup"></i> impound</span>';
+        if (!S.vehicles.length) {
+            const o = S.vov;
+            if (!o) return search + `<div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i>Loading...</div>`;
+            const stat = (ic, v, l, c) => `<div class="stat" style="--c:${c}"><i class="fa-solid fa-${ic}"></i><b>${v}</b><span>${l}</span></div>`;
+            return `${search}
+                <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+                    ${stat('truck-pickup', o.today, 'Impounded 24h', '255,176,32')}
+                    ${stat('warehouse', o.holds.length, 'On police hold', 'var(--accent-rgb)')}
+                    ${stat('triangle-exclamation', o.flagged.length, 'Flagged stolen', '255,77,94')}
+                    ${stat('clipboard-list', o.total, 'Total impounds', '77,163,255')}
+                </div>
+                <div class="cols2">
+                    <div class="card"><h3><i class="fa-solid fa-clock-rotate-left"></i>Recent Impounds<span class="sp"></span><span class="btn sm ghost" data-a="nav" data-p="impound">Police hold</span></h3>
+                        ${o.recent.length ? `<table class="tbl"><tr><th>Plate</th><th>Vehicle</th><th>Type</th><th>Officer</th><th>When</th></tr>
+                        ${o.recent.map(im => `<tr class="click" data-a="vopen" data-plate="${esc(im.plate)}"><td><span class="plate" style="font-size:12px;padding:1px 7px">${esc(im.plate)}</span></td>
+                            <td><b>${esc(im.model || '—')}</b><div class="dim" style="font-size:10.5px">${esc(im.owner || im.reason || '')}</div></td><td>${modeBadge(im.mode)}${im.mode === 'depot' ? ` <span class="badge">${im.hours}h · ${money(im.price)}</span>` : ''}</td>
+                            <td>${esc(im.officer)}</td><td class="dim">${ago(im.t)}</td></tr>`).join('')}</table>` : '<div class="empty-state" style="padding:26px"><i class="fa-solid fa-truck-pickup"></i>No impounds yet<br><span style="font-size:11px">Third eye on a vehicle → Impound / Depot</span></div>'}
+                    </div>
+                    <div>
+                        <div class="card"><h3><i class="fa-solid fa-warehouse"></i>Police Hold</h3>
+                            <div class="list-rows">${o.holds.slice(0, 4).map(h => `<div class="rowcard click" data-a="vopen" data-plate="${esc(h.plate)}"><span class="plate" style="font-size:12px;padding:1px 7px">${esc(h.plate)}</span><div class="who"><b>${esc(h.model || h.reason || 'Police hold')}</b><span>${esc(h.reason || '')}</span></div>
+                                ${h.remaining > 0 ? `<span class="mono" style="color:var(--accent)" data-remain="${h.remaining}">${fmtDur(h.remaining)}</span>` : '<span class="badge ok">ready</span>'}</div>`).join('') || '<div class="dim">No vehicles on hold</div>'}</div></div>
+                        <div class="card"><h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--bad)"></i>Flagged Stolen</h3>
+                            <div class="list-rows">${o.flagged.map(f => `<div class="rowcard click" data-a="vopen" data-plate="${esc(f.plate)}"><span class="plate" style="font-size:12px;padding:1px 7px">${esc(f.plate)}</span><div class="who"><b>${esc(f.model || 'Unknown model')}</b><span>${esc(f.notes || f.owner || '')}</span></div><span class="badge bad">stolen</span></div>`).join('') || '<div class="dim">No stolen vehicles</div>'}</div></div>
+                    </div>
+                </div>`;
+        }
+        return `${search}<div class="list-rows">${S.vehicles.map((v, i) => `<div class="card" style="margin-bottom:0">
                 <div style="display:flex;align-items:center;gap:14px">
-                    <span class="plate">${esc(v.plate)}</span>
-                    <div class="who"><b>${esc(v.model)}</b><span>Owner: ${esc(v.owner || 'Unknown')}</span></div>
+                    <span class="plate" style="font-size:18px">${esc(v.plate)}</span>
+                    <div class="who"><b style="font-size:15px">${esc(v.model)}</b><span>Owner: ${esc(v.owner || 'Unknown')}</span></div>
                     ${v.unregistered ? '<span class="badge warn">not registered</span>' : '<span class="badge ok">registered</span>'}
                     ${v.stolen ? '<span class="badge bad"><i class="fa-solid fa-triangle-exclamation"></i> stolen</span>' : ''}
-                    ${v.bolo ? '<span class="badge warn">bolo</span>' : ''}${v.hold ? '<span class="badge accent">police hold</span>' : ''}
+                    ${v.bolo ? '<span class="badge warn">bolo</span>' : ''}
                     ${v.fines ? `<span class="badge">${v.fines} citations</span>` : ''}
                     <span style="flex:1"></span>
                     ${v.cid ? `<button class="btn sm" data-a="vowner" data-cid="${esc(v.cid)}"><i class="fa-solid fa-id-card"></i> Owner</button>` : ''}
                 </div>
+                ${v.hold ? `<div class="person-card" style="margin-top:12px"><div class="avatar"><i class="fa-solid fa-warehouse"></i></div><div class="who"><b>On police hold · ${money(v.hold.price)}</b><span>${esc(v.hold.reason || '')} · by ${esc(v.hold.officer)} · ${ago(v.hold.t)}</span></div>
+                    ${v.hold.remaining > 0 ? `<span class="big-num" style="color:var(--accent)" data-remain="${v.hold.remaining}">${fmtDur(v.hold.remaining)}</span>` : '<span class="badge ok">can be released</span>'}<button class="btn sm ok" data-a="hrelease" data-plate="${esc(v.plate)}"><i class="fa-solid fa-lock-open"></i> Release</button></div>` : ''}
                 <div class="row" style="margin-top:12px">
                     <div class="toggle-row ${v.stolen ? 'on' : ''}" data-a="vstolen" data-i="${i}" style="width:220px"><div class="t"><b>Reported Stolen</b><span>Flag this plate</span></div><div class="switch"></div></div>
                     <div class="input grow"><i class="fa-solid fa-note-sticky"></i><input placeholder="Notes..." value="${esc(v.notes || '')}" data-in="vnotes" data-i="${i}"></div>
                     <button class="btn" data-a="vsave" data-i="${i}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-                </div></div>`).join('') || `<div class="empty-state"><i class="fa-solid fa-car"></i>Search a plate to see the vehicle record</div>`}</div>`;
+                </div>
+                ${(v.history || []).length ? `<div class="lbl" style="margin-top:14px"><span>Impound history</span></div><div class="feed">${v.history.map(im => `<div class="fi"><div class="ic"><i class="fa-solid fa-${im.mode === 'depot' ? 'warehouse' : 'truck-pickup'}"></i></div><div class="tx">${im.mode === 'depot' ? `Police hold ${im.hours}h · ${money(im.price)}` : 'Sent to impound'}${im.reason ? ' — ' + esc(im.reason) : ''}<small>${esc(im.officer)} · ${fmtDate(im.t)}</small></div></div>`).join('')}</div>` : ''}
+                </div>`).join('')}</div>`;
     },
     warrants() {
         const S = this.S, F = S.wForm;
@@ -609,7 +662,7 @@ const refocus = (sel) => { const i = root.querySelector(sel); if (i) { i.focus()
 
 Object.assign(MDT.handlers, {
     nav(el) { MDT.S.page = el.dataset.p; render(); MDT.load(); },
-    async hrelease(el) { if (result(await call('releaseHold', { plate: el.dataset.plate }))) MDT.load(); },
+    async hrelease(el) { if (result(await call('releaseHold', { plate: el.dataset.plate }))) { if (MDT.S.page === 'vehicles' && MDT.S.vehicles.length) MDT.handlers.vsearch(); else MDT.load(); } },
     reload() { MDT.S.results = []; MDT.load(); },
     openJail() { openPanel('jail', {}, 'mdt'); },
     openFine() { openPanel('fine', {}, 'mdt'); },
@@ -628,6 +681,8 @@ Object.assign(MDT.handlers, {
     // vehicles
     'in:vq'(el) { MDT.S.vq = el.value.toUpperCase(); },
     async vsearch() { const r = await call('searchVehicle', { plate: MDT.S.vq }); MDT.S.vehicles = (r && r.rows) || []; render(); },
+    vopen(el) { MDT.S.page = 'vehicles'; MDT.S.vq = el.dataset.plate; MDT.handlers.vsearch(); },
+    vclear() { MDT.S.vehicles = []; MDT.S.vq = ''; render(); MDT.load(); },
     async vnearest() { const r = await call('closestPlate'); if (r && r.plate) { MDT.S.vq = r.plate; MDT.handlers.vsearch(); } else toast('No vehicle nearby', 'warning'); },
     vstolen(el) { const v = MDT.S.vehicles[el.dataset.i]; v.stolen = !v.stolen; el.classList.toggle('on', v.stolen); },
     'in:vnotes'(el) { MDT.S.vehicles[el.dataset.i].notes = el.value; },
@@ -659,49 +714,76 @@ root.addEventListener('change', (e) => { const k = e.target.dataset.in; if (k &&
    HOME SCREEN (iPad)
    ===================================================================== */
 const Home = {
-    S: { stats: null },
-    reset() { this.S.stats = null; call('dashboard').then(d => { this.S.stats = d && d.stats; if (App.panel === 'home') render(); }); },
+    S: { dash: null },
+    reset() { call('dashboard').then(d => { this.S.dash = d; if (App.panel === 'home') render(); }); },
     html() {
-        const o = (App.init && App.init.officer) || {}, st = this.S.stats || {};
+        const o = (App.init && App.init.officer) || {}, d = this.S.dash || {}, st = d.stats || {};
         const now = new Date();
-        const apps = [
-            ['mdt', 'shield-halved', 'MDT', '255,90,31'],
-            ['jail', 'building-shield', 'Prison', '255,120,60'],
-            ['fine', 'file-invoice-dollar', 'Citations', '52,180,110'],
-            ['boss', 'briefcase', 'Management', '120,110,255', !(App.init && App.init.boss)],
-            ['mdt:citizens', 'id-card', 'Citizens', '77,163,255'],
-            ['mdt:vehicles', 'car', 'Vehicles', '60,190,210'],
-            ['mdt:impound', 'truck-pickup', 'Impound', '255,176,32'],
-            ['mdt:warrants', 'user-ninja', 'Warrants', '255,77,94', false, st.warrants],
-            ['mdt:reports', 'file-lines', 'Reports', '150,150,170'],
-            ['mdt:bolo', 'binoculars', 'BOLO', '255,150,40', false, st.bolos],
-        ];
-        const icon = ([k, ic, nm, c, locked, n]) => {
+        const app = (k, ic, nm, c, n, dark) => {
             const [p, pg] = k.split(':');
-            if (locked) return '';
-            return `<div class="appi" data-a="app" data-p="${p}" ${pg ? `data-page="${pg}"` : ''} style="--c:${c}"><div class="ic"><i class="fa-solid fa-${ic}"></i>${n ? `<span class="badge-n">${n}</span>` : ''}</div><div class="nm">${nm}</div></div>`;
+            return `<div class="dock-app" data-a="app" data-p="${p}" ${pg ? `data-page="${pg}"` : ''} style="--c:${c}"><span class="aicon ${dark ? 'dark' : ''}"><i class="fa-solid fa-${ic}"></i></span>${n ? `<span class="badge-n">${n}</span>` : ''}<span class="dock-tip">${nm}</span></div>`;
         };
-        const w = (ic, v, l, c) => `<div class="widget" style="--c:${c}"><div class="wi"><i class="fa-solid fa-${ic}"></i></div><div><b>${v ?? '—'}</b><span>${l}</span></div></div>`;
-        return `<div class="home">
-            <div class="hero">
-                <div><div class="rox"><i class="fa-solid fa-shield-halved"></i>ROX POLICE OS</div>
-                    <div class="big-clock" id="homeClock">${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
-                    <div class="date">${now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
-                <div class="hello"><b>Welcome back, ${esc((o.name || 'Officer').split(' ')[0])}</b><span>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</span></div>
+        const w = (k, ic, v, l, c) => { const [p, pg] = k.split(':'); return `<div class="hw glass" data-a="app" data-p="${p}" ${pg ? `data-page="${pg}"` : ''} style="--c:${c}"><div class="wi"><i class="fa-solid fa-${ic}"></i></div><div><b>${v ?? '—'}</b><span>${l}</span></div></div>`; };
+        const icons = { jail: 'building-shield', fine: 'file-invoice-dollar', warrant: 'user-ninja', report: 'file-lines', bolo: 'binoculars', release: 'lock-open', vehicle: 'car', citizen: 'id-card' };
+        return `<div class="home2">
+            <div class="home-clock"><b id="homeClock">${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</b><span>${now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+            <div class="home-me glass"><div class="avatar">${initials(o.name)}</div><div>${esc(o.name || 'Officer')}<small>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</small></div><span class="dot"></span></div>
+            <div class="home-widgets">
+                ${w('mdt:dashboard', 'user-shield', st.officers, 'Officers on duty', '77,163,255')}
+                ${w('jail', 'building-shield', st.prisoners, 'In prison', '255,90,31')}
+                ${w('mdt:warrants', 'user-ninja', st.warrants, 'Active warrants', '255,77,94')}
+                ${w('mdt:bolo', 'binoculars', st.bolos, 'Active BOLO', '255,176,32')}
             </div>
-            <div class="widgets">
-                ${w('user-shield', st.officers, 'On duty', '77,163,255')}
-                ${w('building-shield', st.prisoners, 'In prison', 'var(--accent-rgb)')}
-                ${w('user-ninja', st.warrants, 'Warrants', '255,77,94')}
-                ${w('binoculars', st.bolos, 'Active BOLO', '255,176,32')}
+            ${d.activity && d.activity.length ? `<div class="home-feed glass"><h4><i class="fa-solid fa-wave-square"></i>Live Activity</h4>${d.activity.slice(0, 5).map(a => `<div class="fi"><i class="fa-solid fa-${icons[a.kind] || 'circle'}"></i><div>${esc(a.text)}<small>${esc(a.officer || 'System')} · ${ago(a.t)}</small></div></div>`).join('')}</div>` : ''}
+            <div class="home-brand">ROX POLICE OS</div>
+            <div class="dock">
+                ${app('mdt', 'shield-halved', 'MDT', '255,90,31')}
+                ${app('mdt:citizens', 'id-card', 'Citizens', '77,141,255')}
+                ${app('mdt:vehicles', 'car', 'Vehicles', '40,180,200')}
+                ${app('mdt:impound', 'truck-pickup', 'Impound', '255,176,32')}
+                ${app('jail', 'building-shield', 'Prison', '255,110,50')}
+                ${app('fine', 'file-invoice-dollar', 'Citations', '52,180,110')}
+                ${app('mdt:warrants', 'user-ninja', 'Warrants', '255,77,94', st.warrants, true)}
+                ${app('mdt:reports', 'file-lines', 'Reports', '200,200,215', 0, true)}
+                ${app('mdt:bolo', 'binoculars', 'BOLO', '255,150,40', st.bolos, true)}
+                <span class="sep"></span>
+                ${App.init && App.init.boss ? app('boss', 'briefcase', 'Management', '130,100,255') : ''}
+                <div class="dock-app" data-a="app" data-p="settings"><img class="aicon" src="img/icons/settings.jpg" alt=""><span class="dock-tip">Settings</span></div>
             </div>
-            <div class="apps">${apps.map(icon).join('')}</div>
-            <div class="dock">${[apps[0], apps[1], apps[2], apps[3]].map(icon).join('')}</div>
         </div>`;
     },
     after() { clearInterval(App.tick); App.tick = setInterval(() => { const c = $('#homeClock'); if (c) c.textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }, 5000); },
     handlers: {},
 };
+
+/* =====================================================================
+   SETTINGS (iPad)
+   ===================================================================== */
+const SettingsApp = {
+    reset() {},
+    html() {
+        const cur = Settings.wallpaper || WALLPAPERS[0];
+        const custom = Settings.wallpaper && !WALLPAPERS.includes(Settings.wallpaper) ? Settings.wallpaper : '';
+        const pct = Math.round((Settings.scale || 1) * 100);
+        const o = (App.init && App.init.officer) || {};
+        return `<div class="panel form">${header('iPad', 'Settings', 'gear')}
+            <div class="pb"><div class="settings">
+                <div class="set-card"><div class="set-head"><span class="si"><i class="fa-solid fa-image"></i></span><div><b>Wallpaper</b><small>Pick the home screen background</small></div></div>
+                    <div class="walls">${WALLPAPERS.map(w => `<div class="wall ${cur === w ? 'on' : ''}" style="background-image:url('${w}')" data-a="setwall" data-src="${w}">${cur === w ? '<i class="fa-solid fa-check"></i>' : ''}</div>`).join('')}</div>
+                    <div class="set-row"><div class="input grow"><i class="fa-solid fa-link"></i><input id="customWall" placeholder="Or paste an image URL https://..." value="${esc(custom)}"></div><button class="btn" data-a="setwallurl">Save</button></div></div>
+                <div class="set-card"><div class="set-head"><span class="si"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span><div><b>iPad size</b><small>Make the iPad bigger or smaller on screen</small></div><span class="set-val" id="scaleVal">${pct}%</span></div>
+                    <div class="set-row"><span class="muted">Small</span><input type="range" class="set-range" min="70" max="115" step="1" value="${pct}" data-in="scale"><span class="muted">Large</span><button class="btn" data-a="resetscale">Default</button></div></div>
+                <div class="set-card"><div class="set-head"><span class="si"><i class="fa-solid fa-circle-info"></i></span><div><b>About</b><small>ROX Police OS · rox_police · ${esc(o.name || '')}${o.grade ? ' · ' + esc(o.grade) : ''}</small></div><span class="badge accent">ROX STORE</span></div></div>
+            </div></div></div>`;
+    },
+    handlers: {},
+};
+Object.assign(SettingsApp.handlers, {
+    setwall(el) { Settings.wallpaper = el.dataset.src; saveSettings(); applySettings(); render(); },
+    setwallurl() { const v = ($('#customWall').value || '').trim(); if (v && !/^https:\/\//.test(v)) return toast('Use an https:// link', 'error'); Settings.wallpaper = v || null; saveSettings(); applySettings(); render(); },
+    resetscale() { Settings.scale = 1; saveSettings(); applySettings(); render(); },
+    'in:scale'(el) { Settings.scale = Number(el.value) / 100; saveSettings(); applySettings(); const v = $('#scaleVal'); if (v) v.textContent = el.value + '%'; },
+});
 
 /* =====================================================================
    MANAGEMENT (boss menu)
@@ -932,7 +1014,7 @@ Object.assign(Impound.handlers, {
     async iconfirm() {
         const S = Impound.S;
         S.busy = true; render();
-        const r = await call('impound', { plate: S.v.plate, mode: S.mode, price: S.price, hours: S.hours, reason: S.reason });
+        const r = await call('impound', { plate: S.v.plate, mode: S.mode, price: S.price, hours: S.hours, reason: S.reason, model: S.v.model, owner: S.v.owner });
         S.busy = false;
         if (result(r)) { if (!RES) closeAll(); } else render();
     },
@@ -1054,7 +1136,12 @@ const Mock = {
                 { t: n - 5000, kind: 'warrant', text: 'Warrant issued for Faisal Al-Harbi', officer: 'Noura Saad' },
             ],
             people: { RX48213: { flags: ['Armed'], notes: 'Known associate of the Vespucci crew.' } },
-            holds: { '82KLM203': { plate: '82KLM203', price: 7500, hours: 24, releaseAt: n + 72000, reason: 'Used in Fleeca robbery — evidence', officer: 'Dev Hkmi', t: n - 14400 } },
+            holds: { '82KLM203': { plate: '82KLM203', model: 'Karin Sultan', owner: 'Omar Nasser', price: 7500, hours: 24, releaseAt: n + 72000, reason: 'Used in Fleeca robbery — evidence', officer: 'Dev Hkmi', t: n - 14400 } },
+            impounds: [
+                { plate: '44XYZ019', mode: 'impound', price: 500, hours: 0, reason: 'Illegally parked', model: 'Declasse Vigero', owner: 'Sara Khalid', officer: 'Noura Saad', t: n - 50000 },
+                { plate: '82KLM203', mode: 'depot', price: 7500, hours: 24, reason: 'Used in Fleeca robbery — evidence', model: 'Karin Sultan', owner: 'Omar Nasser', officer: 'Dev Hkmi', t: n - 14400 },
+                { plate: '20HRX818', mode: 'impound', price: 500, hours: 0, reason: 'Abandoned on the highway', model: 'Karin Sultan RS', owner: 'Faisal Al-Harbi', officer: 'Khalid Al-Otaibi', t: n - 3000 },
+            ],
             balance: 284500,
             bossLog: [{ t: n - 1800, text: 'Noura Saad rank set to Sergeant', by: 'Dev Hkmi' }, { t: n - 7200, text: 'Reward for Khalid Al-Otaibi: Excellent pursuit on Route 68', by: 'Dev Hkmi' }, { t: n - 90000, text: 'Yazeed Fahad hired as Recruit', by: 'Dev Hkmi' }],
             staff: (() => {
@@ -1067,7 +1154,7 @@ const Mock = {
                 ];
             })(),
             grades: [{ level: 0, name: 'Recruit', payment: 50 }, { level: 1, name: 'Officer', payment: 75 }, { level: 2, name: 'Sergeant', payment: 100 }, { level: 3, name: 'Lieutenant', payment: 125 }, { level: 4, name: 'Captain', payment: 150 }, { level: 5, name: 'Chief', payment: 200 }],
-            vehicles: {},
+            vehicles: { '71BRV552': { stolen: true, model: 'Bravado Buffalo', owner: 'Mohammed Ali', notes: 'Stolen from Legion Square parking' } },
         };
     },
     async call(a, d) {
@@ -1078,7 +1165,8 @@ const Mock = {
         switch (a) {
             case 'nearby': return P.map(p => ({ id: p.id, name: p.name, dist: p.dist, mask: p.mask, hat: p.hat, glasses: p.glasses, bag: p.bag }));
             case 'strip': { const p = byId(d.id); Object.keys(d.items).forEach(k => { if (d.items[k]) p[k] = false; }); return { ok: true, msg: `Removed ${Object.keys(d.items).filter(k => d.items[k]).join(', ')} from ${p.name}` }; }
-            case 'impound': if (d.mode === 'depot') db.holds[d.plate] = { plate: d.plate, price: d.price, hours: d.hours, releaseAt: n + d.hours * 3600, reason: d.reason, officer: 'Dev Hkmi', t: n }; return { ok: true, msg: d.mode === 'depot' ? `Vehicle ${d.plate} held for ${d.hours}h` : `Vehicle ${d.plate} impounded` };
+            case 'impound': db.impounds.push({ plate: d.plate, mode: d.mode, price: d.price, hours: d.hours, reason: d.reason, model: d.model, owner: d.owner, officer: 'Dev Hkmi', t: n }); if (d.mode === 'depot') db.holds[d.plate] = { plate: d.plate, price: d.price, hours: d.hours, releaseAt: n + d.hours * 3600, reason: d.reason, officer: 'Dev Hkmi', t: n }; return { ok: true, msg: d.mode === 'depot' ? `Vehicle ${d.plate} held for ${d.hours}h` : `Vehicle ${d.plate} impounded` };
+            case 'vehicleOverview': return { today: 2, total: db.impounds.length, recent: db.impounds.slice().reverse(), holds: Object.values(db.holds).map(h => ({ ...h, remaining: Math.max(0, h.releaseAt - n) })), flagged: Object.entries(db.vehicles).filter(([, v]) => v.stolen).map(([plate, v]) => ({ plate, ...v })) };
             case 'holds': return Object.values(db.holds).map(h => ({ ...h, remaining: Math.max(0, h.releaseAt - n) }));
             case 'releaseHold': delete db.holds[d.plate]; return { ok: true, msg: d.plate + ' released' };
             case 'bossDash': { const on = db.staff.filter(e => e.online); return { total: db.staff.length, online: on.length, duty: on.filter(e => e.duty).length, balance: db.balance, onlineList: on, log: db.bossLog.slice(0, 8), grades: db.grades }; }
@@ -1123,7 +1211,7 @@ const Mock = {
                     owed: fines.filter(f => !f.paid).reduce((s, f) => s + f.amount, 0), prisoner: db.prisoners[d.cid] };
             }
             case 'saveCitizen': db.people[d.cid] = { notes: d.notes, flags: d.flags }; return { ok: true };
-            case 'searchVehicle': { const v = db.vehicles[d.plate] || {}; return { rows: [{ plate: d.plate || '20HRX818', model: 'Karin Sultan RS', owner: 'Faisal Al-Harbi', cid: 'RX48213', stolen: !!v.stolen, notes: v.notes || '', bolo: d.plate === '82KLM203', fines: db.fines.filter(f => f.plate === d.plate).length }] }; }
+            case 'searchVehicle': { const pl = d.plate || '20HRX818', v = db.vehicles[pl] || {}, h = db.holds[pl], im = db.impounds.filter(x => x.plate === pl).reverse()[0]; return { rows: [{ plate: pl, model: v.model || (im && im.model) || 'Karin Sultan RS', owner: v.owner || (im && im.owner) || 'Faisal Al-Harbi', cid: 'RX48213', stolen: !!v.stolen, notes: v.notes || '', bolo: pl === '82KLM203', fines: db.fines.filter(f => f.plate === pl).length, hold: h ? { ...h, remaining: Math.max(0, h.releaseAt - n) } : null, history: db.impounds.filter(x => x.plate === pl).reverse() }] }; }
             case 'flagVehicle': db.vehicles[d.plate] = { stolen: d.stolen, notes: d.notes }; return { ok: true };
             case 'warrants': return db.warrants.slice().sort((a, b) => b.t - a.t);
             case 'createWarrant': if (!d.name || !d.reason) return { ok: false, msg: 'Name and reason are required' }; db.warrants.push({ id: ++db.seq, ...d, active: true, officer: 'Dev Hkmi', t: n }); log('warrant', 'Warrant issued for ' + d.name); return { ok: true, msg: 'Warrant issued' };
