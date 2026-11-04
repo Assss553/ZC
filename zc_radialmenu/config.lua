@@ -13,6 +13,9 @@ Config.Title = 'ZC MENU'
 -- false = the game is frozen while the menu is open
 Config.KeepInput = true
 
+-- Small UI sounds (hover tick / select / open)
+Config.Sound = true
+
 --[[
     Item fields:
         label       text shown in the middle when hovered

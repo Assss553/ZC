@@ -78,6 +78,7 @@ local function openMenu()
         title = Config.Title,
         color = Config.Color,
         keepInput = Config.KeepInput,
+        sound = Config.Sound,
         items = buildMenu(),
     })
     SetNuiFocus(true, true)
