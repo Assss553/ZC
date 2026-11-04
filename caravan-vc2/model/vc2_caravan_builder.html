@@ -128,10 +128,9 @@ function boxShape(t) {
 let shell = sub(brush(extrude(boxShape(0), WB, 0.06), paint), brush(extrude(boxShape(0.05), WB - 0.14, 0), interior));
 // window, door, skylight and cab pass-through openings
 const winList = [
-  { n: 'window_lounge_r', x: 2.55, y: 2.33, w: 1.05, h: 0.6, s: 1 }, { n: 'window_lounge_l', x: 2.2, y: 2.33, w: 1.25, h: 0.6, s: -1 },
+  { n: 'window_lounge_r', x: 2.55, y: 2.33, w: 1.05, h: 0.6, s: 1 }, { n: 'window_lounge_l', x: 2.05, y: 2.33, w: 0.95, h: 0.6, s: -1 },
   { n: 'window_rear_r', x: 0.95, y: 2.38, w: 0.72, h: 0.52, s: 1 }, { n: 'window_rear_l', x: 0.95, y: 2.38, w: 0.72, h: 0.52, s: -1 },
   { n: 'window_bunk_r', x: 6.6, y: 2.74, w: 0.6, h: 0.3, s: 1 }, { n: 'window_bunk_l', x: 6.6, y: 2.74, w: 0.6, h: 0.3, s: -1 },
-  { n: 'window_kitchen_l', x: 4.1, y: 2.38, w: 0.8, h: 0.5, s: -1 },
 ];
 for (const w of winList) shell = sub(shell, brush(RB(w.w, w.h, 0.4, 0.06), interior, w.x, w.y, w.s * WB / 2));
 const DOOR = { x: 3.65, y: 1.6, w: 0.72, h: 1.78 };
@@ -140,7 +139,12 @@ let doorPanel = inter(shell, brush(RB(DOOR.w - 0.02, DOOR.h - 0.02, 0.4, 0.05), 
 shell = sub(shell, doorCut);
 doorPanel = sub(doorPanel, brush(RB(0.42, 0.6, 0.4, 0.05), interior, DOOR.x, 2.06, WB / 2));
 shell = sub(shell, brush(RB(0.6, 0.4, 0.6, 0.05), interior, 3.0, 3.3, 0.45));                 // skylight
-shell = sub(shell, brush(RB(0.75, 0.42, 0.4, 0.06), interior, 0.02, 2.55, 0.42, 0, Math.PI / 2)); // rear window
+// slide-out openings (the slide-out boxes are separate parts that move out when deployed)
+const SL = { x0: 2.65, x1: 5.25, y0: 0.78, y1: 2.95, D: 0.72, out: 0.66 };            // side slide-out (wider)
+const SR = { z0: -0.85, z1: 0.85, y0: 0.8, y1: 2.9, D: 0.7, out: 0.6, x: -0.01 };      // rear slide-out (longer)
+SL.L = SL.x1 - SL.x0; SL.H = SL.y1 - SL.y0; SR.L = SR.z1 - SR.z0; SR.H = SR.y1 - SR.y0;
+shell = sub(shell, brush(RB(SL.L, SL.H, 0.4, 0.04), interior, SL.x0 + SL.L / 2, SL.y0 + SL.H / 2, -WB / 2));
+shell = sub(shell, brush(RB(0.4, SR.H, SR.L, 0.04), interior, 0.0, SR.y0 + SR.H / 2, 0));
 shell = sub(shell, brush(RB(0.6, 1.45, CAB - 0.5, 0.08), interior, 5.5, 1.45, 0));            // open pass-through to the cab
 toMesh(shell, 'bodyshell');
 
@@ -225,7 +229,6 @@ for (const w of winList) {
 }
 add('window_skylight', RB(0.6, 0.012, 0.4, 0.05), glass, 3.0, 3.29, 0.45).castShadow = false;
 add('skylight_frame', RB(0.7, 0.06, 0.5, 0.03), trim, 3.0, 3.36, 0.45).material = glass;
-add('window_rear', RB(0.012, 0.42, 0.75, 0.05), glass, 0.06, 2.55, 0.42).castShadow = false;
 
 // entry door: hinge on the front edge, clear window, handle, grab bar, porch light, step
 {
@@ -237,7 +240,7 @@ add('window_rear', RB(0.012, 0.42, 0.75, 0.05), glass, 0.06, 2.55, 0.42).castSha
 }
 toMesh(frame(DOOR.w, DOOR.h, DOOR.x, DOOR.y, WB / 2 + 0.006, 0.035), 'door_frame');
 toMesh(frame(0.42, 0.6, DOOR.x, 2.06, WB / 2 + 0.012, 0.03), 'door_window_frame');
-toMesh(frame(0.75, 0.42, 0.0, 2.55, 0.42, 0.04, Math.PI / 2), 'window_rear_frame');
+
 add('grab_handle', new THREE.CylinderGeometry(0.02, 0.02, 0.7, 10), chrome, 3.21, 1.65, WB / 2 + 0.07);
 add('porch_light', RB(0.12, 0.08, 0.05, 0.02), lamp, 3.65, 2.6, WB / 2 + 0.03);
 add('entry_step', RB(0.5, 0.05, 0.3, 0.02), chrome, 3.65, 0.42, WB / 2 + 0.1);
@@ -291,14 +294,14 @@ wheel('wheel_lr', 1.95, -0.97, true, false); wheel('wheel_rr', 1.95, 0.97, true,
 // ---------- exterior details
 for (const sd of [1, -1]) {
   const z = sd * (WB / 2 + 0.004);
-  const bays = sd > 0 ? [0.7, 1.45, 2.6, 4.55] : [0.7, 1.45, 2.6, 3.4, 4.2, 4.95];
+  const bays = sd > 0 ? [0.7, 1.45, 2.6, 4.55] : [0.7, 1.45];
   for (const [i, x] of bays.entries()) {
     add('bay', RB(0.6, 0.42, 0.02, 0.03), paint, x, 0.98, z + 0.006);
     add('bay_line', RB(0.64, 0.46, 0.01, 0.03), trim, x, 0.98, z);
     add('bay_lock', new THREE.CylinderGeometry(0.02, 0.02, 0.02, 12), chrome, x + 0.22, 0.98, z + 0.02, Math.PI / 2);
   }
-  for (let i = 0; i < 4; i++) add('vent', RB(0.36, 0.025, 0.02, 0.008), trim, 4.55, 1.55 + i * 0.05, z + 0.004);
-  for (const x of [0.3, 2.8, 5.3]) add('marker', RB(0.08, 0.04, 0.03, 0.01), amber, x, 0.8, z + 0.01);
+  if (sd > 0) for (let i = 0; i < 4; i++) add('vent', RB(0.36, 0.025, 0.02, 0.008), trim, 4.55, 1.55 + i * 0.05, z + 0.004);
+  for (const x of (sd > 0 ? [0.3, 2.8, 5.3] : [0.3, 5.4])) add('marker', RB(0.08, 0.04, 0.03, 0.01), amber, x, 0.8, z + 0.01);
   add('underglow', RB(5.0, 0.02, 0.015, 0.006), ledStrip, 2.8, 0.55, z + 0.005);
   add('cab_door_seam', new THREE.BoxGeometry(0.01, 0.01, 0.01), trim, 5.6, 1.0, sd * CAB / 2).visible = false;
 }
@@ -324,10 +327,6 @@ add('plate_f', RB(0.01, 0.13, 0.52, 0.01), M('vc2_plate', { color: 0xf2f2ee, rou
 // rear
 add('bumper_r', RB(0.18, 0.18, WB, 0.04), trim, -0.02, 0.6, 0);
 add('taillight_l', RB(0.04, 0.75, 0.16, 0.03), tail, 0.0, 1.35, -1.05); add('taillight_r', RB(0.04, 0.75, 0.16, 0.03), tail, 0.0, 1.35, 1.05);
-add('ladder_l', new THREE.CylinderGeometry(0.018, 0.018, 2.4, 8), chrome, -0.06, 2.05, -0.5);
-add('ladder_r', new THREE.CylinderGeometry(0.018, 0.018, 2.4, 8), chrome, -0.06, 2.05, -0.1);
-for (let i = 0; i < 7; i++) add('ladder_rung', new THREE.CylinderGeometry(0.014, 0.014, 0.4, 8), chrome, -0.06, 1.0 + i * 0.32, -0.3, Math.PI / 2);
-add('spare', tyreGeo, tyreM, -0.14, 1.25, 0.6, 0, Math.PI / 2, 0);
 
 // ---------- VC2 livery decals (masked around windows, door and cab)
 function livery(frontRight) {
@@ -344,6 +343,7 @@ function livery(frontRight) {
   const px = x => frontRight ? (x - 0.05) / 7.3 * 3072 : 3072 - (x - 0.05) / 7.3 * 3072, py = y => (3.375 - y) / 2.85 * 1200;
   const clear = (x0, y0, x1, y1) => { const a = px(x0), b = px(x1); g.clearRect(Math.min(a, b), py(y1), Math.abs(b - a), py(y0) - py(y1)); };
   clear(5.5, 0.4, 7.6, 2.18);
+  if (!frontRight) clear(SL.x0 - 0.02, SL.y0 - 0.02, SL.x1 + 0.02, SL.y1 + 0.02);
   for (const w of winList.filter(w => (w.s > 0) === frontRight)) clear(w.x - w.w / 2 - 0.05, w.y - w.h / 2 - 0.05, w.x + w.w / 2 + 0.05, w.y + w.h / 2 + 0.05);
   if (frontRight) clear(DOOR.x - DOOR.w / 2 - 0.03, DOOR.y - DOOR.h / 2 - 0.03, DOOR.x + DOOR.w / 2 + 0.03, DOOR.y + DOOR.h / 2 + 0.03);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.name = frontRight ? 'vc2_livery_right' : 'vc2_livery_left'; return t;
@@ -361,6 +361,67 @@ for (const sd of [1, -1]) {
   add('front_logo', new THREE.PlaneGeometry(0.9, 0.22), lm, 7.49, 2.8, 0, 0, Math.PI / 2, 0).castShadow = false;
 }
 
+// ---------- SLIDE-OUTS: hollow boxes, flush with the wall when closed, pushed out when deployed
+const deploy = q.get('deploy') === '1';
+function slideBox(L, H, D, name, faceWin, axis) {
+  // built along x (length) / y (height) / z (depth: 0 = outer face, +D = inside)
+  let b = sub(brush(RB(L - 0.012, H - 0.012, D, 0.035), paint, 0, H / 2, D / 2), brush(RB(L - 0.1, H - 0.1, D, 0.02), interior, 0, H / 2, D / 2 + 0.06));
+  if (faceWin) b = sub(b, brush(RB(faceWin.w, faceWin.h, 0.2, 0.05), interior, faceWin.x, faceWin.y, 0));
+  const g = new THREE.Group(); g.name = name;
+  const m = new THREE.Mesh(b.geometry, b.material); m.name = name + '_box'; m.castShadow = m.receiveShadow = true; g.add(m);
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.1, D - 0.04), floorM); fl.name = name + '_floor'; fl.rotation.x = -Math.PI / 2; fl.position.set(0, 0.051, D / 2 + 0.02); fl.receiveShadow = true; g.add(fl);
+  const lt = new THREE.Mesh(RB(Math.min(1.2, L * 0.5), 0.02, 0.12, 0.01), ceilLed); lt.name = name + '_light'; lt.position.set(0, H - 0.06, D / 2); g.add(lt);
+  if (faceWin) {
+    const gl = new THREE.Mesh(RB(faceWin.w, faceWin.h, 0.012, 0.05), glass); gl.name = name + '_window'; gl.position.set(faceWin.x, faceWin.y, 0.025); g.add(gl);
+    const fr = frame(faceWin.w, faceWin.h, faceWin.x, faceWin.y, -0.008, 0.045); const fm = new THREE.Mesh(fr.geometry, rubber); fm.name = name + '_window_frame'; g.add(fm);
+  }
+  // rain gutter + side seals
+  const gut = new THREE.Mesh(RB(L + 0.04, 0.04, 0.06, 0.015), trim); gut.name = name + '_gutter'; gut.position.set(0, H + 0.01, 0.02); g.add(gut);
+  for (const e of [-1, 1]) { const sl = new THREE.Mesh(RB(0.025, H, 0.03, 0.01), rubber); sl.name = name + '_seal'; sl.position.set(e * L / 2, H / 2, 0.01); g.add(sl); }
+  return g;
+}
+// side slide-out: local z points INTO the vehicle (+z), so flip it to sit on the -z wall
+const slideSide = slideBox(SL.L, SL.H, SL.D, 'slideout_side', { w: 1.5, h: 0.62, x: 0, y: 1.55 }, 'z');
+slideSide.position.set(SL.x0 + SL.L / 2, SL.y0, -WB / 2 - (deploy ? SL.out : 0)); RV.add(slideSide);
+{ // VC2 stripe decal on the slide-out face
+  const c = document.createElement('canvas'); c.width = 1300; c.height = 1085; const g = c.getContext('2d');
+  g.strokeStyle = '#2b2d33'; g.lineWidth = 110; g.lineCap = 'round'; g.beginPath(); g.moveTo(-100, 1000); g.bezierCurveTo(400, 950, 900, 520, 1400, 470); g.stroke();
+  g.strokeStyle = '#e4501c'; g.lineWidth = 40; g.beginPath(); g.moveTo(-100, 870); g.bezierCurveTo(400, 830, 900, 400, 1400, 350); g.stroke();
+  g.clearRect(650 - 390, 1085 - (1.55 + 0.36) / SL.H * 1085, 780, 0.72 / SL.H * 1085);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: 0.25, polygonOffset: true, polygonOffsetFactor: -2 }); mat.name = 'vc2_livery_slide';
+  const d = new THREE.Mesh(new THREE.PlaneGeometry(SL.L - 0.02, SL.H - 0.02), mat); d.name = 'slideout_side_livery'; d.position.set(0, SL.H / 2, -0.008); d.rotation.y = Math.PI; slideSide.add(d);
+}
+// rear slide-out: local x = width (z of vehicle), depth goes +x into the vehicle
+const slideRear = slideBox(SR.L, SR.H, SR.D, 'slideout_rear', { w: 1.0, h: 0.5, x: 0, y: 1.7 }, 'x');
+slideRear.rotation.y = Math.PI / 2; slideRear.position.set(SR.x - (deploy ? SR.out : 0), SR.y0, 0); RV.add(slideRear);
+{ const lm2 = new THREE.MeshStandardMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = 1024; c.height = 256; const g = c.getContext('2d'); g.font = '900 170px Nunito, Arial Black, sans-serif'; const w1 = g.measureText('VC').width, w2 = g.measureText('2').width; g.fillStyle = '#2b2d33'; g.fillText('VC', 512 - (w1 + w2) / 2, 190); g.fillStyle = '#e4501c'; g.fillText('2', 512 - (w1 + w2) / 2 + w1, 190); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })(), transparent: true, polygonOffset: true, polygonOffsetFactor: -2 });
+  const d = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.2), lm2); d.name = 'slideout_rear_logo'; d.position.set(0, 0.95, -0.008); d.rotation.y = Math.PI; slideRear.add(d); }
+
+// stabilizer jacks: housings stay on the chassis, the legs extend to the ground when deployed
+const jackHousings = [], jackLegs = [];
+for (const [x, z] of [[0.45, -0.95], [0.45, 0.95], [5.15, -0.95], [5.15, 0.95]]) {
+  add('jack_housing', RB(0.14, 0.16, 0.14, 0.02), graphite, x, 0.49, z);
+  const leg = new THREE.Group(); leg.name = 'jack_leg'; leg.position.set(x, deploy ? 0.56 : 0.9, z); RV.add(leg);
+  add('jack_tube', RB(0.07, 0.5, 0.07, 0.01), chrome, 0, -0.25, 0, 0, 0, 0, leg);
+  add('jack_pad', RB(0.26, 0.035, 0.26, 0.01), trim, 0, -0.51, 0, 0, 0, 0, leg);
+  jackLegs.push(leg);
+}
+
+// wall-mounted VC2 control screen (inside, next to the door)
+{
+  const c = document.createElement('canvas'); c.width = 800; c.height = 500; const g = c.getContext('2d');
+  g.fillStyle = '#121316'; g.fillRect(0, 0, 800, 500); g.strokeStyle = '#e4501c'; g.lineWidth = 8; g.strokeRect(6, 6, 788, 488);
+  g.font = '900 90px Nunito, Arial Black, sans-serif'; g.fillStyle = '#f2f2f4'; g.fillText('VC', 60, 140); g.fillStyle = '#e4501c'; g.fillText('2', 60 + g.measureText('VC').width, 140);
+  g.font = '800 32px Nunito, Arial'; g.fillStyle = '#8a8a92'; g.fillText('CARAVAN CONTROL', 62, 190);
+  const tiles = [['FURNITURE', '#3c1a11'], ['EXTERIOR', '#1c1b21'], ['SLIDE-OUTS', '#1c1b21'], ['LIGHTS', '#1c1b21']];
+  tiles.forEach(([t, bg], i) => { const x = 60 + (i % 2) * 350, y = 240 + Math.floor(i / 2) * 120; g.fillStyle = bg; g.fillRect(x, y, 330, 100); g.strokeStyle = i ? '#2a2a2e' : '#e4501c'; g.lineWidth = 3; g.strokeRect(x, y, 330, 100); g.fillStyle = i ? '#d9d9de' : '#ff8a50'; g.font = '900 34px Nunito, Arial'; g.fillText(t, x + 24, y + 62); });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const sm = M('vc2_wall_screen', { map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.9 });
+  add('wall_screen_frame', RB(0.46, 0.31, 0.03, 0.02), trim, 4.55, 1.62, WB / 2 - 0.085);
+  add('wall_screen', new THREE.PlaneGeometry(0.42, 0.27), sm, 4.55, 1.62, WB / 2 - 0.102, 0, Math.PI, 0).castShadow = false;
+}
+
 // ---------- preview: real-time reflecting mirrors (Reflector) on top of the mirror glass
 const reflectors = [];
 if (q.get('reflect') !== '0') for (const f of mirrorFaces) {
@@ -371,6 +432,10 @@ if (q.get('reflect') !== '0') for (const f of mirrorFaces) {
 // ---------- cameras
 const cam = new THREE.PerspectiveCamera(Number(q.get('fov') || 32), W / H, 0.02, 400);
 const views = {
+  deployed: [[-5.2, 3.4, -11.5], [3.0, 1.4, 0]],
+  deployed_in: [[0.75, 1.62, 0.6], [4.6, 1.45, -1.6]],
+  deployed_rear: [[4.6, 1.65, 0.3], [-0.5, 1.4, -0.3]],
+  screen: [[3.6, 1.62, 0.2], [4.55, 1.62, 1.2]],
   front: [[13.5, 2.6, 8.8], [3.8, 1.5, 0]],
   side: [[3.8, 1.9, 15.5], [3.8, 1.5, 0]],
   rear: [[-7, 3.4, -9.5], [3.2, 1.6, 0]],
@@ -387,7 +452,14 @@ r.render(scene, cam); r.render(scene, cam);
 document.title = 'ready';
 
 window.stats = () => { let vtx = 0, t = 0; RV.traverse(o => { if (o.isMesh && !o.isReflector) { vtx += o.geometry.attributes.position.count; t += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } }); return { vertices: vtx, triangles: Math.round(t) }; };
+window.exportPart = (which) => new Promise((res, rej) => {
+  const src = which === 'slide_side' ? slideSide : which === 'slide_rear' ? slideRear : jackLegs[0];
+  const out = src.clone(true); out.position.set(0, 0, 0); out.rotation.set(0, 0, 0); out.updateMatrixWorld(true);
+  const root = new THREE.Scene(); root.add(out);
+  new GLTFExporter().parse(root, buf => { const b = new Uint8Array(buf); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); res(btoa(s)); }, rej, { binary: true });
+});
 window.exportGLB = () => new Promise((res, rej) => {
+  RV.remove(slideSide); RV.remove(slideRear); jackLegs.forEach(l => RV.remove(l));
   reflectors.forEach(x => x.parent.remove(x));
   const out = RV.clone(true); out.position.x = -3.95; out.updateMatrixWorld(true);
   const root = new THREE.Scene(); root.add(out);

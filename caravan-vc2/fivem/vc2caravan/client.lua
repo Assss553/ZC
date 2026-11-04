@@ -1,5 +1,0 @@
--- Name shown in the game (vehicle HUD, garages, etc.)
-CreateThread(function()
-    AddTextEntry('VC2CARAVAN', 'VC2 Caravan')
-    AddTextEntry('VC2', 'VC2')
-end)

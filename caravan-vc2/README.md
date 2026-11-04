@@ -20,13 +20,57 @@ An original, realistic Class C motorhome designed for VC2, built for FiveM. The 
 - **Outside**: VC2 livery, awning, storage bays, roof AC units, solar panels, ladder, spare wheel, and lights: headlights, DRLs, fog, tail, marker and LED underglow.
 - **Size**: ~8.1 m long, 2.45 m wide, ~3.75 m tall.
 
+## Set-up mode, walk-in interior and customisation (FiveM script)
+
+| Packed | Set up (Q) |
+|---|---|
+| ![packed](model/preview_packed.png) | ![deployed](model/preview_deployed.png) |
+
+1. **Q while parked** (driver seat, standing still): the caravan sets up.
+   - The 4 **stabiliser legs** come down to the ground and the body settles and locks in place.
+   - The **side slide-out** pushes out (wider) and the **rear slide-out** pushes out (longer).
+   - Press Q again to pack up in reverse. You can't drive while it is set up.
+2. **Door**: look at the entry door with the **target eye** (ox_target / qb-target), or use E without a target script.
+   - Open / close the door.
+   - **Go inside** (optional teleport next to the door).
+3. **Inside**: about 2.5 m of headroom, and the slide-outs add floor space with their own windows and lights.
+4. **Wall screen** next to the door (target eye or E) opens the **VC2 Caravan Control** tablet:
+   - **Home**: status, interior lights, step outside.
+   - **Furniture**: beds, sofas, chairs, tables, kitchen, bathroom, TV, decor and storage.
+     - Pick an item and aim with your eyes: **← →** rotate, **↑ ↓** height, **E** place, **Backspace** cancel.
+     - Items are paid for (QBCore / ESX), saved, and everyone sees them.
+   - **Placed**: list of your furniture, with remove.
+   - **Exterior**: body colour, stripes / trim, pearl, wheel colour, underglow (on/off + colour), livery.
+
+![inside](model/preview_deployed_inside.png)
+
+| | |
+|---|---|
+| ![tablet](model/preview_tablet_furniture.png) | ![tablet](model/preview_tablet_exterior.png) |
+
+- **Saving**: everything is stored per plate in the `vc2_caravans` table (created automatically, needs `oxmysql`).
+- **Ownership** (`Config.Ownership`): with the VC2 script running, only the owner registered in VC2 (or `vc2.admin`) can set up, furnish and repaint. Anyone can do it without VC2.
+- **Sync**: the set-up state and door are synced to everyone through the state bag `vc2rv`. Every client builds the slide-outs, legs and furniture for caravans near them.
+
+### Extra props for the moving parts
+Convert these the same way as the kiosk (static props, much easier than the vehicle). Put them in `fivem/vc2caravan/stream/` with a `vc2caravan_props.ytyp`, then uncomment the `data_file` line in `fxmanifest.lua`.
+
+| Model file | Prop name |
+|---|---|
+| `model/vc2caravan_slideout_side.glb` | `vc2caravan_slideout_side` |
+| `model/vc2caravan_slideout_rear.glb` | `vc2caravan_slideout_rear` |
+| `model/vc2caravan_jack.glb` | `vc2caravan_jack` |
+
+The vehicle model already has the openings for both slide-outs and the leg housings. Attach offsets are in `Config.Parts`.
+
 ## Folders
 | Path | Contents |
 |---|---|
 | `model/vc2_caravan.glb` | The 3D model (glTF binary, ~80k triangles). Open in Blender / ZModeler. |
 | `model/preview_*.png` | Renders: outside, inside, open door, mirror. |
-| `model/vc2_caravan_builder.html` | Design source (three.js). Open in a browser. Views: `?v=front`, `side`, `rear`, `inside`, `inside_door`, `inside_side`, `window`, `mirror`, `cabin`, `dooropen&door=open`. |
-| `fivem/vc2caravan/` | Ready FiveM add-on vehicle resource: `fxmanifest.lua`, `handling.meta`, `vehicles.meta`, `carvariations.meta`, `client.lua`. |
+| `model/vc2_caravan_builder.html` | Design source (three.js). Open in a browser. Views: `?v=front`, `side`, `rear`, `inside`, `inside_door`, `window`, `mirror`, `cabin`, `dooropen&door=open`, `deployed&deploy=1`, `deployed_in&deploy=1`. |
+| `model/vc2caravan_slideout_*.glb`, `vc2caravan_jack.glb` | Moving parts (props) for set-up mode. |
+| `fivem/vc2caravan/` | FiveM resource: vehicle meta (handling, vehicles, variations) + set-up mode, door, furniture and exterior script with the tablet UI. |
 
 ## Realistic driving (`fivem/vc2caravan/data/handling.meta`)
 | | Value | Real-world reason |
@@ -66,4 +110,6 @@ GTA V needs the model in its own vehicle format: `vc2caravan.yft` + `vc2caravan_
 
 ## Notes
 - **Mirrors**: GTA V does not render live mirror reflections on vehicles. In the game the mirror glass reflects the environment the way chrome does. The live reflections in `preview_mirror.png` only exist in the design preview.
-- **Walking inside while driving**: GTA has no built-in way to walk inside a moving vehicle. Walking inside works when the caravan is parked. A standing-passenger or "enter interior" system needs a separate script.
+- **Walking inside**: it works when the caravan is set up (frozen in place), as long as the vehicle collision you build is hollow. Until then, **Go inside** puts you inside next to the door. GTA has no built-in way to walk inside a moving vehicle.
+- **Furniture props**: the catalogue uses GTA props. Any model missing on your server is hidden automatically. Add more in `Config.Furniture`.
+- **Attach offsets**: `Config.Parts`, `EnterOffset`, the screen position and `InteriorBounds` match the model with its origin at the centre on the ground. After converting, check them in the game and adjust if your vehicle origin is different.

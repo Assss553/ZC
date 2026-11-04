@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>VC2 Caravan Control</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="stage">
+ <div id="tab">
+  <i class="cam"></i>
+  <div id="scr">
+   <aside>
+    <div class="logo">VC<i>2</i><small>CARAVAN</small></div>
+    <nav id="nav">
+     <button data-t="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></svg>Home</button>
+     <button data-t="furn"><svg viewBox="0 0 24 24"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M5 18v2M19 18v2M5 10V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/></svg>Furniture</button>
+     <button data-t="placed"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Placed <b id="pcount">0</b></button>
+     <button data-t="ext"><svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 10c0-4.4-4.5-8-10-8z"/></svg>Exterior</button>
+    </nav>
+    <div class="plate" id="plate">VC2 0000</div>
+   </aside>
+   <main>
+    <!-- home -->
+    <section class="pg on" id="home">
+     <h1>Welcome home</h1><p class="sub" id="hsub">Your caravan is set up and level.</p>
+     <div class="cards">
+      <div class="st"><span>Status</span><b id="hstate">Set up</b><i id="hdot"></i></div>
+      <div class="st"><span>Furniture</span><b id="hfurn">0 / 40</b></div>
+      <div class="st"><span>Slide-outs</span><b id="hslide">Extended</b></div>
+     </div>
+     <div class="acts">
+      <button class="big" id="lights"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span>Interior lights</span><em id="lstate">OFF</em></button>
+      <button class="big" data-go="furn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add furniture</span><em>Beds, sofas, kitchen…</em></button>
+      <button class="big" data-go="ext"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-1.1.9-2 2-2h2a4 4 0 0 0 4-4c0-6.6-4.5-12-10-12z"/></svg><span>Change the look</span><em>Colours, wheels, underglow</em></button>
+      <button class="big" id="exit"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Step outside</span><em>Leave the caravan</em></button>
+     </div>
+    </section>
+    <!-- furniture catalogue -->
+    <section class="pg" id="furn">
+     <div class="hd"><h1>Furniture</h1><div class="cats" id="cats"></div></div>
+     <div class="grid" id="fgrid"></div>
+     <p class="tip">Pick an item, then place it with your eyes: <b>← →</b> rotate · <b>↑ ↓</b> height · <b>E</b> place · <b>Backspace</b> cancel</p>
+    </section>
+    <!-- placed items -->
+    <section class="pg" id="placed">
+     <div class="hd"><h1>Placed items</h1></div>
+     <div class="list" id="plist"></div>
+    </section>
+    <!-- exterior -->
+    <section class="pg" id="ext">
+     <div class="hd"><h1>Exterior</h1></div>
+     <div class="exts">
+      <div class="ex"><h3>Body colour</h3><div class="sw" data-k="primary"></div></div>
+      <div class="ex"><h3>Stripes &amp; trim</h3><div class="sw" data-k="secondary"></div></div>
+      <div class="ex"><h3>Pearl shine</h3><div class="sw" data-k="pearl"></div></div>
+      <div class="ex"><h3>Wheels</h3><div class="sw" data-k="wheel"></div></div>
+      <div class="ex"><h3>Underglow <label class="tg"><input type="checkbox" id="neonOn"><i></i></label></h3><div class="sw" id="neon"></div></div>
+      <div class="ex" id="livWrap"><h3>Livery</h3><div class="liv" id="liv"></div></div>
+     </div>
+    </section>
+    <div class="toast" id="toast"></div>
+   </main>
+  </div>
+ </div>
+</div>
+<script src="script.js"></script>
+</body></html>
