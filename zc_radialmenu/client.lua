@@ -2,48 +2,62 @@ local isOpen = false
 local lookup = {}
 local QBCore, ESX
 
-local function getJob()
+local function getPlayerData()
     if GetResourceState('qbx_core') == 'started' then
         local ok, data = pcall(function() return exports.qbx_core:GetPlayerData() end)
-        if ok and data and data.job then return data.job.name end
+        if ok and data then return data end
     end
     if GetResourceState('qb-core') == 'started' then
         if not QBCore then
             local ok, obj = pcall(function() return exports['qb-core']:GetCoreObject() end)
             if ok then QBCore = obj end
         end
-        if QBCore then
-            local data = QBCore.Functions.GetPlayerData()
-            if data and data.job then return data.job.name end
-        end
+        if QBCore then return QBCore.Functions.GetPlayerData() end
     end
     if GetResourceState('es_extended') == 'started' then
         if not ESX then
             local ok, obj = pcall(function() return exports['es_extended']:getSharedObject() end)
             if ok then ESX = obj end
         end
-        if ESX then
-            local data = ESX.GetPlayerData()
-            if data and data.job then return data.job.name end
-        end
+        if ESX then return ESX.GetPlayerData() end
     end
     return nil
 end
 
-local currentJob = nil
+-- context of the player when the menu opens
+local ctx = {}
 
-local function canUse(name)
-    local menu = Config.Menus[name]
-    if not menu then return false end
-    if menu.jobs then
+local function readContext()
+    local ped = PlayerPedId()
+    local data = getPlayerData()
+    local job = data and data.job or {}
+    local veh = GetVehiclePedIsIn(ped, false)
+    ctx = {
+        job = job.name,
+        jobLabel = job.label or job.name,
+        duty = job.onduty ~= false,
+        vehicle = veh ~= 0,
+        vehicleLabel = nil,
+    }
+    if veh ~= 0 then
+        local name = GetDisplayNameFromVehicleModel(GetEntityModel(veh))
+        local label = GetLabelText(name)
+        ctx.vehicleLabel = (label ~= 'NULL' and label) or name
+    end
+end
+
+local function allowed(item)
+    if item.jobs then
         local ok = false
-        for _, j in ipairs(menu.jobs) do
-            if j == currentJob then ok = true break end
+        for _, j in ipairs(item.jobs) do
+            if j == ctx.job then ok = true break end
         end
         if not ok then return false end
     end
-    if menu.canOpen then
-        local ok, res = pcall(menu.canOpen)
+    if item.duty and not ctx.duty then return false end
+    if item.vehicle ~= nil and item.vehicle ~= ctx.vehicle then return false end
+    if item.canInteract then
+        local ok, res = pcall(item.canInteract)
         if not (ok and res) then return false end
     end
     return true
@@ -52,20 +66,15 @@ end
 local function prepare(items, prefix)
     local out = {}
     for _, item in ipairs(items) do
-        local visible = true
-        if item.canInteract then
-            local ok, res = pcall(item.canInteract)
-            visible = ok and res
-        end
-        if visible and item.type == 'menu' then
-            visible = canUse(item.menu)
-        end
-        if visible then
+        if allowed(item) then
             local id = prefix .. (#out + 1)
             lookup[id] = item
             local entry = { id = id, label = item.label, icon = item.icon }
-            if item.items then entry.items = prepare(item.items, id .. '-') end
-            out[#out + 1] = entry
+            if item.items then
+                entry.items = prepare(item.items, id .. '-')
+                if #entry.items == 0 then entry = nil end
+            end
+            if entry then out[#out + 1] = entry end
         end
     end
     return out
@@ -106,58 +115,33 @@ local function blockControls()
     end)
 end
 
-local function openMenu(name)
-    if IsPauseMenuActive() or IsEntityDead(PlayerPedId()) then return end
-    currentJob = getJob()
-    if not canUse(name) then return end
-    local menu = Config.Menus[name]
-
+local function openMenu()
+    if isOpen or IsPauseMenuActive() or IsEntityDead(PlayerPedId()) then return end
+    readContext()
     lookup = {}
+    local items = prepare(Config.Menu, 'i')
+    if #items == 0 then return end
+
+    isOpen = true
     SendNUIMessage({
         action = 'open',
-        title = menu.title or name:upper(),
-        color = menu.color or Config.Color,
+        title = Config.Title,
+        color = Config.Color,
         keepInput = Config.KeepInput,
         sound = Config.Sound,
-        items = prepare(menu.items or {}, 'i'),
+        context = ctx,
+        items = items,
     })
-
-    if not isOpen then
-        isOpen = true
-        SetNuiFocus(true, true)
-        SetNuiFocusKeepInput(Config.KeepInput)
-        SetCursorLocation(0.5, 0.5)
-        if Config.KeepInput then blockControls() end
-    end
+    SetNuiFocus(true, true)
+    SetNuiFocusKeepInput(Config.KeepInput)
+    SetCursorLocation(0.5, 0.5)
+    if Config.KeepInput then blockControls() end
 end
 
--- one key mapping per key; menus sharing a key (police / ems) pick the first one the player can use
-local byKey = {}
-for name, menu in pairs(Config.Menus) do
-    if menu.key then
-        local k = menu.key:upper()
-        byKey[k] = byKey[k] or {}
-        table.insert(byKey[k], name)
-    end
-end
-for key, names in pairs(byKey) do
-    table.sort(names, function(a, b) return a == 'main' or (b ~= 'main' and a < b) end)
-    local cmd = 'zcradial_' .. key:lower()
-    RegisterCommand(cmd, function()
-        if isOpen then return closeMenu() end
-        currentJob = getJob()
-        for _, name in ipairs(names) do
-            if canUse(name) then return openMenu(name) end
-        end
-    end, false)
-    RegisterKeyMapping(cmd, ('Radial Menu (%s)'):format(table.concat(names, ' / ')), 'keyboard', key)
-end
-
--- /radial <name>  (e.g. /radial vehicle)
-RegisterCommand('radial', function(_, args)
-    if isOpen then closeMenu() end
-    openMenu(args[1] or 'main')
+RegisterCommand('zcradial', function()
+    if isOpen then closeMenu() else openMenu() end
 end, false)
+RegisterKeyMapping('zcradial', 'Open Radial Menu', 'keyboard', Config.Key)
 
 RegisterNUICallback('close', function(_, cb)
     closeMenu()
@@ -168,11 +152,9 @@ RegisterNUICallback('select', function(data, cb)
     cb('ok')
     local item = data and lookup[data.id]
     if not item then return end
-    if not item.keepOpen and item.type ~= 'menu' then closeMenu() end
+    if not item.keepOpen then closeMenu() end
 
-    if item.type == 'menu' and item.menu then
-        openMenu(item.menu)
-    elseif item.type == 'client' and item.event then
+    if item.type == 'client' and item.event then
         TriggerEvent(item.event, item.args)
     elseif item.type == 'server' and item.event then
         TriggerServerEvent(item.event, item.args)

@@ -1,198 +1,187 @@
 Config = {}
 
--- Default accent colour (any menu can override it with its own `color`)
+-- Key that opens the menu (players can rebind it in GTA Settings > Key Bindings > FiveM)
+Config.Key = 'F1'
+
+-- Accent colour (any CSS hex colour)
 Config.Color = '#ff5a1f'
 
--- true  = player can keep walking/driving while a menu is open (camera & shooting are blocked)
--- false = the game is frozen while a menu is open
+-- Title shown in the middle
+Config.Title = 'ZC MENU'
+
+-- true  = keep walking/driving while the menu is open (camera & shooting are blocked)
 Config.KeepInput = true
 
 -- Small UI sounds (hover tick / select / open)
 Config.Sound = true
 
 --[[
-    Every menu has its own key (players can rebind them in GTA Settings > Key Bindings > FiveM).
+    ONE menu on F1 that changes with context:
+      * sections with `jobs`      -> only show for those jobs        (police, ems ...)
+      * sections with `vehicle`   -> true  = only inside a vehicle
+                                     false = only on foot
+      * `duty = true`             -> only when on duty (QBCore / Qbox)
+      * `canInteract = function() return true end` -> any custom check
 
-    Menu fields:
-        key         default key
-        title       text in the middle
-        color       (optional) accent colour for this menu only
-        jobs        (optional) { 'police', 'sheriff' } -> only these jobs can open it
-        canOpen     (optional) function() return true end
-        items       { ... }
+    Hover a section and its items fan out around it as an outer ring
+    (up to 3 rings deep). Click an item to use it.
 
     Item fields:
-        label       text shown in the middle when hovered
-        icon        Font Awesome 6 icon name, e.g. 'car', 'shirt', 'shield-halved'
-        type        'client' | 'server' | 'command' | 'menu'
-        event       event name (client / server)
-        command     command name without '/' (type = 'command')
-        menu        name of another menu to switch to (type = 'menu')
-        args        anything, passed to the event
-        items       { ... }  -> makes it a sub menu
-        canInteract function() return true end  (optional, hides the item when false)
-        keepOpen    true -> don't close the menu after selecting
+        label, icon         text + Font Awesome 6 (free/solid) icon name
+        type                'client' | 'server' | 'command'
+        event / command     what to run
+        args                passed to the event
+        items = { ... }     makes it a section (opens the next ring)
+        keepOpen = true     don't close the menu after selecting
 ]]
 
-local function inVehicle() return IsPedInAnyVehicle(PlayerPedId(), false) end
-local function veh(args, keepOpen)
-    return { type = 'client', event = 'zc_radial:client:vehicle', args = args, keepOpen = keepOpen }
+local function veh(label, icon, args, keepOpen)
+    return { label = label, icon = icon, type = 'client', event = 'zc_radial:client:vehicle', args = args, keepOpen = keepOpen }
 end
-local function item(label, icon, base)
-    base = base or {}
-    base.label, base.icon = label, icon
-    return base
+local function cmd(label, icon, command)
+    return { label = label, icon = icon, type = 'command', command = command }
+end
+local function ev(label, icon, event, args)
+    return { label = label, icon = icon, type = 'client', event = event, args = args }
 end
 
-Config.Menus = {}
+Config.Menu = {
+    -------------------------------------------------------------------
+    -- VEHICLE  (only when you are inside a vehicle)
+    -------------------------------------------------------------------
+    {
+        label = 'Vehicle', icon = 'car', vehicle = true,
+        items = {
+            veh('Engine', 'power-off', { action = 'engine' }, true),
+            {
+                label = 'Doors', icon = 'door-open',
+                items = {
+                    veh('Front Left',  'door-open', { action = 'door', door = 0 }, true),
+                    veh('Front Right', 'door-open', { action = 'door', door = 1 }, true),
+                    veh('Rear Left',   'door-open', { action = 'door', door = 2 }, true),
+                    veh('Rear Right',  'door-open', { action = 'door', door = 3 }, true),
+                    veh('Hood',        'car-side',  { action = 'door', door = 4 }, true),
+                    veh('Trunk',       'box-open',  { action = 'door', door = 5 }, true),
+                    veh('All Doors',   'car',       { action = 'alldoors' }, true),
+                }
+            },
+            {
+                label = 'Windows', icon = 'wind',
+                items = {
+                    veh('Front Left',  'wind', { action = 'window', window = 0 }, true),
+                    veh('Front Right', 'wind', { action = 'window', window = 1 }, true),
+                    veh('Rear Left',   'wind', { action = 'window', window = 2 }, true),
+                    veh('Rear Right',  'wind', { action = 'window', window = 3 }, true),
+                    veh('All',         'wind', { action = 'windows' }, true),
+                }
+            },
+            {
+                label = 'Seats', icon = 'chair',
+                items = {
+                    veh('Driver',     'gauge-high', { action = 'seat', seat = -1 }),
+                    veh('Passenger',  'user',       { action = 'seat', seat = 0 }),
+                    veh('Rear Left',  'user',       { action = 'seat', seat = 1 }),
+                    veh('Rear Right', 'user',       { action = 'seat', seat = 2 }),
+                }
+            },
+            veh('Lights', 'lightbulb', { action = 'lights' }, true),
+            cmd('Lock', 'lock', 'lock'),
+            cmd('Give Keys', 'key', 'givekeys'),
+        }
+    },
 
----------------------------------------------------------------------------
--- F1 : MAIN MENU
----------------------------------------------------------------------------
-Config.Menus.main = {
-    key = 'F1',
-    title = 'ZC MENU',
-    items = {
-        {
-            label = 'Citizen', icon = 'user',
-            items = {
-                { label = 'Give Number', icon = 'address-book', type = 'command', command = 'givenumber' },
-                { label = 'Show ID',     icon = 'id-card',      type = 'command', command = 'showid' },
-                { label = 'Carry',       icon = 'people-carry-box', type = 'command', command = 'carry' },
-                { label = 'Rob',         icon = 'mask',         type = 'command', command = 'rob' },
-            }
-        },
-        {
-            label = 'Emotes', icon = 'person-walking',
-            items = {
-                { label = 'Emote Menu', icon = 'face-smile', type = 'command', command = 'emotemenu' },
-                { label = 'Cancel',     icon = 'ban',        type = 'command', command = 'e c' },
-                { label = 'Hands Up',   icon = 'hand',       type = 'command', command = 'e handsup' },
-                { label = 'Sit',        icon = 'chair',      type = 'command', command = 'e sit' },
-            }
-        },
-        {
-            label = 'Clothing', icon = 'shirt',
-            items = {
-                { label = 'Hat',     icon = 'hat-cowboy',    type = 'command', command = 'hat' },
-                { label = 'Mask',    icon = 'masks-theater', type = 'command', command = 'mask' },
-                { label = 'Glasses', icon = 'glasses',       type = 'command', command = 'glasses' },
-                { label = 'Shirt',   icon = 'shirt',         type = 'command', command = 'shirt' },
-                { label = 'Pants',   icon = 'socks',         type = 'command', command = 'pants' },
-                { label = 'Shoes',   icon = 'shoe-prints',   type = 'command', command = 'shoes' },
-            }
-        },
-        -- shortcuts to the other menus
-        { label = 'Vehicle', icon = 'car',           type = 'menu', menu = 'vehicle', canInteract = inVehicle },
-        { label = 'Police',  icon = 'shield-halved', type = 'menu', menu = 'police' },
-        { label = 'EMS',     icon = 'kit-medical',   type = 'menu', menu = 'ambulance' },
+    -------------------------------------------------------------------
+    -- POLICE  (only for police jobs)
+    -------------------------------------------------------------------
+    {
+        label = 'Police', icon = 'shield-halved',
+        jobs = { 'police', 'sheriff', 'bcso', 'sasp' },
+        items = {
+            {
+                label = 'Citizen', icon = 'person',
+                items = {
+                    ev('Cuff',   'handcuffs',        'police:client:CuffPlayer'),
+                    ev('Escort', 'people-arrows',    'police:client:EscortPlayer'),
+                    ev('Search', 'magnifying-glass', 'police:client:SearchPlayer'),
+                    ev('Put In Vehicle', 'right-to-bracket',   'police:client:PutPlayerInVehicle'),
+                    ev('Take Out',       'right-from-bracket', 'police:client:SetPlayerOutVehicle'),
+                    cmd('Fine', 'file-invoice-dollar', 'fine'),
+                    cmd('Jail', 'building-shield', 'jail'),
+                }
+            },
+            {
+                label = 'Objects', icon = 'road-barrier',
+                items = {
+                    ev('Cone',    'traffic-light', 'police:client:spawnCone'),
+                    ev('Barrier', 'road-barrier',  'police:client:spawnBarrier'),
+                    cmd('Spikes', 'road-spikes',   'spikestrip'),
+                    ev('Remove',  'trash',         'police:client:deleteObject'),
+                }
+            },
+            {
+                label = 'Vehicle', icon = 'car-side',
+                items = {
+                    ev('Impound', 'truck-pickup', 'police:client:ImpoundVehicle'),
+                    cmd('Plate Check', 'rectangle-list', 'plate'),
+                    cmd('Radar', 'satellite-dish', 'radar'),
+                }
+            },
+            cmd('MDT',    'tablet-screen-button', 'mdt'),
+            cmd('Backup', 'tower-broadcast',      '10-78'),
+            cmd('Duty',   'user-shield',          'duty'),
+        }
+    },
 
-        { label = 'Flip Vehicle', icon = 'rotate', type = 'client', event = 'zc_radial:client:vehicle', args = { action = 'flip' },
-          canInteract = function() return not inVehicle() end },
-        { label = 'GPS',      icon = 'map-location-dot', type = 'command', command = 'gps' },
-        { label = 'Phone',    icon = 'mobile-screen',    type = 'command', command = 'phone' },
-        { label = 'Music',    icon = 'music',            type = 'command', command = 'music' },
-        { label = 'Settings', icon = 'bars',             type = 'command', command = 'settings' },
-    }
-}
+    -------------------------------------------------------------------
+    -- EMS  (only for ambulance jobs)
+    -------------------------------------------------------------------
+    {
+        label = 'EMS', icon = 'kit-medical',
+        jobs = { 'ambulance', 'ems' },
+        items = {
+            ev('Revive', 'heart-pulse',   'hospital:client:RevivePlayer'),
+            ev('Heal',   'bandage',       'hospital:client:TreatWounds'),
+            ev('Escort', 'people-arrows', 'police:client:EscortPlayer'),
+            cmd('Stretcher', 'bed-pulse', 'stretcher'),
+            cmd('Duty', 'user-doctor', 'duty'),
+        }
+    },
 
----------------------------------------------------------------------------
--- F6 : POLICE MENU  (police jobs only)
----------------------------------------------------------------------------
-Config.Menus.police = {
-    key = 'F6',
-    title = 'POLICE',
-    jobs = { 'police', 'sheriff', 'bcso', 'sasp' },
-    -- color = '#2f7bff',   -- uncomment for a blue police menu
-    items = {
-        { label = 'Police Radar', icon = 'satellite-dish',   type = 'command', command = 'radar' },
-        { label = 'Cuff',         icon = 'handcuffs',        type = 'client', event = 'police:client:CuffPlayer' },
-        { label = 'Escort',       icon = 'people-arrows',    type = 'client', event = 'police:client:EscortPlayer' },
-        { label = 'Search',       icon = 'magnifying-glass', type = 'client', event = 'police:client:SearchPlayer' },
-        {
-            label = 'Vehicle', icon = 'car-side',
-            items = {
-                { label = 'Put In Vehicle',  icon = 'right-to-bracket', type = 'client', event = 'police:client:PutPlayerInVehicle' },
-                { label = 'Take Out',        icon = 'right-from-bracket', type = 'client', event = 'police:client:SetPlayerOutVehicle' },
-                { label = 'Impound',         icon = 'truck-pickup',     type = 'client', event = 'police:client:ImpoundVehicle' },
-                { label = 'Plate Check',     icon = 'rectangle-list',   type = 'command', command = 'plate' },
-            }
-        },
-        {
-            label = 'Objects', icon = 'road-barrier',
-            items = {
-                { label = 'Cone',        icon = 'traffic-light', type = 'client', event = 'police:client:spawnCone' },
-                { label = 'Barrier',     icon = 'road-barrier',  type = 'client', event = 'police:client:spawnBarrier' },
-                { label = 'Spike Strip', icon = 'road-spikes',   type = 'command', command = 'spikestrip' },
-                { label = 'Remove',      icon = 'trash',         type = 'client', event = 'police:client:deleteObject' },
-            }
-        },
-        { label = 'Fine',   icon = 'file-invoice-dollar',  type = 'command', command = 'fine' },
-        { label = 'Jail',   icon = 'building-shield',      type = 'command', command = 'jail' },
-        { label = 'MDT',    icon = 'tablet-screen-button', type = 'command', command = 'mdt' },
-        { label = 'Duty',   icon = 'user-shield',          type = 'command', command = 'duty' },
-        { label = 'Backup', icon = 'tower-broadcast',      type = 'command', command = '10-78' },
-    }
-}
-
----------------------------------------------------------------------------
--- F6 : EMS MENU  (same key as police, opens for ambulance job)
----------------------------------------------------------------------------
-Config.Menus.ambulance = {
-    key = 'F6',
-    title = 'EMS',
-    jobs = { 'ambulance', 'ems' },
-    items = {
-        { label = 'Revive',    icon = 'heart-pulse', type = 'client', event = 'hospital:client:RevivePlayer' },
-        { label = 'Heal',      icon = 'bandage',     type = 'client', event = 'hospital:client:TreatWounds' },
-        { label = 'Stretcher', icon = 'bed-pulse',   type = 'command', command = 'stretcher' },
-        { label = 'Escort',    icon = 'people-arrows', type = 'client', event = 'police:client:EscortPlayer' },
-        { label = 'Duty',      icon = 'user-doctor', type = 'command', command = 'duty' },
-    }
-}
-
----------------------------------------------------------------------------
--- F3 : VEHICLE MENU  (only inside a vehicle)
----------------------------------------------------------------------------
-Config.Menus.vehicle = {
-    key = 'F3',
-    title = 'VEHICLE',
-    canOpen = inVehicle,
-    items = {
-        item('Engine',  'power-off', veh({ action = 'engine' }, true)),
-        item('Hood',    'car-side',  veh({ action = 'door', door = 4 }, true)),
-        item('Trunk',   'box-open',  veh({ action = 'door', door = 5 }, true)),
-        {
-            label = 'Doors', icon = 'door-open',
-            items = {
-                item('Front Left',  'door-open', veh({ action = 'door', door = 0 }, true)),
-                item('Front Right', 'door-open', veh({ action = 'door', door = 1 }, true)),
-                item('Rear Left',   'door-open', veh({ action = 'door', door = 2 }, true)),
-                item('Rear Right',  'door-open', veh({ action = 'door', door = 3 }, true)),
-                item('All Doors',   'car',       veh({ action = 'alldoors' }, true)),
-            }
-        },
-        {
-            label = 'Windows', icon = 'wind',
-            items = {
-                item('Front Left',  'wind', veh({ action = 'window', window = 0 }, true)),
-                item('Front Right', 'wind', veh({ action = 'window', window = 1 }, true)),
-                item('Rear Left',   'wind', veh({ action = 'window', window = 2 }, true)),
-                item('Rear Right',  'wind', veh({ action = 'window', window = 3 }, true)),
-                item('All Windows', 'wind', veh({ action = 'windows' }, true)),
-            }
-        },
-        {
-            label = 'Seats', icon = 'chair',
-            items = {
-                item('Driver',      'gauge-high', veh({ action = 'seat', seat = -1 })),
-                item('Passenger',   'user',  veh({ action = 'seat', seat = 0 })),
-                item('Rear Left',   'user',  veh({ action = 'seat', seat = 1 })),
-                item('Rear Right',  'user',  veh({ action = 'seat', seat = 2 })),
-            }
-        },
-        item('Lights',  'lightbulb',    veh({ action = 'lights' }, true)),
-        item('Lock',    'lock',         { type = 'command', command = 'lock' }),
-        item('Keys',    'key',          { type = 'command', command = 'givekeys' }),
-    }
+    -------------------------------------------------------------------
+    -- EVERYONE
+    -------------------------------------------------------------------
+    {
+        label = 'Citizen', icon = 'user',
+        items = {
+            cmd('Show ID',     'id-card',          'showid'),
+            cmd('Give Number', 'address-book',     'givenumber'),
+            cmd('Carry',       'people-carry-box', 'carry'),
+            cmd('Rob',         'mask',             'rob'),
+        }
+    },
+    {
+        label = 'Emotes', icon = 'person-walking',
+        items = {
+            cmd('Emote Menu', 'face-smile', 'emotemenu'),
+            cmd('Hands Up',   'hand',       'e handsup'),
+            cmd('Sit',        'chair',      'e sit'),
+            cmd('Cancel',     'ban',        'e c'),
+        }
+    },
+    {
+        label = 'Clothing', icon = 'shirt',
+        items = {
+            cmd('Hat',     'hat-cowboy',    'hat'),
+            cmd('Mask',    'masks-theater', 'mask'),
+            cmd('Glasses', 'glasses',       'glasses'),
+            cmd('Shirt',   'shirt',         'shirt'),
+            cmd('Pants',   'socks',         'pants'),
+            cmd('Shoes',   'shoe-prints',   'shoes'),
+        }
+    },
+    { label = 'Flip Vehicle', icon = 'rotate', vehicle = false,   -- on foot only
+      type = 'client', event = 'zc_radial:client:vehicle', args = { action = 'flip' } },
+    cmd('GPS',      'map-location-dot', 'gps'),
+    cmd('Phone',    'mobile-screen',    'phone'),
+    cmd('Settings', 'gear',             'settings'),
 }

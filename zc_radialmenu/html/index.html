@@ -2,75 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ZC Radial 5D</title>
+    <title>ZC Radial</title>
     <link rel="stylesheet" href="fa/css/fontawesome.min.css">
     <link rel="stylesheet" href="fa/css/solid.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- shared gradients -->
-    <svg width="0" height="0" style="position:absolute">
-        <defs>
-            <radialGradient id="gTop" cx="260" cy="260" r="228" gradientUnits="userSpaceOnUse">
-                <stop offset="55%" stop-color="#1a1b21"/>
-                <stop offset="100%" stop-color="#0d0e12"/>
-            </radialGradient>
-            <radialGradient id="gHot" cx="260" cy="260" r="228" gradientUnits="userSpaceOnUse">
-                <stop offset="52%" stop-color="var(--accent)" stop-opacity="0.15"/>
-                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.85"/>
-            </radialGradient>
-            <linearGradient id="gArc" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
-                <stop offset="50%" stop-color="var(--accent)"/>
-                <stop offset="100%" stop-color="#fff" stop-opacity="0.9"/>
-            </linearGradient>
-        </defs>
-    </svg>
+    <svg width="0" height="0" style="position:absolute"><defs id="defs">
+        <linearGradient id="gArc" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+            <stop offset="50%" stop-color="var(--accent)"/>
+            <stop offset="100%" stop-color="#fff" stop-opacity="0.9"/>
+        </linearGradient>
+    </defs></svg>
 
     <div id="stage" class="stage">
         <canvas id="fx" class="fx"></canvas>
         <div id="wheel" class="wheel">
             <div class="layer floor"></div>
 
-            <svg class="layer holo holo-a" viewBox="0 0 520 520">
-                <circle cx="260" cy="260" r="250" class="tick-ring"/>
-                <circle cx="260" cy="260" r="242" class="thin-ring"/>
+            <svg class="layer deco deco-a" viewBox="0 0 1000 1000">
+                <circle cx="500" cy="500" r="404" class="tick-ring"/>
             </svg>
-            <svg class="layer holo holo-b" viewBox="0 0 520 520">
-                <circle cx="260" cy="260" r="236" class="dash-ring"/>
-                <path d="M260 6 l-6 -8 h12 z" class="holo-mark"/>
-                <path d="M260 514 l-6 8 h12 z" class="holo-mark"/>
+            <svg class="layer deco deco-b" viewBox="0 0 1000 1000">
+                <circle cx="500" cy="500" r="223" class="dash-ring"/>
+                <circle cx="500" cy="500" r="232" class="thin-ring"/>
             </svg>
-
-            <svg class="layer base" viewBox="0 0 520 520">
-                <circle cx="260" cy="260" r="178" class="base-ring"/>
+            <svg class="layer base" viewBox="0 0 1000 1000">
+                <circle cx="500" cy="500" r="173" class="base-ring"/>
             </svg>
 
-            <div id="segs" class="layer"></div>
+            <div id="rings" class="layer"></div>
 
-            <svg id="arcLayer" class="layer arc-layer" viewBox="0 0 520 520">
-                <path id="activeArc" class="active-arc"/>
-            </svg>
-
-            <div id="icons" class="layer"></div>
-
-            <svg id="needleLayer" class="layer needle-layer" viewBox="0 0 520 520">
-                <path d="M260 136 l-8 -12 h16 z" class="needle"/>
-            </svg>
+            <svg id="arcLayer" class="layer arc-layer" viewBox="0 0 1000 1000"><path id="activeArcGlow" class="active-arc glow"/><path id="activeArc" class="active-arc"/></svg>
+            <svg id="needleLayer" class="layer needle-layer" viewBox="0 0 1000 1000"><path d="M500 382 l-8 -12 h16 z" class="needle"/></svg>
 
             <div class="core">
                 <div class="core-shadow"></div>
                 <div class="core-ring"></div>
                 <div class="core-edge"></div>
-                <div class="core-glass"><div class="scan"></div></div>
+                <div class="core-glass"><i id="mark" class="mark fa-solid fa-circle"></i><div class="scan"></div></div>
             </div>
-
             <div class="layer core-text">
                 <div id="crumb" class="crumb">ZC MENU</div>
                 <div id="label" class="label">ZC MENU</div>
                 <div id="hint" class="hint"></div>
                 <button id="closeBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+
+        <div class="hud">
+            <div id="chips" class="chips"></div>
+            <div class="keys">
+                <span><b>LMB</b> select</span>
+                <span><b>SCROLL</b> navigate</span>
+                <span><b>RMB</b> / <b>ESC</b> close</span>
             </div>
         </div>
     </div>
