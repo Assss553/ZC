@@ -45,7 +45,7 @@ const grass2 = grass.clone(); grass2.position.z = -30; scene.add(grass2);
 const trunkM = new THREE.MeshStandardMaterial({ color: 0x5b4636, roughness: 1 }), leafM = new THREE.MeshStandardMaterial({ color: 0x3f6b2e, roughness: 1 });
 const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
 for (let i = 0; i < 46; i++) {
-  const side = i % 2 ? 1 : -1, x = -40 + rnd() * 90, z = side * (9 + rnd() * 25), h = 3 + rnd() * 4;
+  const side = i % 2 ? 1 : -1, x = -40 + rnd() * 90, z = side * (19 + rnd() * 20), h = 3 + rnd() * 4;
   const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, h * 0.45, 8), trunkM); tr.position.set(x, h * 0.22, z); tr.castShadow = true; scene.add(tr);
   const lf = new THREE.Mesh(new THREE.SphereGeometry(h * 0.33, 14, 10), leafM); lf.position.set(x, h * 0.6, z); lf.castShadow = true; scene.add(lf);
 }
@@ -99,10 +99,12 @@ const add = (name, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, parent = RV) => {
 };
 const RB = (w, h, d, rad = 0.04, s = 2) => new RoundedBoxGeometry(w, h, d, s, rad);
 const clean = g => { g = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k); if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2)); return g; };
-const extrude = (shape, width, bevel = 0.04) => {
-  const g = new THREE.ExtrudeGeometry(shape, { depth: width - bevel * 2, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 20 });
-  g.translate(0, 0, -(width - bevel * 2) / 2); return clean(g);
-};
+const extrude = (shape, width, bevel = 0.04, round = 0) => {
+  // round > bevel: bigger corner radius while keeping the same outer size (bevelOffset pulls the outline back in)
+  const size = Math.max(bevel, round), segs = round ? 7 : 3;
+  const g = new THREE.ExtrudeGeometry(shape, { depth: width - size * 2, bevelEnabled: bevel > 0, bevelThickness: size, bevelSize: size, bevelOffset: bevel - size, bevelSegments: segs, curveSegments: 24 });
+  g.translate(0, 0, -(width - size * 2) / 2); return clean(g);
+  };
 const ev = new Evaluator(); ev.useGroups = true; ev.attributes = ['position', 'normal', 'uv'];
 const brush = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const b = new Brush(clean(geo), mat); b.position.set(x, y, z); b.rotation.set(rx, ry, rz); b.updateMatrixWorld(); return b; };
 const sub = (a, b) => { const o = ev.evaluate(a, b, SUBTRACTION); o.updateMatrixWorld(); return o; };
@@ -125,7 +127,7 @@ function boxShape(t) {
   s.lineTo(0.05 + t, 0.62 + t * 1.6);
   return s;
 }
-let shell = sub(brush(extrude(boxShape(0), WB, 0.06), paint), brush(extrude(boxShape(0.05), WB - 0.14, 0), interior));
+let shell = sub(brush(extrude(boxShape(0), WB, 0.06, 0.16), paint), brush(extrude(boxShape(0.05), WB - 0.14, 0), interior));
 // window, door, skylight and cab pass-through openings
 const winList = [
   { n: 'window_lounge_r', x: 2.55, y: 2.33, w: 1.05, h: 0.6, s: 1 }, { n: 'window_lounge_l', x: 2.05, y: 2.33, w: 0.95, h: 0.6, s: -1 },
@@ -146,6 +148,7 @@ SL.L = SL.x1 - SL.x0; SL.H = SL.y1 - SL.y0; SR.L = SR.z1 - SR.z0; SR.H = SR.y1 -
 shell = sub(shell, brush(RB(SL.L, SL.H, 0.4, 0.04), interior, SL.x0 + SL.L / 2, SL.y0 + SL.H / 2, -WB / 2));
 shell = sub(shell, brush(RB(0.4, SR.H, SR.L, 0.04), interior, 0.0, SR.y0 + SR.H / 2, 0));
 shell = sub(shell, brush(RB(0.6, 1.45, CAB - 0.5, 0.08), interior, 5.5, 1.45, 0));            // open pass-through to the cab
+shell = sub(shell, brush(new THREE.CylinderGeometry(0.53, 0.53, WB + 0.4, 48), interior, 1.95, 0.42, 0, Math.PI / 2));   // rear wheel wells
 toMesh(shell, 'bodyshell');
 
 // ---------- cab: hollow, real windshield / side window openings, opening doors
@@ -158,7 +161,7 @@ function cabInner() {
   const s = new THREE.Shape();
   s.moveTo(5.3, 0.72); s.lineTo(6.9, 0.72); s.lineTo(6.9, 1.27); s.lineTo(6.48, 2.05); s.lineTo(5.3, 2.1); s.lineTo(5.3, 0.72); return s;
 }
-let cab = sub(brush(extrude(cabShape(), CAB, 0.07), paint), brush(extrude(cabInner(), CAB - 0.14, 0), interior));
+let cab = sub(brush(extrude(cabShape(), CAB, 0.07, 0.13), paint), brush(extrude(cabInner(), CAB - 0.14, 0), interior));
 const wsAng = Math.atan2(0.45, 0.79), wsC = new THREE.Vector3(6.725 + 0.79 * 0.08, 1.725 + 0.45 * 0.08, 0);
 { const b = new Brush(clean(RB(0.4, 0.76, CAB - 0.24, 0.05)), interior); b.position.copy(wsC); b.rotation.set(0, 0, wsAng); b.updateMatrixWorld(); cab = sub(cab, b); }
 const cabWin = () => { const s = new THREE.Shape(); s.moveTo(5.78, 1.42); s.lineTo(6.83, 1.42); s.lineTo(6.46, 2.04); s.lineTo(5.78, 2.06); s.closePath(); return s; };
@@ -172,6 +175,8 @@ for (const sd of [-1, 1]) {
   door = sub(door, brush(extrude(cabWin(), 0.4, 0), interior, 0, 0, z));
   cabDoors[sd] = door;
 }
+cab = sub(cab, brush(new THREE.CylinderGeometry(0.52, 0.52, CAB + 0.4, 48), interior, 6.95, 0.42, 0, Math.PI / 2));     // front wheel wells
+for (const sd of [-1, 1]) cabDoors[sd] = sub(cabDoors[sd], brush(new THREE.CylinderGeometry(0.52, 0.52, CAB + 0.4, 48), interior, 6.95, 0.42, 0, Math.PI / 2));
 toMesh(cab, 'cab_shell');
 // windshield glass + rubber seal
 { const ws = add('windscreen', new THREE.PlaneGeometry(CAB - 0.26, 0.78), glass, wsC.x - 0.79 * 0.03, wsC.y - 0.45 * 0.03, 0); ws.rotation.set(0, Math.PI / 2, wsAng, 'ZYX'); ws.castShadow = false; }
@@ -247,10 +252,15 @@ add('entry_step', RB(0.5, 0.05, 0.3, 0.02), chrome, 3.65, 0.42, WB / 2 + 0.1);
 
 // ---------- chassis / skirts / fenders
 add('chassis_frame', new THREE.BoxGeometry(7.4, 0.22, 1.5), trim, 3.9, 0.47, 0);
-add('skirt', RB(5.3, 0.14, WB - 0.03, 0.03), graphite, 2.8, 0.6, 0);
+add('skirt', RB(1.22, 0.14, WB - 0.03, 0.03), graphite, 0.77, 0.6, 0); add('skirt', RB(2.9, 0.14, WB - 0.03, 0.03), graphite, 4.0, 0.6, 0);
 const fenderM = M('vc2_fender', { color: 0x1a1b1f, roughness: 0.6, side: THREE.DoubleSide });
+// black wheel-tub liners (you see these through the wheel wells, like a real vehicle)
+for (const [x, w] of [[1.95, WB - 0.02], [6.95, CAB - 0.02]]) {
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.528, 0.528, w, 40, 1, true, Math.PI / 2 - 0.1, Math.PI + 0.2), M('vc2_wheel_liner', { color: 0x101012, roughness: 0.95, side: THREE.DoubleSide }));
+  t.name = 'wheel_liner'; t.rotation.x = Math.PI / 2; t.position.set(x, 0.42, 0); RV.add(t);
+}
 for (const sd of [-1, 1]) for (const x of [1.95, 6.95]) {
-  const f = new THREE.Mesh(new THREE.RingGeometry(0.48, 0.57, 40, 1, 0, Math.PI), fenderM); f.name = 'fender'; f.position.set(x, 0.42, sd * ((x > 5 ? CAB : WB) / 2 + 0.006)); RV.add(f);
+  const f = new THREE.Mesh(new THREE.RingGeometry(0.53, 0.6, 48, 1, -0.12, Math.PI + 0.24), fenderM); f.name = 'fender'; f.position.set(x, 0.42, sd * ((x > 5 ? CAB : WB) / 2 + 0.006)); RV.add(f);
 }
 
 // ---------- realistic wheels: lathe tyre with sidewall bulge + tread grooves, steel/alloy rims, duals at the rear
@@ -272,6 +282,7 @@ function rimGeo(dish) {
     new THREE.Vector2(0.255, -0.06), new THREE.Vector2(0.272, -0.1), new THREE.Vector2(0.272, 0.1), new THREE.Vector2(0.26, 0.1)];
   const g = new THREE.LatheGeometry(pts, 48); g.rotateX(Math.PI / 2); return g;
 }
+const simM = M('vc2_wheel_simulator', { color: 0xe3e6ea, roughness: 0.16, metalness: 0.85, envMapIntensity: 1.4 });
 function wheel(name, x, z, dual, front) {
   const g = new THREE.Group(); g.name = name; g.position.set(x, 0.42, z); RV.add(g);
   const sd = Math.sign(z), offs = dual ? [-0.125, 0.125] : [0];
@@ -281,11 +292,19 @@ function wheel(name, x, z, dual, front) {
     if (sd < 0) rm.rotation.y = Math.PI;
   }
   const fz = sd * (dual ? 0.25 : 0.14);
-  add(name + '_hubcap', new THREE.CylinderGeometry(0.1, 0.12, 0.07, 24), chrome, 0, 0, fz, Math.PI / 2, 0, 0, g);
-  for (let i = 0; i < 8; i++) {
-    const a = i / 8 * Math.PI * 2;
-    add(name + '_lug', new THREE.CylinderGeometry(0.016, 0.016, 0.05, 6), chrome, Math.cos(a) * 0.165, Math.sin(a) * 0.165, fz - sd * 0.02, Math.PI / 2, 0, 0, g);
-    add(name + '_hole', new THREE.CylinderGeometry(0.03, 0.03, 0.005, 12), M('vc2_rim_hole', { color: 0x0b0b0c, roughness: 1 }), Math.cos(a + 0.39) * 0.215, Math.sin(a + 0.39) * 0.215, fz - sd * 0.035, Math.PI / 2, 0, 0, g);
+  // polished "wheel simulator" cover (front: flat dish, rear outer: domed)
+  const dome = dual ? 0.05 : 0.02;
+  const cover = new THREE.LatheGeometry([new THREE.Vector2(0.0, dome + 0.02), new THREE.Vector2(0.08, dome + 0.018), new THREE.Vector2(0.14, dome * 0.8), new THREE.Vector2(0.2, dome * 0.35),
+    new THREE.Vector2(0.255, 0.0), new THREE.Vector2(0.272, -0.012)], 56); cover.rotateX(Math.PI / 2);
+  const cv = add(name + '_simulator', cover, simM, 0, 0, fz - sd * 0.03, 0, 0, 0, g); if (sd < 0) cv.rotation.y = Math.PI;
+  add(name + '_hubcap', new THREE.CylinderGeometry(0.075, 0.09, 0.06, 28), chrome, 0, 0, fz + sd * dome, Math.PI / 2, 0, 0, g);
+  add(name + '_hubring', new THREE.TorusGeometry(0.11, 0.008, 8, 40), steelM, 0, 0, fz + sd * (dome * 0.8 - 0.01), 0, 0, 0, g);
+  const holeM0 = 0; const holeM = M('vc2_rim_hole', { color: 0x0b0b0c, roughness: 1 });
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2;
+    const hole = add(name + '_hole', new THREE.CylinderGeometry(0.03, 0.03, 0.006, 16), holeM, Math.cos(a) * 0.19, Math.sin(a) * 0.19, fz + sd * (dome * 0.45 + 0.003), Math.PI / 2, 0, 0, g);
+    hole.scale.set(1.0, 1.0, 1.7); hole.rotation.set(Math.PI / 2, 0, a);   // oval holes pointing outwards
+    add(name + '_lug', new THREE.CylinderGeometry(0.014, 0.014, 0.03, 6), chrome, Math.cos(a + 0.31) * 0.125, Math.sin(a + 0.31) * 0.125, fz + sd * (dome * 0.7), Math.PI / 2, 0, 0, g);
   }
 }
 wheel('wheel_lf', 6.95, -1.0, false, true); wheel('wheel_rf', 6.95, 1.0, false, true);
@@ -294,7 +313,7 @@ wheel('wheel_lr', 1.95, -0.97, true, false); wheel('wheel_rr', 1.95, 0.97, true,
 // ---------- exterior details
 for (const sd of [1, -1]) {
   const z = sd * (WB / 2 + 0.004);
-  const bays = sd > 0 ? [0.7, 1.45, 2.6, 4.55] : [0.7, 1.45];
+  const bays = sd > 0 ? [0.45, 1.05, 2.85, 4.55] : [0.45, 1.05];
   for (const [i, x] of bays.entries()) {
     add('bay', RB(0.6, 0.42, 0.02, 0.03), paint, x, 0.98, z + 0.006);
     add('bay_line', RB(0.64, 0.46, 0.01, 0.03), trim, x, 0.98, z);
@@ -302,7 +321,7 @@ for (const sd of [1, -1]) {
   }
   if (sd > 0) for (let i = 0; i < 4; i++) add('vent', RB(0.36, 0.025, 0.02, 0.008), trim, 4.55, 1.55 + i * 0.05, z + 0.004);
   for (const x of (sd > 0 ? [0.3, 2.8, 5.3] : [0.3, 5.4])) add('marker', RB(0.08, 0.04, 0.03, 0.01), amber, x, 0.8, z + 0.01);
-  add('underglow', RB(5.0, 0.02, 0.015, 0.006), ledStrip, 2.8, 0.55, z + 0.005);
+  add('underglow', RB(1.0, 0.02, 0.015, 0.006), ledStrip, 0.85, 0.55, z + 0.005); add('underglow', RB(2.7, 0.02, 0.015, 0.006), ledStrip, 3.95, 0.55, z + 0.005);
   add('cab_door_seam', new THREE.BoxGeometry(0.01, 0.01, 0.01), trim, 5.6, 1.0, sd * CAB / 2).visible = false;
 }
 add('awning_case', new THREE.CylinderGeometry(0.085, 0.085, 4.6, 24), graphite, 2.75, 3.1, WB / 2 + 0.12, 0, 0, Math.PI / 2);
@@ -316,12 +335,15 @@ add('antenna_disk', new THREE.CylinderGeometry(0.12, 0.12, 0.04, 20), trim, 5.8,
 for (let i = 0; i < 5; i++) add('cab_marker', RB(0.05, 0.04, 0.12, 0.01), amber, 7.0, 3.19, -0.6 + i * 0.3);
 add('cabover_led', RB(0.02, 0.03, 1.9, 0.01), ledStrip, 7.44, 2.62, 0);
 // front end
-add('grille', RB(0.06, 0.42, 1.2, 0.03), graphite, 7.95, 0.92, 0);
+add('grille_surround', RB(0.05, 0.5, 1.3, 0.05), chrome, 7.94, 0.92, 0);
+add('grille', RB(0.06, 0.42, 1.2, 0.03), graphite, 7.955, 0.92, 0);
 for (let i = 0; i < 4; i++) add('grille_bar', RB(0.02, 0.025, 1.12, 0.01), chrome, 7.985, 0.77 + i * 0.1, 0);
 add('badge', new THREE.CylinderGeometry(0.075, 0.075, 0.02, 32), orange, 8.0, 0.92, 0, 0, 0, Math.PI / 2);
-add('headlight_l', RB(0.07, 0.2, 0.36, 0.04), lamp, 7.94, 0.98, -0.86); add('headlight_r', RB(0.07, 0.2, 0.36, 0.04), lamp, 7.94, 0.98, 0.86);
+add('headlight_l', RB(0.07, 0.2, 0.32, 0.04), lamp, 7.94, 0.98, -0.84); add('headlight_r', RB(0.07, 0.2, 0.32, 0.04), lamp, 7.94, 0.98, 0.84);
+for (const sd of [-1, 1]) { add('headlight_housing', RB(0.05, 0.25, 0.45, 0.05), chrome, 7.915, 0.98, sd * 0.88); add('corner_lamp', RB(0.07, 0.17, 0.08, 0.03), amber, 7.9, 0.98, sd * 1.07); }
 for (const sd of [-1, 1]) { add('indicator_' + (sd < 0 ? 'lf' : 'rf'), RB(0.02, 0.025, 0.34, 0.01), ledStrip, 7.98, 0.86, sd * 0.86); add('fog', new THREE.CylinderGeometry(0.05, 0.05, 0.03, 20), lamp, 8.1, 0.56, sd * 0.8, 0, 0, Math.PI / 2); }
-add('bumper_f', RB(0.2, 0.24, CAB + 0.12, 0.06), trim, 8.0, 0.56, 0);
+add('bumper_f', RB(0.2, 0.22, CAB + 0.12, 0.07), chrome, 8.0, 0.58, 0);
+add('bumper_valance', RB(0.16, 0.1, CAB, 0.03), trim, 7.98, 0.43, 0);
 add('bumper_trim', RB(0.02, 0.03, 1.6, 0.01), orange, 8.105, 0.63, 0);
 add('plate_f', RB(0.01, 0.13, 0.52, 0.01), M('vc2_plate', { color: 0xf2f2ee, roughness: 0.4 }), 8.11, 0.5, 0);
 // rear
@@ -360,16 +382,32 @@ function livery(frontRight) {
   const c = document.createElement('canvas'); c.width = 3072; c.height = 1200; const g = c.getContext('2d');
   const X = x => (frontRight ? x : 3072 - x);
   const sweep = (col, w, p) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(X(p[0]), p[1]); g.bezierCurveTo(X(p[2]), p[3], X(p[4]), p[5], X(p[6]), p[7]); g.stroke(); };
-  sweep('#2b2d33', 120, [-200, 1150, 700, 1100, 1300, 300, 2900, 380]);
-  sweep('#e4501c', 46, [-200, 1010, 760, 980, 1350, 230, 3000, 270]);
-  sweep('#8d9096', 26, [-200, 1250, 820, 1220, 1500, 470, 3100, 520]);
+  // tapered swoosh: filled shape between two bezier curves (like real RV graphics)
+  const tape = (col, a, b) => {
+    g.fillStyle = col; g.beginPath();
+    g.moveTo(X(a[0]), a[1]); g.bezierCurveTo(X(a[2]), a[3], X(a[4]), a[5], X(a[6]), a[7]);
+    g.lineTo(X(b[6]), b[7]); g.bezierCurveTo(X(b[4]), b[5], X(b[2]), b[3], X(b[0]), b[1]); g.closePath(); g.fill();
+  };
+  // big rear swirl
+  tape('#2b2d33', [0, 330, 420, 260, 900, 700, 760, 1200], [0, 520, 300, 470, 640, 800, 520, 1200]);
+  tape('#9a9da4', [0, 250, 520, 160, 1060, 640, 980, 1200], [0, 320, 440, 250, 900, 700, 790, 1200]);
+  // main wave from the rear swirl, under the windows, rising to the cab-over
+  tape('#2b2d33', [700, 1200, 1300, 1050, 1700, 640, 3072, 520], [930, 1200, 1450, 1130, 1850, 740, 3072, 660]);
+  tape('#6d7076', [1050, 1200, 1550, 1150, 1950, 820, 3072, 760], [1180, 1200, 1650, 1185, 2050, 900, 3072, 840]);
+  tape('#b5b8be', [1350, 1200, 1800, 1185, 2200, 960, 3072, 930], [1430, 1200, 1880, 1200, 2280, 1010, 3072, 990]);
+  // thin VC2 orange pinstripe
+  g.strokeStyle = '#e4501c'; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.moveTo(X(0), 560); g.bezierCurveTo(X(380), 520, X(700), 860, X(640), 1200); g.stroke();
+  g.beginPath(); g.moveTo(X(880), 1200); g.bezierCurveTo(X(1400), 1090, X(1800), 700, X(3072), 600); g.stroke();
+  // cab-over sweep
+  tape('#2b2d33', [2300, 360, 2600, 300, 2850, 240, 3072, 200], [2300, 400, 2620, 360, 2870, 300, 3072, 280]);
   g.save(); g.font = '900 210px Nunito, Arial Black, sans-serif';
-  const lw = g.measureText('VC2').width, lx = frontRight ? 120 : 3072 - 120 - lw;
-  g.fillStyle = '#2b2d33'; g.fillText('VC', lx, 735); g.fillStyle = '#e4501c'; g.fillText('2', lx + g.measureText('VC').width, 735);
-  g.font = '800 62px Nunito, Arial, sans-serif'; g.fillStyle = '#5a5d64'; g.fillText('C A R A V A N', lx + 8, 812); g.restore();
+  g.font = '900 150px Nunito, Arial Black, sans-serif'; const lw = g.measureText('VC2').width + 330, lx = frontRight ? 70 : 3072 - 70 - lw;
+  g.fillStyle = '#2b2d33'; g.fillText('VC', lx, 245); g.fillStyle = '#e4501c'; g.fillText('2', lx + g.measureText('VC').width, 245);
+  g.font = '800 62px Nunito, Arial, sans-serif'; g.fillStyle = '#5a5d64'; g.fillText('C A R A V A N', lx + g.measureText('VC2').width * 2.45 + 24, 232); g.restore();
   const px = x => frontRight ? (x - 0.05) / 7.3 * 3072 : 3072 - (x - 0.05) / 7.3 * 3072, py = y => (3.375 - y) / 2.85 * 1200;
   const clear = (x0, y0, x1, y1) => { const a = px(x0), b = px(x1); g.clearRect(Math.min(a, b), py(y1), Math.abs(b - a), py(y0) - py(y1)); };
   clear(5.5, 0.4, 7.6, 2.18);
+  { const cx = px(1.95), cy = py(0.42), rr = 0.6 / 7.3 * 3072; g.save(); g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.fill(); g.restore(); }
   if (!frontRight) clear(SL.x0 - 0.02, SL.y0 - 0.02, SL.x1 + 0.02, SL.y1 + 0.02);
   for (const w of winList.filter(w => (w.s > 0) === frontRight)) clear(w.x - w.w / 2 - 0.05, w.y - w.h / 2 - 0.05, w.x + w.w / 2 + 0.05, w.y + w.h / 2 + 0.05);
   if (frontRight) clear(DOOR.x - DOOR.w / 2 - 0.03, DOOR.y - DOOR.h / 2 - 0.03, DOOR.x + DOOR.w / 2 + 0.03, DOOR.y + DOOR.h / 2 + 0.03);
@@ -467,6 +505,7 @@ const views = {
   front_l: [[12.5, 2.4, -8.5], [3.8, 1.5, 0]],
   rear_close: [[-4.6, 1.8, -3.4], [0.6, 1.2, 0]],
   side: [[3.8, 1.9, 15.5], [3.8, 1.5, 0]],
+  wheel: [[2.3, 0.7, 3.2], [1.95, 0.42, 1.0]],
   rear: [[-7, 3.4, -9.5], [3.2, 1.6, 0]],
   inside: [[0.55, 1.62, 0.15], [5.8, 1.55, -0.05]],
   inside_side: [[2.2, 1.6, 0.85], [2.4, 1.6, -1.4]],
