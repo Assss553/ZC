@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 PropertyList = {}       -- synced from server (personalised)
 CurrentHouse = nil      -- { id, label, spawn, door, canFurnish }
 ShellObject = nil       -- spawned shell prop for shell interiors
@@ -43,7 +48,7 @@ local function refreshBlips()
     end
 end
 
-RegisterNetEvent('zc_re:sync', function(list)
+RegisterNetEvent('rox_re:sync', function(list)
     PropertyList = list or {}
     refreshBlips()
     SendNUIMessage({ action = 'sync', properties = PropertyList })
@@ -181,7 +186,7 @@ function ExitProperty()
     end
 end
 
-RegisterNetEvent('zc_re:forceExit', function() ExitProperty() end)
+RegisterNetEvent('rox_re:forceExit', function() ExitProperty() end)
 
 ---------------------------------------------------------------------
 -- Door / exit interaction loop
@@ -238,8 +243,8 @@ end)
 
 -- Keep G free for our use inside houses
 -- O (default) anywhere inside your house opens the furniture panel
-RegisterKeyMapping('zc_re_furni', 'Real estate: furniture panel (inside your house)', 'keyboard', Config.Furniture.OpenKey)
-RegisterCommand('zc_re_furni', function()
+RegisterKeyMapping('rox_re_furni', 'Real estate: furniture panel (inside your house)', 'keyboard', Config.Furniture.OpenKey)
+RegisterCommand('rox_re_furni', function()
     if CurrentHouse and CurrentHouse.canFurnish and not IsNuiFocused() then OpenFurniturePanel() end
 end, false)
 

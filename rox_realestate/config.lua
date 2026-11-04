@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 Config = {}
 
 -- 'auto' | 'esx' | 'qb' | 'standalone'
@@ -41,7 +46,7 @@ Config.Realtor = {
         manage    = 1,  -- Manage Properties (edit, change door, send contract)
         contracts = 0,  -- See every contract of the agency
     },
-    AcePermission   = 'zc_realestate.realtor', -- players with this ace are realtors too (admins)
+    AcePermission   = 'rox_realestate.realtor', -- players with this ace are realtors too (admins)
     Commission      = 0.10,  -- 10% of each deal goes to the realtor who made the contract
     MaxDoorDistance = 25.0,  -- realtor must be this close to the door he aimed at
     CanEnterAll     = true,  -- realtors can enter any property (inspection)
@@ -121,7 +126,7 @@ Config.Map = {
 ---------------------------------------------------------------------
 -- House detection (auto)
 ---------------------------------------------------------------------
--- Drop shell files (.ydr / .ytyp) into zc_realestate/stream/houses/  (or ensure any shell resource)
+-- Drop shell files (.ydr / .ytyp) into rox_realestate/stream/houses/  (or ensure any shell resource)
 -- and pictures into html/img/houses/<model or interior key>.jpg|png|webp.
 -- On start the server scans for shells + pictures, every client checks the model is really streamed,
 -- and the shell appears in the "Create Property" interior list automatically.
@@ -131,6 +136,6 @@ Config.Detect = {
     NamePatterns = { 'shell', 'k4mb1', 'furnitured', 'house', 'apart', 'mlo' }, -- .ydr names containing one of these
     OwnFolder    = 'stream/houses',    -- everything in this folder counts as a shell, whatever its name
     Extra        = {},                 -- extra shell model names, e.g. { 'my_villa_shell' }
-    Command      = 'realestate_scan',  -- ace 'zc_realestate.realtor' or realtor: rescan without restart
+    Command      = 'realestate_scan',  -- ace 'rox_realestate.realtor' or realtor: rescan without restart
     EntryCommand = 'houseentry',       -- realtor inside a detected shell: save the entry point where you stand
 }

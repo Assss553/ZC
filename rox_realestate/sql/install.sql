@@ -1,6 +1,6 @@
--- zc_realestate (tables are also created automatically on resource start)
+-- rox_realestate (tables are also created automatically on resource start)
 
-CREATE TABLE IF NOT EXISTS `zc_properties` (
+CREATE TABLE IF NOT EXISTS `rox_properties` (
         `id` INT NOT NULL AUTO_INCREMENT,
         `label` VARCHAR(64) NOT NULL,
         `interior` VARCHAR(64) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `zc_properties` (
         KEY `owner` (`owner`)
     );
 
-CREATE TABLE IF NOT EXISTS `zc_contracts` (
+CREATE TABLE IF NOT EXISTS `rox_contracts` (
         `id` INT NOT NULL AUTO_INCREMENT,
         `property_id` INT NOT NULL,
         `ctype` VARCHAR(8) NOT NULL DEFAULT 'sale',
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `zc_contracts` (
         KEY `property_id` (`property_id`)
     );
 
-CREATE TABLE IF NOT EXISTS `zc_furniture` (
+CREATE TABLE IF NOT EXISTS `rox_furniture` (
         `id` INT NOT NULL AUTO_INCREMENT,
         `property_id` INT NOT NULL,
         `model` VARCHAR(64) NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `zc_furniture` (
         KEY `property_id` (`property_id`)
     );
 
-CREATE TABLE IF NOT EXISTS `zc_payouts` (
+CREATE TABLE IF NOT EXISTS `rox_payouts` (
         `id` INT NOT NULL AUTO_INCREMENT,
         `identifier` VARCHAR(64) NOT NULL,
         `amount` INT NOT NULL,

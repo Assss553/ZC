@@ -1,9 +1,15 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-name 'zc_realestate'
-author 'ZC'
+name 'rox_realestate'
+-- © ROX Store – All rights reserved
+author 'ROX Store'
 description 'Real estate system: realtor iPad, aim-based property creation, contracts, rent, marketplace and furniture'
 version '1.2.0'
 

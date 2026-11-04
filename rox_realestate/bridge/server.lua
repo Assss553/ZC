@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 Bridge = {}
 
 local FW = Config.Framework
@@ -19,7 +24,7 @@ elseif FW == 'qb' then
     if ok then QBCore = obj else FW = 'standalone' end
 end
 
-print(('^2[zc_realestate]^7 framework: ^3%s^7'):format(FW))
+print(('^2[rox_realestate]^7 framework: ^3%s^7'):format(FW))
 Bridge.Framework = FW
 
 local function getPlayer(src)
@@ -116,5 +121,5 @@ function Bridge.RegisterUsableItem(name, cb)
 end
 
 function Bridge.Notify(src, msg, kind)
-    TriggerClientEvent('zc_re:notify', src, msg, kind or 'info')
+    TriggerClientEvent('rox_re:notify', src, msg, kind or 'info')
 end

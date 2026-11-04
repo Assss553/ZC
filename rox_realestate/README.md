@@ -1,4 +1,6 @@
-# zc_realestate — نظام عقاري كامل (FiveM)
+# ROX Real Estate — نظام عقاري كامل (FiveM)
+
+**© ROX Store – جميع الحقوق محفوظة.** ممنوع إعادة البيع أو النشر بدون إذن متجر ROX.
 
 نظام عقارات كامل مع **ايباد** فيه تطبيقات للمواطن وتطبيقات خاصة بالعقاري (حسب الوظيفة والرتبة).
 يدعم **ESX / QBCore / Qbox** تلقائياً (أو standalone للتجربة)، ويحتاج **oxmysql** فقط.
@@ -34,18 +36,18 @@
 - بعد `Config.Rent.MaxOverdue` دفعات متأخرة ← إخلاء تلقائي.
 
 ## التركيب
-1. انسخ المجلد `zc_realestate` إلى `resources`.
+1. انسخ المجلد `rox_realestate` إلى `resources`.
 2. في `server.cfg`:
    ```
    ensure oxmysql
    ensure es_extended   # أو qb-core
-   ensure zc_realestate
+   ensure rox_realestate
    ```
    الجداول تنشأ تلقائياً (أو شغّل `sql/install.sql`).
 3. عدّل `config.lua`:
    - `Config.Realtor.Jobs` = اسم وظيفة العقاري وأقل رتبة تفتح تطبيقات العقاري.
    - `Config.Realtor.ManageGrade` = الرتبة اللي تقدر تحذف وتخلي.
-   - الأدمن يقدر يصير عقاري بـ: `add_ace group.admin zc_realestate.realtor allow`
+   - الأدمن يقدر يصير عقاري بـ: `add_ace group.admin rox_realestate.realtor allow`
 4. فتح الايباد: الأمر `/ipad` أو زر `F6`، أو آيتم `realestate_ipad`:
    - **ESX**: أضف الآيتم لجدول `items` (`name = realestate_ipad`, `label = iPad`).
    - **QB**: في `qb-core/shared/items.lua`:
@@ -101,12 +103,12 @@ Config.Realtor.Apps = { create = 0, manage = 1, contracts = 0 }
 `Config.Tablet.CitizenAccess = false` ← الايباد كله للعقاريين فقط.
 
 ### نظام كشف البيوت (تلقائي)
-- **الشلز**: حط ملفات البيت (`.ydr` + `.ytyp`) في `zc_realestate/stream/houses/` أو شغّل أي ريسورس شلز.
+- **الشلز**: حط ملفات البيت (`.ydr` + `.ytyp`) في `rox_realestate/stream/houses/` أو شغّل أي ريسورس شلز.
   السيرفر يفحص الملفات عند التشغيل (أي `.ydr` اسمه فيه `shell` وغيرها من `Config.Detect.NamePatterns`)، وكل لاعب يتأكد إن الموديل محمّل فعلاً،
   ويطلع البيت في "إنشاء عقار > التصميم" بعلامة **DETECTED**. اللي مو محمّل يطلع رمادي "غير محمّل".
 - **الصور**: `html/img/houses/<اسم التصميم أو اسم الشل>.jpg|png|webp` تنعرف تلقائياً.
 - **نقطة الدخول**: الشل المكتشف يدخلك تلقائياً لنص أرضيته. لتثبيت النقطة الصح: ادخل البيت كعقاري، وقف عند الباب من داخل واكتب
-  `/houseentry اسم البيت` ← تنحفظ للأبد (جدول `zc_shells`) وتنطبق على كل البيوت اللي بنفس الشل.
+  `/houseentry اسم البيت` ← تنحفظ للأبد (جدول `rox_shells`) وتنطبق على كل البيوت اللي بنفس الشل.
 - **إعادة الفحص** بدون رستارت: زر **Rescan** في التطبيق أو الأمر `/realestate_scan`.
 - ملاحظة: فحص الملفات يستخدم `io.popen`. إذا السيرفر ما يسمح فيه، النظام يعتمد على قائمة الأسماء المعروفة + `Config.Detect.Extra`.
 

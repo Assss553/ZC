@@ -1,8 +1,13 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 function Notify(msg, kind)
     SendNUIMessage({ action = 'notify', msg = msg, kind = kind or 'info' })
 end
 
-RegisterNetEvent('zc_re:notify', Notify)
+RegisterNetEvent('rox_re:notify', Notify)
 
 function HelpText(text)
     BeginTextCommandDisplayHelp('STRING')

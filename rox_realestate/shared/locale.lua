@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 Locales = {
     ar = {
         no_access          = 'ليس لديك صلاحية',

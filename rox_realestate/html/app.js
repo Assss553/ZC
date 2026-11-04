@@ -1,5 +1,9 @@
-/* ZC Real Estate – iPad UI */
-const RES = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'zc_realestate';
+/*
+ * ROX Real Estate  ·  © ROX Store – All rights reserved.
+ * Made for ROX Store. Do not resell or redistribute without permission.
+ */
+/* ROX Real Estate – iPad UI */
+const RES = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'rox_realestate';
 const IS_GAME = typeof GetParentResourceName === 'function';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -76,10 +80,10 @@ const S = {
 /* ------------------------------------------------------------------ settings (saved per player in the NUI storage) */
 const WALLPAPERS = ['img/wallpapers/street.jpg', 'img/wallpapers/pond.jpg', 'img/wallpapers/forest.jpg'];
 function loadSettings() {
-    try { Object.assign(S.settings, JSON.parse(localStorage.getItem('zc_re_settings') || '{}')); } catch (e) { /* storage unavailable */ }
+    try { Object.assign(S.settings, JSON.parse(localStorage.getItem('rox_re_settings') || '{}')); } catch (e) { /* storage unavailable */ }
 }
 function saveSettings() {
-    try { localStorage.setItem('zc_re_settings', JSON.stringify(S.settings)); } catch (e) { /* storage unavailable */ }
+    try { localStorage.setItem('rox_re_settings', JSON.stringify(S.settings)); } catch (e) { /* storage unavailable */ }
 }
 function applySettings() {
     const wall = S.settings.wallpaper || (S.st && S.st.wallpaper) || WALLPAPERS[0];
@@ -252,7 +256,7 @@ Views.settings = () => {
                 <div class="seg" style="max-width:360px"><button class="${LANG === 'en' ? 'on' : ''}" data-act="setlang" data-v="en">English</button><button class="${LANG === 'ar' ? 'on' : ''}" data-act="setlang" data-v="ar">العربية</button></div>
             </section>
             <section class="set-card">
-                <div class="set-head">${icon('info')}<div><b>${t('set_about')}</b><small>ZC Realty OS · v1.1 · ${esc(S.data.name)} · ID ${S.data.serverId}</small></div>
+                <div class="set-head">${icon('info')}<div><b>${t('set_about')}</b><small>ROX Realty OS · v1.2 · © ROX Store · ${esc(S.data.name)} · ID ${S.data.serverId}</small></div>
                 ${S.data.isRealtor ? `<span class="chip orange">${t('realtor_badge', S.data.grade)}</span>` : ''}</div>
             </section>
         </div></div>`;

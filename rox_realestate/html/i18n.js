@@ -1,3 +1,7 @@
+/*
+ * ROX Real Estate  ·  © ROX Store – All rights reserved.
+ * Made for ROX Store. Do not resell or redistribute without permission.
+ */
 const I18N = {
     ar: {
         no_access_title: 'ما عندك صلاحية', no_access_sub: 'هذا التطبيق يحتاج رتبة أعلى في العقار', f_ipl: 'تصاميم اللعبة', f_shells: 'شل', f_detected: 'مكتشف تلقائي', rescan: 'إعادة الفحص',

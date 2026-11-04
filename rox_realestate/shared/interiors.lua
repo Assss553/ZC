@@ -1,4 +1,9 @@
 --[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
+--[[
     Interiors the realtor can choose from when creating a property.
     spawn  = where the player appears inside (also the exit point)
     image  = picture shown in the iPad (put your own screenshots in html/img/houses/)

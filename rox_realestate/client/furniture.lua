@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 local Spawned = {}       -- [furnitureId] = entity
 CurrentPlacement = nil  -- piece being placed
 local panelOpen = false
@@ -30,7 +35,7 @@ function DeleteAllFurniture()
     end
 end
 
-RegisterNetEvent('zc_re:furnitureUpdate', function(action, piece)
+RegisterNetEvent('rox_re:furnitureUpdate', function(action, piece)
     if not CurrentHouse then return end
     if action == 'place' then
         spawnPiece(piece)

@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 -- Periodic rent collection
 local function period(prop) return (prop.rent_days or Config.Rent.DefaultDays) * 86400 end
 

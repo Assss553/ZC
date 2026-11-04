@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 Properties = {}   -- [id] = property row
 Contracts  = {}   -- [id] = contract row (pending + recent)
 Inside     = {}   -- [src] = property id
@@ -143,7 +148,7 @@ function BuildClientData(src)
 end
 
 function SyncPlayer(src)
-    TriggerClientEvent('zc_re:sync', src, BuildClientData(src))
+    TriggerClientEvent('rox_re:sync', src, BuildClientData(src))
 end
 
 local syncQueued = false
@@ -160,6 +165,7 @@ end
 -- Boot
 ---------------------------------------------------------------------
 MySQL.ready(function()
+    print('^3[ROX Store]^7 ROX Real Estate v1.2 – © ROX Store, all rights reserved')
     DB.Init()
     local count = 0
     for _, row in ipairs(DB.LoadProperties()) do
@@ -171,12 +177,12 @@ MySQL.ready(function()
         Properties[row.id] = row
     end
     for _, c in ipairs(DB.LoadContracts()) do Contracts[c.id] = c end
-    print(('^2[zc_realestate]^7 loaded %d properties'):format(count))
+    print(('^2[rox_realestate]^7 loaded %d properties'):format(count))
     if Detect then Detect.Run() end
     SyncAll()
 end)
 
-RegisterNetEvent('zc_re:requestSync', function()
+RegisterNetEvent('rox_re:requestSync', function()
     local src = source
     SyncPlayer(src)
     local identifier = Bridge.GetIdentifier(src)
@@ -188,7 +194,7 @@ RegisterNetEvent('zc_re:requestSync', function()
         -- show still-pending contracts on login
         for _, c in pairs(Contracts) do
             if c.buyer == identifier and c.status == 'pending' then
-                TriggerClientEvent('zc_re:contract', src, ContractForClient(c, identifier))
+                TriggerClientEvent('rox_re:contract', src, ContractForClient(c, identifier))
                 break
             end
         end
@@ -214,7 +220,7 @@ RegisterCallback('bootstrap', function(src)
 end)
 
 Bridge.RegisterUsableItem(Config.Tablet.Item, function(src)
-    TriggerClientEvent('zc_re:openTablet', src)
+    TriggerClientEvent('rox_re:openTablet', src)
 end)
 
 ---------------------------------------------------------------------
@@ -232,7 +238,7 @@ local function createContract(prop, buyerSrc, ctype, realtorSrc)
     Contracts[c.id] = c
     prop.status = 'pending'
     DB.SaveProperty(prop)
-    TriggerClientEvent('zc_re:contract', buyerSrc, ContractForClient(c, c.buyer))
+    TriggerClientEvent('rox_re:contract', buyerSrc, ContractForClient(c, c.buyer))
     return c
 end
 
@@ -430,7 +436,7 @@ function Evict(prop, reason)
     if prop.owner then NotifyIdentifier(prop.owner, 'error', 'evicted', prop.label) end
     -- kick everybody inside
     for s, pid in pairs(Inside) do
-        if pid == prop.id then TriggerClientEvent('zc_re:forceExit', s) end
+        if pid == prop.id then TriggerClientEvent('rox_re:forceExit', s) end
     end
     prop.owner, prop.owner_name, prop.keyholders, prop.sale_price = nil, nil, {}, nil
     prop.rent_due, prop.overdue, prop.status, prop.locked = nil, 0, 'available', true
@@ -528,7 +534,7 @@ RegisterCallback('marketBuy', function(src, id)
     end
 
     for s, pid in pairs(Inside) do
-        if pid == prop.id then TriggerClientEvent('zc_re:forceExit', s) end
+        if pid == prop.id then TriggerClientEvent('rox_re:forceExit', s) end
     end
     prop.owner, prop.owner_name, prop.keyholders, prop.sale_price, prop.locked = identifier, Bridge.GetName(src), {}, nil, true
     prop.price = price
@@ -600,7 +606,7 @@ RegisterCallback('deleteProperty', function(src, id)
     local prop = GetProp(id)
     if not prop then return false end
     for s, pid in pairs(Inside) do
-        if pid == prop.id then TriggerClientEvent('zc_re:forceExit', s) end
+        if pid == prop.id then TriggerClientEvent('rox_re:forceExit', s) end
     end
     if prop.owner then NotifyIdentifier(prop.owner, 'error', 'evicted', prop.label) end
     DB.DeleteProperty(prop.id)

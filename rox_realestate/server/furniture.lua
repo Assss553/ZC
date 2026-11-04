@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 local function pieceForClient(row)
     local item = FurnitureByModel[row.model]
     return {
@@ -17,7 +22,7 @@ end
 
 local function broadcastInside(propertyId, action, payload)
     for s, pid in pairs(Inside) do
-        if pid == propertyId then TriggerClientEvent('zc_re:furnitureUpdate', s, action, payload) end
+        if pid == propertyId then TriggerClientEvent('rox_re:furnitureUpdate', s, action, payload) end
     end
 end
 

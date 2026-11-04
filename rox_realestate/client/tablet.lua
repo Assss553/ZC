@@ -1,10 +1,15 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 local tabletOpen = false
 local tabletProp
 local contractOpen = false
 
 ClientRegistry = nil   -- detected interiors + pictures (from the server)
 
-RegisterNetEvent('zc_re:registry', function(reg)
+RegisterNetEvent('rox_re:registry', function(reg)
     ClientRegistry = reg
     SendNUIMessage({ action = 'registry', static = { interiors = UIInteriors(), furnitureImages = reg.furnitureImages } })
 end)
@@ -88,7 +93,7 @@ end
 
 RegisterCommand(Config.Tablet.Command, function() OpenTablet() end, false)
 RegisterKeyMapping(Config.Tablet.Command, 'Real estate iPad', 'keyboard', Config.Tablet.Key)
-RegisterNetEvent('zc_re:openTablet', function() OpenTablet() end)
+RegisterNetEvent('rox_re:openTablet', function() OpenTablet() end)
 
 -- Property card at a door (available / for sale)
 function OpenPropertyCard(prop)
@@ -97,7 +102,7 @@ function OpenPropertyCard(prop)
     updateFocus()
 end
 
-RegisterNetEvent('zc_re:contract', function(contract)
+RegisterNetEvent('rox_re:contract', function(contract)
     contractOpen = true
     SendNUIMessage({ action = 'contract', contract = contract, static = staticData() })
     updateFocus()
@@ -117,7 +122,7 @@ RegisterNUICallback('setLang', function(data, cb)
     cb(1)
     if data.lang == 'en' or data.lang == 'ar' then
         ClientLang = data.lang
-        TriggerServerEvent('zc_re:setLang', data.lang)
+        TriggerServerEvent('rox_re:setLang', data.lang)
     end
 end)
 

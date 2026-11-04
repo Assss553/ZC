@@ -1,3 +1,8 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
 -- Furniture shop catalog. model = GTA prop name, price = cost per piece.
 FurnitureCategories = {
     { key = 'bathroom',    label = 'Bathroom',    labelAr = 'الحمام',      icon = 'bath' },

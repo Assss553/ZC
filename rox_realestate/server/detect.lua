@@ -1,11 +1,16 @@
 --[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
+--[[
     House detection
     ----------------
     1. Shell models
-       - every .ydr inside zc_realestate/stream/houses/ (any name)
+       - every .ydr inside rox_realestate/stream/houses/ (any name)
        - every .ydr in a started resource whose name matches Config.Detect.NamePatterns
        - a list of well-known shell names from popular packs
-       - Config.Detect.Extra and every shell saved in the zc_shells table
+       - Config.Detect.Extra and every shell saved in the rox_shells table
        Each client then checks IsModelInCdimage, so only shells that are really streamed show in the iPad.
     2. Pictures
        html/img/houses/<interior key or shell model>.jpg|png|webp|jpeg
@@ -163,14 +168,14 @@ function Detect.Run()
 
     Registry.interiors = InteriorsForUI()
     Registry.scannedAt = os.time()
-    TriggerClientEvent('zc_re:registry', -1, Registry)
-    print(('^2[zc_realestate]^7 detection: %d candidate shells, file scan %s, %d furniture pictures'):format(
+    TriggerClientEvent('rox_re:registry', -1, Registry)
+    print(('^2[rox_realestate]^7 detection: %d candidate shells, file scan %s, %d furniture pictures'):format(
         added, Registry.files and 'ok' or 'unavailable (io.popen)', (function() local n = 0 for _ in pairs(Registry.furnitureImages) do n = n + 1 end return n end)()))
     return added
 end
 
-RegisterNetEvent('zc_re:requestSync', function()
-    TriggerClientEvent('zc_re:registry', source, Registry)
+RegisterNetEvent('rox_re:requestSync', function()
+    TriggerClientEvent('rox_re:registry', source, Registry)
 end)
 
 ---------------------------------------------------------------------
@@ -204,7 +209,7 @@ RegisterCallback('saveEntry', function(src, label)
         end
     end
     Registry.interiors = InteriorsForUI()
-    TriggerClientEvent('zc_re:registry', -1, Registry)
+    TriggerClientEvent('rox_re:registry', -1, Registry)
     Bridge.Notify(src, LP(src, 'entry_saved', interior.shell), 'success')
     return true
 end)
