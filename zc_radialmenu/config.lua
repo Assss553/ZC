@@ -105,8 +105,6 @@ Config.Menu = {
                     ev('Search', 'magnifying-glass', 'police:client:SearchPlayer'),
                     ev('Put In Vehicle', 'right-to-bracket',   'police:client:PutPlayerInVehicle'),
                     ev('Take Out',       'right-from-bracket', 'police:client:SetPlayerOutVehicle'),
-                    cmd('Fine', 'file-invoice-dollar', 'fine'),
-                    cmd('Jail', 'building-shield', 'jail'),
                 }
             },
             {
@@ -126,7 +124,10 @@ Config.Menu = {
                     cmd('Radar', 'satellite-dish', 'radar'),
                 }
             },
-            cmd('MDT',    'tablet-screen-button', 'mdt'),
+            -- zc_police panels
+            ev('MDT',       'tablet-screen-button', 'zc_police:client:open', { panel = 'mdt' }),
+            ev('Prison',    'building-shield',      'zc_police:client:open', { panel = 'jail' }),
+            ev('Citations', 'file-invoice-dollar',  'zc_police:client:open', { panel = 'fine' }),
             cmd('Backup', 'tower-broadcast',      '10-78'),
             cmd('Duty',   'user-shield',          'duty'),
         }
