@@ -24,8 +24,7 @@ files {
 data_file 'HANDLING_FILE'            'data/handling.meta'
 data_file 'VEHICLE_METADATA_FILE'    'data/vehicles.meta'
 data_file 'VEHICLE_VARIATION_FILE'   'data/carvariations.meta'
--- slide-out / leg props (vc2caravan_slideout_side, vc2caravan_slideout_rear, vc2caravan_jack):
--- put their .ydr files + vc2caravan_props.ytyp in /stream and uncomment:
--- data_file 'DLC_ITYP_REQUEST' 'stream/vc2caravan_props.ytyp'
+-- slide-out / leg props (vc2caravan_slideout_side, vc2caravan_slideout_rear, vc2caravan_jack)
+data_file 'DLC_ITYP_REQUEST' 'stream/vc2caravan_props.ytyp'
 
 dependency 'oxmysql'

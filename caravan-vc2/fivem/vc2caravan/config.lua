@@ -22,8 +22,8 @@ Config.LowerBody = 0.06              -- the body settles this much (m) when the 
 -- Offsets are relative to the vehicle origin: x = right, y = forward, z = up (metres).
 -- They match the model; fine-tune them after converting the model if needed.
 Config.Parts = {
-    slideSide = { model = 'vc2caravan_slideout_side', closed = vector3(-1.225, 0.0, 0.78), open = vector3(-1.885, 0.0, 0.78), rot = vector3(0.0, 0.0, 90.0) },
-    slideRear = { model = 'vc2caravan_slideout_rear', closed = vector3(0.0, -3.96, 0.8), open = vector3(0.0, -4.56, 0.8), rot = vector3(0.0, 0.0, 180.0) },
+    slideSide = { model = 'vc2caravan_slideout_side', closed = vector3(-1.225, 0.0, 0.78), open = vector3(-1.885, 0.0, 0.78), rot = vector3(0.0, 0.0, 0.0) },
+    slideRear = { model = 'vc2caravan_slideout_rear', closed = vector3(0.0, -3.96, 0.8), open = vector3(0.0, -4.56, 0.8), rot = vector3(0.0, 0.0, 90.0) },
     jack = {
         model = 'vc2caravan_jack', closedZ = 0.90, openZ = 0.56,
         positions = { vector2(-0.95, -3.5), vector2(0.95, -3.5), vector2(-0.95, 1.2), vector2(0.95, 1.2) },
@@ -50,7 +50,7 @@ Config.Placement = {
 
 ---------------------------------------------------------------- exterior
 Config.Colors = {
-    { label = 'Frost White', index = 111, hex = '#f2f3f5' }, { label = 'Silver', index = 4, hex = '#b7bbc1' },
+    { label = 'Off White', index = 121, hex = '#e4e2dc' },   { label = 'Frost White', index = 111, hex = '#f2f3f5' }, { label = 'Silver', index = 4, hex = '#b7bbc1' },
     { label = 'Graphite', index = 1, hex = '#3b3d42' },      { label = 'Black', index = 0, hex = '#121316' },
     { label = 'VC2 Orange', index = 38, hex = '#e4501c' },   { label = 'Red', index = 27, hex = '#b3141b' },
     { label = 'Sand', index = 99, hex = '#c8b48a' },         { label = 'Olive', index = 151, hex = '#5c6b3a' },

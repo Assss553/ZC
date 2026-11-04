@@ -92,24 +92,52 @@ The vehicle model already has the openings for both slide-outs and the leg housi
 These are starting values. Drive it in the game and tune it: top speed through `fInitialDriveMaxFlatVel`, weight through `fMass`, braking through `fBrakeForce`.
 
 ## Putting it in the game
-GTA V needs the model in its own vehicle format: `vc2caravan.yft` + `vc2caravan_hi.yft` + `vc2caravan.ytd`. The `.glb` has to be rigged and exported once in **Blender + [Sollumz](https://github.com/Sollumz/Sollumz)** or in **ZModeler 3**.
 
-1. Import `vc2_caravan.glb`.
-2. **Rig it.** The parts already use GTA bone names, so they map straight onto the vehicle skeleton:
-   - body: `bodyshell` / `chassis`
-   - wheels: `wheel_lf`, `wheel_rf`, `wheel_lr`, `wheel_rr`
-   - doors: `door_dside_f`, `door_pside_f`, and the entry door `door_pside_r`
-   - glass: `windscreen`, `window_lf`, `window_rf`
-   - cab: `steeringw`, `seat_dside_f`, `seat_pside_f`
-   - lights: `headlight_l`, `headlight_r`, `taillight_l`, `taillight_r`, `indicator_lf`, `indicator_rf`
-3. **Shaders:**
-   - Glass: `vehicle_vehglass` with no tint.
-   - Mirror glass (`vc2_mirror`): a chrome / reflective vehicle shader.
-   - Body: `vehicle_paint` (so it can be repainted).
-   - Lights: emissive vehicle light shaders.
-4. **Collision**: add a simple collision (bounds) around the body and the cab. Leave the interior hollow so players can walk inside.
-5. Export `vc2caravan.yft`, `vc2caravan_hi.yft` and `vc2caravan.ytd` into `fivem/vc2caravan/stream/`.
-6. Copy `fivem/vc2caravan` to your server's `resources`, add `ensure vc2caravan` to `server.cfg`, and spawn it with `vc2caravan`.
+The vehicle is **already built and exported** with Blender + Sollumz: `fivem/vc2caravan_cwxml.zip`.
+
+**What the export contains**
+- **Vehicle** `vc2caravan.yft.xml`, a GTA vehicle fragment:
+  - 27 bones: chassis, 4 wheels, 3 doors with hinge limits, windscreen, side windows, steering wheel, seat bones, and all the light bones (headlights, indicators, tail / brake / reversing).
+  - One skinned model of about 255k vertices, automatically split into geometries under the 65k vertex limit.
+  - 52 GTA vehicle shaders: paintable body (`vehicle_paint1`), clear glass (`vehicle_vehglass`), tyres, lights, interior and decals.
+  - 46 embedded DXT textures.
+  - 25 collision boxes that leave the interior hollow, so you can walk inside.
+- **Props**:
+  - `vc2caravan_slideout_side.ydr.xml`, `vc2caravan_slideout_rear.ydr.xml` and `vc2caravan_jack.ydr.xml`, each with its own collision.
+  - `vc2caravan_props.ytyp.xml`.
+- **Blender file** `vc2caravan_sollumz.blend`, the Sollumz scene, in case you want to edit it in Blender.
+
+**Last step: XML -> game files (Windows, about 2 minutes)**
+
+Sollumz can only write the binary game format on Windows, so this step happens in CodeWalker.
+
+1. Unzip `vc2caravan_cwxml.zip` and keep each `.xml` next to its texture folder.
+2. Open **CodeWalker** → **Tools → RPF Explorer**.
+3. Make a folder (or open any folder) and use **Import XML**.
+4. Pick these files:
+   - `vc2caravan.yft.xml`
+   - the 3 `.ydr.xml` files
+   - `vc2caravan_props.ytyp.xml`
+5. CodeWalker creates `vc2caravan.yft`, `vc2caravan_slideout_side.ydr`, `vc2caravan_slideout_rear.ydr`, `vc2caravan_jack.ydr` and `vc2caravan_props.ytyp`. Export / extract them.
+6. Put them in `fivem/vc2caravan/stream/`. Also copy `vc2caravan.yft` as `vc2caravan_hi.yft` (FiveM expects a hi version).
+7. Copy `fivem/vc2caravan` to your server's `resources` and add `ensure vc2caravan` to `server.cfg`.
+8. In the game, spawn it with the model name `vc2caravan`.
+
+**First test in the game**
+- Check the vehicle **origin**: wheels on the ground, body not floating or sunk. If it's off, tune `vecCentreOfMassOffset` / suspension in `handling.meta`.
+- Check the **door** opening directions. If one opens the wrong way, swap the min/max hinge limits in the Blender file and export again.
+- Check the **slide-out and leg** positions (`Config.Parts` in `config.lua`).
+
+**Rebuilding**
+
+`tools/convert_vc2.py` (vehicle) and `tools/convert_props.py` (props) rebuild everything from `model/*.glb`:
+
+```
+python convert_vc2.py <Blender addons dir with Sollumz> model/vc2_caravan.glb <out>
+python convert_props.py <Blender addons dir with Sollumz> model <out>
+```
+
+Run them with Blender's Python (`bpy`) plus `Pillow`. On Windows with PyMateria, Sollumz can also write the binary files directly. To do that, set `target_formats = {"NATIVE"}` in the scripts.
 
 ## Notes
 - **Mirrors**: GTA V does not render live mirror reflections on vehicles. In the game the mirror glass reflects the environment the way chrome does. The live reflections in `preview_mirror.png` only exist in the design preview.
