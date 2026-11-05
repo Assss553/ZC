@@ -330,28 +330,52 @@ AddEventHandler('onResourceStop', function(r) if r == GetCurrentResourceName() t
 ---------------------------------------------------------------------------
 -- third eye (ox_target / qb-target)
 ---------------------------------------------------------------------------
+local function targetId(ent) return GetPlayerServerId(NetworkGetPlayerIndexFromPed(ent)) end
+
 CreateThread(function()
-    if not Config.Impound.useTarget then return end
+    local T = Config.Target or {}
+    if T.enabled == false or Config.Impound.useTarget == false then return end
     Wait(1000)
+    -- police jobs only, from the MDT minimum grade (the server checks job + grade again on every action)
     local jobs = {}
-    for _, j in ipairs(Config.PoliceJobs) do jobs[j] = 0 end
+    for _, j in ipairs(Config.PoliceJobs) do jobs[j] = Config.MdtMinGrade or 0 end
+    local pd = T.playerDistance or 2.5
+
+    local veh, ply = {}, {}
+    if T.vehicle == nil or T.vehicle.impound ~= false then
+        veh[#veh + 1] = { name = 'rox_impound', icon = 'truck-pickup', label = 'Impound / Depot Vehicle', fn = function(ent) OpenImpound(ent) end }
+    end
+    local P = T.player or {}
+    if P.jail ~= false then
+        ply[#ply + 1] = { name = 'rox_jail', icon = 'building-shield', label = 'Send to Prison', fn = function(ent) open('jail', { id = targetId(ent) }) end }
+    end
+    if P.fine ~= false then
+        ply[#ply + 1] = { name = 'rox_fine', icon = 'file-invoice-dollar', label = 'Issue Citation', fn = function(ent) open('fine', { id = targetId(ent) }) end }
+    end
+    if P.strip ~= false then
+        ply[#ply + 1] = { name = 'rox_strip', icon = 'masks-theater', label = 'Remove Mask / Hat', fn = function(ent) OpenStrip(targetId(ent)) end }
+    end
+
     if GetResourceState('ox_target') == 'started' then
-        exports.ox_target:addGlobalVehicle({
-            { name = 'rox_impound', icon = 'fa-solid fa-truck-pickup', label = 'Impound / Depot Vehicle', groups = jobs, distance = Config.Impound.distance,
-              onSelect = function(d) OpenImpound(d.entity) end },
-        })
-        exports.ox_target:addGlobalPlayer({
-            { name = 'rox_strip', icon = 'fa-solid fa-masks-theater', label = 'Remove Mask / Hat', groups = jobs, distance = 2.5,
-              onSelect = function(d) OpenStrip(GetPlayerServerId(NetworkGetPlayerIndexFromPed(d.entity))) end },
-        })
+        local function ox(list, dist)
+            local out = {}
+            for _, o in ipairs(list) do
+                out[#out + 1] = { name = o.name, icon = 'fa-solid fa-' .. o.icon, label = o.label, groups = jobs, distance = dist,
+                    onSelect = function(d) CreateThread(function() o.fn(d.entity) end) end }
+            end
+            return out
+        end
+        if #veh > 0 then exports.ox_target:addGlobalVehicle(ox(veh, Config.Impound.distance)) end
+        if #ply > 0 then exports.ox_target:addGlobalPlayer(ox(ply, pd)) end
     elseif GetResourceState('qb-target') == 'started' then
-        exports['qb-target']:AddGlobalVehicle({
-            options = { { icon = 'fas fa-truck-pickup', label = 'Impound / Depot Vehicle', job = jobs, action = function(ent) OpenImpound(ent) end } },
-            distance = Config.Impound.distance,
-        })
-        exports['qb-target']:AddGlobalPlayer({
-            options = { { icon = 'fas fa-masks-theater', label = 'Remove Mask / Hat', job = jobs, action = function(ent) OpenStrip(GetPlayerServerId(NetworkGetPlayerIndexFromPed(ent))) end } },
-            distance = 2.5,
-        })
+        local function qb(list)
+            local out = {}
+            for _, o in ipairs(list) do
+                out[#out + 1] = { icon = 'fas fa-' .. o.icon, label = o.label, job = jobs, action = function(ent) CreateThread(function() o.fn(ent) end) end }
+            end
+            return out
+        end
+        if #veh > 0 then exports['qb-target']:AddGlobalVehicle({ options = qb(veh), distance = Config.Impound.distance }) end
+        if #ply > 0 then exports['qb-target']:AddGlobalPlayer({ options = qb(ply), distance = pd }) end
     end
 end)

@@ -128,7 +128,17 @@ Config.Certifications = {
 }
 
 ---------------------------------------------------------------------------
--- IMPOUND / DEPOT (third eye on any vehicle: ox_target / qb-target)
+-- THIRD EYE (ox_target / qb-target) — police jobs only, from Config.MdtMinGrade
+---------------------------------------------------------------------------
+Config.Target = {
+    enabled = true,
+    vehicle = { impound = true },                          -- on any vehicle: Impound / Depot
+    player  = { jail = true, fine = true, strip = true },  -- on a player: Prison, Citation, Remove mask
+    playerDistance = 2.5,
+}
+
+---------------------------------------------------------------------------
+-- IMPOUND / DEPOT
 ---------------------------------------------------------------------------
 Config.Impound = {
     useTarget = true,        -- add "Impound Vehicle" to ox_target / qb-target

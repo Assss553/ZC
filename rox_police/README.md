@@ -13,8 +13,8 @@
 |---|---|
 | **F1 › Police** | MDT، iPad، Prison، Citations، Impound، Unmask، Management (كابتن وفوق) |
 | **iPad** (`/tablet` أو آيتم `tablet`) | الشاشة الرئيسية وفيها كل التطبيقات |
-| **العين الثالثة على سيارة** (ox_target / qb-target) | Impound / Depot Vehicle |
-| **العين الثالثة على لاعب** | Remove Mask / Hat |
+| **العين الثالثة على سيارة** (ox_target / qb-target) | **Impound / Depot Vehicle** (حجز / مصادرة) |
+| **العين الثالثة على لاعب** | **Send to Prison** (سجن)، **Issue Citation** (مخالفة)، **Remove Mask / Hat** |
 | أوامر | `/mdt` `/jail` `/fine` `/impound` `/unmask` `/policeboss` `/tablet` `/paybail` |
 
 لما تفتح الـ iPad، الشخصية تمسك تابلت بحركة حقيقية.
@@ -82,6 +82,16 @@ ensure rox_radialmenu
 ```lua
 tablet = { name = 'tablet', label = 'Police iPad', weight = 500, type = 'item', image = 'tablet.png', unique = true, useable = true, shouldClose = true, description = 'Police iPad' },
 ```
+
+## العين الثالثة
+كل خيارات العين للشرطة بس (`Config.PoliceJobs`) ومن رتبة `Config.MdtMinGrade` وفوق. تقدر تطفي أي خيار من `Config.Target`:
+```lua
+Config.Target = {
+    vehicle = { impound = true },
+    player  = { jail = true, fine = true, strip = true },
+}
+```
+السجن والمخالفة يفتحون الايباد على اللوحة مباشرة ورقم اللاعب مكتوب.
 
 ## الرتب (مين يشوف وش)
 | التطبيق | مين يشوفه | الإعداد |

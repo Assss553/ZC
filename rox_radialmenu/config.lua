@@ -121,7 +121,7 @@ Config.Menu = {
             {
                 label = 'Vehicle', icon = 'car-side',
                 items = {
-                    ev('Impound', 'truck-pickup', 'police:client:ImpoundVehicle'),
+                    ev('Impound', 'truck-pickup', 'rox_police:client:impoundNearest'),
                     cmd('Plate Check', 'rectangle-list', 'plate'),
                     cmd('Radar', 'satellite-dish', 'radar'),
                 }
