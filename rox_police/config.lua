@@ -6,6 +6,9 @@ Config.Color = '#ff5a1f'
 -- jobs that can use the MDT / jail / citations
 Config.PoliceJobs = { 'police', 'sheriff', 'bcso', 'sasp' }
 
+-- minimum job grade that can open the MDT and use police actions (0 = every police rank)
+Config.MdtMinGrade = 0
+
 -- require the officer to be on duty (QBCore / Qbox)
 Config.RequireDuty = false
 
@@ -98,6 +101,9 @@ Config.Tablet = {
     command = 'tablet',     -- /tablet opens the iPad home screen
     item = 'tablet',        -- usable item that opens the iPad (QBCore / Qbox / ESX). nil = off
     prop = true,            -- hold a tablet prop + animation while it is open
+    -- show rox_realestate apps on the police iPad and police apps on the real estate iPad
+    -- false = the two iPads stay completely separate
+    shareWithRealEstate = true,
 }
 
 ---------------------------------------------------------------------------

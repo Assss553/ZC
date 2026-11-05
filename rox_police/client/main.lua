@@ -72,7 +72,7 @@ end
 -- apps from other ROX resources shown on the police iPad
 local function externalApps()
     local out = {}
-    if GetResourceState('rox_realestate') == 'started' then
+    if Config.Tablet.shareWithRealEstate and GetResourceState('rox_realestate') == 'started' then
         out[#out + 1] = { res = 'rox_realestate', app = 'dashboard', label = 'Real Estate', img = 'img/icons/realestate.jpg' }
         out[#out + 1] = { res = 'rox_realestate', app = 'shop', label = 'Furniture', img = 'img/icons/furniture.jpg' }
         out[#out + 1] = { res = 'rox_realestate', app = 'contracts', label = 'Contracts', icon = 'file-signature', c = '52,52,59' }
@@ -276,7 +276,7 @@ end)
 
 -- police apps shown on the other ROX iPads (rox_realestate home screen)
 exports('IpadApps', function()
-    if not lastAccess.ok then return {} end
+    if not lastAccess.ok or not Config.Tablet.shareWithRealEstate then return {} end
     local apps = {
         { res = 'rox_police', app = 'mdt', label = 'MDT', labelAr = 'MDT', icon = 'shield', c1 = '#ff7a3d', c2 = '#d8400f' },
     }

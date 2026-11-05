@@ -69,6 +69,7 @@ function Bridge.IsPolice(src)
     for _, j in ipairs(Config.PoliceJobs) do
         if j == c.job then
             if Config.RequireDuty and c.duty == false then return false end
+            if not c.isboss and (c.gradeLevel or 0) < (Config.MdtMinGrade or 0) then return false end
             return true
         end
     end

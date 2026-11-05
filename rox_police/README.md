@@ -83,6 +83,16 @@ ensure rox_radialmenu
 tablet = { name = 'tablet', label = 'Police iPad', weight = 500, type = 'item', image = 'tablet.png', unique = true, useable = true, shouldClose = true, description = 'Police iPad' },
 ```
 
+## الرتب (مين يشوف وش)
+| التطبيق | مين يشوفه | الإعداد |
+|---|---|---|
+| **MDT** (كل شي للشرطة) | وظائف الشرطة من رتبة `Config.MdtMinGrade` وفوق | `Config.PoliceJobs` + `Config.MdtMinGrade` |
+| **Management** (القادة) | من رتبة `Config.BossMinGrade` وفوق، أو `isboss` | `Config.BossMinGrade` |
+| تطبيقات العقارات | الكل (المواطن) — وتطبيقات العقاري حسب رتبته في `rox_realestate` | `Config.Realtor` في rox_realestate |
+
+السيرفر يتحقق من الوظيفة والرتبة في كل طلب، حتى لو أحد حاول يفتح التطبيق بالقوة.
+تبي الايبادين منفصلين تماماً؟ خل `Config.Tablet.shareWithRealEstate = false`.
+
 ## الإعدادات المهمة (`config.lua`)
 `Config.PoliceJobs`، `Config.BossMinGrade`، `Config.Society`، `Config.Charges`، `Config.Jail.types`، `Config.Impound`، `Config.Accessories`، `Config.Certifications`، `Config.Tablet`
 
