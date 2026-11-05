@@ -1433,6 +1433,7 @@ if ($RenderTest) {
     $deadline = (Get-Date).AddSeconds(240)
     while (((Get-Date) -lt $deadline) -and ($null -ne $script:Job -or $script:JobQueue.Count -gt 0)) { Invoke-Pump 5 }
     Write-Host ("jobs finished: score={0} games={1} apps={2} crashes={3}" -f $script:ScoreTarget, $script:GameData.Count, $script:Apps.Count, $script:Crashes.Count)
+    Set-Language 'ar'
 
     # icon preview: dark + light background, several sizes
     $strip = New-Object System.Windows.Controls.StackPanel
@@ -1456,7 +1457,8 @@ if ($RenderTest) {
 
     $script:ScoreTarget = [math]::Max($script:ScoreTarget, 72)
     $script:ScoreShown = $script:ScoreTarget
-    Update-ScoreAnim
+    $ui.ScoreText.Text = '{0:N0}%' -f $script:ScoreShown
+    Set-ScoreRing $script:ScoreShown
     Update-HeroText
     $rnd = New-Object System.Random(7)
     for ($i = 0; $i -lt 40; $i++) {

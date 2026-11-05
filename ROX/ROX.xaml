@@ -959,7 +959,7 @@
           <ScrollViewer.RenderTransform><TranslateTransform/></ScrollViewer.RenderTransform>
           <StackPanel Margin="34,2,34,36">
             <Grid>
-              <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+              <StackPanel MaxWidth="520" HorizontalAlignment="Left">
                 <TextBlock Text="{DynamicResource S_OptTitle}" Style="{StaticResource H1}"/>
                 <TextBlock Text="{DynamicResource S_OptDesc}" Style="{StaticResource Sub}" Margin="0,6,0,0"/>
               </StackPanel>
@@ -979,7 +979,7 @@
           <ScrollViewer.RenderTransform><TranslateTransform/></ScrollViewer.RenderTransform>
           <StackPanel Margin="34,2,34,36">
             <Grid>
-              <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+              <StackPanel MaxWidth="480" HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="{DynamicResource S_GamesTitle}" Style="{StaticResource H1}"/>
                   <Border Style="{StaticResource Chip}" Margin="12,8,0,0" VerticalAlignment="Center" Background="#228B5CF6">
