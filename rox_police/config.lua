@@ -116,6 +116,13 @@ Config.BossMinGrade = 3
 
 Config.Society = 'police'   -- society / job account name
 
+-- police divisions (managed from the Management app). Add as many as you want.
+Config.Divisions = {
+    { key = 'swat', label = 'SWAT',             icon = 'user-ninja',      color = '#ff4d5e', desc = 'Special Weapons and Tactics — high risk entries, hostage rescue' },
+    { key = 'air',  label = 'Air Support Unit', icon = 'helicopter',      color = '#4da3ff', desc = 'Helicopter patrol, pursuits and search from the air' },
+    { key = 'ops',  label = 'Operations',       icon = 'tower-broadcast', color = '#ffb020', desc = 'Dispatch, planning and field operations command' },
+}
+
 Config.Certifications = {
     { key = 'firearms', label = 'Firearms',            icon = 'gun' },
     { key = 'pursuit',  label = 'Pursuit Driving',     icon = 'car-burst' },

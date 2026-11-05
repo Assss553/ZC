@@ -96,24 +96,39 @@ local function close(keepProp)
     tabletAnim(false, keepProp)
 end
 
+local opening = false
 local function open(panel, opts)
     opts = opts or {}
     if isOpen then
         SendNUIMessage({ action = 'open', panel = panel, opts = opts })
         return
     end
-    local a = access()
-    lastAccess = a
-    if not a.ok then
+    if opening then return end -- key spam while the server answers
+    opening = true
+    local ok, err = pcall(function() return OpenNow(panel, opts) end)
+    opening = false
+    if not ok then print('[rox_police] open: ' .. tostring(err)) end
+end
+
+function OpenNow(panel, opts)
+    -- only one ROX iPad at a time
+    if not opts.handoff and GetResourceState('rox_realestate') == 'started' then
+        pcall(function() if exports.rox_realestate:IsTabletOpen() then exports.rox_realestate:CloseTablet(TABLET[panel]) end end)
+    end
+    -- one round trip: 'init' is refused by the server for non police
+    local init = ServerRequest('init')
+    if not init or init.denied or init.ok == false then
+        lastAccess = { ok = false, boss = false }
         if opts.handoff then tabletAnim(false) end
-        SendNUIMessage({ action = 'toast', kind = 'error', msg = 'Police only' })
+        SendNUIMessage({ action = 'toast', kind = 'error', msg = (init and init.msg) or 'Police only' })
         return
     end
-    if panel == 'boss' and not a.boss then
+    lastAccess = { ok = true, boss = init.boss == true }
+    if panel == 'boss' and not init.boss then
+        if opts.handoff then tabletAnim(false) end
         SendNUIMessage({ action = 'toast', kind = 'error', msg = 'Management only (Captain and above)' })
         return
     end
-    local init = ServerRequest('init')
     isOpen = true
     SendNUIMessage({ action = 'open', panel = panel, opts = opts, init = init, color = Config.Color,
         instant = opts.handoff, ext = externalApps(), ipad = LocalPlayer.state.roxIpad })
@@ -278,6 +293,9 @@ RegisterNUICallback('ipadSettings', function(data, cb)
 end)
 
 -- police apps shown on the other ROX iPads (rox_realestate home screen)
+exports('IsOpen', function() return isOpen end)
+exports('Close', function(keepProp) close(keepProp) end)
+
 exports('IpadApps', function()
     if not lastAccess.ok or not Config.Tablet.shareWithRealEstate then return {} end
     local apps = {

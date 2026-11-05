@@ -471,7 +471,8 @@ const MDT = {
                     <div class="ni" data-a="quick" data-k="impound"><i class="fa-solid fa-truck-pickup"></i>Impound Nearest</div>
                     <div class="ni" data-a="quick" data-k="strip"><i class="fa-solid fa-masks-theater"></i>Remove Mask</div>
                 </div>
-                <div class="me"><div class="avatar">${initials(o.name)}</div><div class="who"><b>${esc(o.name || 'Officer')}</b><span>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</span></div><span class="badge ok">on duty</span></div>
+                <div class="me" style="flex-wrap:wrap"><div class="avatar">${initials(o.name)}</div><div class="who"><b>${esc(o.name || 'Officer')}</b><span>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</span></div><span class="badge ok">on duty</span>
+                    ${(App.init.myDivisions || []).length ? `<div style="display:flex;gap:5px;flex-wrap:wrap;width:100%">${divChips(App.init.myDivisions)}</div>` : ''}</div>
             </div>
             <div class="main">
                 <div class="topbar">${App.tablet ? '<div class="icon-btn" data-a="home" title="Home"><i class="fa-solid fa-house"></i></div>' : ''}<div class="tt"><div class="eyebrow">${eb}</div><div class="title">${tt}</div></div>
@@ -734,7 +735,7 @@ const Home = {
         const icons = { jail: 'building-shield', fine: 'file-invoice-dollar', warrant: 'user-ninja', report: 'file-lines', bolo: 'binoculars', release: 'lock-open', vehicle: 'car', citizen: 'id-card' };
         return `<div class="home2">
             <div class="home-clock"><b id="homeClock">${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</b><span>${now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
-            <div class="home-me glass"><div class="avatar">${initials(o.name)}</div><div>${esc(o.name || 'Officer')}<small>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</small></div><span class="dot"></span></div>
+            <div class="home-me glass"><div class="avatar">${initials(o.name)}</div><div>${esc(o.name || 'Officer')}<small>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}${(App.init.myDivisions || []).map(x => divDef(x.key)).filter(Boolean).map(d => ' · ' + esc(d.label)).join('')}</small></div><span class="dot"></span></div>
             <div class="home-widgets">
                 ${w('mdt:dashboard', 'user-shield', st.officers, 'Officers on duty', '77,163,255')}
                 ${w('jail', 'building-shield', st.prisoners, 'In prison', '255,90,31')}
@@ -788,6 +789,10 @@ Object.assign(SettingsApp.handlers, {
    MANAGEMENT (boss menu)
    ===================================================================== */
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const hexRgb = (h) => { const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h || ''); return m ? [m[1], m[2], m[3]].map(x => parseInt(x, 16)).join(',') : '255,90,31'; };
+const dcs = (c) => `--dc:${esc(c)};--dcr:${hexRgb(c)}`;
+const divDef = (k) => ((App.init && App.init.divisionList) || []).find(d => d.key === k);
+const divChips = (list) => (list || []).map(x => { const d = divDef(x.key); return d ? `<span class="div-chip" style="${dcs(d.color)}"><i class="fa-solid fa-${esc(d.icon)}"></i>${esc(d.label)}${x.leader ? ' <i class="fa-solid fa-crown"></i>' : ''}</span>` : ''; }).join('');
 const fmtHours = (min) => min >= 60 ? (min / 60).toFixed(1) + 'h' : (min || 0) + 'm';
 const Boss = {
     S: null,
@@ -798,12 +803,13 @@ const Boss = {
         if (S.page === 'employees' || S.page === 'certs') { const r = await call('employees'); S.emp = (r && r.list) || []; S.grades = (r && r.grades) || S.grades; }
         if (S.page === 'finance' && !S.dash) S.dash = await call('bossDash');
         if (S.page === 'log') S.log = await call('bossLog') || [];
+        if (S.page === 'divisions') S.divs = await call('divisions');
         if (App.panel === 'boss') render();
     },
     html() {
         const S = this.S, o = (App.init && App.init.officer) || {};
-        const nav = [['dashboard', 'table-cells-large', 'Dashboard'], ['employees', 'users', 'Employee List', S.dash && S.dash.online], ['certs', 'certificate', 'Certifications'], ['finance', 'building-columns', 'Finance'], ['log', 'wave-square', 'Activity Log']];
-        const titles = { dashboard: ['Management', 'Dashboard'], employees: ['Database', 'Employee List'], profile: ['Employee', 'Profile'], certs: ['Database', 'Certifications'], finance: ['Department', 'Finance'], log: ['Database', 'Activity Log'] };
+        const nav = [['dashboard', 'table-cells-large', 'Dashboard'], ['employees', 'users', 'Employee List', S.dash && S.dash.online], ['divisions', 'sitemap', 'Divisions'], ['certs', 'certificate', 'Certifications'], ['finance', 'building-columns', 'Finance'], ['log', 'wave-square', 'Activity Log']];
+        const titles = { dashboard: ['Management', 'Dashboard'], employees: ['Database', 'Employee List'], profile: ['Employee', 'Profile'], divisions: ['Department', 'Divisions'], certs: ['Database', 'Certifications'], finance: ['Department', 'Finance'], log: ['Database', 'Activity Log'] };
         const [eb, tt] = titles[S.page];
         return `<div class="panel mdt boss">
             <div class="side">
@@ -843,9 +849,9 @@ const Boss = {
             </div>
             <div class="cols2">
                 <div class="card"><h3><i class="fa-solid fa-users"></i>Online Employees<span class="sp"></span></h3>
-                    ${d.onlineList.length ? `<table class="tbl"><tr><th>Name</th><th>Status</th><th>Rank</th><th>Callsign</th><th>Duty</th></tr>
+                    ${d.onlineList.length ? `<table class="tbl"><tr><th>Name</th><th>Status</th><th>Rank</th><th>Callsign</th><th>Division</th><th>Duty</th></tr>
                     ${d.onlineList.map(e => `<tr class="click" data-a="bprof" data-cid="${esc(e.cid)}"><td><div class="cell-who"><div class="avatar">${initials(e.name)}</div><div><b>${esc(e.name)}</b><div class="dim" style="font-size:10.5px">${esc(e.cid)}</div></div></div></td>
-                        <td><span class="badge ok">● active</span></td><td>${esc(e.grade)}</td><td class="mono">${esc(e.callsign || '—')}</td>
+                        <td><span class="badge ok">● active</span></td><td>${esc(e.grade)}</td><td class="mono">${esc(e.callsign || '—')}</td><td>${divChips(e.divisions) || '<span class="dim">—</span>'}</td>
                         <td>${e.duty ? '<span class="badge ok"><i class="fa-solid fa-calendar-check"></i> on duty</span>' : '<span class="badge">off duty</span>'}</td></tr>`).join('')}</table>` : '<div class="dim">Nobody online</div>'}
                 </div>
                 <div class="card"><h3><i class="fa-solid fa-bell"></i>Notification Center</h3>
@@ -859,10 +865,10 @@ const Boss = {
         const rows = S.emp.filter(e => !q || e.name.toLowerCase().includes(q) || String(e.cid).toLowerCase().includes(q) || (e.callsign || '').toLowerCase().includes(q));
         return `<div class="search-bar"><div class="input grow"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search employees..." value="${esc(S.q)}" data-in="bq"></div>
                 <button class="btn primary" data-a="hireOpen"><i class="fa-solid fa-user-plus"></i> Hire</button></div>
-            <table class="tbl"><tr><th>Name</th><th>Rank</th><th>Callsign</th><th>Status</th><th>Duty time</th><th>Rewards</th><th>Strikes</th><th></th></tr>
+            <table class="tbl"><tr><th>Name</th><th>Rank</th><th>Callsign</th><th>Division</th><th>Status</th><th>Duty time</th><th>Rewards</th><th>Strikes</th><th></th></tr>
             ${rows.map(e => `<tr class="click" data-a="bprof" data-cid="${esc(e.cid)}">
                 <td><div class="cell-who"><div class="avatar">${initials(e.name)}</div><div><b>${esc(e.name)}</b><div class="dim" style="font-size:10.5px">${esc(e.cid)}</div></div></div></td>
-                <td><span class="badge accent">${esc(e.grade)}</span></td><td class="mono">${esc(e.callsign || '—')}</td>
+                <td><span class="badge accent">${esc(e.grade)}</span></td><td class="mono">${esc(e.callsign || '—')}</td><td>${divChips(e.divisions) || '<span class="dim">—</span>'}</td>
                 <td>${e.online ? (e.duty ? '<span class="badge ok">on duty</span>' : '<span class="badge info">online</span>') : '<span class="badge">offline</span>'}</td>
                 <td class="mono">${fmtHours(e.dutyTotal)}</td><td style="color:var(--ok)" class="mono">+${e.rewards || 0}</td><td style="color:var(--bad)" class="mono">-${e.strikes || 0}</td>
                 <td><i class="fa-solid fa-chevron-right dim"></i></td></tr>`).join('')}</table>`;
@@ -870,7 +876,7 @@ const Boss = {
     profile() {
         const S = this.S, p = S.prof;
         if (!p) return `<div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i>Loading...</div>`;
-        const tabs = [['info', 'circle-info', 'Information'], ['certs', 'certificate', 'Certifications'], ['rank', 'ranking-star', 'Rank & Actions']];
+        const tabs = [['info', 'circle-info', 'Information'], ['divs', 'sitemap', 'Divisions'], ['certs', 'certificate', 'Certifications'], ['rank', 'ranking-star', 'Rank & Actions']];
         let body = '';
         if (S.ptab === 'info') {
             const max = Math.max(1, ...Object.values(p.duty || {}));
@@ -895,6 +901,11 @@ const Boss = {
                 </div></div>
                 <div class="card"><h3><i class="fa-solid fa-note-sticky"></i>Notes<span class="sp"></span><button class="btn sm" data-a="saveStaff"><i class="fa-solid fa-floppy-disk"></i> Save</button></h3>
                     <div class="input"><textarea data-in="snotes" placeholder="Supervisor notes...">${esc(p.notes || '')}</textarea></div></div>`;
+        } else if (S.ptab === 'divs') {
+            const mine = {}; (p.divisions || []).forEach(x => { mine[x.key] = x; });
+            body = `<div class="cert-grid" style="grid-template-columns:repeat(3,1fr)">${(App.init.divisionList || []).map(d => { const m = mine[d.key]; return `<div class="cert div-card ${m ? 'on' : ''}" style="${dcs(d.color)}" data-a="pdiv" data-k="${esc(d.key)}">
+                <div class="ci"><i class="fa-solid fa-${esc(d.icon)}"></i></div><b>${esc(d.label)} ${m && m.leader ? '<i class="fa-solid fa-crown" style="color:var(--warn)"></i>' : ''}</b><span>${esc(d.desc || '')}</span>
+                <span class="badge ${m ? 'ok' : ''}">${m ? (m.leader ? 'leader' : 'member') : 'not a member'}</span></div>`; }).join('')}</div>`;
         } else if (S.ptab === 'certs') {
             body = `<div class="cert-grid">${(App.init.certifications || []).map(c => { const on = p.certs && p.certs[c.key]; return `<div class="cert ${on ? 'on' : ''}" data-a="cert" data-k="${c.key}"><div class="ci"><i class="fa-solid fa-${c.icon}"></i></div><b>${esc(c.label)}</b><span>${on ? 'Granted by ' + esc(on.by) + ' · ' + ago(on.t) : 'Not certified'}</span></div>`; }).join('')}</div>`;
         } else {
@@ -905,7 +916,7 @@ const Boss = {
         }
         return `<div class="banner"></div>
             <div class="prof"><div class="avatar lg">${initials(p.name)}<span class="on-dot ${p.online ? 'on' : ''}"></span></div>
-                <div style="flex:1;padding-bottom:6px"><div class="nm">${esc(p.name)}</div><div class="dim">${esc(p.grade)} · ${esc(p.cid)}</div></div>
+                <div style="flex:1;padding-bottom:6px"><div class="nm">${esc(p.name)}</div><div class="dim">${esc(p.grade)} · ${esc(p.cid)}</div><div style="display:flex;gap:6px;margin-top:6px">${divChips(p.divisions)}</div></div>
                 <div class="row" style="padding-bottom:6px"><div class="input" style="width:130px"><i class="fa-solid fa-hashtag"></i><input value="${esc(p.callsign || '')}" placeholder="Callsign" data-in="callsign" data-enter="saveStaff"></div><button class="btn" data-a="saveStaff"><i class="fa-solid fa-pen"></i> Edit Profile</button></div></div>
             <div class="kv" style="grid-template-columns:repeat(6,1fr)">
                 <div><span>Department</span><b>${esc((App.init.officer || {}).jobLabel || 'Police')}</b></div><div><span>Rank</span><b>${esc(p.grade)}</b></div>
@@ -913,6 +924,27 @@ const Boss = {
                 <div><span>Last duty</span><b>${p.online ? 'Online' : (p.lastDuty ? ago(p.lastDuty) : '—')}</b></div><div><span>Officer ID</span><b class="mono">${esc(p.cid)}</b></div></div>
             <div class="tabs" style="padding:0;margin-bottom:16px">${tabs.map(([k, ic, l]) => `<div class="tab ${S.ptab === k ? 'on' : ''}" data-a="bptab" data-t="${k}" style="flex:none;padding:10px 16px"><i class="fa-solid fa-${ic}"></i> ${l}</div>`).join('')}</div>
             ${body}`;
+    },
+    divisions() {
+        const S = this.S, D = S.divs;
+        if (!D) return `<div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i>Loading...</div>`;
+        return `<div class="div-grid">${D.list.map(d => {
+            const inIt = new Set(d.members.map(m => m.cid));
+            const leader = d.members.find(m => m.leader);
+            const on = d.members.filter(m => m.online).length;
+            return `<div class="div-panel" style="${dcs(d.color)}">
+                <div class="div-head"><div class="div-ic"><i class="fa-solid fa-${esc(d.icon)}"></i></div>
+                    <div style="flex:1;min-width:0"><b>${esc(d.label)}</b><span>${esc(d.desc || '')}</span></div></div>
+                <div class="div-stats"><div><b>${d.members.length}</b><span>Members</span></div><div><b style="color:var(--ok)">${on}</b><span>Online</span></div><div><b style="font-size:13px">${leader ? esc(leader.name) : '—'}</b><span>Leader</span></div></div>
+                <div class="list-rows div-members">${d.members.map(m => `<div class="rowcard"><div class="avatar">${initials(m.name)}</div>
+                    <div class="who"><b>${esc(m.name)} ${m.leader ? '<i class="fa-solid fa-crown" style="color:var(--warn)"></i>' : ''}</b><span>${esc(m.grade)}${m.callsign ? ' · ' + esc(m.callsign) : ''}</span></div>
+                    ${m.online ? '<span class="badge ok">online</span>' : ''}
+                    <span class="icon-btn" title="${m.leader ? 'Remove leader' : 'Make leader'}" data-a="divLead" data-k="${esc(d.key)}" data-cid="${esc(m.cid)}" style="width:28px;height:28px;${m.leader ? 'color:var(--warn)' : ''}"><i class="fa-solid fa-crown"></i></span>
+                    <span class="icon-btn x" title="Remove" data-a="divDel" data-k="${esc(d.key)}" data-cid="${esc(m.cid)}" style="width:28px;height:28px"><i class="fa-solid fa-xmark"></i></span></div>`).join('') || '<div class="dim" style="padding:10px;text-align:center">No members yet</div>'}</div>
+                <div class="row"><div class="input grow"><select data-in="divPick" data-k="${esc(d.key)}"><option value="">Add officer...</option>${D.employees.filter(e => !inIt.has(e.cid)).map(e => `<option value="${esc(e.cid)}">${esc(e.name)} — ${esc(e.grade)}</option>`).join('')}</select></div>
+                    <button class="btn" data-a="divAdd" data-k="${esc(d.key)}"><i class="fa-solid fa-user-plus"></i></button></div>
+            </div>`;
+        }).join('')}</div>`;
     },
     certs() {
         const S = this.S, certs = (App.init && App.init.certifications) || [];
@@ -950,6 +982,11 @@ Object.assign(Boss.handlers, {
     'in:bq'(el) { Boss.S.q = el.value; render(); refocus('[data-in="bq"]'); },
     async bprof(el) { Boss.S.page = 'profile'; Boss.S.ptab = Boss.S.ptab || 'info'; Boss.S.prof = null; render(); Boss.S.prof = await call('employee', { cid: el.dataset.cid }); if (Boss.S.prof && Boss.S.prof.grades) Boss.S.grades = Boss.S.prof.grades; render(); },
     bptab(el) { Boss.S.ptab = el.dataset.t; render(); },
+    async pdiv(el) { const p = Boss.S.prof, k = el.dataset.k, on = !(p.divisions || []).some(x => x.key === k); if (result(await call('setDivision', { key: k, cid: p.cid, on }))) Boss.handlers.bprof({ dataset: { cid: p.cid } }); },
+    'in:divPick'(el) { Boss.S.divPick = Boss.S.divPick || {}; Boss.S.divPick[el.dataset.k] = el.value; },
+    async divAdd(el) { const k = el.dataset.k, cid = (Boss.S.divPick || {})[k]; if (!cid) return toast('Pick an officer', 'error'); if (result(await call('setDivision', { key: k, cid, on: true }))) { Boss.S.divPick[k] = ''; Boss.load(); } },
+    async divDel(el) { if (result(await call('setDivision', { key: el.dataset.k, cid: el.dataset.cid, on: false }))) Boss.load(); },
+    async divLead(el) { if (result(await call('setDivisionLeader', { key: el.dataset.k, cid: el.dataset.cid }))) Boss.load(); },
     recKind(el) { Boss.S.rec.kind = el.dataset.k; render(); },
     'in:recReason'(el) { Boss.S.rec.reason = el.value; },
     async recAdd() { const p = Boss.S.prof; if (result(await call('addRecord', { cid: p.cid, kind: Boss.S.rec.kind, reason: Boss.S.rec.reason }))) { Boss.S.rec.reason = ''; Boss.handlers.bprof({ dataset: { cid: p.cid } }); } },
@@ -1108,6 +1145,8 @@ const Mock = {
             certifications: [['firearms', 'Firearms', 'gun'], ['pursuit', 'Pursuit Driving', 'car-burst'], ['k9', 'K9 Unit', 'dog'], ['air', 'Air Unit', 'helicopter'], ['swat', 'SWAT', 'user-ninja'], ['detective', 'Detective', 'user-secret'], ['traffic', 'Traffic Unit', 'motorcycle'], ['fto', 'Field Training', 'chalkboard-user']].map(([key, label, icon]) => ({ key, label, icon })),
             accessories: [['mask', 'Mask', 'masks-theater'], ['hat', 'Hat', 'hat-cowboy'], ['glasses', 'Glasses', 'glasses'], ['bag', 'Bag', 'bag-shopping']].map(([key, label, icon]) => ({ key, label, icon })),
             impound: { price: 500, maxPrice: 50000, maxHours: 72 },
+            divisionList: [{ key: 'swat', label: 'SWAT', icon: 'user-ninja', color: '#ff4d5e', desc: 'Special Weapons and Tactics — high risk entries, hostage rescue' }, { key: 'air', label: 'Air Support Unit', icon: 'helicopter', color: '#4da3ff', desc: 'Helicopter patrol, pursuits and search from the air' }, { key: 'ops', label: 'Operations', icon: 'tower-broadcast', color: '#ffb020', desc: 'Dispatch, planning and field operations command' }],
+            myDivisions: [{ key: 'swat', leader: true }],
             jailTypes: [{ key: 'prison', label: 'Prison', icon: 'building-shield' }, { key: 'cell', label: 'Holding Cell', icon: 'door-closed' }],
             presets: [5, 10, 15, 30, 60], maxMinutes: 300, stats: {},
         };
@@ -1143,6 +1182,8 @@ const Mock = {
                 { plate: '20HRX818', mode: 'impound', price: 500, hours: 0, reason: 'Abandoned on the highway', model: 'Karin Sultan RS', owner: 'Faisal Al-Harbi', officer: 'Khalid Al-Otaibi', t: n - 3000 },
             ],
             balance: 284500,
+            divs: { swat: { RX10001: true, RX31877: true }, air: { RX20442: true }, ops: { RX20442: true, RX40210: true } },
+            divLead: { swat: 'RX10001', air: 'RX20442' },
             bossLog: [{ t: n - 1800, text: 'Noura Saad rank set to Sergeant', by: 'Dev Hkmi' }, { t: n - 7200, text: 'Reward for Khalid Al-Otaibi: Excellent pursuit on Route 68', by: 'Dev Hkmi' }, { t: n - 90000, text: 'Yazeed Fahad hired as Recruit', by: 'Dev Hkmi' }],
             staff: (() => {
                 const heat = (seed) => { const o = {}; for (let d = 0; d < 7; d++) for (let h = 0; h < 24; h++) { const v = Math.floor(Math.max(0, Math.sin((h + seed) / 3.2) * 60 + (d % 3) * 8 - 18)); if (v > 0 && (h > 14 || h < 2)) o[d + '_' + h] = v; } return o; };
@@ -1157,6 +1198,7 @@ const Mock = {
             vehicles: { '71BRV552': { stolen: true, model: 'Bravado Buffalo', owner: 'Mohammed Ali', notes: 'Stolen from Legion Square parking' } },
         };
     },
+    myDivs(cid) { return Object.keys(this.db.divs).filter(k => this.db.divs[k][cid]).map(k => ({ key: k, leader: this.db.divLead[k] === cid })); },
     async call(a, d) {
         await new Promise(r => setTimeout(r, 120));
         const db = this.db, n = this.now(), P = this.players, byId = (id) => P.find(p => p.id === Number(id));
@@ -1169,9 +1211,9 @@ const Mock = {
             case 'vehicleOverview': return { today: 2, total: db.impounds.length, recent: db.impounds.slice().reverse(), holds: Object.values(db.holds).map(h => ({ ...h, remaining: Math.max(0, h.releaseAt - n) })), flagged: Object.entries(db.vehicles).filter(([, v]) => v.stolen).map(([plate, v]) => ({ plate, ...v })) };
             case 'holds': return Object.values(db.holds).map(h => ({ ...h, remaining: Math.max(0, h.releaseAt - n) }));
             case 'releaseHold': delete db.holds[d.plate]; return { ok: true, msg: d.plate + ' released' };
-            case 'bossDash': { const on = db.staff.filter(e => e.online); return { total: db.staff.length, online: on.length, duty: on.filter(e => e.duty).length, balance: db.balance, onlineList: on, log: db.bossLog.slice(0, 8), grades: db.grades }; }
-            case 'employees': return { list: db.staff.map(e => ({ ...e, rewards: e.rewards.length, strikes: e.strikes.length })), grades: db.grades };
-            case 'employee': { const e = db.staff.find(x => x.cid === d.cid); let peak = null, pv = 0; Object.entries(e.duty).forEach(([k, v]) => { if (v > pv) { pv = v; peak = k; } }); return { ok: true, ...e, peak, grades: db.grades }; }
+            case 'bossDash': { const on = db.staff.filter(e => e.online).map(e => ({ ...e, divisions: this.myDivs(e.cid) })); return { total: db.staff.length, online: on.length, duty: on.filter(e => e.duty).length, balance: db.balance, onlineList: on, log: db.bossLog.slice(0, 8), grades: db.grades }; }
+            case 'employees': return { list: db.staff.map(e => ({ ...e, rewards: e.rewards.length, strikes: e.strikes.length, divisions: this.myDivs(e.cid) })), grades: db.grades };
+            case 'employee': { const e = db.staff.find(x => x.cid === d.cid); let peak = null, pv = 0; Object.entries(e.duty).forEach(([k, v]) => { if (v > pv) { pv = v; peak = k; } }); return { ok: true, ...e, peak, grades: db.grades, divisions: this.myDivs(d.cid) }; }
             case 'setGrade': { const e = db.staff.find(x => x.cid === d.cid); if (d.grade >= 4) return { ok: false, msg: 'You can only set ranks below yours' }; e.gradeLevel = d.grade; e.grade = db.grades[d.grade].name; db.bossLog.unshift({ t: n, text: `${e.name} rank set to ${e.grade}`, by: 'Dev Hkmi' }); return { ok: true, msg: 'Rank updated' }; }
             case 'fire': db.staff = db.staff.filter(x => x.cid !== d.cid); return { ok: true, msg: 'Employee fired' };
             case 'hire': { const p = byId(d.id); db.staff.push({ cid: p.cid, name: p.name, gradeLevel: d.grade, grade: db.grades[d.grade].name, callsign: '', online: true, duty: false, phone: p.phone, dutyTotal: 0, rewards: [], strikes: [], certs: {}, duty: {} }); return { ok: true, msg: p.name + ' hired' }; }
@@ -1180,6 +1222,9 @@ const Mock = {
             case 'saveStaff': { const e = db.staff.find(x => x.cid === d.cid); e.callsign = d.callsign; e.notes = d.notes; return { ok: true, msg: 'Saved' }; }
             case 'society': { const a = Number(d.amount) || 0; if (a <= 0) return { ok: false, msg: 'Invalid amount' }; db.balance += d.action === 'deposit' ? a : -a; return { ok: true, msg: 'Done', balance: db.balance }; }
             case 'bossLog': return db.bossLog;
+            case 'divisions': return { list: App.init.divisionList.map(d => ({ ...d, members: db.staff.filter(e => (db.divs[d.key] || {})[e.cid]).map(e => ({ cid: e.cid, name: e.name, grade: e.grade, gradeLevel: e.gradeLevel, online: e.online, callsign: e.callsign, leader: db.divLead[d.key] === e.cid })).sort((a, b) => b.leader - a.leader) })), employees: db.staff };
+            case 'setDivision': { db.divs[d.key] = db.divs[d.key] || {}; if (d.on) db.divs[d.key][d.cid] = true; else { delete db.divs[d.key][d.cid]; if (db.divLead[d.key] === d.cid) delete db.divLead[d.key]; } return { ok: true, msg: d.on ? 'Added' : 'Removed' }; }
+            case 'setDivisionLeader': if (!(db.divs[d.key] || {})[d.cid]) return { ok: false, msg: 'Add the officer to the division first' }; db.divLead[d.key] = db.divLead[d.key] === d.cid ? null : d.cid; return { ok: true, msg: 'Division leader set' };
             case 'closestPlate': return { plate: '20HRX818', model: 'Sultan' };
             case 'player': { const p = byId(d.id); if (!p) return { ok: false }; return { ok: true, name: p.name, cid: p.cid, jailed: !!db.prisoners[p.cid], warrants: db.warrants.filter(w => w.active && w.cid === p.cid).length, flags: (db.people[p.cid] || {}).flags || [] }; }
             case 'jail': {

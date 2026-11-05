@@ -10,7 +10,7 @@ local function loadDB()
     local raw = LoadResourceFile(RES, DB_FILE)
     local ok, data = pcall(json.decode, raw or '{}')
     db = (ok and type(data) == 'table') and data or {}
-    for _, k in ipairs({ 'prisoners', 'people', 'vehicles', 'holds', 'staff' }) do db[k] = db[k] or {} end
+    for _, k in ipairs({ 'prisoners', 'people', 'vehicles', 'holds', 'staff', 'divisions' }) do db[k] = db[k] or {} end
     for _, k in ipairs({ 'jailHistory', 'fines', 'warrants', 'reports', 'bolos', 'activity', 'bossLog', 'impounds' }) do db[k] = db[k] or {} end
     db.seq = db.seq or 0
 end
@@ -170,7 +170,8 @@ H.init = function(src)
     return {
         officer = { name = c.name, grade = c.grade, jobLabel = c.jobLabel, duty = c.duty ~= false, cid = c.cid, gradeLevel = c.isboss and 999 or c.gradeLevel },
         boss = Bridge.IsBoss(src),
-        certifications = Config.Certifications, accessories = Config.Accessories,
+        certifications = Config.Certifications, accessories = Config.Accessories, divisionList = Config.Divisions,
+        myDivisions = MyDivisions(c.cid),
         impound = { price = Config.Impound.impoundPrice, maxPrice = Config.Impound.maxDepotPrice, maxHours = Config.Impound.maxHours },
         charges = Config.Charges, jailTypes = types, presets = Config.Jail.presets, maxMinutes = Config.Jail.maxMinutes,
         stats = stats(),
@@ -518,6 +519,26 @@ end)
 ---------------------------------------------------------------------------
 -- staff records (callsign, rewards, strikes, certifications, duty heatmap)
 ---------------------------------------------------------------------------
+-- divisions ------------------------------------------------------------
+local function division(key)
+    for _, d in ipairs(Config.Divisions or {}) do if d.key == key then return d end end
+end
+local function divData(key)
+    local d = db.divisions[key]
+    if not d then d = { members = {} }; db.divisions[key] = d end
+    d.members = d.members or {}
+    return d
+end
+function MyDivisions(cid)
+    local out = {}
+    if not cid then return out end
+    for _, d in ipairs(Config.Divisions or {}) do
+        local x = db.divisions and db.divisions[d.key]
+        if x and x.members and x.members[cid] then out[#out + 1] = { key = d.key, leader = x.leader == cid } end
+    end
+    return out
+end
+
 local function staff(cid, name)
     local s = db.staff[cid]
     if not s then s = { cid = cid, name = name, callsign = '', rewards = {}, strikes = {}, certs = {}, notes = '', duty = {}, dutyTotal = 0 }; db.staff[cid] = s end
@@ -558,7 +579,63 @@ end
 
 local function myLevel(src) local c = Bridge.GetChar(src) return c and (c.isboss and 999 or c.gradeLevel) or 0 end
 
-for _, k in ipairs({ 'bossDash', 'employees', 'employee', 'setGrade', 'fire', 'hire', 'addRecord', 'setCert', 'saveStaff', 'finance', 'society', 'bossLog' }) do BossOnly[k] = true end
+for _, k in ipairs({ 'bossDash', 'employees', 'employee', 'setGrade', 'fire', 'hire', 'addRecord', 'setCert', 'saveStaff', 'finance', 'society', 'bossLog', 'divisions', 'setDivision', 'setDivisionLeader' }) do BossOnly[k] = true end
+
+H.divisions = function()
+    local emp = Bridge.Employees(Config.Society)
+    local byCid = {}
+    for _, e in ipairs(emp) do byCid[e.cid] = e end
+    local out = {}
+    for _, d in ipairs(Config.Divisions or {}) do
+        local x = divData(d.key)
+        local members = {}
+        for cid, m in pairs(x.members) do
+            local e = byCid[cid]
+            if e then
+                members[#members + 1] = { cid = cid, name = e.name, grade = e.grade, gradeLevel = e.gradeLevel, online = e.online, duty = e.duty, since = m.t, leader = x.leader == cid,
+                    callsign = db.staff[cid] and db.staff[cid].callsign or '' }
+            else
+                x.members[cid] = nil -- left the department
+            end
+        end
+        table.sort(members, function(a, b) if a.leader ~= b.leader then return a.leader end return (a.gradeLevel or 0) > (b.gradeLevel or 0) end)
+        out[#out + 1] = { key = d.key, label = d.label, icon = d.icon, color = d.color, desc = d.desc, members = members }
+    end
+    return { list = out, employees = emp }
+end
+
+H.setDivision = function(src, d)
+    local def = division(d.key)
+    if not def then return { ok = false, msg = 'Unknown division' } end
+    local cid = tostring(d.cid)
+    local x = divData(def.key)
+    local s = staff(cid)
+    if d.on then
+        x.members[cid] = { t = os.time(), by = officerName(src) }
+        bossLog(src, ('%s joined %s'):format(s.name or cid, def.label))
+        local t = Bridge.SourceFromCid(cid)
+        if t then notify(t, 'You joined the ' .. def.label .. ' division', 'success') end
+    else
+        x.members[cid] = nil
+        if x.leader == cid then x.leader = nil end
+        bossLog(src, ('%s removed from %s'):format(s.name or cid, def.label))
+    end
+    save()
+    return { ok = true, msg = d.on and ('Added to ' .. def.label) or ('Removed from ' .. def.label) }
+end
+
+H.setDivisionLeader = function(src, d)
+    local def = division(d.key)
+    if not def then return { ok = false, msg = 'Unknown division' } end
+    local cid = tostring(d.cid)
+    local x = divData(def.key)
+    if not x.members[cid] then return { ok = false, msg = 'Add the officer to the division first' } end
+    x.leader = (x.leader == cid) and nil or cid
+    local s = staff(cid)
+    bossLog(src, x.leader and ('%s is now leader of %s'):format(s.name or cid, def.label) or ('%s is no longer leader of %s'):format(s.name or cid, def.label))
+    save()
+    return { ok = true, msg = x.leader and 'Division leader set' or 'Leader removed' }
+end
 
 H.bossDash = function(src)
     local emp = Bridge.Employees(Config.Society)
@@ -568,6 +645,7 @@ H.bossDash = function(src)
     for _, e in ipairs(emp) do if e.online then
         local s = db.staff[e.cid]
         e.callsign = s and s.callsign or ''
+        e.divisions = MyDivisions(e.cid)
         list[#list + 1] = e
     end end
     local log = {}
@@ -585,6 +663,7 @@ H.employees = function(src)
         e.lastDuty = s and s.lastDuty
         e.dutyTotal = s and s.dutyTotal or 0
         e.certs = s and s.certs or {}
+        e.divisions = MyDivisions(e.cid)
     end
     return { list = emp, grades = Bridge.GetGrades(Config.Society) }
 end
@@ -602,6 +681,7 @@ H.employee = function(src, d)
     e.rewards, e.strikes = s.rewards, s.strikes
     e.duty, e.dutyTotal, e.lastDuty, e.peak = s.duty, s.dutyTotal or 0, s.lastDuty, peak
     e.grades = Bridge.GetGrades(Config.Society)
+    e.divisions = MyDivisions(cid)
     return e
 end
 

@@ -91,12 +91,24 @@ local function updateFocus()
     SetNuiFocus(focus, focus)
 end
 
+local tabletOpening = false
 function OpenTablet(app, handoff)
-    if tabletOpen or CurrentPlacement then return end
+    if tabletOpen or tabletOpening or CurrentPlacement then return end
+    tabletOpening = true
+    local ok, err = pcall(OpenTabletNow, app, handoff)
+    tabletOpening = false
+    if not ok then print('[rox_realestate] open: ' .. tostring(err)) end
+end
+
+function OpenTabletNow(app, handoff)
     local data, err = ServerCall('bootstrap') -- returns the table as first value
     if type(data) ~= 'table' then
         if err then Notify(err, 'error') end
         return
+    end
+    -- only one ROX iPad at a time
+    if not handoff and GetResourceState('rox_police') == 'started' then
+        pcall(function() if exports.rox_police:IsOpen() then exports.rox_police:Close(true) end end)
     end
     tabletOpen = true
     if data.apps then appAccess = data.apps end
@@ -118,6 +130,7 @@ RegisterKeyMapping(Config.Tablet.Command, 'Real estate iPad', 'keyboard', Config
 RegisterNetEvent('rox_re:openTablet', function(app) OpenTablet(app) end)
 exports('OpenTablet', function(app, handoff) CreateThread(function() OpenTablet(app, handoff) end) end)
 exports('IsTabletOpen', function() return tabletOpen end)
+exports('CloseTablet', function(keepProp) if tabletOpen then CloseTablet(keepProp) end end)
 
 -- which real estate apps this player can see (used by the police iPad). Cached, refreshed every minute.
 local appAccess = {}
