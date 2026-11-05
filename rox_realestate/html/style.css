@@ -498,3 +498,8 @@ html[dir="rtl"] .fp-head h2 { font-family: 'Cairo'; font-style: normal; font-wei
 .icard .ph .rox-chip { inset-inline-start: auto; inset-inline-end: 8px; background: linear-gradient(135deg, #ff7a3d, #e0441a); color: #fff; }
 .icard .ph .rox-chip + .chip { inset-inline-end: 52px; }
 .decor-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+
+/* ---------------------------------------------------------- gang hideouts */
+.chip.gang-chip, .icard .ph .gang-chip { background: linear-gradient(135deg, #8b1d1d, #3d0a0a); color: #ffd7d7; border: 1px solid rgba(255, 80, 80, .35); }
+.icard .ph .gang-chip { inset-inline-start: auto; inset-inline-end: 8px; }
+.decor-opt .swatch { width: 20px; height: 20px; border-radius: 50%; display: block; border: 2px solid rgba(255, 255, 255, .25); }

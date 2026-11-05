@@ -64,6 +64,15 @@ function Bridge.GetJob(src)
     return 'unemployed', 0
 end
 
+-- gang name (QBCore gang system, otherwise the job)
+function Bridge.GetGang(src)
+    local p = getPlayer(src)
+    if FW == 'qb' and p and p.PlayerData.gang and p.PlayerData.gang.name and p.PlayerData.gang.name ~= 'none' then
+        return p.PlayerData.gang.name
+    end
+    return (Bridge.GetJob(src))
+end
+
 local function account()
     if FW == 'esx' then
         return Config.PayAccount == 'cash' and 'money' or Config.PayAccount

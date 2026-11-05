@@ -139,3 +139,12 @@ Config.Detect = {
     Command      = 'realestate_scan',  -- ace 'rox_realestate.realtor' or realtor: rescan without restart
     EntryCommand = 'houseentry',       -- realtor inside a detected shell: save the entry point where you stand
 }
+
+---------------------------------------------------------------------
+-- Gangs (ROX Gang Hideouts)
+---------------------------------------------------------------------
+Config.Gangs = {
+    -- QBCore: PlayerData.gang.name is checked, ESX: the job name
+    Jobs = { 'ballas', 'vagos', 'families', 'lostmc', 'marabunta', 'triads', 'cartel', 'gang' },
+    RealtorCanSell = true, -- realtors can still create hideouts and send contracts (only gang members can sign)
+}

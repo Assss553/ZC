@@ -192,6 +192,35 @@ Interiors = {
         tier = 'luxury', rooms = 1, image = 'img/houses/rox_wh_large.png', order = -2, decor = true,
         spawn = vec4(1006.97, -3102.08, -39.00, 90.0),
     },
+    ------------------------------------------------------------------
+    -- ROX GANG HIDEOUTS: abandoned houses for gangs (procedural abandoned dressing, shared/decor.lua)
+    -- gangOnly = only players in Config.Gangs.Jobs can buy / rent them
+    ------------------------------------------------------------------
+    rox_hideout_bar = {
+        label = 'ROX Hideout · Old Bar', labelAr = 'وكر ROX · البار المهجور',
+        tier = 'mid', rooms = 3, image = 'img/houses/rox_hideout_bar.png', order = -3, decor = 'hideout', gangOnly = true,
+        spawn = vec4(1107.04, -3157.40, -37.52, 0.0),
+        ipl = 'bkr_biker_interior_placement_interior_0_biker_dlc_int_01_milo',
+        entitySets = { 'walls_01', 'furnishings_02', 'decorative_02', 'mural_04', 'gun_locker', 'no_mod_booth', 'cash_stash1', 'weed_stash1' },
+    },
+    rox_hideout_den = {
+        label = 'ROX Hideout · Graffiti Den', labelAr = 'وكر ROX · وكر الجرافيتي',
+        tier = 'mid', rooms = 3, image = 'img/houses/rox_hideout_den.png', order = -3, decor = 'hideout', gangOnly = true,
+        spawn = vec4(998.48, -3164.71, -38.91, 0.0),
+        ipl = 'bkr_biker_interior_placement_interior_1_biker_dlc_int_02_milo',
+        entitySets = { 'walls_01', 'lower_walls_default', 'furnishings_02', 'decorative_02', 'mural_05', 'gun_locker', 'no_mod_booth', 'meth_small', 'cash_small' },
+    },
+    rox_hideout_shack = {
+        label = 'ROX Hideout · Desert Shack', labelAr = 'وكر ROX · كوخ الصحراء',
+        tier = 'low', rooms = 2, image = 'img/houses/rox_hideout_shack.png', order = -3, decor = 'hideout', gangOnly = true,
+        shell = 'shell_trevor', offset = vec4(0.37, -3.79, 2.43, 358.63),
+    },
+    rox_hideout_house = {
+        label = 'ROX Hideout · Abandoned House', labelAr = 'وكر ROX · البيت المهجور',
+        tier = 'low', rooms = 3, image = 'img/houses/rox_hideout_house.png', order = -3, decor = 'hideout', gangOnly = true,
+        shell = 'shell_frankaunt', offset = vec4(-0.36, -5.89, 1.70, 358.21),
+    },
+
     rox_wh_vehicle = {
         label = 'ROX Vehicle Warehouse', labelAr = 'مخزن سيارات ROX',
         tier = 'luxury', rooms = 1, image = 'img/houses/rox_wh_vehicle.png', order = -2, decor = true,
@@ -233,7 +262,7 @@ function InteriorsForUI()
         list[#list + 1] = {
             key = key, label = v.label, labelAr = v.labelAr, tier = v.tier,
             rooms = v.rooms, image = v.image, shell = v.shell, custom = v.custom or false,
-            auto = v.auto or false, decor = v.decor or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
+            auto = v.auto or false, decor = (v.decor == true and 'warehouse') or v.decor or false, gangOnly = v.gangOnly or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
         }
     end
     table.sort(list, function(a, b)

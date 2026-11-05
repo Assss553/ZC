@@ -41,6 +41,19 @@ end
 
 function GetProp(id) return Properties[tonumber(id) or -1] end
 
+-- gang hideouts: only gang members can own them
+function IsGangMember(src)
+    local g = Bridge.GetGang(src)
+    for _, name in ipairs(Config.Gangs.Jobs) do if g == name then return true end end
+    return IsPlayerAceAllowed(src, Config.Realtor.AcePermission)
+end
+
+function GangAllowed(src, prop)
+    local i = prop and Interiors[prop.interior]
+    if not i or not i.gangOnly then return true end
+    return IsGangMember(src)
+end
+
 function ParsePoint(t)
     if type(t) ~= 'table' then return nil end
     local d = { x = tonumber(t.x), y = tonumber(t.y), z = tonumber(t.z), h = tonumber(t.h) or 0.0 }
@@ -119,8 +132,9 @@ local function propForClient(prop, src, identifier, realtor)
         rentDue = private and prop.rent_due or nil, overdue = private and prop.overdue or nil,
         rooms = Interiors[prop.interior] and Interiors[prop.interior].rooms or 1,
         inside = realtor and prop.inside or nil,
-        hasDecor = Interiors[prop.interior] and Interiors[prop.interior].decor or false,
-        decor = (prop.options and prop.options.decor) or DecorDefaultStyle,
+        hasDecor = DecorCategory(prop.interior) or false,
+        decor = DecorStyleFor(prop.interior, prop.options and prop.options.decor),
+        gangOnly = Interiors[prop.interior] and Interiors[prop.interior].gangOnly or false,
     }
 end
 
@@ -323,6 +337,7 @@ RegisterCallback('requestAvailable', function(src, propId)
     if not Config.AllowDirectPurchase then return false, L('no_access') end
     local prop = GetProp(propId)
     if not prop or prop.status ~= 'available' then return false, L('not_available') end
+    if not GangAllowed(src, prop) then return false, L('gang_only') end
     createContract(prop, src, prop.ptype, nil)
     SyncAll()
     return true
@@ -357,6 +372,7 @@ RegisterCallback('signContract', function(src, id, signature)
         c.status = 'cancelled'; DB.UpdateContract(c)
         return false, L('not_available')
     end
+    if not GangAllowed(src, prop) then return false, L('gang_only') end
     if now() > c.created_at + Config.ContractExpireMinutes * 60 then
         c.status = 'expired'; DB.UpdateContract(c); releaseIfPending(prop); SyncAll()
         return false, L('contract_expired')
@@ -523,6 +539,7 @@ RegisterCallback('marketBuy', function(src, id)
     local identifier = Bridge.GetIdentifier(src)
     if not prop or not prop.sale_price or prop.status ~= 'owned' then return false, L('not_available') end
     if prop.owner == identifier then return false, L('invalid_data') end
+    if not GangAllowed(src, prop) then return false, L('gang_only') end
     local price = prop.sale_price
     if not Bridge.RemoveMoney(src, price, 'realestate-market') then return false, L('no_money') end
 
@@ -570,7 +587,7 @@ end)
 -- ROX warehouse design picked by the owner (or a managing realtor)
 RegisterCallback('setDecor', function(src, id, style)
     local prop = GetProp(id)
-    if not prop or not DecorStyles[style] then return false, L('invalid_data') end
+    if not prop or not DecorStyles[style] or DecorStyleFor(prop.interior, style) ~= style then return false, L('invalid_data') end
     if GetAccess(src, prop) ~= 'owner' and not HasApp(src, 'manage') then return false, L('no_access') end
     prop.options = prop.options or {}
     prop.options.decor = style
@@ -672,7 +689,7 @@ RegisterCallback('enter', function(src, id)
         id = prop.id, label = prop.label, spawn = spawn, ipl = interior.ipl,
         shell = interior.shell, shellPos = shellPos, autoEntry = auto, interior = prop.interior,
         entitySets = interior.entitySets,
-        decor = interior.decor and ((prop.options and prop.options.decor) or DecorDefaultStyle) or nil,
+        decor = DecorStyleFor(prop.interior, prop.options and prop.options.decor),
         isRealtor = IsRealtor(src),
         furniture = GetPlacedFurniture(prop.id), canFurnish = access ~= nil,
     }

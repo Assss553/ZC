@@ -417,16 +417,16 @@ Views.detail = () => {
     }
     const canDecor = p.hasDecor && (p.isOwner || (S.data.apps && S.data.apps.manage));
     if (canDecor) {
-        const styles = S.st.decorStyles || [];
-        extra = `<div class="section-title">${t('decor_title')}</div>
+        const styles = (S.st.decorStyles || []).filter((d) => !d.category || d.category === 'any' || d.category === p.hasDecor);
+        extra = `<div class="section-title">${t(p.hasDecor === 'hideout' ? 'decor_title_hideout' : 'decor_title')}</div>
             <div class="decor-grid">${styles.map((d) => `<button class="decor-opt ${p.decor === d.key ? 'on' : ''}" data-act="setdecor" data-id="${p.id}" data-v="${d.key}">
-                ${icon({ empty: 'building', logistics: 'box', storage: 'grid', workshop: 'briefcase', off: 'x' }[d.key] || 'box')}<b>${esc(LANG === 'ar' && d.labelAr ? d.labelAr : d.label)}</b></button>`).join('')}</div>
+                ${d.color ? `<i class="swatch" style="background:rgb(${d.color.join(',')});box-shadow:0 0 14px rgb(${d.color.join(',')})"></i>` : icon({ empty: 'building', logistics: 'box', storage: 'grid', workshop: 'briefcase', off: 'x' }[d.key] || 'box')}<b>${esc(LANG === 'ar' && d.labelAr ? d.labelAr : d.label)}</b></button>`).join('')}</div>
             <div class="hint">${t('decor_hint')}</div>` + extra;
     }
     const alert = p.isOwner && p.overdue > 0 ? `<div class="alert">${icon('alert')}${t('overdue_alert', p.overdue, S.st.maxOverdue)}</div>` : '';
     return `<div class="page">${appbar(esc(p.label), `#${p.id} · ${esc(p.street || '')}`)}
         <div class="detail">
-            <div ${propImg(p, 'hero')}><div class="chips">${statusChip(p)}<span class="chip">${t('rooms', p.rooms)}</span>${p.hasKey ? `<span class="chip ${p.locked ? 'red' : 'green'}">${icon(p.locked ? 'lock' : 'unlock')}</span>` : ''}</div>
+            <div ${propImg(p, 'hero')}><div class="chips">${statusChip(p)}${p.gangOnly ? `<span class="chip gang-chip">${t('gang_only_chip')}</span>` : ''}<span class="chip">${t('rooms', p.rooms)}</span>${p.hasKey ? `<span class="chip ${p.locked ? 'red' : 'green'}">${icon(p.locked ? 'lock' : 'unlock')}</span>` : ''}</div>
                 <h2>${esc(p.label)}</h2><p>${icon('pin')}${esc(p.street || '')}</p></div>
             <div class="info">${alert}
                 <div class="stats">${stats.map(([k, v, m]) => `<div class="stat"><small>${k}</small><b class="${m ? 'money' : ''}">${v}</b></div>`).join('')}</div>
@@ -518,7 +518,7 @@ Views.create = () => {
             <div class="grow" style="flex:1"></div><button class="btn ghost" data-act="rescan" style="height:34px">${icon('search')}${t('rescan')}</button></div>
             <div class="igrid">${list.map((i) => {
             const off = i.available === false;
-            const tags = [i.decor ? `<span class="chip rox-chip">ROX</span>` : '', i.custom ? `<span class="chip blue">MLO</span>` : '', i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
+            const tags = [i.gangOnly ? `<span class="chip gang-chip">GANG</span>` : i.decor ? `<span class="chip rox-chip">ROX</span>` : '', i.custom ? `<span class="chip blue">MLO</span>` : '', i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
             return `<div class="card icard ${c.interior === i.key ? 'on' : ''} ${off ? 'off' : ''}" ${off ? '' : `data-act="pickinterior" data-key="${i.key}"`}>
             <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span>${tags}</div>
             <div class="ib"><b>${esc(interiorName(i))}</b><small>${off ? `<span style="color:var(--red)">${t('not_installed')}</span>` : i.needsEntry ? t('auto_entry_short') : i.custom ? t('custom_hint') : t('rooms', i.rooms)}</small></div></div>`;
@@ -1009,7 +1009,9 @@ if (!IS_GAME) {
     document.body.style.background = 'linear-gradient(160deg,#3a4c5c,#1b2530)';
     const ints = [['low_apartment', 'Low-End Apartment', 'شقة اقتصادية', 'low', 1], ['medium_apartment', 'Medium Apartment', 'شقة متوسطة', 'mid', 2], ['integrity_way', '4 Integrity Way Apt', 'شقة انتغريتي واي', 'high', 2], ['north_conker', 'North Conker Villa', 'فيلا نورث كونكر', 'high', 3], ['franklin_vinewood', 'Vinewood Hills Villa', 'فيلا فاينوود هيلز', 'luxury', 4], ['penthouse_modern', 'Eclipse Penthouse - Modern', 'بنتهاوس إكلبس - مودرن', 'luxury', 3]]
         .map(([key, label, labelAr, tier, rooms]) => ({ key, label, labelAr, tier, rooms, image: `img/houses/${key}.jpg` }))
-        .concat([{ key: 'rox_wh_large', label: 'ROX Warehouse · Large', labelAr: 'مخزن ROX · كبير', tier: 'luxury', rooms: 1, image: 'img/houses/rox_wh_large.png', decor: true },
+        .concat([{ key: 'rox_hideout_bar', label: 'ROX Hideout · Old Bar', labelAr: 'وكر ROX · البار المهجور', tier: 'mid', rooms: 3, image: 'img/houses/rox_hideout_bar.png', decor: 'hideout', gangOnly: true },
+            { key: 'rox_hideout_house', label: 'ROX Hideout · Abandoned House', labelAr: 'وكر ROX · البيت المهجور', tier: 'low', rooms: 3, image: 'img/houses/rox_hideout_house.png', decor: 'hideout', gangOnly: true, shell: 'shell_frankaunt' },
+            { key: 'rox_wh_large', label: 'ROX Warehouse · Large', labelAr: 'مخزن ROX · كبير', tier: 'luxury', rooms: 1, image: 'img/houses/rox_wh_large.png', decor: true },
             { key: 'rox_wh_vehicle', label: 'ROX Vehicle Warehouse', labelAr: 'مخزن سيارات ROX', tier: 'luxury', rooms: 1, image: 'img/houses/rox_wh_vehicle.png', decor: true },
             { key: 'custom', label: 'Custom location / MLO', labelAr: 'موقع مخصص / MLO', tier: 'mid', rooms: 1, custom: true },
             { key: 'shell_ranch', label: 'Ranch House', labelAr: 'بيت مزرعة', tier: 'mid', rooms: 3, shell: 'shell_ranch', available: true },
@@ -1020,12 +1022,12 @@ if (!IS_GAME) {
     const P = (id, label, interior, status, x, y, extra = {}) => ({ id, label, interior, status, ptype: 'sale', price: 180000 + id * 25000, rentPrice: 2500, rentDays: 7, door: { x, y, z: 30, h: 0 }, street: 'Alta St, Pillbox Hill', locked: true, rooms: 2, realtorName: 'Saad Realty', ...extra });
     Mock.data = {
         name: 'Jaber Ali', money: 42347, serverId: 1, isRealtor: true, canManage: true, grade: 3, apps: { create: true, manage: true, contracts: true },
-        properties: [P(1, 'ROX Logistics Depot', 'rox_wh_large', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [], hasDecor: true, decor: 'empty' }),
-            P(2, 'Vinewood Villa', 'franklin_vinewood', 'available', 7, 538), P(3, 'Grove Room', 'low_apartment', 'rented', -14, -1440, { ptype: 'rent', isOwner: true, hasKey: true, ownerName: 'Jaber Ali', overdue: 1, rentDue: Date.now() / 1000 + 86400 }),
+        properties: [P(1, 'ROX Logistics Depot', 'rox_wh_large', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [], hasDecor: 'warehouse', decor: 'empty' }),
+            P(2, 'Grove St Trap House', 'rox_hideout_house', 'owned', 7, 538, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [], hasDecor: 'hideout', decor: 'hideout_purple', gangOnly: true }), P(3, 'Grove Room', 'low_apartment', 'rented', -14, -1440, { ptype: 'rent', isOwner: true, hasKey: true, ownerName: 'Jaber Ali', overdue: 1, rentDue: Date.now() / 1000 + 86400 }),
             P(4, 'Conker Hills', 'north_conker', 'owned', 342, 437, { ownerName: 'Omar', salePrice: 650000 }), P(5, 'Mirror Park 4', 'medium_apartment', 'available', 1100, -500, { ptype: 'rent' })],
         contracts: [{ id: 7, propertyId: 2, ctype: 'sale', price: 230000, rentPrice: 0, rentDays: 7, buyerName: 'Jaber Ali', realtorName: 'Saad Realty', status: 'pending', isMine: true, createdAt: Date.now() / 1000, expiresAt: Date.now() / 1000 + 1700, label: 'Vinewood Villa', interior: 'franklin_vinewood', street: 'Wild Oats Dr', rooms: 4 }],
     };
-    const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true, decorStyles: [{ key: 'empty', label: 'ROX Empty · Detailed', labelAr: 'ROX فاضي · بالتفاصيل' }, { key: 'logistics', label: 'Logistics Hub', labelAr: 'مركز لوجستي' }, { key: 'off', label: 'Bare (no details)', labelAr: 'بدون أي إضافات' }, { key: 'storage', label: 'Dense Storage', labelAr: 'تخزين كثيف' }, { key: 'workshop', label: 'Workshop Garage', labelAr: 'ورشة وكراج' }] };
+    const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true, decorStyles: [{ key: 'hideout_red', label: 'Abandoned · Blood Red', labelAr: 'مهجور · أحمر', category: 'hideout', color: [220, 40, 30] }, { key: 'hideout_purple', label: 'Abandoned · Purple', labelAr: 'مهجور · بنفسجي', category: 'hideout', color: [150, 40, 220] }, { key: 'hideout_yellow', label: 'Abandoned · Yellow', labelAr: 'مهجور · أصفر', category: 'hideout', color: [240, 190, 20] }, { key: 'hideout_green', label: 'Abandoned · Green', labelAr: 'مهجور · أخضر', category: 'hideout', color: [40, 200, 70] }, { key: 'hideout_blue', label: 'Abandoned · Blue', labelAr: 'مهجور · أزرق', category: 'hideout', color: [40, 110, 240] }, { key: 'empty', category: 'warehouse', label: 'ROX Empty · Detailed', labelAr: 'ROX فاضي · بالتفاصيل' }, { key: 'logistics', label: 'Logistics Hub', labelAr: 'مركز لوجستي', category: 'warehouse' }, { key: 'storage', label: 'Dense Storage', labelAr: 'تخزين كثيف', category: 'warehouse' }, { key: 'workshop', label: 'Workshop Garage', labelAr: 'ورشة وكراج', category: 'warehouse' }, { key: 'off', label: 'Bare (no details)', labelAr: 'بدون أي إضافات', category: 'any' }] };
     const q = new URLSearchParams(location.search);
     if (q.get('lang')) S.settings.lang = q.get('lang');
     if (q.get('wall')) S.settings.wallpaper = `img/wallpapers/${q.get('wall')}.jpg`;

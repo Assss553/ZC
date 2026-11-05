@@ -4,7 +4,7 @@
 ]]
 
 -- Procedural ROX warehouse design (see shared/decor.lua)
-ROXDecor = { entities = {}, lights = {}, spots = {}, polys = {}, fx = {}, active = false }
+ROXDecor = { entities = {}, lights = {}, spots = {}, polys = {}, fx = {}, flicker = {}, active = false }
 
 local Debug = false
 
@@ -104,6 +104,13 @@ local function Builder(room, entry, seed)
     B.flip = eu > B.L / 2
     local ev = B.longX and (entry.y - room.minY) or (entry.x - room.minX)
     B.entryV = ev
+
+    function B.toLocal(x, y)
+        local u, v
+        if B.longX then u, v = x - room.minX, y - room.minY else u, v = y - room.minY, x - room.minX end
+        if B.flip then u = B.L - u end
+        return u, v
+    end
 
     function B.world(u, v)
         if B.flip then u = B.L - u end
@@ -438,6 +445,100 @@ local function buildArchitecture(B)
     end
 end
 
+---------------------------------------------------------------------
+-- GANG HIDEOUT: abandoned house dressing
+---------------------------------------------------------------------
+local function onTop(B, base, role, du, dv, extraHeading)
+    if not base then return end
+    local mn, mx = GetModelDimensions(GetEntityModel(base))
+    local c = GetEntityCoords(base)
+    local top = c.z + mx.z
+    local bu, bv = B.toLocal(c.x, c.y)
+    return B.place(role, bu + (du or 0), bv + (dv or 0), { z = top, force = true, heading = B.headingU(extraHeading or B.rnd(0, 360)) })
+end
+
+local function buildHideout(B, style)
+    local rnd = B.rnd
+    local gang = style.light or { 220, 40, 30 }
+
+    -- 1) junk along every wall: trash bags, boarded planks, mattresses, tyres
+    local wallRoles = { { 'trash', 0.42 }, { 'planks', 0.16 }, { 'mattress', 0.14 }, { 'tyre', 0.08 }, { 'oldChair', 0.06 }, { 'trash', 0.14 } }
+    local function pickRole()
+        local r, acc = rnd(), 0
+        for _, w in ipairs(wallRoles) do acc = acc + w[2]; if r <= acc then return w[1] end end
+        return 'trash'
+    end
+    local function wallSpot(side, at)
+        if rnd() > 0.72 then return end
+        local role = pickRole()
+        local u, v, face
+        if side == 'v0' then u, v, face = at, 0.7, 90 elseif side == 'vW' then u, v, face = at, B.W - 0.7, -90 else u, v, face = B.L - 0.7, at, 180 end
+        B.place(role, u + rnd(-0.3, 0.3), v + rnd(-0.15, 0.15), { heading = B.headingU(face + rnd(-35, 35)), wallOk = true, alongU = role == 'mattress' or role == 'planks' })
+    end
+    for u = 1.2, B.L - 1.0, 1.7 do wallSpot('v0', u); wallSpot('vW', u + 0.8) end
+    for v = 1.2, B.W - 1.0, 1.7 do wallSpot('uL', v) end
+
+    -- 2) the hangout: fire barrel, old couch, chairs, crate table with bottles, old TV, radio
+    local hubs = { { B.L * 0.55, B.W * 0.5 }, { B.L * 0.45, B.W * 0.4 }, { B.L * 0.65, B.W * 0.6 }, { B.L * 0.5, B.W * 0.62 }, { B.L * 0.7, B.W * 0.4 } }
+    for _, h in ipairs(hubs) do
+        local hu, hv = h[1], h[2]
+        local barrel = B.place('fireBarrel', hu, hv, {})
+        if barrel then
+            ROXDecor.flicker[#ROXDecor.flicker + 1] = { u = hu, v = hv, h = 1.3, c = { 255, 120, 30 }, range = 7.0, base = 2.2 }
+            B.place('oldCouch', hu, hv - 2.0, { heading = B.headingU(90), alongU = true })
+            B.place('oldChair', hu + 1.7, hv + 0.5, { heading = B.headingU(180 + rnd(-30, 30)) })
+            B.place('oldChair', hu - 1.7, hv + 0.7, { heading = B.headingU(rnd(-30, 30)) })
+            local tbl = B.place('crateTable', hu + 1.1, hv - 1.0, { heading = B.headingU(rnd(0, 90)) })
+            for i = 1, 3 do onTop(B, tbl, 'bottles', rnd(-0.2, 0.2), rnd(-0.2, 0.2)) end
+            local tvCrate = B.place('crateTable', hu, hv + 2.4, { heading = B.headingU(-90) })
+            onTop(B, tvCrate, 'oldTv', 0, 0, -90)
+            B.place('radio', hu - 1.0, hv + 2.3, { heading = B.headingU(-90 + rnd(-20, 20)) })
+            break
+        end
+    end
+
+    -- 3) drug corner (far corner) with a gang-coloured light, cash and scales on the table
+    local dt = B.place('drugTable', B.L - 1.8, 1.6, { heading = B.headingU(90), alongU = true })
+    if dt then
+        for _ = 1, 3 do onTop(B, dt, 'drugs', rnd(-0.45, 0.45), rnd(-0.2, 0.2)) end
+        onTop(B, dt, 'cash', rnd(-0.3, 0.3), rnd(-0.15, 0.15))
+        onTop(B, dt, 'scale', rnd(-0.3, 0.3), rnd(-0.15, 0.15))
+        B.place('oldChair', B.L - 1.8, 2.6, { heading = B.headingU(-90) })
+        B.place('bulb', B.L - 0.6, 0.8, { heading = B.headingU(135), wallOk = true })
+    end
+    ROXDecor.lights[#ROXDecor.lights + 1] = { u = B.L - 1.8, v = 1.8, c = gang, h = 2.2 }
+
+    -- 4) weapons corner
+    for i = 0, 2 do B.place('weapons', B.L - 1.0 - i * 0.9, B.W - 0.9, { heading = B.headingU(-90 + rnd(-10, 10)), wallOk = true }) end
+    B.place('bat', B.L - 3.6, B.W - 0.8, { heading = B.headingU(rnd(0, 360)) })
+
+    -- 5) dartboard + flickering bulb near the entrance
+    B.wall('dartboard', 'vW', B.L * 0.3, 1.45)
+    ROXDecor.flicker[#ROXDecor.flicker + 1] = { u = 2.2, v = B.W * 0.5, h = 2.4, c = { 255, 225, 170 }, range = 6.0, base = 1.1, broken = true }
+
+    -- 6) litter all over the floor (bottles, cans, cups)
+    for _ = 1, math.floor(B.L * B.W / 6) do
+        B.place('bottles', rnd(2.5, B.L - 0.8), rnd(0.8, B.W - 0.8), { heading = B.headingU(rnd(0, 360)) })
+    end
+
+    -- 7) stains and dirt on the floor
+    for _ = 1, math.floor(B.L * B.W / 9) + 6 do
+        local u, v, r = rnd(1.0, B.L - 1.0), rnd(1.0, B.W - 1.0), rnd(0.3, 1.2)
+        local a = rnd(0, 6.28)
+        local pts = {}
+        for k = 0, 3 do
+            local ang = a + k * 1.5708 + rnd(-0.3, 0.3)
+            pts[#pts + 1] = { u + math.cos(ang) * r * rnd(0.6, 1.2), v + math.sin(ang) * r * rnd(0.6, 1.2) }
+        end
+        local dark = rnd() < 0.2 and { 70, 10, 10, 120 } or { 25, 20, 15, math.floor(rnd(70, 130)) }
+        B.paint(pts, dark)
+    end
+
+    -- 8) dim gang-coloured mood light in the middle + CCTV (they watch the door)
+    ROXDecor.lights[#ROXDecor.lights + 1] = { u = B.L * 0.5, v = B.W * 0.5, c = gang, h = B.room.ceilZ - B.room.floorZ - 0.6 }
+    B.place('cctv', 0.6, 0.6, { heading = B.headingU(45), z = B.room.ceilZ - 0.7, force = true })
+end
+
 -- even grid of ceiling spot lights + hanging lamp props
 local function buildLightGrid(B, style)
     local stepU, stepV = 6.0, math.max(5.0, B.W / math.max(2, math.floor(B.W / 6.0)))
@@ -457,7 +558,7 @@ function ROXDecor.Clear()
         if DoesEntityExist(e) then DeleteEntity(e) end
     end
     for _, f in ipairs(ROXDecor.fx) do StopParticleFxLooped(f, false) end
-    ROXDecor.entities, ROXDecor.lights, ROXDecor.spots, ROXDecor.polys, ROXDecor.fx, ROXDecor.active = {}, {}, {}, {}, {}, false
+    ROXDecor.entities, ROXDecor.lights, ROXDecor.spots, ROXDecor.polys, ROXDecor.fx, ROXDecor.flicker, ROXDecor.active = {}, {}, {}, {}, {}, {}, false
 end
 
 -- center: vec3/vec4 entry point inside the interior; seed: property id
@@ -474,7 +575,13 @@ function ROXDecor.Build(styleKey, center, seed)
 
     local room = measure(vector3(center.x, center.y, center.z))
     local B = Builder(room, vector3(center.x, center.y, center.z), seed or 1)
-    if B.L < 8.0 or B.W < 6.0 then return 0 end
+    if style.builder ~= 'hideout' and (B.L < 8.0 or B.W < 6.0) then return 0 end
+
+    if style.builder == 'hideout' then
+        if B.L < 5.0 or B.W < 4.0 then return 0 end
+        buildHideout(B, style)
+        style = setmetatable({ dust = true, lightRange = 8.0, lightIntensity = 1.3 }, { __index = style })
+    end
 
     local entryZone = math.min(4.5, B.L * 0.14)
     local frontZone = (style.office or style.workshop) and math.min(6.5, B.L * 0.2) or 0
@@ -482,6 +589,7 @@ function ROXDecor.Build(styleKey, center, seed)
     local uFrontEnd = u0 + frontZone
     local uDock = (style.dock and B.L > 18) and B.L * 0.76 or B.L - 0.6
 
+    if style.builder == 'hideout' then goto resolve end
     if style.markings then buildMarkings(B, style) end
     if style.architecture then buildArchitecture(B) end
     if style.lightGrid then buildLightGrid(B, style) end
@@ -492,13 +600,20 @@ function ROXDecor.Build(styleKey, center, seed)
     if style.dock and B.L > 18 then buildDock(B, style, uDock, B.L - 0.6) end
     if not style.architecture then buildSafety(B) end
 
+    ::resolve::
     -- resolve light positions to world space
     local lights = {}
     for _, l in ipairs(ROXDecor.lights) do
         local x, y = B.world(l.u, l.v)
-        local c = l.warm and { 255, 214, 170 } or style.light
-        lights[#lights + 1] = { x = x, y = y, z = room.ceilZ - 1.2, r = c[1], g = c[2], b = c[3] }
+        local c = l.c or (l.warm and { 255, 214, 170 }) or style.light
+        lights[#lights + 1] = { x = x, y = y, z = l.h and (room.floorZ + l.h) or (room.ceilZ - 1.2), r = c[1], g = c[2], b = c[3] }
     end
+    local flick = {}
+    for _, l in ipairs(ROXDecor.flicker) do
+        local x, y = B.world(l.u, l.v)
+        flick[#flick + 1] = { x = x, y = y, z = room.floorZ + (l.h or 1.5), r = l.c[1], g = l.c[2], b = l.c[3], range = l.range, base = l.base, broken = l.broken, seed = math.random() * 10 }
+    end
+    ROXDecor.flicker = flick
     ROXDecor.lights = lights
     local spots = {}
     for _, l in ipairs(ROXDecor.spots) do
@@ -539,6 +654,19 @@ CreateThread(function()
                 if math.abs(l.x - pc.x) < 40.0 and math.abs(l.y - pc.y) < 40.0 then
                     DrawLightWithRange(l.x, l.y, l.z, l.r, l.g, l.b, ROXDecor.range, ROXDecor.intensity)
                 end
+            end
+            local tm = GetGameTimer() / 1000.0
+            for _, l in ipairs(ROXDecor.flicker) do
+                local k
+                if l.broken then
+                    -- broken bulb: mostly on, sometimes cuts out
+                    local n = math.sin(tm * 13.0 + l.seed) + math.sin(tm * 7.3 + l.seed * 2)
+                    k = n > 1.55 and 0.05 or 1.0
+                else
+                    -- fire: soft random flicker
+                    k = 0.75 + 0.15 * math.sin(tm * 9.0 + l.seed) + 0.1 * math.sin(tm * 23.0 + l.seed * 3)
+                end
+                DrawLightWithRange(l.x, l.y, l.z, l.r, l.g, l.b, l.range, l.base * k)
             end
             for _, l in ipairs(ROXDecor.spots) do
                 if math.abs(l.x - pc.x) < 45.0 and math.abs(l.y - pc.y) < 45.0 then

@@ -74,6 +74,31 @@ DecorProps = {
     bucket      = { 'prop_cs_bucket_s', 'prop_mop_bucket_01a' },
     broom       = { 'prop_tool_broom', 'prop_cs_broom' },
     wetsign     = { 'prop_wetfloor_sign_01', 'prop_sign_wet_floor' },
+
+    -- abandoned gang hideout
+    trash       = { 'prop_rub_binbag_01', 'prop_rub_binbag_03', 'prop_rub_binbag_04', 'prop_rub_binbag_05', 'prop_rub_binbag_06',
+                    'prop_rub_litter_01', 'prop_rub_litter_03', 'prop_rub_cardpile_01', 'prop_rub_cardpile_03', 'prop_rub_boxpile_01',
+                    'prop_rub_boxpile_04', 'prop_rub_pile_01', 'prop_rub_pile_03' },
+    planks      = { 'prop_rub_planks_01', 'prop_rub_planks_02', 'prop_rub_planks_03', 'prop_woodpile_04a' },
+    mattress    = { 'prop_rub_matress_01', 'prop_rub_matress_02', 'prop_rub_matress_03', 'prop_skid_sleepbag_1' },
+    oldCouch    = { 'prop_rub_couch01', 'prop_rub_couch02', 'prop_rub_couch03', 'prop_rub_couch04' },
+    oldChair    = { 'prop_rub_chair01', 'prop_rub_chair02', 'prop_old_wood_chair', 'prop_chair_08' },
+    crateTable  = { 'prop_box_wood01a', 'prop_box_wood03a', 'prop_cs_cardbox_01', 'prop_table_03b' },
+    fireBarrel  = { 'prop_hobo_stove_01', 'prop_barrel_03d', 'prop_barrel_02b' },
+    oldTv       = { 'prop_tv_06', 'prop_tv_02', 'prop_tv_04' },
+    drugTable   = { 'prop_table_03', 'prop_ld_farm_table02', 'bkr_prop_weed_table_01a' },
+    drugs       = { 'bkr_prop_weed_bigbag_01a', 'bkr_prop_weed_bag_01a', 'prop_weed_block_01', 'prop_coke_block_01',
+                    'bkr_prop_coke_cutblock_01', 'prop_meth_bag_01', 'bkr_prop_meth_bigbag_04a' },
+    cash        = { 'bkr_prop_moneypack_01a', 'prop_cash_pile_01', 'prop_cash_pile_02', 'bkr_prop_money_wrapped_01' },
+    scale       = { 'bkr_prop_coke_scale_01', 'bkr_prop_weed_scales_01a' },
+    weapons     = { 'prop_gun_case_01', 'prop_box_ammo04a', 'prop_box_ammo03a_set', 'prop_mil_crate_01', 'gr_prop_gr_gunsmithsupl_01a' },
+    bottles     = { 'prop_amb_beer_bottle', 'prop_cs_beer_bot_01', 'prop_beer_bottle', 'prop_wine_bot_01', 'prop_vodka_bottle',
+                    'prop_ecola_can', 'prop_ld_can_01', 'prop_cs_bs_cup', 'prop_food_bs_juice01' },
+    dartboard   = { 'prop_dart_bd_01', 'prop_dart_bd_cab_01' },
+    tyre        = { 'prop_rub_tyre_01', 'prop_rub_tyre_02', 'prop_rub_tyre_03' },
+    bulb        = { 'prop_construcionlamp_01', 'prop_worklight_01a', 'prop_cs_lamp_wall' },
+    radio       = { 'prop_boombox_01', 'prop_ghettoblast_02' },
+    bat         = { 'prop_cs_bowie_knife', 'w_me_bat', 'prop_cs_katana_01' },
 }
 
 -- wall props whose front is their local -Y (mounted rotated 180°). Adjust if a model faces the wall.
@@ -83,6 +108,15 @@ DecorWallFlip = {
 
 -- styles the owner can pick from the iPad (property page)
 DecorStyles = {
+    -- ===================== GANG HIDEOUT (abandoned house) =====================
+    -- light = gang colour of the hideout lights
+    hideout_red    = { category = 'hideout', builder = 'hideout', order = 10, label = 'Abandoned · Blood Red', labelAr = 'مهجور · أحمر', light = { 220, 40, 30 } },
+    hideout_purple = { category = 'hideout', builder = 'hideout', order = 11, label = 'Abandoned · Purple',    labelAr = 'مهجور · بنفسجي', light = { 150, 40, 220 } },
+    hideout_yellow = { category = 'hideout', builder = 'hideout', order = 12, label = 'Abandoned · Yellow',    labelAr = 'مهجور · أصفر', light = { 240, 190, 20 } },
+    hideout_green  = { category = 'hideout', builder = 'hideout', order = 13, label = 'Abandoned · Green',     labelAr = 'مهجور · أخضر', light = { 40, 200, 70 } },
+    hideout_blue   = { category = 'hideout', builder = 'hideout', order = 14, label = 'Abandoned · Blue',      labelAr = 'مهجور · أزرق', light = { 40, 110, 240 } },
+
+    -- ===================== WAREHOUSE =====================
     -- DEFAULT: empty warehouse, fully detailed building (no stock, no furniture)
     empty = {
         label = 'ROX Empty · Detailed', labelAr = 'ROX فاضي · بالتفاصيل', order = 0,
@@ -107,14 +141,37 @@ DecorStyles = {
         architecture = true, markings = true, bays = true, lightGrid = true, order = 3,
         light = { 255, 222, 180 }, lightRange = 12.0, lightIntensity = 1.8,
     },
-    off = { label = 'Bare (no details)', labelAr = 'بدون أي إضافات', order = 4 },
+    off = { label = 'Bare (no details)', labelAr = 'بدون أي إضافات', order = 99, category = 'any' },
 }
 
+for _, st in pairs(DecorStyles) do st.category = st.category or 'warehouse' end
+
+DecorDefaults = { warehouse = 'empty', hideout = 'hideout_red' }
 DecorDefaultStyle = 'empty'
+
+-- interior.decor = true (warehouse) or a category name ('hideout')
+function DecorCategory(interiorKey)
+    local i = Interiors[interiorKey]
+    if not i or not i.decor then return nil end
+    return i.decor == true and 'warehouse' or i.decor
+end
+
+function DecorDefaultFor(interiorKey)
+    return DecorDefaults[DecorCategory(interiorKey) or 'warehouse'] or DecorDefaultStyle
+end
+
+-- style chosen for a property, falling back to the category default
+function DecorStyleFor(interiorKey, chosen)
+    local cat = DecorCategory(interiorKey)
+    if not cat then return nil end
+    local st = chosen and DecorStyles[chosen]
+    if st and (st.category == cat or st.category == 'any') then return chosen end
+    return DecorDefaultFor(interiorKey)
+end
 
 function DecorStylesForUI()
     local out = {}
-    for key, s in pairs(DecorStyles) do out[#out + 1] = { key = key, label = s.label, labelAr = s.labelAr, order = s.order or 9 } end
+    for key, s in pairs(DecorStyles) do out[#out + 1] = { key = key, label = s.label, labelAr = s.labelAr, order = s.order or 9, category = s.category, color = s.builder == 'hideout' and s.light or nil } end
     table.sort(out, function(a, b) return a.order < b.order end)
     return out
 end

@@ -4,7 +4,8 @@
  */
 const I18N = {
     ar: {
-        decor_title: 'تصميم المخزن', decor_hint: 'التصميم ينبني تلقائياً داخل المخزن ويشوفه كل اللي داخل. أثاثك يبقى فوقه.',
+        decor_title_hideout: 'تصميم الوكر (لون العصابة)', gang_only_chip: 'للعصابات فقط',
+        decor_title: 'تصميم المخزن', decor_hint: 'التصميم ينبني تلقائياً داخل العقار ويشوفه كل اللي داخل. أثاثك يبقى فوقه.',
         no_access_title: 'ما عندك صلاحية', no_access_sub: 'هذا التطبيق يحتاج رتبة أعلى في العقار', f_ipl: 'تصاميم اللعبة', f_shells: 'شل', f_detected: 'مكتشف تلقائي', rescan: 'إعادة الفحص',
         detected: 'مكتشف', not_installed: 'غير محمّل في السيرفر', auto_entry_short: 'نقطة دخول تلقائية', custom_hint: 'تحدد نقطة الدخول بالتصويب',
         aim_inside: 'صوّب على مكان الدخول من داخل', aim_inside_desc: 'ادخل الـ MLO أو المكان، صوّب على الأرض اللي يطلع فيها اللاعب واضغط E', inside_point: 'نقطة الدخول (داخل)',
@@ -62,7 +63,8 @@ const I18N = {
         card_view: 'عقار', unknown: '—', tier_low: 'اقتصادي', tier_mid: 'متوسط', tier_high: 'فاخر', tier_luxury: 'لوكس',
     },
     en: {
-        decor_title: 'Warehouse design', decor_hint: 'The design is generated inside the warehouse and everyone inside sees it. Your own furniture stays on top.',
+        decor_title_hideout: 'Hideout design (gang colour)', gang_only_chip: 'GANG ONLY',
+        decor_title: 'Warehouse design', decor_hint: 'The design is generated inside the property and everyone inside sees it. Your own furniture stays on top.',
         no_access_title: 'No access', no_access_sub: 'This app needs a higher real estate grade', f_ipl: 'GTA interiors', f_shells: 'Shells', f_detected: 'Detected', rescan: 'Rescan',
         detected: 'DETECTED', not_installed: 'Not installed on the server', auto_entry_short: 'Automatic entry point', custom_hint: 'Entry point picked by aiming',
         aim_inside: 'Aim at the inside spawn', aim_inside_desc: 'Go inside the MLO / place, aim at the floor where players should appear and press E', inside_point: 'Inside point',
