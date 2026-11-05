@@ -111,6 +111,10 @@ function tabletFrame() {
 function render() {
     const P = PANELS()[App.panel];
     if (!P) return;
+    // same app re-rendered: no open animation, keep scroll positions (prevents the "refresh" flash)
+    const same = App.lastPanel === App.panel && root.firstElementChild;
+    const scrolls = same ? [...root.querySelectorAll('.content, .pb, .split > div, .div-members')].map(e => e.scrollTop) : null;
+    App.lastPanel = App.panel;
     if (App.tablet) {
         if (!root.querySelector('.tablet')) {
             root.innerHTML = tabletFrame();
@@ -125,12 +129,16 @@ function render() {
     } else {
         root.innerHTML = P.html();
     }
+    if (same) {
+        root.querySelectorAll('.panel, .side-wrap, .spn, .home2').forEach(e => e.classList.add('still'));
+        root.querySelectorAll('.content, .pb, .split > div, .div-members').forEach((e, i) => { if (scrolls[i]) e.scrollTop = scrolls[i]; });
+    }
     backdrop.classList.toggle('show', App.tablet);
     H = P.handlers;
     P.after && P.after();
 }
 function closeAll(fromGame) {
-    App.open = false; App.panel = null; App.tablet = false;
+    App.open = false; App.panel = null; App.tablet = false; App.lastPanel = null;
     root.innerHTML = ''; backdrop.classList.remove('show');
     clearInterval(App.tick); clearInterval(App.sbTick);
     if (!fromGame) post('close');
@@ -342,7 +350,7 @@ const Jail = {
     handlers: {},
 };
 Object.assign(Jail.handlers, {
-    tab(el) { Jail.S.tab = el.dataset.t; render(); if (Jail.S.tab === 'list') Jail.loadList(); },
+    async tab(el) { Jail.S.tab = el.dataset.t; if (Jail.S.tab === 'list') await Jail.loadList(); else render(); },
     type(el) { Jail.S.type = el.dataset.k; root.querySelectorAll('.seg-pick .opt').forEach(o => o.classList.toggle('on', o === el)); },
     life(el) { const S = Jail.S; S.life = !S.life; el.classList.toggle('on', S.life); $('#durField').style.display = S.life ? 'none' : ''; $('#bailInput').style.display = S.bail && !S.life ? '' : 'none'; Jail.refreshSum(); },
     bail(el) { const S = Jail.S; S.bail = !S.bail; el.classList.toggle('on', S.bail); $('#bailInput').style.display = S.bail && !S.life ? '' : 'none'; },
@@ -411,7 +419,7 @@ const Fine = {
     handlers: {},
 };
 Object.assign(Fine.handlers, {
-    tab(el) { Fine.S.tab = el.dataset.t; render(); if (Fine.S.tab === 'list') Fine.loadList(); },
+    async tab(el) { Fine.S.tab = el.dataset.t; if (Fine.S.tab === 'list') await Fine.loadList(); else render(); },
     'in:plate'(el) { Fine.S.plate = el.value.toUpperCase(); },
     'in:notes'(el) { Fine.S.notes = el.value; },
     'in:listQ'(el) { Fine.S.listQ = el.value; },
@@ -669,7 +677,7 @@ const dangerBadge = (d) => `<span class="badge ${d === 'high' ? 'bad' : d === 'l
 const refocus = (sel) => { const i = root.querySelector(sel); if (i) { i.focus(); i.setSelectionRange && i.setSelectionRange(i.value.length, i.value.length); } };
 
 Object.assign(MDT.handlers, {
-    nav(el) { MDT.S.page = el.dataset.p; render(); MDT.load(); },
+    async nav(el) { if (MDT.busy) return; MDT.busy = true; el.classList.add('pending'); MDT.S.page = el.dataset.p; try { await MDT.load(); } finally { MDT.busy = false; } },
     async hrelease(el) { if (result(await call('releaseHold', { plate: el.dataset.plate }))) { if (MDT.S.page === 'vehicles' && MDT.S.vehicles.length) MDT.handlers.vsearch(); else MDT.load(); } },
     reload() { MDT.S.results = []; MDT.load(); },
     openJail() { openPanel('jail', {}, 'mdt'); },
@@ -978,7 +986,7 @@ const Boss = {
     handlers: {},
 };
 Object.assign(Boss.handlers, {
-    bnav(el) { Boss.S.page = el.dataset.p; Boss.S.prof = null; render(); Boss.load(); },
+    async bnav(el) { if (Boss.busy) return; Boss.busy = true; el.classList.add('pending'); Boss.S.page = el.dataset.p; Boss.S.prof = null; try { await Boss.load(); } finally { Boss.busy = false; } },
     breload() { Boss.load(); if (Boss.S.page === 'profile') Boss.handlers.bprof({ dataset: { cid: Boss.S.prof.cid } }); },
     'in:bq'(el) { Boss.S.q = el.value; render(); refocus('[data-in="bq"]'); },
     async bprof(el) { Boss.S.page = 'profile'; Boss.S.ptab = Boss.S.ptab || 'info'; Boss.S.prof = null; render(); Boss.S.prof = await call('employee', { cid: el.dataset.cid }); if (Boss.S.prof && Boss.S.prof.grades) Boss.S.grades = Boss.S.prof.grades; render(); },

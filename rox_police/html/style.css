@@ -519,3 +519,8 @@ table.tbl { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
 .brand .logo.svg { background: none; box-shadow: 0 8px 20px rgba(var(--accent-rgb), .35); padding: 0; overflow: hidden; }
 .brand .logo.svg .app-svg { border-radius: 10px; box-shadow: none; }
 .div-grid { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+
+/* re-render without replaying the open animation */
+.still, .app > .panel.still, .still .icon, .still .label { animation: none !important; }
+.nav .ni.pending { opacity: .7; }
+.nav .ni.pending::after { content: ''; margin-left: auto; width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(var(--accent-rgb), .3); border-top-color: var(--accent); animation: spin .7s linear infinite; }
