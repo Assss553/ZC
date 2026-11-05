@@ -198,8 +198,8 @@ $script:FixText = @{
     gpu = 'صلّح الكرت'; runtimes = 'ثبّت الملفات الناقصة'; pagefile = 'صلّح الذاكرة'; verify = 'افحص ملفات اللعبة'
     sfc = 'صلّح ويندوز'; memtest = 'افحص الرام'; boost = 'فضّي الرام'; disk = 'افحص القرص'
 }
-$script:CatText  = @{ app = 'برنامج'; launcher = 'لانشر'; chat = 'تواصل' }
-$script:CatColor = @{ app = '#FF2D3A8C'; launcher = '#FF5B2A9E'; chat = '#FF0F6A8A' }
+$script:CatText  = @{ app = 'برنامج'; launcher = 'لانشر'; chat = 'تواصل'; browser = 'متصفح'; tool = 'أداة بث / FPS' }
+$script:CatColor = @{ app = '#FF2D3A8C'; launcher = '#FF5B2A9E'; chat = '#FF0F6A8A'; browser = '#FF7A4A12'; tool = '#FF7A1F4A' }
 $script:Palette  = @('#FF3B2A7A', '#FF1E4D7A', '#FF6B2A4D', '#FF22604A', '#FF6B4D2A', '#FF2A4D6B', '#FF4A2A6B', '#FF6B2A2A')
 $script:VendorName = @{ amd = 'AMD'; nvidia = 'NVIDIA'; intel = 'Intel' }
 

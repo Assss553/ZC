@@ -1095,6 +1095,10 @@ $script:LauncherNames = @('steam', 'steamwebhelper', 'steamservice', 'epicgamesl
                           'xboxpcapp', 'gamingservices', 'leagueclient', 'leagueclientux', 'leagueclientuxrender')
 $script:ChatNames = @('discord', 'teamspeak', 'ts3client_win64', 'whatsapp', 'telegram', 'slack', 'zoom',
                       'ms-teams', 'msteams', 'teams', 'signal', 'viber', 'messenger', 'skype')
+# Browsers (open tabs) and streaming / FPS-overlay tools are never closed automatically.
+$script:BrowserNames = @('chrome', 'msedge', 'firefox', 'opera', 'brave', 'vivaldi', 'iexplore', 'arc', 'yandex')
+$script:ToolNames = @('obs64', 'obs32', 'obs', 'streamlabs obs', 'streamlabs', 'twitchstudio', 'xsplit.core',
+                      'msiafterburner', 'rtss', 'rtsshooksloader64', 'hwinfo64', 'capframex', 'presentmon')
 
 function Get-BackgroundApps {
     $session  = [System.Diagnostics.Process]::GetCurrentProcess().SessionId
@@ -1123,6 +1127,8 @@ function Get-BackgroundApps {
                 $cat = 'app'
                 if ($script:LauncherNames -contains $name) { $cat = 'launcher' }
                 elseif ($script:ChatNames -contains $name) { $cat = 'chat' }
+                elseif ($script:BrowserNames -contains $name) { $cat = 'browser' }
+                elseif ($script:ToolNames -contains $name) { $cat = 'tool' }
                 $display = $desc.Trim()
                 if (-not $display -or $display.Length -gt 40) { $display = $p.ProcessName }
                 $groups[$name] = [pscustomobject]@{
