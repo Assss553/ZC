@@ -1,0 +1,4 @@
+# Keep Windows files exactly as committed (CRLF, UTF-8 BOM for ROX.ps1)
+*.bat -text
+*.ps1 -text
+*.xaml -text
