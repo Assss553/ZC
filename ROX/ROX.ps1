@@ -152,7 +152,8 @@ function New-RoxItem([hashtable]$P) {
     return $i
 }
 
-function New-ItemList { return (New-Object 'System.Collections.ObjectModel.ObservableCollection[RoxItem]') }
+# The comma keeps PowerShell from unrolling the (empty) collection into `$null.
+function New-ItemList { return , (New-Object 'System.Collections.ObjectModel.ObservableCollection[RoxItem]') }
 
 # ----------------------------------------------------------------- Arabic text
 $script:ModuleDefs = @(
@@ -1264,6 +1265,13 @@ if ($RenderTest) {
     Show-GameToast 'ROX سرّع VALORANT' 'قفلت 6 برامج  •  فضّيت 1,240 MB  •  أولوية عالية'
     Invoke-Pump 5
     $script:Sync.Stop = $true
+    $seen = @{}
+    foreach ($er in @($Error)) {
+        $msg = '{0} @ {1}' -f $er.Exception.Message, $er.InvocationInfo.PositionMessage
+        if ($seen.ContainsKey($msg) -or $msg -match 'No events were found|Cannot find path|does not exist|Cannot find a process') { continue }
+        $seen[$msg] = $true
+        Write-Host ('UI-ERROR: ' + ($msg -replace '\s+', ' '))
+    }
     Write-Host 'RENDER OK'
     $window.Close()
     exit 0

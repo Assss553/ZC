@@ -1,3 +1,0 @@
-# Keep Windows line endings exactly as committed (CRLF)
-*.bat -text
-*.ps1 -text
