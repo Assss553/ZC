@@ -4,11 +4,17 @@
 
 كل تغيير يسويه ROX **ينحفظ**، وتقدر ترجّع كل شي مثل ما كان من **الإعدادات ← رجّع كل شي**.
 
+![أيقونة ROX](screenshots/icon.jpg)
+
 ![ROX - الرئيسية](screenshots/home.jpg)
 
-| الألعاب | طبيب الكراش | اختيار الكرت |
+| English | الألعاب | الإعدادات واللغة |
 |---|---|---|
-| ![الألعاب](screenshots/games.jpg) | ![طبيب الكراش](screenshots/crash-doctor.jpg) | ![اختيار الكرت](screenshots/gpu-picker.jpg) |
+| ![English](screenshots/home-en.jpg) | ![الألعاب](screenshots/games.jpg) | ![الإعدادات](screenshots/settings.jpg) |
+
+| طبيب الكراش | شاشة الترحيب |
+|---|---|
+| ![طبيب الكراش](screenshots/crash-doctor.jpg) | ![شاشة الترحيب](screenshots/gpu-picker.jpg) |
 
 > الصور من تشغيل حقيقي على ويندوز. بعض الألعاب فيها للعرض بس.
 
