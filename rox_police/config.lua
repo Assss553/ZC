@@ -118,9 +118,18 @@ Config.Society = 'police'   -- society / job account name
 
 -- police divisions (managed from the Management app). Add as many as you want.
 Config.Divisions = {
-    { key = 'swat', label = 'SWAT',             icon = 'user-ninja',      color = '#ff4d5e', desc = 'Special Weapons and Tactics — high risk entries, hostage rescue' },
-    { key = 'air',  label = 'Air Support Unit', icon = 'helicopter',      color = '#4da3ff', desc = 'Helicopter patrol, pursuits and search from the air' },
-    { key = 'ops',  label = 'Operations',       icon = 'tower-broadcast', color = '#ffb020', desc = 'Dispatch, planning and field operations command' },
+    -- key, label, tag (ribbon text), emblem (swat air ops k9 traffic detective marine motor gang fto ia), color, desc
+    { key = 'swat',    label = 'SWAT',               tag = 'SWAT',    emblem = 'swat',      color = '#ff4d5e', desc = 'Special Weapons and Tactics — high risk entries, hostage rescue' },
+    { key = 'air',     label = 'Air Support Unit',   tag = 'AIR',     emblem = 'air',       color = '#4da3ff', desc = 'Helicopter patrol, pursuits and search from the air' },
+    { key = 'ops',     label = 'Operations',         tag = 'OPS',     emblem = 'ops',       color = '#ffb020', desc = 'Dispatch, planning and field operations command' },
+    { key = 'k9',      label = 'K-9 Unit',           tag = 'K-9',     emblem = 'k9',        color = '#c08552', desc = 'Police dogs: tracking, searches and drug detection' },
+    { key = 'traffic', label = 'Highway Patrol',     tag = 'TRAFFIC', emblem = 'traffic',   color = '#3ddc84', desc = 'Traffic enforcement, speed control and accidents' },
+    { key = 'cid',     label = 'Criminal Investigations', tag = 'CID', emblem = 'detective', color = '#8a7cff', desc = 'Detectives: investigations, evidence and interviews' },
+    { key = 'marine',  label = 'Marine Unit',        tag = 'MARINE',  emblem = 'marine',    color = '#1fb5c9', desc = 'Boats, coast patrol and water rescue' },
+    { key = 'motor',   label = 'Motor Unit',         tag = 'MOTOR',   emblem = 'motor',     color = '#ff7a3d', desc = 'Police motorcycles, escorts and fast response' },
+    { key = 'gang',    label = 'Gang Unit',          tag = 'GANG',    emblem = 'gang',      color = '#9a9aa8', desc = 'Organized crime and gang intelligence' },
+    { key = 'fto',     label = 'Field Training',     tag = 'FTO',     emblem = 'fto',       color = '#5aa9ff', desc = 'Training new recruits and cadets' },
+    { key = 'ia',      label = 'Internal Affairs',   tag = 'I.A.',    emblem = 'ia',        color = '#d4af37', desc = 'Officer conduct, complaints and investigations' },
 }
 
 Config.Certifications = {

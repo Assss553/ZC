@@ -18,6 +18,7 @@ ui_page 'html/index.html'
 files {
     'html/index.html',
     'html/style.css',
+    'html/emblems.js',
     'html/app.js',
     'html/fa/css/*.css',
     'html/fa/webfonts/*',

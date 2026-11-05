@@ -462,7 +462,7 @@ const MDT = {
         const [eb, tt] = titles[S.page];
         return `<div class="panel mdt">
             <div class="side">
-                <div class="brand"><div class="logo"><i class="fa-solid fa-shield-halved"></i></div><div><b>ROX MDT</b><span>MOBILE DATA TERMINAL</span></div></div>
+                <div class="brand"><div class="logo svg">${Emblem.app('mdt')}</div><div><b>ROX MDT</b><span>MOBILE DATA TERMINAL</span></div></div>
                 <div class="nav">
                     ${nav.map(([k, ic, l, c]) => `<div class="ni ${S.page === k ? 'on' : ''}" data-a="nav" data-p="${k}"><i class="fa-solid fa-${ic}"></i>${l}${c ? `<span class="count">${c}</span>` : ''}</div>`).join('')}
                     <div class="sep">QUICK ACTIONS</div>
@@ -745,8 +745,8 @@ const Home = {
             ${d.activity && d.activity.length ? `<div class="home-feed glass"><h4><i class="fa-solid fa-wave-square"></i>Live Activity</h4>${d.activity.slice(0, 5).map(a => `<div class="fi"><i class="fa-solid fa-${icons[a.kind] || 'circle'}"></i><div>${esc(a.text)}<small>${esc(a.officer || 'System')} · ${ago(a.t)}</small></div></div>`).join('')}</div>` : ''}
             <div class="home-brand">ROX POLICE OS</div>
             <div class="dock">
-                ${app('mdt', 'shield-halved', 'MDT', '255,90,31', (st.warrants || 0) + (st.bolos || 0))}
-                ${App.init && App.init.boss ? app('boss', 'briefcase', 'Management', '130,100,255') : ''}
+                <div class="dock-app" data-a="app" data-p="mdt">${Emblem.app('mdt')}${(st.warrants || 0) + (st.bolos || 0) ? `<span class="badge-n">${(st.warrants || 0) + (st.bolos || 0)}</span>` : ''}<span class="dock-tip">MDT</span></div>
+                ${App.init && App.init.boss ? `<div class="dock-app" data-a="app" data-p="boss">${Emblem.app('boss')}<span class="dock-tip">Management</span></div>` : ''}
                 ${(App.ext || []).length ? '<span class="sep"></span>' + App.ext.map(x => `<div class="dock-app" data-a="handoff" data-res="${esc(x.res)}" data-app="${esc(x.app)}" style="--c:${esc(x.c || '255,90,31')}">${x.img ? `<img class="aicon" src="${esc(x.img)}" alt="">` : `<span class="aicon dark"><i class="fa-solid fa-${esc(x.icon)}"></i></span>`}<span class="dock-tip">${esc(x.label)}</span></div>`).join('') : ''}
                 <div class="dock-app" data-a="app" data-p="settings"><img class="aicon" src="img/icons/settings.jpg" alt=""><span class="dock-tip">Settings</span></div>
             </div>
@@ -792,7 +792,8 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const hexRgb = (h) => { const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h || ''); return m ? [m[1], m[2], m[3]].map(x => parseInt(x, 16)).join(',') : '255,90,31'; };
 const dcs = (c) => `--dc:${esc(c)};--dcr:${hexRgb(c)}`;
 const divDef = (k) => ((App.init && App.init.divisionList) || []).find(d => d.key === k);
-const divChips = (list) => (list || []).map(x => { const d = divDef(x.key); return d ? `<span class="div-chip" style="${dcs(d.color)}"><i class="fa-solid fa-${esc(d.icon)}"></i>${esc(d.label)}${x.leader ? ' <i class="fa-solid fa-crown"></i>' : ''}</span>` : ''; }).join('');
+const divBadge = (d, size, label) => Emblem.badge(d.emblem || d.key, d.color, { size, label: label ? (d.tag || d.label) : '' });
+const divChips = (list) => (list || []).map(x => { const d = divDef(x.key); return d ? `<span class="div-chip" style="${dcs(d.color)}">${divBadge(d, 15)}${esc(d.tag || d.label)}${x.leader ? ' <i class="fa-solid fa-crown"></i>' : ''}</span>` : ''; }).join('');
 const fmtHours = (min) => min >= 60 ? (min / 60).toFixed(1) + 'h' : (min || 0) + 'm';
 const Boss = {
     S: null,
@@ -813,7 +814,7 @@ const Boss = {
         const [eb, tt] = titles[S.page];
         return `<div class="panel mdt boss">
             <div class="side">
-                <div class="brand"><div class="logo"><i class="fa-solid fa-briefcase"></i></div><div><b>Management</b><span>${esc((o.jobLabel || 'POLICE').toUpperCase())}</span></div></div>
+                <div class="brand"><div class="logo svg">${Emblem.app('boss')}</div><div><b>Management</b><span>${esc((o.jobLabel || 'POLICE').toUpperCase())}</span></div></div>
                 <div class="nav"><div class="sep">DATABASE</div>
                     ${nav.map(([k, ic, l, c]) => `<div class="ni ${S.page === k || (k === 'employees' && S.page === 'profile') ? 'on' : ''}" data-a="bnav" data-p="${k}"><i class="fa-solid fa-${ic}"></i>${l}${c ? `<span class="count">${c}</span>` : ''}</div>`).join('')}
                 </div>
@@ -904,7 +905,7 @@ const Boss = {
         } else if (S.ptab === 'divs') {
             const mine = {}; (p.divisions || []).forEach(x => { mine[x.key] = x; });
             body = `<div class="cert-grid" style="grid-template-columns:repeat(3,1fr)">${(App.init.divisionList || []).map(d => { const m = mine[d.key]; return `<div class="cert div-card ${m ? 'on' : ''}" style="${dcs(d.color)}" data-a="pdiv" data-k="${esc(d.key)}">
-                <div class="ci"><i class="fa-solid fa-${esc(d.icon)}"></i></div><b>${esc(d.label)} ${m && m.leader ? '<i class="fa-solid fa-crown" style="color:var(--warn)"></i>' : ''}</b><span>${esc(d.desc || '')}</span>
+                <div class="div-emb sm">${divBadge(d, 54, true)}</div><b>${esc(d.label)} ${m && m.leader ? '<i class="fa-solid fa-crown" style="color:var(--warn)"></i>' : ''}</b><span>${esc(d.desc || '')}</span>
                 <span class="badge ${m ? 'ok' : ''}">${m ? (m.leader ? 'leader' : 'member') : 'not a member'}</span></div>`; }).join('')}</div>`;
         } else if (S.ptab === 'certs') {
             body = `<div class="cert-grid">${(App.init.certifications || []).map(c => { const on = p.certs && p.certs[c.key]; return `<div class="cert ${on ? 'on' : ''}" data-a="cert" data-k="${c.key}"><div class="ci"><i class="fa-solid fa-${c.icon}"></i></div><b>${esc(c.label)}</b><span>${on ? 'Granted by ' + esc(on.by) + ' · ' + ago(on.t) : 'Not certified'}</span></div>`; }).join('')}</div>`;
@@ -933,7 +934,7 @@ const Boss = {
             const leader = d.members.find(m => m.leader);
             const on = d.members.filter(m => m.online).length;
             return `<div class="div-panel" style="${dcs(d.color)}">
-                <div class="div-head"><div class="div-ic"><i class="fa-solid fa-${esc(d.icon)}"></i></div>
+                <div class="div-head"><div class="div-emb">${divBadge(d, 74, true)}</div>
                     <div style="flex:1;min-width:0"><b>${esc(d.label)}</b><span>${esc(d.desc || '')}</span></div></div>
                 <div class="div-stats"><div><b>${d.members.length}</b><span>Members</span></div><div><b style="color:var(--ok)">${on}</b><span>Online</span></div><div><b style="font-size:13px">${leader ? esc(leader.name) : '—'}</b><span>Leader</span></div></div>
                 <div class="list-rows div-members">${d.members.map(m => `<div class="rowcard"><div class="avatar">${initials(m.name)}</div>
@@ -1145,7 +1146,7 @@ const Mock = {
             certifications: [['firearms', 'Firearms', 'gun'], ['pursuit', 'Pursuit Driving', 'car-burst'], ['k9', 'K9 Unit', 'dog'], ['air', 'Air Unit', 'helicopter'], ['swat', 'SWAT', 'user-ninja'], ['detective', 'Detective', 'user-secret'], ['traffic', 'Traffic Unit', 'motorcycle'], ['fto', 'Field Training', 'chalkboard-user']].map(([key, label, icon]) => ({ key, label, icon })),
             accessories: [['mask', 'Mask', 'masks-theater'], ['hat', 'Hat', 'hat-cowboy'], ['glasses', 'Glasses', 'glasses'], ['bag', 'Bag', 'bag-shopping']].map(([key, label, icon]) => ({ key, label, icon })),
             impound: { price: 500, maxPrice: 50000, maxHours: 72 },
-            divisionList: [{ key: 'swat', label: 'SWAT', icon: 'user-ninja', color: '#ff4d5e', desc: 'Special Weapons and Tactics — high risk entries, hostage rescue' }, { key: 'air', label: 'Air Support Unit', icon: 'helicopter', color: '#4da3ff', desc: 'Helicopter patrol, pursuits and search from the air' }, { key: 'ops', label: 'Operations', icon: 'tower-broadcast', color: '#ffb020', desc: 'Dispatch, planning and field operations command' }],
+            divisionList: [['swat', 'SWAT', 'SWAT', '#ff4d5e', 'Special Weapons and Tactics — high risk entries, hostage rescue'], ['air', 'Air Support Unit', 'AIR', '#4da3ff', 'Helicopter patrol, pursuits and search from the air'], ['ops', 'Operations', 'OPS', '#ffb020', 'Dispatch, planning and field operations command'], ['k9', 'K-9 Unit', 'K-9', '#c08552', 'Police dogs: tracking, searches and drug detection'], ['traffic', 'Highway Patrol', 'TRAFFIC', '#3ddc84', 'Traffic enforcement, speed control and accidents'], ['cid', 'Criminal Investigations', 'CID', '#8a7cff', 'Detectives: investigations, evidence and interviews', 'detective'], ['marine', 'Marine Unit', 'MARINE', '#1fb5c9', 'Boats, coast patrol and water rescue'], ['motor', 'Motor Unit', 'MOTOR', '#ff7a3d', 'Police motorcycles, escorts and fast response'], ['gang', 'Gang Unit', 'GANG', '#9a9aa8', 'Organized crime and gang intelligence'], ['fto', 'Field Training', 'FTO', '#5aa9ff', 'Training new recruits and cadets'], ['ia', 'Internal Affairs', 'I.A.', '#d4af37', 'Officer conduct, complaints and investigations']].map(([key, label, tag, color, desc, emblem]) => ({ key, label, tag, color, desc, emblem: emblem || key })),
             myDivisions: [{ key: 'swat', leader: true }],
             jailTypes: [{ key: 'prison', label: 'Prison', icon: 'building-shield' }, { key: 'cell', label: 'Holding Cell', icon: 'door-closed' }],
             presets: [5, 10, 15, 30, 60], maxMinutes: 300, stats: {},

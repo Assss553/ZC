@@ -67,6 +67,8 @@ const IC = {
     truck: '<path d="M2 16V6h11v10M13 9h5l4 4v3h-9"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/>',
     jail: '<path d="M4 21V4h16v17M8 4v17M12 4v17M16 4v17M4 21h16"/>',
     ticket: '<path d="M4 4h12l4 4v12H4z"/><path d="M8 12h8M8 16h5M8 8h4"/>',
+    pstar: '<circle cx="12" cy="12" r="8.6" stroke-width="1.4"/><path d="M12 5.6l1.8 3.3 3.7.1-1.9 3.2 1.9 3.2-3.7.1-1.8 3.3-1.8-3.3-3.7-.1 1.9-3.2-1.9-3.2 3.7-.1z" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="#d8400f" stroke="none"/>',
+    chev: '<path d="M6 8.5l6-3 6 3M6 13l6-3 6 3M6 17.5l6-3 6 3" stroke-width="2.4"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 20a6 6 0 0 0-3-5"/>',
 };
 const icon = (n) => `<svg viewBox="0 0 24 24">${IC[n] || IC.info}</svg>`;
@@ -1033,7 +1035,7 @@ if (!IS_GAME) {
     if (q.get('citizen')) { Object.assign(Mock.data.apps, { create: false, manage: false, contracts: false, estate: false, furniture: q.get('citizen') === 'home' }); Mock.data.isRealtor = false; }
     if (q.get('wall')) S.settings.wallpaper = `img/wallpapers/${q.get('wall')}.jpg`;
     setTimeout(() => {
-        const ext = q.get('police') ? [['mdt', '', 'MDT', 'shield', '#ff7a3d', '#d8400f'], ['boss', '', 'Management', 'users', '#9b7bff', '#5b33e6']]
+        const ext = q.get('police') ? [['mdt', '', 'MDT', 'pstar', '#ff7a3d', '#c93a0c'], ['boss', '', 'Management', 'chev', '#9b7bff', '#4a24cf']]
             .map(([app, page, label, icon, c1, c2]) => ({ res: 'rox_police', app, page, label, icon, c1, c2 })) : [];
         window.postMessage({ action: 'open', data: Mock.data, static: st, app: q.get('app') || 'home', ext }, '*');
         if (q.get('dialog')) setTimeout(() => confirmDialog('Someone wants to buy your property. Do you want to allow it?', null, null, 'Sale Request'), 100);

@@ -40,7 +40,9 @@
 - **Employee List**: كل الموظفين (أونلاين وأوفلاين)، الرتبة، النداء (Callsign)، ساعات الدوام، المكافآت والإنذارات
 - **Profile**: مكافأة / إنذار، **خريطة نشاط** لساعات الدوام لكل يوم وساعة، الشهادات، تغيير الرتبة، فصل، وملاحظات
 - **Hire**: توظيف لاعب قريب منك برتبة تختارها
-- **Divisions**: الأقسام **SWAT** و **Air Support Unit** و **Operations** — تضيف وتشيل الأعضاء، تحدد قائد لكل قسم (👑)، والقسم يطلع جنب اسم الشرطي في الملف والجداول والـ MDT. تضيف أقسام ثانية من `Config.Divisions`
+- **Divisions**: 11 قسم بشعارات مرسومة خاصة (درع + رمز + شريط): **SWAT**، **Air Support Unit**، **Operations**، **K-9**، **Highway Patrol**، **CID**، **Marine**، **Motor**، **Gang Unit**، **Field Training**، **Internal Affairs** — تضيف وتشيل الأعضاء، تحدد قائد لكل قسم (👑)، والقسم يطلع جنب اسم الشرطي في الملف والجداول والـ MDT. تضيف أقسام ثانية من `Config.Divisions` وتختار الشعار (`emblem`) واللون والكلمة اللي على الشريط (`tag`)
+
+![emblems](docs/emblems.png)
 - **Certifications**: جدول الشهادات (Firearms، K9، SWAT، Air...)
 - **Finance**: إيداع وسحب من حساب الشرطة (qb-banking / qb-management / Renewed-Banking / esx_society)
 - **Activity Log**: كل شي سواه المدراء

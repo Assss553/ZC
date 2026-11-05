@@ -299,9 +299,9 @@ exports('Close', function(keepProp) close(keepProp) end)
 exports('IpadApps', function()
     if not lastAccess.ok or not Config.Tablet.shareWithRealEstate then return {} end
     local apps = {
-        { res = 'rox_police', app = 'mdt', label = 'MDT', labelAr = 'MDT', icon = 'shield', c1 = '#ff7a3d', c2 = '#d8400f' },
+        { res = 'rox_police', app = 'mdt', label = 'MDT', labelAr = 'MDT', icon = 'pstar', c1 = '#ff7a3d', c2 = '#c93a0c' },
     }
-    if lastAccess.boss then apps[#apps + 1] = { res = 'rox_police', app = 'boss', label = 'Management', labelAr = 'الإدارة', icon = 'users', c1 = '#9b7bff', c2 = '#5b33e6' } end
+    if lastAccess.boss then apps[#apps + 1] = { res = 'rox_police', app = 'boss', label = 'Management', labelAr = 'الإدارة', icon = 'chev', c1 = '#9b7bff', c2 = '#4a24cf' } end
     return apps
 end)
 
