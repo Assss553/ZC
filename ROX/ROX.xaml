@@ -102,8 +102,8 @@
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Grid>
-              <Border x:Name="shadow" CornerRadius="20" Background="{TemplateBinding Background}" Opacity="0.32" Margin="6,8,6,-5">
-                <Border.Effect><BlurEffect Radius="16"/></Border.Effect>
+              <Border x:Name="shadow" CornerRadius="20" Background="{TemplateBinding Background}" Opacity="0.2" Margin="10,10,10,-2">
+                <Border.Effect><BlurEffect Radius="10"/></Border.Effect>
               </Border>
               <Border CornerRadius="20" Background="{TemplateBinding Background}">
                 <Grid>
@@ -115,7 +115,7 @@
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="shine" Property="Opacity" Value="0.14"/>
-                <Setter TargetName="shadow" Property="Opacity" Value="0.6"/>
+                <Setter TargetName="shadow" Property="Opacity" Value="0.38"/>
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
                 <Setter TargetName="shine" Property="Opacity" Value="0.26"/>

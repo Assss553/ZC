@@ -1186,8 +1186,23 @@ function Save-Shot([string]$Name) {
     $root = $ui.Root
     $w = [int][math]::Max(1, $root.ActualWidth)
     $h = [int][math]::Max(1, $root.ActualHeight)
+    # Paint the window background, and re-apply the right-to-left mirror that Windows applies
+    # to the whole window (rendering the content directly would give a mirrored picture).
+    $dv = New-Object System.Windows.Media.DrawingVisual
+    $dc = $dv.RenderOpen()
+    $full = New-Object System.Windows.Rect(0, 0, $w, $h)
+    $dc.DrawRectangle($window.Background, $null, $full)
+    $vb = New-Object System.Windows.Media.VisualBrush($root)
+    $vb.ViewboxUnits = [System.Windows.Media.BrushMappingMode]::Absolute
+    $vb.Viewbox = $full
+    $vb.Stretch = [System.Windows.Media.Stretch]::Fill
+    $rtl = ($window.FlowDirection -eq [System.Windows.FlowDirection]::RightToLeft)
+    if ($rtl) { $dc.PushTransform((New-Object System.Windows.Media.MatrixTransform(-1.0, 0.0, 0.0, 1.0, [double]$w, 0.0))) }
+    $dc.DrawRectangle($vb, $null, $full)
+    if ($rtl) { $dc.Pop() }
+    $dc.Close()
     $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap($w, $h, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
-    $rtb.Render($root)
+    $rtb.Render($dv)
     $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
     $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($rtb))
     $path = Join-Path $RenderTest "$Name.png"
@@ -1234,10 +1249,10 @@ if ($RenderTest) {
             [pscustomobject]@{ Cause = 'tdr'; App = ''; Module = ''; Code = ''; Count = 2; Last = (Get-Date).AddDays(-3); FixId = 'gpu'; Extra = '' }
         )
     }
-    Show-Page 'PageHome';     Save-Shot '01-home'
-    Show-Page 'PageOptimize'; Save-Shot '02-optimize'
-    Show-Page 'PageGames';    Save-Shot '03-games'
-    Show-Page 'PageApps'
+    $ui.NavHome.IsChecked = $true;     Show-Page 'PageHome'; Save-Shot '01-home'
+    $ui.NavOptimize.IsChecked = $true; Save-Shot '02-optimize'
+    $ui.NavGames.IsChecked = $true;    Save-Shot '03-games'
+    $ui.NavApps.IsChecked = $true
     Invoke-Pump 3
     $deadline = (Get-Date).AddSeconds(60)
     while (((Get-Date) -lt $deadline) -and ($null -ne $script:Job -or $script:JobQueue.Count -gt 0)) { Invoke-Pump 5 }
@@ -1248,9 +1263,9 @@ if ($RenderTest) {
         )
     }
     Save-Shot '04-apps'
-    Show-Page 'PageCrash';    Save-Shot '05-crash'
-    Show-Page 'PageSettings'; Save-Shot '06-settings'
-    Show-Page 'PageHome'
+    $ui.NavCrash.IsChecked = $true;    Save-Shot '05-crash'
+    $ui.NavSettings.IsChecked = $true; Save-Shot '06-settings'
+    $ui.NavHome.IsChecked = $true
     Show-GpuModal;            Save-Shot '07-gpu-modal'
     $ui.ModalGpu.Visibility = 'Collapsed'
     Open-Drawer 'تحديث وإصلاح كل شي'
