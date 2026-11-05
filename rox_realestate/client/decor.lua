@@ -212,6 +212,8 @@ local function Builder(room, entry, seed)
         FreezeEntityPosition(ent, true)
         SetModelAsNoLongerNeeded(hash)
         ROXDecor.entities[#ROXDecor.entities + 1] = ent
+        ROXDecor.models = ROXDecor.models or {}
+        ROXDecor.models[ent] = { model = model, vehicle = role == 'forklift' }
         B.placed = B.placed + 1
         if B.placed % 6 == 0 then Wait(0) end
         return ent, size, model
@@ -555,5 +557,23 @@ CreateThread(function()
         end
     end
 end)
+
+-- Export the warehouse you are standing in as a real map file (CodeWalker .ymap.xml)
+-- /roxdecor_export [name]  -> saved on the server in rox_realestate/exports/<name>.ymap.xml
+RegisterCommand('roxdecor_export', function(_, args)
+    if not ROXDecor.active or #ROXDecor.entities == 0 then return Notify('No ROX warehouse design here', 'error') end
+    local list = {}
+    for _, e in ipairs(ROXDecor.entities) do
+        local meta = ROXDecor.models and ROXDecor.models[e]
+        if DoesEntityExist(e) and meta and not meta.vehicle then
+            local c = GetEntityCoords(e)
+            local qx, qy, qz, qw = GetEntityQuaternion(e)
+            list[#list + 1] = { m = meta.model, x = c.x, y = c.y, z = c.z, qx = qx, qy = qy, qz = qz, qw = qw }
+        end
+    end
+    local name = (args and args[1] or ('rox_warehouse_' .. (CurrentHouse and CurrentHouse.id or 0))):gsub('[^%w_%-]', '')
+    local ok, res = ServerCall('exportDecor', name, list)
+    if ok then Notify(('Saved %s (%d props)'):format(res, #list), 'success') elseif res then Notify(res, 'error') end
+end, false)
 
 RegisterCommand('roxdecor_debug', function() Debug = not Debug print('ROX decor debug', Debug) end, false)

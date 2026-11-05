@@ -231,6 +231,84 @@ RegisterCallback('saveEntry', function(src, label)
     return true
 end)
 
+-- realtor: write the generated warehouse as a CodeWalker ymap XML (exports/<name>.ymap.xml)
+RegisterCallback('exportDecor', function(src, name, list)
+    if not IsRealtor(src) then return false, L('not_realtor') end
+    if type(name) ~= 'string' or name == '' or type(list) ~= 'table' or #list == 0 or #list > 2000 then return false, L('invalid_data') end
+    name = name:gsub('[^%w_%-]', ''):sub(1, 48)
+    local minV, maxV = { math.huge, math.huge, math.huge }, { -math.huge, -math.huge, -math.huge }
+    local items = {}
+    for _, e in ipairs(list) do
+        local x, y, z = tonumber(e.x), tonumber(e.y), tonumber(e.z)
+        local m = type(e.m) == 'string' and e.m:gsub('[^%w_]', '') or nil
+        if x and y and z and m then
+            minV = { math.min(minV[1], x), math.min(minV[2], y), math.min(minV[3], z) }
+            maxV = { math.max(maxV[1], x), math.max(maxV[2], y), math.max(maxV[3], z) }
+            -- ymap stores the inverse rotation
+            items[#items + 1] = ([[
+    <Item type="CEntityDef">
+      <archetypeName>%s</archetypeName>
+      <flags value="32" />
+      <guid value="0" />
+      <position x="%.4f" y="%.4f" z="%.4f" />
+      <rotation x="%.6f" y="%.6f" z="%.6f" w="%.6f" />
+      <scaleXY value="1" />
+      <scaleZ value="1" />
+      <parentIndex value="-1" />
+      <lodDist value="120" />
+      <childLodDist value="0" />
+      <lodLevel>LODTYPES_DEPTH_ORPHANHD</lodLevel>
+      <numChildren value="0" />
+      <priorityLevel>PRI_REQUIRED</priorityLevel>
+      <extensions />
+      <ambientOcclusionMultiplier value="255" />
+      <artificialAmbientOcclusion value="255" />
+      <tintValue value="0" />
+    </Item>]]):format(m, x, y, z, -(tonumber(e.qx) or 0), -(tonumber(e.qy) or 0), -(tonumber(e.qz) or 0), tonumber(e.qw) or 1)
+        end
+    end
+    local pad = 60.0
+    local xml = ([[<?xml version="1.0" encoding="UTF-8"?>
+<!-- ROX Real Estate · ROX warehouse design · © ROX Store – All rights reserved -->
+<CMapData>
+  <name>%s</name>
+  <parent />
+  <flags value="0" />
+  <contentFlags value="1" />
+  <streamingExtentsMin x="%.2f" y="%.2f" z="%.2f" />
+  <streamingExtentsMax x="%.2f" y="%.2f" z="%.2f" />
+  <entitiesExtentsMin x="%.2f" y="%.2f" z="%.2f" />
+  <entitiesExtentsMax x="%.2f" y="%.2f" z="%.2f" />
+  <entities>%s
+  </entities>
+  <containerLods />
+  <boxOccluders />
+  <occludeModels />
+  <physicsDictionaries />
+  <instancedData>
+    <ImapLink />
+    <PropInstanceList />
+    <GrassInstanceList />
+  </instancedData>
+  <timeCycleModifiers />
+  <carGenerators />
+  <block>
+    <version value="0" />
+    <flags value="0" />
+    <name>%s</name>
+    <exportedBy>ROX Store</exportedBy>
+    <owner />
+    <time />
+  </block>
+</CMapData>
+]]):format(name, minV[1] - pad, minV[2] - pad, minV[3] - pad, maxV[1] + pad, maxV[2] + pad, maxV[3] + pad,
+        minV[1], minV[2], minV[3], maxV[1], maxV[2], maxV[3], table.concat(items), name)
+    local path = ('exports/%s.ymap.xml'):format(name)
+    if not SaveResourceFile(RES, path, xml, -1) then return false, 'save failed (create the exports folder)' end
+    print(('^2[ROX Store]^7 exported %d props to %s/%s'):format(#items, RES, path))
+    return true, path
+end)
+
 RegisterCommand(Config.Detect.Command, function(src)
     if src ~= 0 and not IsRealtor(src) then return end
     CreateThread(function()
