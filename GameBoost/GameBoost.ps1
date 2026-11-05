@@ -7,12 +7,12 @@
   * Uses only built-in Windows settings. The only download is the official
     GPU vendor updater app (through winget) so the GPU driver updates itself.
   * Start it with GameBoost.bat (double-click). Command line:
-        GameBoost.ps1 -Mode Menu | Apply | CleanRam | Status | Restore
+        GameBoost.ps1 -Mode Menu | Apply | CleanRam | Status | Restore | Intel
 ================================================================================
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Menu', 'Apply', 'CleanRam', 'Status', 'Restore')]
+    [ValidateSet('Menu', 'Apply', 'CleanRam', 'Status', 'Restore', 'Intel')]
     [string]$Mode = 'Menu'
 )
 
@@ -34,14 +34,17 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     exit
 }
 
-if ([Environment]::OSVersion.Version.Major -lt 10) {
+$osBuild = 0
+try { $osBuild = [int](Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).BuildNumber } catch { }
+if ($osBuild -gt 0 -and $osBuild -lt 10240) {
     Write-Host 'GameBoost supports Windows 10 and Windows 11 only.' -ForegroundColor Red
     Start-Sleep -Seconds 6
     exit 1
 }
 
 # ----------------------------------------------------------------- constants
-$script:Version         = '1.0'
+$script:Version         = '1.1'
+$script:IsWin10         = ($osBuild -gt 0 -and $osBuild -lt 22000)
 $script:DataDir         = Join-Path $env:ProgramData 'GameBoost'
 $script:BackupFile      = Join-Path $script:DataDir 'backup.json'
 $script:LogFile         = Join-Path $script:DataDir 'log.txt'
@@ -128,6 +131,47 @@ public static class GameBoostNative
         EnablePrivilege("SeProfileSingleProcessPrivilege");
         int command = 4;                                            // MemoryPurgeStandbyList
         return NtSetSystemInformation(80, ref command, sizeof(int)); // SystemMemoryListInformation
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetSystemCpuSetInformation(IntPtr information, int bufferLength, out int returnedLength,
+                                                          IntPtr process, int flags);
+
+    // Logical processors per efficiency class (index = class). Hybrid Intel CPUs (12th gen+ / Core Ultra):
+    // the highest class = P-cores, lower classes = E-cores. A normal CPU returns a single class.
+    public static int[] GetEfficiencyClassCounts()
+    {
+        int length;
+        GetSystemCpuSetInformation(IntPtr.Zero, 0, out length, IntPtr.Zero, 0);
+        if (length <= 0) return new int[0];
+        IntPtr buffer = Marshal.AllocHGlobal(length);
+        try
+        {
+            if (!GetSystemCpuSetInformation(buffer, length, out length, IntPtr.Zero, 0)) return new int[0];
+            int[] counts = new int[256];
+            int max = -1;
+            int offset = 0;
+            while (offset + 20 <= length)
+            {
+                int size = Marshal.ReadInt32(buffer, offset);
+                if (size <= 0) break;
+                int type = Marshal.ReadInt32(buffer, offset + 4);
+                if (type == 0)                                      // CpuSetInformation
+                {
+                    int cls = Marshal.ReadByte(buffer, offset + 18); // CpuSet.EfficiencyClass
+                    counts[cls]++;
+                    if (cls > max) max = cls;
+                }
+                offset += size;
+            }
+            int[] result = new int[max + 1];
+            Array.Copy(counts, result, max + 1);
+            return result;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
     }
 }
 '@
@@ -417,11 +461,18 @@ function Set-CpuPowerPlan {
 
     if (Test-SchemeExists $script:SchemeGuid) {
         $null = powercfg /changename $script:SchemeGuid 'GameBoost' 'Maximum performance for gaming (GameBoost)' 2>&1
-        # Plugged in (AC): full speed, no core parking, no PCIe/USB power saving.
+        # Plugged in (AC): full speed + turbo, no core parking, no PCIe/USB power saving.
+        # The "...1" settings are for the P-cores of hybrid Intel CPUs (ignored on other CPUs).
         $ac = @(
             @('SUB_PROCESSOR', 'PROCTHROTTLEMIN', 100),
             @('SUB_PROCESSOR', 'PROCTHROTTLEMAX', 100),
             @('SUB_PROCESSOR', 'CPMINCORES', 100),
+            @('SUB_PROCESSOR', 'PROCTHROTTLEMIN1', 100),
+            @('SUB_PROCESSOR', 'PROCTHROTTLEMAX1', 100),
+            @('SUB_PROCESSOR', 'CPMINCORES1', 100),
+            @('SUB_PROCESSOR', 'PERFBOOSTMODE', 2),      # Turbo Boost: aggressive
+            @('SUB_PROCESSOR', 'PERFEPP', 0),            # Speed Shift / CPPC: 0 = max performance
+            @('SUB_PROCESSOR', 'PERFEPP1', 0),
             @('SUB_PCIEXPRESS', 'ASPM', 0),
             @('2a737441-1930-4402-8d77-b2bebba308a3', '48e6b7a6-50f5-4782-a5d4-53bb8f07e226', 0),
             @('SUB_DISK', 'DISKIDLE', 0)
@@ -700,6 +751,212 @@ function Optimize-ProcessesAndClean {
     Write-Ok ('Temp files cleaned: {0:N0} MB' -f ($freed / 1MB))
 }
 
+# ================================================================= INTEL (CPU + GPU)
+
+function Get-CpuDetails {
+    $cpu   = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
+    $name  = ''
+    $maker = ''
+    if ($cpu) { $name = ([string]$cpu.Name).Trim(); $maker = [string]$cpu.Manufacturer }
+
+    # Intel generation from the model number: i7-4790 = 4, i5-1135G7 = 11, i9-13900K = 13.
+    $gen = 0
+    $m = [regex]::Match($name, 'i[3579]-(\d{4,5})')
+    if ($m.Success) {
+        $num = $m.Groups[1].Value
+        if ($num.Length -eq 5 -or $num.StartsWith('1')) { $gen = [int]$num.Substring(0, 2) } else { $gen = [int]$num.Substring(0, 1) }
+    } elseif ($name -match 'Ultra') {
+        $gen = 15   # Core Ultra (Meteor Lake / Lunar Lake / Arrow Lake)
+    }
+
+    $classes = @()
+    if (Initialize-Native) { try { $classes = @([GameBoostNative]::GetEfficiencyClassCounts()) } catch { } }
+    $p = 0
+    $e = 0
+    if ($classes.Count -gt 1) {
+        $p = [int]$classes[$classes.Count - 1]
+        for ($i = 0; $i -lt $classes.Count - 1; $i++) { $e += [int]$classes[$i] }
+    }
+    return [pscustomobject]@{
+        Name     = $name
+        IsIntel  = ($maker -match 'Intel' -or $name -match 'Intel')
+        Gen      = $gen
+        Hybrid   = ($p -gt 0 -and $e -gt 0)
+        PThreads = $p
+        EThreads = $e
+    }
+}
+
+# Running CPU microcode revision (upper 32 bits of "Update Revision").
+function Get-MicrocodeRevision {
+    try {
+        $v = (Get-ItemProperty -LiteralPath 'HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0' -Name 'Update Revision' -ErrorAction Stop).'Update Revision'
+        if ($v -is [byte[]] -and $v.Length -ge 8) { return [BitConverter]::ToUInt32($v, 4) }
+    } catch { }
+    return 0
+}
+
+# Biggest memory window (MB) given to a GPU. >= 1 GB means Resizable BAR is ON. -1 = unknown.
+function Get-LargestBarMB([string]$PnpId) {
+    try {
+        $ranges = @{}
+        foreach ($r in @(Get-WmiObject Win32_DeviceMemoryAddress -ErrorAction Stop)) { $ranges[[string]$r.StartingAddress] = $r }
+        $max = 0
+        foreach ($a in @(Get-WmiObject Win32_PnPAllocatedResource -ErrorAction Stop)) {
+            $m = [regex]::Match([string]$a.Antecedent, 'Win32_DeviceMemoryAddress\.StartingAddress="(\d+)"')
+            if (-not $m.Success) { continue }
+            $dep = ([string]$a.Dependent).Replace('\\', '\')
+            if ($dep.IndexOf($PnpId, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
+            $range = $ranges[$m.Groups[1].Value]
+            if ($range) {
+                $size = ([double]$range.EndingAddress - [double]$range.StartingAddress + 1) / 1MB
+                if ($size -gt $max) { $max = $size }
+            }
+        }
+        return [math]::Round($max)
+    } catch {
+        return -1
+    }
+}
+
+function Show-RamCheck([switch]$IntegratedOnly) {
+    $dimms = @(Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue)
+    if ($dimms.Count -eq 0) { return }
+    $type     = [int]$dimms[0].SMBIOSMemoryType
+    $speed    = [int]$dimms[0].ConfiguredClockSpeed
+    $typeName = 'RAM'
+    switch ($type) {
+        24 { $typeName = 'DDR3' }
+        26 { $typeName = 'DDR4' }
+        29 { $typeName = 'LPDDR3' }
+        30 { $typeName = 'LPDDR4' }
+        34 { $typeName = 'DDR5' }
+        35 { $typeName = 'LPDDR5' }
+    }
+    $totalGB = (($dimms | Measure-Object -Property Capacity -Sum).Sum) / 1GB
+    Write-Info ('RAM: {0} stick(s), {1}, {2} MT/s, {3:N0} GB' -f $dimms.Count, $typeName, $speed, $totalGB)
+    $soldered = @(27, 28, 29, 30, 35) -contains $type
+    if ($IntegratedOnly -and $dimms.Count -eq 1 -and -not $soldered) {
+        Write-Attention 'Only ONE RAM stick = single channel. Intel integrated graphics get up to ~2x FPS with TWO matching sticks (dual channel) - the best cheap upgrade for this PC.'
+    }
+    if (($type -eq 26 -and $speed -gt 0 -and $speed -le 2666) -or ($type -eq 34 -and $speed -gt 0 -and $speed -le 4800)) {
+        Write-Info 'If your RAM is rated faster (look at the sticker), turn on XMP in BIOS - free FPS.'
+    }
+}
+
+function Install-IntelDsa {
+    $what = 'keeps Intel graphics, Wi-Fi, Bluetooth and chipset drivers updated'
+    if (Test-AppInstalled 'Intel.*Driver.*Support Assistant') {
+        Write-Ok "Intel Driver & Support Assistant is installed - $what"
+    } elseif (Install-WithWinget -Ids @('Intel.IntelDriverAndSupportAssistant') -ExactName '') {
+        Write-Ok "Intel Driver & Support Assistant installed - $what"
+    } else {
+        Write-Attention 'Could not install Intel Driver & Support Assistant automatically - opening the official page'
+        Start-Process 'https://www.intel.com/content/www/us/en/support/detect.html'
+    }
+    Write-Info 'Some laptops show "use the laptop maker driver" for graphics in DSA - that is normal.'
+}
+
+function Invoke-IntelTune {
+    param([switch]$FromMenu)
+    if ($FromMenu) { Write-Banner }
+    $cpu       = Get-CpuDetails
+    $gpus      = @(Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue)
+    $intelGpus = @($gpus | Where-Object { $_.PNPDeviceID -match 'VEN_8086' })
+    if (-not $cpu.IsIntel -and $intelGpus.Count -eq 0) {
+        if ($FromMenu) { Write-Skip 'No Intel CPU or Intel GPU in this PC - nothing Intel-specific to do.' }
+        return
+    }
+    # Discrete Intel Arc cards are named A380 / A750 / A770 / B570 / B580 ...
+    # ("Arc Graphics" / "Arc 140V" without that is the integrated GPU of Core Ultra).
+    $isArcCard = { param($g) [string]$g.Name -match 'Arc.*\b[AB]\d{3}' }
+    $dedicated = @($gpus | Where-Object { $_.PNPDeviceID -match 'VEN_10DE|VEN_1002' -or (& $isArcCard $_) })
+
+    Write-Step 'Intel: CPU + GPU tuning and checks'
+
+    # ---------------------------------------------------------------- CPU
+    if ($cpu.IsIntel) {
+        $genText = ''
+        if ($cpu.Gen -ge 15) { $genText = '  (Core Ultra)' } elseif ($cpu.Gen -gt 0) { $genText = "  (gen $($cpu.Gen))" }
+        Write-Info ('CPU: {0}{1}' -f $cpu.Name, $genText)
+
+        if ($cpu.Hybrid) {
+            Write-Ok ('Hybrid CPU: {0} P-core threads (fast) + {1} E-core threads (efficient)' -f $cpu.PThreads, $cpu.EThreads)
+            if (Test-SchemeExists $script:SchemeGuid) {
+                Write-Ok 'GameBoost plan keeps P-cores AND E-cores awake at full speed while plugged in'
+                if ($script:IsWin10) {
+                    # Windows 10 has no Thread Director: tell it to prefer the P-cores.
+                    $null = powercfg /setacvalueindex $script:SchemeGuid SUB_PROCESSOR SCHEDPOLICY 2 2>&1
+                    $null = powercfg /setacvalueindex $script:SchemeGuid SUB_PROCESSOR SHORTSCHEDPOLICY 2 2>&1
+                    $null = powercfg /setactive $script:SchemeGuid 2>&1
+                    Write-Ok 'Windows 10 fix: games now prefer the fast P-cores'
+                }
+            } else {
+                Write-Skip 'Run [1] Apply first - it adds the P-core / E-core tuning to the GameBoost power plan'
+            }
+            if ($script:IsWin10) {
+                Write-Attention 'Windows 10 does not fully understand P-cores/E-cores (games can land on E-cores = stutter). Windows 11 fixes this - the biggest win for this CPU.'
+            } else {
+                Write-Ok 'Windows 11 Thread Director moves the game to the P-cores automatically'
+            }
+            Write-Info 'Tip: keep the game window in focus - background windows get moved to E-cores.'
+        } elseif (Test-SchemeExists $script:SchemeGuid) {
+            Write-Ok 'All cores run at full speed with Turbo Boost while plugged in (GameBoost plan)'
+        } else {
+            Write-Skip 'Run [1] Apply first - it sets all cores to full speed + Turbo Boost'
+        }
+
+        # 13th / 14th gen desktop i5/i7/i9: Intel's Vmin-shift fix needs microcode 0x12B or newer.
+        $mm = [regex]::Match($cpu.Name, 'i[579]-1[34]\d{3}([A-Z]*)')
+        if ($mm.Success -and $mm.Groups[1].Value -notmatch '[HUP]') {
+            $rev = Get-MicrocodeRevision
+            if ($rev -ge 0x12B) {
+                Write-Ok ('Microcode 0x{0:X}: has Intel''s 13th/14th gen stability fix' -f $rev)
+            } elseif ($rev -gt 0) {
+                Write-Attention ('Microcode 0x{0:X} is OLD. 13th/14th gen desktop CPUs need 0x12B or newer to stop crashes and CPU damage - update your motherboard BIOS from the board maker''s website.' -f $rev)
+            } else {
+                Write-Info 'Important for 13th/14th gen: keep the motherboard BIOS updated (Intel microcode 0x12B fix).'
+            }
+        }
+
+        # Old Intel (6th gen and older) has no MBEC -> Memory Integrity costs much more FPS.
+        $hvci = (Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity' -Name 'Enabled' -ErrorAction SilentlyContinue).Enabled
+        if ($cpu.Gen -gt 0 -and $cpu.Gen -le 6 -and $hvci -eq 1) {
+            Write-Attention ('Gen {0} Intel CPUs lack MBEC, so Memory Integrity costs MORE FPS here. Menu option [5] helps this PC more than usual.' -f $cpu.Gen)
+        }
+    }
+
+    # ---------------------------------------------------------------- GPU
+    foreach ($g in $intelGpus) {
+        if (& $isArcCard $g) {
+            Write-Info ('GPU: {0}  (Intel Arc graphics card, driver {1})' -f $g.Name, $g.DriverVersion)
+            $bar = Get-LargestBarMB ([string]$g.PNPDeviceID)
+            if ($bar -ge 1024) {
+                Write-Ok ('Resizable BAR is ON ({0:N0} MB) - Arc runs at full speed' -f $bar)
+            } else {
+                Write-Attention 'Resizable BAR could not be confirmed ON. Intel Arc loses a LOT of FPS without it.'
+                Write-Info 'Check it in Intel Graphics Software. If OFF: BIOS > enable "Above 4G Decoding" + "Re-Size BAR Support".'
+            }
+            Write-Info 'In games use XeSS (and XeSS Frame Generation when the game has it) for much more FPS.'
+        } else {
+            Write-Info ('GPU: {0}  (Intel integrated graphics, driver {1})' -f $g.Name, $g.DriverVersion)
+            if ($dedicated.Count -gt 0) {
+                Write-Info 'This PC also has a graphics card - use menu [3] so every game runs on the strong card.'
+            } else {
+                Write-Info 'Integrated graphics: play at 720p-900p with XeSS or FSR upscaling and LOW shadows.'
+            }
+        }
+    }
+
+    # ---------------------------------------------------------------- RAM (huge for Intel integrated graphics)
+    Show-RamCheck -IntegratedOnly:($dedicated.Count -eq 0 -and $intelGpus.Count -gt 0)
+
+    if ($FromMenu) {
+        Write-Step 'Intel drivers: automatic updates'
+        Install-IntelDsa
+    }
+}
+
 function Set-GpuDriverUpdates {
     Write-Step 'GPU driver: keep it updated automatically'
     # 1) Windows Update is allowed to install new drivers by itself.
@@ -739,17 +996,9 @@ function Set-GpuDriverUpdates {
         Write-Info 'Tip: AMD Software > Settings > System > Check for updates = Automatic.'
     }
 
-    $intelArc = @($intel | Where-Object { $_.Name -match 'Arc' })
-    if ($intel.Count -gt 0 -and (($nvidia.Count + $amd.Count) -eq 0 -or $intelArc.Count -gt 0)) {
-        if (Test-AppInstalled 'Intel.*Driver.*Support Assistant') {
-            Write-Ok 'Intel Driver & Support Assistant is installed'
-        } elseif (Install-WithWinget -Ids @('Intel.IntelDriverAndSupportAssistant') -ExactName '') {
-            Write-Ok 'Intel Driver & Support Assistant installed - it keeps Intel drivers updated'
-        } else {
-            Write-Attention 'Could not install Intel DSA automatically - opening the official page'
-            Start-Process 'https://www.intel.com/content/www/us/en/support/detect.html'
-        }
-    }
+    # Intel: graphics (integrated or Arc) AND Intel CPU systems (chipset, Wi-Fi, Bluetooth drivers too).
+    $cpuIsIntel = [string](Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1).Manufacturer -match 'Intel'
+    if ($intel.Count -gt 0 -or $cpuIsIntel) { Install-IntelDsa }
 
     if (($nvidia.Count + $amd.Count + $intel.Count) -eq 0) {
         Write-Skip 'No NVIDIA / AMD / Intel GPU detected - Windows Update will handle the driver'
@@ -790,6 +1039,7 @@ function Invoke-Apply {
     $steps = @(
         { New-SafetyRestorePoint },
         { Set-CpuPowerPlan },
+        { Invoke-IntelTune },
         { Set-GameAndGpuSettings },
         { Set-CpuScheduling },
         { Disable-ExtraServices },
@@ -946,6 +1196,8 @@ function Show-Status {
     $gpus = @(Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue)
     if ($os)  { Write-Info ('Windows   : {0} (build {1})' -f $os.Caption, $os.BuildNumber) }
     if ($cpu) { Write-Info ('CPU       : {0}  ({1} cores / {2} threads)' -f $cpu.Name.Trim(), $cpu.NumberOfCores, $cpu.NumberOfLogicalProcessors) }
+    $cd = Get-CpuDetails
+    if ($cd.Hybrid) { Write-Info ('CPU cores : {0} P-core threads + {1} E-core threads (hybrid)' -f $cd.PThreads, $cd.EThreads) }
     foreach ($g in $gpus) {
         $date = ''
         if ($g.DriverDate) { try { $date = ([datetime]$g.DriverDate).ToString('yyyy-MM-dd') } catch { } }
@@ -1092,6 +1344,7 @@ function Show-Menu {
         Write-Host '   [4]  Show PC status                (RAM / CPU / GPU / top apps)'
         Write-Host '   [5]  Advanced: Memory Integrity OFF (+FPS, less security)'
         Write-Host '   [6]  Undo everything               (back to your original settings)'
+        Write-Host '   [7]  Intel CPU + GPU check / tune  (P-cores, Arc ReBAR, iGPU, drivers)'
         Write-Host '   [0]  Exit'
         Write-Host ''
         $c = Read-Choice ' Choose a number'
@@ -1102,6 +1355,7 @@ function Show-Menu {
             '4' { Show-Status;               Wait-Enter }
             '5' { Invoke-MemoryIntegrityOff; Wait-Enter }
             '6' { Invoke-Restore;            Wait-Enter }
+            '7' { Invoke-IntelTune -FromMenu; Wait-Enter }
             '0' { return }
         }
     }
@@ -1116,5 +1370,6 @@ switch ($Mode) {
     'CleanRam' { Invoke-CleanRam; Start-Sleep -Seconds 5 }
     'Status'   { Show-Status;     Wait-Enter }
     'Restore'  { Invoke-Restore;  Wait-Enter }
+    'Intel'    { Invoke-IntelTune -FromMenu; Wait-Enter }
     default    { Show-Menu }
 }
