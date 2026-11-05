@@ -33,39 +33,64 @@ end
 ---------------------------------------------------------------------------
 -- tablet prop + animation
 ---------------------------------------------------------------------------
-local tabletObj
 local ANIM_DICT, ANIM = 'amb@code_human_in_bus_passenger_idles@female@tablet@base', 'base'
 
 local function loadDict(d) RequestAnimDict(d) local t = GetGameTimer() while not HasAnimDictLoaded(d) and GetGameTimer() - t < 3000 do Wait(10) end end
 local function loadModel(m) RequestModel(m) local t = GetGameTimer() while not HasModelLoaded(m) and GetGameTimer() - t < 3000 do Wait(10) end end
 
-local function tabletAnim(on)
+-- the prop is shared with the other ROX iPad apps (rox_realestate), so switching apps keeps it in the hand
+local function sharedProp()
+    local h = LocalPlayer.state.roxTabletProp
+    if h and DoesEntityExist(h) then return h end
+end
+
+local function tabletAnim(on, keepProp)
     if not Config.Tablet.prop then return end
     local ped = PlayerPedId()
     if on then
-        if tabletObj or IsPedInAnyVehicle(ped, false) then return end
+        if IsPedInAnyVehicle(ped, false) then return end
         loadDict(ANIM_DICT)
-        local model = `prop_cs_tablet`
-        loadModel(model)
-        tabletObj = CreateObject(model, 0.0, 0.0, 0.0, true, true, false)
-        AttachEntityToEntity(tabletObj, ped, GetPedBoneIndex(ped, 60309), 0.03, 0.002, -0.0, 10.0, 160.0, 0.0, true, false, false, false, 2, true)
-        SetModelAsNoLongerNeeded(model)
-        TaskPlayAnim(ped, ANIM_DICT, ANIM, 3.0, 3.0, -1, 49, 0, false, false, false)
-    else
-        if tabletObj then DeleteEntity(tabletObj) tabletObj = nil end
+        if not sharedProp() then
+            local model = `prop_cs_tablet`
+            loadModel(model)
+            local obj = CreateObject(model, 0.0, 0.0, 0.0, true, true, false)
+            AttachEntityToEntity(obj, ped, GetPedBoneIndex(ped, 60309), 0.03, 0.002, -0.0, 10.0, 160.0, 0.0, true, false, false, false, 2, true)
+            SetModelAsNoLongerNeeded(model)
+            LocalPlayer.state:set('roxTabletProp', obj, false)
+        end
+        if not IsEntityPlayingAnim(ped, ANIM_DICT, ANIM, 3) then
+            TaskPlayAnim(ped, ANIM_DICT, ANIM, 3.0, 3.0, -1, 49, 0, false, false, false)
+        end
+    elseif not keepProp then
+        local h = sharedProp()
+        if h then DeleteEntity(h) end
+        LocalPlayer.state:set('roxTabletProp', nil, false)
         StopAnimTask(ped, ANIM_DICT, ANIM, 1.0)
     end
+end
+
+-- apps from other ROX resources shown on the police iPad
+local function externalApps()
+    local out = {}
+    if GetResourceState('rox_realestate') == 'started' then
+        out[#out + 1] = { res = 'rox_realestate', app = 'dashboard', label = 'Real Estate', img = 'img/icons/realestate.jpg' }
+        out[#out + 1] = { res = 'rox_realestate', app = 'shop', label = 'Furniture', img = 'img/icons/furniture.jpg' }
+        out[#out + 1] = { res = 'rox_realestate', app = 'contracts', label = 'Contracts', icon = 'file-signature', c = '52,52,59' }
+    end
+    return out
 end
 
 ---------------------------------------------------------------------------
 -- open / close
 ---------------------------------------------------------------------------
-local function close()
+local lastAccess = { ok = false, boss = false }
+
+local function close(keepProp)
     if not isOpen then return end
     isOpen = false
     SetNuiFocus(false, false)
     SendNUIMessage({ action = 'close' })
-    tabletAnim(false)
+    tabletAnim(false, keepProp)
 end
 
 local function open(panel, opts)
@@ -75,7 +100,9 @@ local function open(panel, opts)
         return
     end
     local a = access()
+    lastAccess = a
     if not a.ok then
+        if opts.handoff then tabletAnim(false) end
         SendNUIMessage({ action = 'toast', kind = 'error', msg = 'Police only' })
         return
     end
@@ -85,7 +112,8 @@ local function open(panel, opts)
     end
     local init = ServerRequest('init')
     isOpen = true
-    SendNUIMessage({ action = 'open', panel = panel, opts = opts, init = init, color = Config.Color })
+    SendNUIMessage({ action = 'open', panel = panel, opts = opts, init = init, color = Config.Color,
+        instant = opts.handoff, ext = externalApps(), ipad = LocalPlayer.state.roxIpad })
     SetNuiFocus(true, true)
     if TABLET[panel] then tabletAnim(true) end
 end
@@ -212,6 +240,50 @@ end)
 -- NUI
 ---------------------------------------------------------------------------
 RegisterNUICallback('close', function(_, cb) close(); cb('ok') end)
+
+-- open an app that lives in another ROX resource (same iPad, the prop stays in the hand)
+RegisterNUICallback('handoff', function(data, cb)
+    cb('ok')
+    if type(data) ~= 'table' or data.res ~= 'rox_realestate' or GetResourceState('rox_realestate') ~= 'started' then return end
+    close(true)
+    exports.rox_realestate:OpenTablet(data.app, true)
+    -- if the other iPad could not open, drop the prop after a moment
+    SetTimeout(1500, function()
+        local ok, open = pcall(function() return exports.rox_realestate:IsTabletOpen() end)
+        if not isOpen and not (ok and open) then tabletAnim(false) end
+    end)
+end)
+
+-- wallpaper / size are shared by every ROX iPad app
+RegisterNUICallback('ipadSettings', function(data, cb)
+    cb('ok')
+    if type(data) == 'table' then
+        LocalPlayer.state:set('roxIpad', { wallpaper = data.wallpaper, scale = tonumber(data.scale) or 1 }, false)
+    end
+end)
+
+-- police apps shown on the other ROX iPads (rox_realestate home screen)
+exports('IpadApps', function()
+    if not lastAccess.ok then return {} end
+    local apps = {
+        { res = 'rox_police', app = 'mdt', label = 'MDT', labelAr = 'MDT', icon = 'shield', c1 = '#ff7a3d', c2 = '#d8400f' },
+        { res = 'rox_police', app = 'jail', label = 'Prison', labelAr = 'السجن', icon = 'jail', c1 = '#ff9466', c2 = '#e0571f' },
+        { res = 'rox_police', app = 'fine', label = 'Citations', labelAr = 'المخالفات', icon = 'ticket', c1 = '#57d07a', c2 = '#1f9e4a' },
+        { res = 'rox_police', app = 'mdt', page = 'vehicles', label = 'Vehicles', labelAr = 'السيارات', icon = 'car', c1 = '#3cc7dc', c2 = '#167f9a' },
+        { res = 'rox_police', app = 'mdt', page = 'impound', label = 'Impound', labelAr = 'الحجز', icon = 'truck', c1 = '#ffc24a', c2 = '#d98a0c' },
+    }
+    if lastAccess.boss then apps[#apps + 1] = { res = 'rox_police', app = 'boss', label = 'Management', labelAr = 'الإدارة', icon = 'users', c1 = '#9b7bff', c2 = '#5b33e6' } end
+    return apps
+end)
+
+-- keep the police access cached for the other iPads (job / rank can change)
+CreateThread(function()
+    Wait(5000)
+    while true do
+        lastAccess = access()
+        Wait(60000)
+    end
+end)
 
 RegisterNUICallback('req', function(data, cb)
     local action = data.action

@@ -189,6 +189,8 @@ Config.Menu = {
     },
     { label = 'Flip Vehicle', icon = 'rotate', vehicle = false,   -- on foot only
       type = 'client', event = 'rox_radial:client:vehicle', args = { action = 'flip' } },
+    { label = 'iPad', icon = 'tablet-screen-button', type = 'client', event = 'rox_re:openTablet',   -- rox_realestate iPad (everyone)
+      canInteract = function() return GetResourceState('rox_realestate') == 'started' end },
     cmd('GPS',      'map-location-dot', 'gps'),
     cmd('Phone',    'mobile-screen',    'phone'),
     cmd('Settings', 'gear',             'settings'),

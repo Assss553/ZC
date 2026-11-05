@@ -85,7 +85,10 @@ function openPanel(name, opts = {}, fromPanel) {
 const WALLPAPERS = ['img/wallpapers/street.jpg', 'img/wallpapers/forest.jpg', 'img/wallpapers/pond.jpg'];
 const Settings = { wallpaper: null, scale: 1 };
 try { Object.assign(Settings, JSON.parse(localStorage.getItem('rox_police_ipad') || '{}')); } catch (e) { /* storage unavailable */ }
-const saveSettings = () => { try { localStorage.setItem('rox_police_ipad', JSON.stringify(Settings)); } catch (e) { /* storage unavailable */ } };
+const saveSettings = () => {
+    try { localStorage.setItem('rox_police_ipad', JSON.stringify(Settings)); } catch (e) { /* storage unavailable */ }
+    post('ipadSettings', { wallpaper: Settings.wallpaper, scale: Settings.scale });
+};
 function applySettings() {
     const scr = $('#screen'), bz = $('.bezel');
     if (scr) scr.style.setProperty('--wall', `url("${(Settings.wallpaper || WALLPAPERS[0]).replace(/"/g, '')}")`);
@@ -111,6 +114,7 @@ function render() {
     if (App.tablet) {
         if (!root.querySelector('.tablet')) {
             root.innerHTML = tabletFrame();
+            if (App.instant) root.querySelector('.tablet').style.animation = 'none';
             clearInterval(App.sbTick);
             const sb = () => { const e = $('#sbTime'); if (e) e.textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
             sb(); App.sbTick = setInterval(sb, 5000);
@@ -141,6 +145,7 @@ root.addEventListener('click', (e) => {
     if (k === 'close') return closeAll();
     if (k === 'back') return goBack();
     if (k === 'home') return goHome();
+    if (k === 'handoff') { if (!RES) return toast('[preview] opens ' + a.dataset.res + ' → ' + a.dataset.app, 'info'); return post('handoff', { res: a.dataset.res, app: a.dataset.app }); }
     if (k === 'app') { const p = a.dataset.p, pg = a.dataset.page; if (p === 'mdt' && pg) { openPanel('mdt', { page: pg }); return; } return openPanel(p); }
     H[k] && H[k](a, e);
 });
@@ -748,6 +753,7 @@ const Home = {
                 ${app('mdt:bolo', 'binoculars', 'BOLO', '255,150,40', st.bolos, true)}
                 <span class="sep"></span>
                 ${App.init && App.init.boss ? app('boss', 'briefcase', 'Management', '130,100,255') : ''}
+                ${(App.ext || []).length ? '<span class="sep"></span>' + App.ext.map(x => `<div class="dock-app" data-a="handoff" data-res="${esc(x.res)}" data-app="${esc(x.app)}" style="--c:${esc(x.c || '255,90,31')}">${x.img ? `<img class="aicon" src="${esc(x.img)}" alt="">` : `<span class="aicon dark"><i class="fa-solid fa-${esc(x.icon)}"></i></span>`}<span class="dock-tip">${esc(x.label)}</span></div>`).join('') : ''}
                 <div class="dock-app" data-a="app" data-p="settings"><img class="aicon" src="img/icons/settings.jpg" alt=""><span class="dock-tip">Settings</span></div>
             </div>
         </div>`;
@@ -1080,6 +1086,9 @@ window.addEventListener('message', (e) => {
     if (d.action === 'open') {
         if (d.color) setColor(d.color);
         if (d.init) App.init = d.init;
+        if (d.ipad) { if (d.ipad.wallpaper !== undefined) Settings.wallpaper = d.ipad.wallpaper; if (d.ipad.scale) Settings.scale = d.ipad.scale; }
+        if (d.ext) App.ext = d.ext;
+        App.instant = !!d.instant;
         App.open = true;
         backdrop.classList.add('show');
         openPanel(d.panel || 'mdt', d.opts || {});
@@ -1233,6 +1242,7 @@ if (!RES) {
     const opts = q.get('id') ? { id: Number(q.get('id')) } : {};
     if (q.get('page')) opts.page = q.get('page');
     if (q.get('panel') === 'impound') opts.vehicle = { plate: '20HRX818', model: 'Karin Sultan RS', owner: 'Faisal Al-Harbi', registered: true, stolen: false };
-    window.postMessage({ action: 'open', panel: q.get('panel') || 'home', opts }, '*');
+    const ext = [{ res: 'rox_realestate', app: 'dashboard', label: 'Real Estate', img: 'img/icons/realestate.jpg' }, { res: 'rox_realestate', app: 'shop', label: 'Furniture', img: 'img/icons/furniture.jpg' }, { res: 'rox_realestate', app: 'contracts', label: 'Contracts', icon: 'file-signature', c: '255,122,61' }];
+    window.postMessage({ action: 'open', panel: q.get('panel') || 'home', opts, ext }, '*');
     if (q.get('hud')) setTimeout(() => window.postMessage({ action: 'jailHud', show: true, data: { label: 'Prison', remaining: 1134, total: 1800, bail: 12000, paybail: 'paybail' } }, '*'), 200);
 }
