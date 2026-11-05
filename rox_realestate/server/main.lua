@@ -62,6 +62,28 @@ function HasApp(src, app)
     return ok and grade >= (Config.Realtor.Apps[app] or 0)
 end
 
+-- does the player own / rent at least one property
+function HasHome(src, identifier)
+    identifier = identifier or Bridge.GetIdentifier(src)
+    if not identifier then return false end
+    for _, prop in pairs(Properties) do
+        if prop.owner == identifier then return true end
+    end
+    return false
+end
+
+-- which apps this player sees on the iPad
+function AppAccess(src)
+    local realtor = IsRealtor(src)
+    local apps = { create = HasApp(src, 'create'), manage = HasApp(src, 'manage'), contracts = HasApp(src, 'contracts') }
+    apps.estate = Config.Tablet.CitizenEstateApp or HasApp(src, 'estate')
+    apps.furniture = (not Config.Tablet.FurnitureNeedsHome) or HasHome(src)
+    apps.realtor = realtor
+    return apps
+end
+
+RegisterCallback('appAccess', function(src) return AppAccess(src) end)
+
 function CanManage(src)
     local ok, grade = IsRealtor(src)
     return ok and grade >= Config.Realtor.ManageGrade
@@ -208,7 +230,7 @@ RegisterCallback('bootstrap', function(src)
     local identifier = Bridge.GetIdentifier(src)
     local realtor, grade = IsRealtor(src)
     if not realtor and not Config.Tablet.CitizenAccess then return false, L('not_realtor') end
-    local apps = { create = HasApp(src, 'create'), manage = HasApp(src, 'manage'), contracts = HasApp(src, 'contracts') }
+    local apps = AppAccess(src)
     local contracts = {}
     local rows = apps.contracts and DB.RecentContracts() or DB.ContractsForBuyer(identifier)
     for _, c in ipairs(rows) do contracts[#contracts + 1] = ContractForClient(c, identifier) end

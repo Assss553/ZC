@@ -73,9 +73,12 @@ end
 local function externalApps()
     local out = {}
     if Config.Tablet.shareWithRealEstate and GetResourceState('rox_realestate') == 'started' then
-        out[#out + 1] = { res = 'rox_realestate', app = 'dashboard', label = 'Real Estate', img = 'img/icons/realestate.jpg' }
-        out[#out + 1] = { res = 'rox_realestate', app = 'shop', label = 'Furniture', img = 'img/icons/furniture.jpg' }
-        out[#out + 1] = { res = 'rox_realestate', app = 'contracts', label = 'Contracts', icon = 'file-signature', c = '52,52,59' }
+        -- same rules as the real estate iPad: Real Estate by realtor rank, Furniture only with a home
+        local ok, acc = pcall(function() return exports.rox_realestate:IpadAccess() end)
+        acc = ok and type(acc) == 'table' and acc or {}
+        if acc.estate then out[#out + 1] = { res = 'rox_realestate', app = 'dashboard', label = 'Real Estate', img = 'img/icons/realestate.jpg' } end
+        if acc.furniture then out[#out + 1] = { res = 'rox_realestate', app = 'shop', label = 'Furniture', img = 'img/icons/furniture.jpg' } end
+        out[#out + 1] = { res = 'rox_realestate', app = 'contracts', label = 'Contracts', icon = 'file-signature', c = '255,122,61' }
     end
     return out
 end

@@ -99,6 +99,7 @@ function OpenTablet(app, handoff)
         return
     end
     tabletOpen = true
+    if data.apps then appAccess = data.apps end
     startTabletAnim()
     SendNUIMessage({ action = 'open', data = data, static = staticData(), app = app, instant = handoff,
         ext = externalApps(), ipad = LocalPlayer.state.roxIpad })
@@ -117,6 +118,18 @@ RegisterKeyMapping(Config.Tablet.Command, 'Real estate iPad', 'keyboard', Config
 RegisterNetEvent('rox_re:openTablet', function(app) OpenTablet(app) end)
 exports('OpenTablet', function(app, handoff) CreateThread(function() OpenTablet(app, handoff) end) end)
 exports('IsTabletOpen', function() return tabletOpen end)
+
+-- which real estate apps this player can see (used by the police iPad). Cached, refreshed every minute.
+local appAccess = {}
+exports('IpadAccess', function() return appAccess end)
+CreateThread(function()
+    Wait(6000)
+    while true do
+        local a = ServerCall('appAccess')
+        if type(a) == 'table' then appAccess = a end
+        Wait(60000)
+    end
+end)
 
 -- Property card at a door (available / for sale)
 function OpenPropertyCard(prop)

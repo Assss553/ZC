@@ -232,10 +232,10 @@ Views.home = () => {
             <span>${now.toLocaleDateString(LANG === 'ar' ? 'ar' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
         <div class="home-wallet">${icon('cash')}<span>${moneyText(d.money)}</span></div>
         <div class="dock">
-            ${app('shop', t('app_furniture'), img('furniture'))}
+            ${!d.apps || d.apps.furniture !== false ? app('shop', t('app_furniture'), img('furniture')) : ''}
             ${d.apps && d.apps.create ? app('create', t('app_create'), css('ai-blue', 'briefcase')) : ''}
             ${app('contracts', t('app_contracts'), css('ai-dark', 'file'), pending)}
-            ${app('dashboard', t('app_estate'), img('realestate'), overdue)}
+            ${!d.apps || d.apps.estate !== false ? app('dashboard', t('app_estate'), img('realestate'), overdue) : ''}
             ${app('settings', t('app_settings'), img('settings'))}
             ${d.apps && d.apps.manage ? app('manage', t('app_manage'), css('ai-orange', 'building')) : ''}
             ${(S.ext || []).length ? `<span class="dock-sep"></span>${S.ext.map((x) => `<button class="dock-app" data-act="ext" data-res="${esc(x.res)}" data-app="${esc(x.app)}" data-page="${esc(x.page || '')}">
@@ -1021,7 +1021,7 @@ if (!IS_GAME) {
     const furn = [['prop_sink_02', 'Bathroom Sink (Rounded)', 'bathroom', 280], ['prop_sink_04', 'Bathroom Sink (Pedestal)', 'bathroom', 250], ['prop_toilet_01', 'Toilet', 'bathroom', 350], ['p_mbbed_s', 'Master Bed', 'bed', 2500], ['prop_couch_01', 'Leather Couch', 'chair', 1200], ['prop_tv_flat_01', 'Flat TV (Large)', 'electronic', 1500], ['prop_fridge_01', 'Fridge', 'kitchen', 900], ['apa_mp_h_floorlamp_a', 'Floor Lamp', 'light', 180]].map(([model, label, cat, price]) => ({ model, label, cat, price }));
     const P = (id, label, interior, status, x, y, extra = {}) => ({ id, label, interior, status, ptype: 'sale', price: 180000 + id * 25000, rentPrice: 2500, rentDays: 7, door: { x, y, z: 30, h: 0 }, street: 'Alta St, Pillbox Hill', locked: true, rooms: 2, realtorName: 'Saad Realty', ...extra });
     Mock.data = {
-        name: 'Jaber Ali', money: 42347, serverId: 1, isRealtor: true, canManage: true, grade: 3, apps: { create: true, manage: true, contracts: true },
+        name: 'Jaber Ali', money: 42347, serverId: 1, isRealtor: true, canManage: true, grade: 3, apps: { create: true, manage: true, contracts: true, estate: true, furniture: true },
         properties: [P(1, 'Alta Street 12', 'integrity_way', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [] }),
             P(2, 'Vinewood Villa', 'franklin_vinewood', 'available', 7, 538), P(3, 'Grove Room', 'low_apartment', 'rented', -14, -1440, { ptype: 'rent', isOwner: true, hasKey: true, ownerName: 'Jaber Ali', overdue: 1, rentDue: Date.now() / 1000 + 86400 }),
             P(4, 'Conker Hills', 'north_conker', 'owned', 342, 437, { ownerName: 'Omar', salePrice: 650000 }), P(5, 'Mirror Park 4', 'medium_apartment', 'available', 1100, -500, { ptype: 'rent' })],
@@ -1030,6 +1030,7 @@ if (!IS_GAME) {
     const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true };
     const q = new URLSearchParams(location.search);
     if (q.get('lang')) S.settings.lang = q.get('lang');
+    if (q.get('citizen')) { Object.assign(Mock.data.apps, { create: false, manage: false, contracts: false, estate: false, furniture: q.get('citizen') === 'home' }); Mock.data.isRealtor = false; }
     if (q.get('wall')) S.settings.wallpaper = `img/wallpapers/${q.get('wall')}.jpg`;
     setTimeout(() => {
         const ext = q.get('police') ? [['mdt', '', 'MDT', 'shield', '#ff7a3d', '#d8400f'], ['boss', '', 'Management', 'users', '#9b7bff', '#5b33e6']]

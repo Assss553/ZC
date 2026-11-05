@@ -27,6 +27,10 @@ Config.Tablet = {
     Item      = 'realestate_ipad', -- usable item (set to false to disable)
     UseProp   = true,            -- hold a tablet prop + animation
     CitizenAccess = true,        -- false = only realtors can open the iPad at all
+    -- Real Estate app for citizens too (true) or only for realtors from Config.Realtor.Apps.estate (false)
+    CitizenEstateApp = false,
+    -- Furniture app only shows when the player owns (or rents) a property
+    FurnitureNeedsHome = true,
 }
 
 ---------------------------------------------------------------------
@@ -42,6 +46,7 @@ Config.Realtor = {
     -- Minimum grade for each realtor app. The app is hidden from the iPad dock below that grade
     -- (and the server refuses the action too). Grades are checked against the job's grade in Config.Realtor.Jobs.
     Apps = {
+        estate    = 0,  -- Real Estate app (map, all properties, available, market) — realtors only
         create    = 0,  -- Create Property
         manage    = 1,  -- Manage Properties (edit, change door, send contract)
         contracts = 0,  -- See every contract of the agency
