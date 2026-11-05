@@ -1,6 +1,6 @@
 ﻿<#
 ================================================================================
-  ROX  -  gaming optimizer for Windows 10 / 11
+  ROX  -  gaming optimizer for Windows 10 / 11   (Arabic + English)
   Start it with ROX.bat (double-click). Needs administrator rights.
   ROX.ps1 -Tray            start hidden next to the clock (used by "start with Windows")
   ROX.ps1 -RenderTest DIR  build the UI and save screenshots of every page (CI)
@@ -16,10 +16,12 @@ Set-StrictMode -Off
 $ErrorActionPreference = 'Continue'
 $ProgressPreference    = 'SilentlyContinue'
 
-$script:Here       = Split-Path -Parent $PSCommandPath
-$script:EnginePath = Join-Path $script:Here 'RoxEngine.ps1'
-$script:XamlPath   = Join-Path $script:Here 'ROX.xaml'
-$script:TestMode   = [bool]($RenderTest -or $SelfTest)
+$script:Here        = Split-Path -Parent $PSCommandPath
+$script:EnginePath  = Join-Path $script:Here 'RoxEngine.ps1'
+$script:StringsPath = Join-Path $script:Here 'RoxStrings.ps1'
+$script:XamlPath    = Join-Path $script:Here 'ROX.xaml'
+$script:TestMode    = [bool]($RenderTest -or $SelfTest)
+$script:IconVersion = 3
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml, System.Windows.Forms, System.Drawing
 
@@ -30,11 +32,12 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     $a = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f $PSCommandPath
     if ($Tray) { $a += ' -Tray' }
     try { Start-Process -FilePath 'powershell.exe' -ArgumentList $a -Verb RunAs -ErrorAction Stop }
-    catch { [void][System.Windows.Forms.MessageBox]::Show('ROX يحتاج صلاحيات المسؤول. اضغط "نعم" لما يطلبها ويندوز.', 'ROX') }
+    catch { [void][System.Windows.Forms.MessageBox]::Show("ROX يحتاج صلاحيات المسؤول.`nROX needs administrator rights.", 'ROX') }
     exit
 }
 
 . $script:EnginePath
+. $script:StringsPath
 
 # ----------------------------------------------------------------- self test (engine only, used by CI)
 if ($SelfTest) {
@@ -93,6 +96,13 @@ if ($SelfTest) {
         if ($now -ne $before[$k]) { $fails++; Write-Host "FAIL  restore mismatch $k : before='$($before[$k])' now='$now'" -ForegroundColor Red }
         else { Write-Host "PASS  restored $k = '$now'" -ForegroundColor Green }
     }
+    # every key used by the UI must exist in both languages
+    foreach ($k in $script:Strings['ar'].Keys) { if (-not $script:Strings['en'].ContainsKey($k)) { $fails++; Write-Host "FAIL  string '$k' missing in English" -ForegroundColor Red } }
+    foreach ($k in $script:Strings['en'].Keys) { if (-not $script:Strings['ar'].ContainsKey($k)) { $fails++; Write-Host "FAIL  string '$k' missing in Arabic" -ForegroundColor Red } }
+    $xamlText = [IO.File]::ReadAllText($script:XamlPath)
+    foreach ($m in [regex]::Matches($xamlText, 'DynamicResource (S_[A-Za-z0-9_]+)')) {
+        if (-not $script:Strings['ar'].ContainsKey($m.Groups[1].Value)) { $fails++; Write-Host "FAIL  XAML uses unknown string $($m.Groups[1].Value)" -ForegroundColor Red }
+    }
     Write-Host "SELFTEST DONE - $fails failure(s)"
     exit $fails
 }
@@ -106,18 +116,16 @@ if (-not $script:TestMode) {
     if (-not $created) { [void]$script:ShowEvent.Set(); exit }
 }
 
-# ----------------------------------------------------------------- bindable item + console helper
+# ----------------------------------------------------------------- bindable item
 if (-not ('RoxItem' -as [type])) {
     Add-Type -Language CSharp -TypeDefinition @'
-using System;
 using System.ComponentModel;
-using System.Runtime.InteropServices;
 
 public class RoxItem : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
     private void Notify(string name) { PropertyChangedEventHandler h = PropertyChanged; if (h != null) h(this, new PropertyChangedEventArgs(name)); }
-    private string _key, _title, _subtitle, _detail, _badge, _icon, _accent, _image, _initial, _actionText;
+    private string _key, _title, _subtitle, _detail, _badge, _icon, _accent, _tint, _image, _initial, _actionText;
     private bool _isChecked, _isOn, _hasBadge, _hasAction;
     private object _tag;
     public string Key        { get { return _key; }        set { _key = value; Notify("Key"); } }
@@ -127,6 +135,7 @@ public class RoxItem : INotifyPropertyChanged
     public string Badge      { get { return _badge; }      set { _badge = value; Notify("Badge"); } }
     public string Icon       { get { return _icon; }       set { _icon = value; Notify("Icon"); } }
     public string Accent     { get { return _accent; }     set { _accent = value; Notify("Accent"); } }
+    public string Tint       { get { return _tint; }       set { _tint = value; Notify("Tint"); } }
     public string Image      { get { return _image; }      set { _image = value; Notify("Image"); } }
     public string Initial    { get { return _initial; }    set { _initial = value; Notify("Initial"); } }
     public string ActionText { get { return _actionText; } set { _actionText = value; Notify("ActionText"); } }
@@ -135,13 +144,6 @@ public class RoxItem : INotifyPropertyChanged
     public bool HasBadge     { get { return _hasBadge; }   set { _hasBadge = value; Notify("HasBadge"); } }
     public bool HasAction    { get { return _hasAction; }  set { _hasAction = value; Notify("HasAction"); } }
     public object Tag        { get { return _tag; }        set { _tag = value; Notify("Tag"); } }
-}
-
-public static class RoxWin
-{
-    [DllImport("kernel32.dll")] private static extern IntPtr GetConsoleWindow();
-    [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int cmd);
-    public static void HideConsole() { IntPtr h = GetConsoleWindow(); if (h != IntPtr.Zero) ShowWindow(h, 0); }
 }
 '@
 }
@@ -152,53 +154,29 @@ function New-RoxItem([hashtable]$P) {
     return $i
 }
 
-# The comma keeps PowerShell from unrolling the (empty) collection into `$null.
+# The comma keeps PowerShell from unrolling the (empty) collection into $null.
 function New-ItemList { return , (New-Object 'System.Collections.ObjectModel.ObservableCollection[RoxItem]') }
 
-# ----------------------------------------------------------------- Arabic text
-$script:ModuleDefs = @(
-    @{ Key = 'win';     Title = 'تحسين الويندوز';     Sub = 'يقفل الخدمات والتتبع والمهام اللي تشتغل بالخلفية';      Icon = [string][char]0xE770; Check = 'telemetry' },
-    @{ Key = 'gaming';  Title = 'تحسين الألعاب';      Sub = 'Game Mode، إيقاف تسجيل الخلفية، أولوية أعلى للعبة';     Icon = [string][char]0xE7FC; Check = 'gamemode' },
-    @{ Key = 'gpu';     Title = 'إعدادات الكرت';      Sub = 'جدولة الكرت، تحسين النوافذ، تحديث التعريف تلقائي';      Icon = [string][char]0xE7F4; Check = 'hags' },
-    @{ Key = 'power';   Title = 'الطاقة والمعالج';    Sub = 'خطة أداء أقصى + Turbo + أنوية P و E لمعالجات Intel';     Icon = [string][char]0xE945; Check = 'plan' },
-    @{ Key = 'cleanup'; Title = 'التنظيف';            Sub = 'يمسح الملفات المؤقتة وكاش التحديثات';                    Icon = [string][char]0xE74D; Check = 'temp' },
-    @{ Key = 'network'; Title = 'تحسين الشبكة';       Sub = 'بنق أقل ولاق أقل في الأونلاين';                          Icon = [string][char]0xE701; Check = 'network' },
-    @{ Key = 'input';   Title = 'الكيبورد والماوس';    Sub = 'تصويب 1:1، أزرار أسرع، بدون نافذة Sticky Keys';          Icon = [string][char]0xE765; Check = 'input' },
-    @{ Key = 'startup'; Title = 'برامج بدء التشغيل';   Sub = 'البرامج الثقيلة ما تشتغل مع الويندوز';                  Icon = [string][char]0xE7E8; Check = 'startup' },
-    @{ Key = 'ram';     Title = 'الرامات والعمليات';   Sub = 'عمليات أقل، و Widgets و Edge ما يشتغلون بالخلفية';      Icon = [string][char]0xE9D9; Check = 'svchost' }
-)
+# ----------------------------------------------------------------- language
+$script:Lang = 'ar'
+function T([string]$Key) {
+    $v = $script:Strings[$script:Lang][$Key]
+    if ($null -eq $v) { $v = $script:Strings['en'][$Key] }
+    if ($null -eq $v) { $v = $Key }
+    return [string]$v
+}
 
-$script:CauseText = @{
-    'gpu-nvidia'  = @('كراش من تعريف كرت NVIDIA', 'اللعبة طاحت داخل تعريف الكرت. الأسباب: تعريف قديم أو خربان، أو كسر سرعة (Overclock) للكرت، أو حرارة عالية.')
-    'gpu-amd'     = @('كراش من تعريف كرت AMD', 'اللعبة طاحت داخل تعريف الكرت. الأسباب: تعريف قديم أو خربان، أو كسر سرعة (Overclock) للكرت، أو حرارة عالية.')
-    'gpu-intel'   = @('كراش من تعريف كرت Intel', 'اللعبة طاحت داخل تعريف كرت Intel. حدّث التعريف من Intel، ولكروت Arc تأكد إن Resizable BAR شغّال.')
-    'gpu-generic' = @('كراش في DirectX / الكرت', 'المشكلة في طبقة الرسوميات. غالباً التعريف، أو إعدادات رسوم عالية، أو Overclock.')
-    'tdr'         = @('الكرت وقف عن الاستجابة (TDR)', 'الشاشة تسود وترجع أو اللعبة تقفل فجأة. ROX يعطي الكرت وقت أكثر قبل ما ويندوز يعيد تشغيله، ويحدّث التعريف.')
-    'runtime-vc'  = @('ملفات Visual C++ ناقصة أو خربانة', 'اللعبة تحتاج ملفات تشغيل من مايكروسوفت. ROX يثبّتها ويصلّحها لك.')
-    'runtime-dx'  = @('ملفات DirectX القديمة ناقصة', 'ألعاب كثيرة تحتاج DirectX 9 / 10 / 11 القديم. ROX يثبّته لك.')
-    'runtime-net' = @('مشكلة في .NET', 'اللعبة أو اللانشر يحتاج .NET. ROX يثبّت ملفات التشغيل الناقصة.')
-    'missing-dll' = @('ملف DLL ناقص', 'اللعبة ما لقت ملف تحتاجه، غالباً من ملفات التشغيل (Visual C++ / DirectX).')
-    'overlay'     = @('برنامج Overlay يسبب الكراش', 'برامج تطلع فوق اللعبة (Discord / Steam Overlay / MSI Afterburner / OBS) سببت الكراش. قفّل الـ Overlay حقها وجرّب.')
-    'anticheat'   = @('مشكلة في الأنتي تشيت', 'الأنتي تشيت (EasyAntiCheat / BattlEye / Vanguard) طاح. افحص ملفات اللعبة وأعد تثبيت الأنتي تشيت من مجلد اللعبة.')
-    'game-files'  = @('ملفات اللعبة فيها مشكلة', 'اللعبة طاحت من نفسها. افحص ملفات اللعبة، وحدّث التعريف، ونزّل الإعدادات شوي.')
-    'hang'        = @('اللعبة علّقت (Not responding)', 'اللعبة وقفت تستجيب. غالباً الرام أو الديسك أو برامج الخلفية. ROX يفضّي الرام ويقفل الخلفية.')
-    'memory'      = @('الذاكرة خلصت', 'الرام والذاكرة الافتراضية ما كفت. ROX يخلي ويندوز يدير ملف الصفحات (Page file) تلقائي.')
-    'low-memory'  = @('ويندوز حذّر إن الذاكرة قربت تخلص', 'ROX يخلي ويندوز يدير ملف الصفحات تلقائي عشان ما تطيح الألعاب.')
-    'bsod-gpu'    = @('شاشة زرقا بسبب الكرت', 'ويندوز طاح بسبب تعريف الكرت. ROX يحدّث التعريف ويعطي الكرت وقت أكثر.')
-    'bsod-hw'     = @('شاشة زرقا: عدم ثبات في المعالج', 'غالباً Overclock أو XMP مو ثابت، أو حرارة، أو BIOS قديم (مهم لمعالجات Intel الجيل 13 و 14). حدّث البايوس.')
-    'bsod-ram'    = @('شاشة زرقا: مشكلة في الرام', 'ممكن الرام أو XMP. ROX يفتح فحص الذاكرة من ويندوز (يحتاج ريستارت).')
-    'bsod-driver' = @('شاشة زرقا: تعريف خربان', 'تعريف في الجهاز سبب الطيحة. ROX يفحص ويصلّح ملفات ويندوز.')
-    'bsod-system' = @('شاشة زرقا', 'ويندوز طاح. ROX يفحص ويصلّح ملفات النظام (SFC + DISM).')
-    'power'       = @('الجهاز طفى فجأة', 'بدون شاشة زرقا: غالباً الباور سبلاي أو الحرارة أو الكهرباء. نظّف المراوح وتأكد من الباور.')
-    'whea'        = @('أخطاء هاردوير (WHEA)', 'المعالج أو الرام أعطوا أخطاء. غالباً Overclock أو XMP مو ثابت أو حرارة، أو BIOS قديم لمعالجات Intel 13 و 14.')
-    'disk'        = @('أخطاء في الهارديسك / SSD', 'القرص يعطي أخطاء قراءة وكتابة وهذا يسبب تعليق. ROX يفحص القرص. خذ نسخة من ملفاتك المهمة.')
-    'unknown'     = @('كراش سببه مو واضح', 'ROX يثبّت ملفات التشغيل الناقصة. إذا استمر: افحص ملفات اللعبة وحدّث التعريف.')
-}
-$script:FixText = @{
-    gpu = 'صلّح الكرت'; runtimes = 'ثبّت الملفات الناقصة'; pagefile = 'صلّح الذاكرة'; verify = 'افحص ملفات اللعبة'
-    sfc = 'صلّح ويندوز'; memtest = 'افحص الرام'; boost = 'فضّي الرام'; disk = 'افحص القرص'
-}
-$script:CatText  = @{ app = 'برنامج'; launcher = 'لانشر'; chat = 'تواصل'; browser = 'متصفح'; tool = 'أداة بث / FPS' }
+$script:ModuleDefs = @(
+    @{ Key = 'win';     Icon = 0xE770; Accent = '#FF60A5FA'; Check = 'telemetry' },
+    @{ Key = 'gaming';  Icon = 0xE7FC; Accent = '#FFA78BFA'; Check = 'gamemode' },
+    @{ Key = 'gpu';     Icon = 0xE7F4; Accent = '#FFFF7A85'; Check = 'hags' },
+    @{ Key = 'power';   Icon = 0xE945; Accent = '#FFFFD166'; Check = 'plan' },
+    @{ Key = 'cleanup'; Icon = 0xE74D; Accent = '#FF34F5B4'; Check = 'temp' },
+    @{ Key = 'network'; Icon = 0xE701; Accent = '#FF22D3EE'; Check = 'network' },
+    @{ Key = 'input';   Icon = 0xE765; Accent = '#FFF472B6'; Check = 'input' },
+    @{ Key = 'startup'; Icon = 0xE7E8; Accent = '#FFFB923C'; Check = 'startup' },
+    @{ Key = 'ram';     Icon = 0xE9D9; Accent = '#FF4ADE80'; Check = 'svchost' }
+)
 $script:CatColor = @{ app = '#FF2D3A8C'; launcher = '#FF5B2A9E'; chat = '#FF0F6A8A'; browser = '#FF7A4A12'; tool = '#FF7A1F4A' }
 $script:Palette  = @('#FF3B2A7A', '#FF1E4D7A', '#FF6B2A4D', '#FF22604A', '#FF6B4D2A', '#FF2A4D6B', '#FF4A2A6B', '#FF6B2A2A')
 $script:VendorName = @{ amd = 'AMD'; nvidia = 'NVIDIA'; intel = 'Intel' }
@@ -213,6 +191,94 @@ function Get-Initial([string]$Text) {
     $t = ([string]$Text).Trim()
     if (-not $t) { return '?' }
     return $t.Substring(0, 1).ToUpper()
+}
+
+# ----------------------------------------------------------------- the ROX logo (vector, drawn - no image files)
+$script:LogoXaml = @'
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Width="256" Height="256" FlowDirection="LeftToRight">
+  <Border Margin="16" CornerRadius="66">
+    <Border.Background>
+      <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FF8B5CF6" Offset="0"/>
+        <GradientStop Color="#FF6366F1" Offset="0.48"/>
+        <GradientStop Color="#FF06B6D4" Offset="1"/>
+      </LinearGradientBrush>
+    </Border.Background>
+    <Border.Effect><DropShadowEffect Color="#FF6D28D9" BlurRadius="22" ShadowDepth="0" Opacity="0.6"/></Border.Effect>
+  </Border>
+  <Border Margin="16" CornerRadius="66">
+    <Border.Background>
+      <RadialGradientBrush Center="0.26,0.1" GradientOrigin="0.26,0.1" RadiusX="0.85" RadiusY="0.7">
+        <GradientStop Color="#66FFFFFF" Offset="0"/><GradientStop Color="#00FFFFFF" Offset="1"/>
+      </RadialGradientBrush>
+    </Border.Background>
+  </Border>
+  <Border Margin="16" CornerRadius="66" BorderBrush="#45FFFFFF" BorderThickness="3"/>
+  <Canvas>
+    <Border Canvas.Left="56" Canvas.Top="84"  Width="36" Height="12" CornerRadius="6" Background="#F2FFFFFF"/>
+    <Border Canvas.Left="42" Canvas.Top="112" Width="50" Height="12" CornerRadius="6" Background="#C0FFFFFF"/>
+    <Border Canvas.Left="64" Canvas.Top="140" Width="28" Height="12" CornerRadius="6" Background="#8CFFFFFF"/>
+    <Path Data="M 100,62 L 158,62 A 38,38 0 0 1 158,138 L 204,194 L 166,194 L 132,142 L 132,194 L 100,194 Z M 132,92 L 158,92 A 8,8 0 0 1 158,108 L 132,108 Z">
+      <Path.Fill>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+          <GradientStop Color="#FFFFFFFF" Offset="0"/><GradientStop Color="#FFE0F2FE" Offset="1"/>
+        </LinearGradientBrush>
+      </Path.Fill>
+      <Path.Effect><DropShadowEffect Color="#FF1E1B4B" BlurRadius="14" ShadowDepth="5" Direction="270" Opacity="0.45"/></Path.Effect>
+    </Path>
+  </Canvas>
+</Grid>
+'@
+
+function New-LogoElement { return [Windows.Markup.XamlReader]::Parse($script:LogoXaml) }
+
+function Get-LogoPngBytes([int]$Size, [string]$Background = '') {
+    $host2 = New-Object System.Windows.Controls.Grid
+    $host2.Width = $Size
+    $host2.Height = $Size
+    if ($Background) { $host2.Background = (New-Object System.Windows.Media.BrushConverter).ConvertFromString($Background) }
+    $vb = New-Object System.Windows.Controls.Viewbox
+    $vb.Child = New-LogoElement
+    [void]$host2.Children.Add($vb)
+    $host2.Measure((New-Object System.Windows.Size($Size, $Size)))
+    $host2.Arrange((New-Object System.Windows.Rect(0, 0, $Size, $Size)))
+    $host2.UpdateLayout()
+    $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap($Size, $Size, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $rtb.Render($host2)
+    $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+    $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($rtb))
+    $ms = New-Object System.IO.MemoryStream
+    $enc.Save($ms)
+    return , $ms.ToArray()
+}
+
+# Writes rox-v3.ico (256/64/48/32/24/16, PNG frames) + PNGs for the window and tray.
+function New-RoxIcon {
+    $png = Join-Path $script:DataDir 'rox-v3-256.png'
+    $png32 = Join-Path $script:DataDir 'rox-v3-32.png'
+    $ico = Join-Path $script:DataDir 'rox-v3.ico'
+    if ((Test-Path -LiteralPath $png) -and (Test-Path -LiteralPath $ico) -and (Test-Path -LiteralPath $png32)) { return }
+    try {
+        $sizes = @(256, 64, 48, 32, 24, 16)
+        $frames = @{}
+        foreach ($s in $sizes) { $frames[$s] = Get-LogoPngBytes $s }
+        [IO.File]::WriteAllBytes($png, $frames[256])
+        [IO.File]::WriteAllBytes($png32, $frames[32])
+        $fs = [IO.File]::Create($ico)
+        $bw = New-Object System.IO.BinaryWriter($fs)
+        $bw.Write([uint16]0); $bw.Write([uint16]1); $bw.Write([uint16]$sizes.Count)
+        $offset = 6 + 16 * $sizes.Count
+        foreach ($s in $sizes) {
+            $dim = [byte]0
+            if ($s -lt 256) { $dim = [byte]$s }
+            $bw.Write($dim); $bw.Write($dim); $bw.Write([byte]0); $bw.Write([byte]0)
+            $bw.Write([uint16]1); $bw.Write([uint16]32)
+            $bw.Write([uint32]$frames[$s].Length); $bw.Write([uint32]$offset)
+            $offset += $frames[$s].Length
+        }
+        foreach ($s in $sizes) { $bw.Write($frames[$s]) }
+        $bw.Close()
+    } catch { Write-Log "icon: $($_.Exception.Message)" }
 }
 
 # ----------------------------------------------------------------- window
@@ -238,13 +304,24 @@ $script:Crashes   = New-ItemList
 $script:Logs      = New-ItemList
 $script:GameData  = New-Object System.Collections.ArrayList
 $script:GameByExe = @{}
+$script:LastApps  = $null
+$script:LastCrashes = $null
+$script:LastBoost = ''
 $script:NoAnim    = [bool]$RenderTest
 $script:ScoreTarget = 0.0
-$script:ScoreShown  = 0.0
+$script:ScoreShown  = -1.0
 $script:ToastUntil  = $null
 $script:TickCount   = 0
 $script:Exiting     = $false
 $script:CrashScanned = $false
+$script:LangBusy    = $false
+$script:CurrentPage = 'PageHome'
+$script:Hist = @{
+    cpu  = (New-Object System.Collections.Generic.List[double])
+    gpu  = (New-Object System.Collections.Generic.List[double])
+    ram  = (New-Object System.Collections.Generic.List[double])
+    proc = (New-Object System.Collections.Generic.List[double])
+}
 
 $ui.HomeModules.ItemsSource = $script:HomeMods
 $ui.ModulesList.ItemsSource = $script:Modules
@@ -253,46 +330,10 @@ $ui.AppsList.ItemsSource    = $script:Apps
 $ui.CrashList.ItemsSource   = $script:Crashes
 $ui.DrawerLog.ItemsSource   = $script:Logs
 
-$ui.DateText.Text    = (Get-Date).ToString('dd MMMM yyyy', [Globalization.CultureInfo]::GetCultureInfo('ar-AE'))
-$ui.VersionText.Text = "ROX v$script:RoxVersion  •  $script:DataDir"
-
-# ----------------------------------------------------------------- icon (drawn, no image files needed)
-function New-RoxIcon {
-    $png = Join-Path $script:DataDir 'rox.png'
-    $ico = Join-Path $script:DataDir 'rox.ico'
-    if ((Test-Path -LiteralPath $png) -and (Test-Path -LiteralPath $ico)) { return $png }
-    try {
-        $dv = New-Object System.Windows.Media.DrawingVisual
-        $dc = $dv.RenderOpen()
-        $grad = New-Object System.Windows.Media.LinearGradientBrush(
-            [System.Windows.Media.Color]::FromRgb(0x8B, 0x5C, 0xF6), [System.Windows.Media.Color]::FromRgb(0x22, 0xD3, 0xEE), 45.0)
-        $dc.DrawRoundedRectangle($grad, $null, (New-Object System.Windows.Rect(8, 8, 240, 240)), 60, 60)
-        $tf = New-Object System.Windows.Media.Typeface('Segoe UI Black')
-        $ft = New-Object System.Windows.Media.FormattedText('R', [Globalization.CultureInfo]::InvariantCulture,
-                  [System.Windows.FlowDirection]::LeftToRight, $tf, 168.0, [System.Windows.Media.Brushes]::White)
-        $dc.DrawText($ft, (New-Object System.Windows.Point(((256 - $ft.Width) / 2), ((256 - $ft.Height) / 2 - 6))))
-        $dc.Close()
-        $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap(256, 256, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
-        $rtb.Render($dv)
-        $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
-        $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($rtb))
-        $ms = New-Object System.IO.MemoryStream
-        $enc.Save($ms)
-        $bytes = $ms.ToArray()
-        [IO.File]::WriteAllBytes($png, $bytes)
-        $fs = [IO.File]::Create($ico)
-        $bw = New-Object System.IO.BinaryWriter($fs)
-        $bw.Write([uint16]0); $bw.Write([uint16]1); $bw.Write([uint16]1)
-        $bw.Write([byte]0); $bw.Write([byte]0); $bw.Write([byte]0); $bw.Write([byte]0)
-        $bw.Write([uint16]1); $bw.Write([uint16]32); $bw.Write([uint32]$bytes.Length); $bw.Write([uint32]22)
-        $bw.Write($bytes)
-        $bw.Close()
-    } catch { Write-Log "icon: $($_.Exception.Message)" }
-    return $png
-}
-
-$script:IconPng = New-RoxIcon
+New-RoxIcon
+$script:IconPng = Join-Path $script:DataDir 'rox-v3-256.png'
 try { $window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create((New-Object System.Uri($script:IconPng))) } catch { }
+foreach ($h in 'LogoHost', 'AboutLogoHost', 'ModalLogoHost') { try { $ui[$h].Child = New-LogoElement } catch { } }
 
 # ----------------------------------------------------------------- animation helpers
 function New-Ease { $e = New-Object System.Windows.Media.Animation.CubicEase; $e.EasingMode = 'EaseOut'; return $e }
@@ -310,12 +351,46 @@ function Start-FadeIn($El, [double]$FromY = 16) {
     }
 }
 
-function Set-Bar($Fill, [double]$Percent) {
-    $v = [math]::Max(0.0, [math]::Min(1.0, $Percent / 100.0))
-    if ($script:NoAnim) { $Fill.RenderTransform.ScaleX = $v; return }
-    $a = New-Object System.Windows.Media.Animation.DoubleAnimation($v, (New-Dur 600))
-    $a.EasingFunction = New-Ease
-    $Fill.RenderTransform.BeginAnimation([System.Windows.Media.ScaleTransform]::ScaleXProperty, $a)
+# Draws the score ring as an arc (0-100 %).
+function Set-ScoreRing([double]$Pct) {
+    $size = 180.0; $th = 14.0
+    $r = ($size - $th) / 2
+    $c = $size / 2
+    $p = [math]::Max(0.002, [math]::Min(0.9995, $Pct / 100.0))
+    $ang = 2 * [math]::PI * $p
+    $ex = $c + $r * [math]::Sin($ang)
+    $ey = $c - $r * [math]::Cos($ang)
+    $large = 0
+    if ($p -gt 0.5) { $large = 1 }
+    $d = [string]::Format([Globalization.CultureInfo]::InvariantCulture, 'M {0},{1} A {2},{2} 0 {3} 1 {4},{5}', $c, ($c - $r), $r, $large, $ex, $ey)
+    $ui.ScoreArc.Data = [System.Windows.Media.Geometry]::Parse($d)
+}
+
+function Update-Spark($Canvas, $Line, $Area, $Values, [double]$Max) {
+    $w = $Canvas.ActualWidth
+    $h = $Canvas.ActualHeight
+    if ($w -lt 4 -or $h -lt 4 -or $Values.Count -lt 2) { return }
+    if ($Max -le 0) { $Max = 1 }
+    $slots = 40
+    $start = $slots - $Values.Count
+    $pts = New-Object System.Windows.Media.PointCollection
+    for ($i = 0; $i -lt $Values.Count; $i++) {
+        $x = $w * ($start + $i) / ($slots - 1)
+        $v = [math]::Max(0.0, [math]::Min($Max, [double]$Values[$i]))
+        $y = $h - 3 - ($v / $Max) * ($h - 6)
+        $pts.Add((New-Object System.Windows.Point($x, $y)))
+    }
+    $Line.Points = $pts
+    $ap = $pts.Clone()
+    $ap.Add((New-Object System.Windows.Point($pts[$pts.Count - 1].X, $h)))
+    $ap.Add((New-Object System.Windows.Point($pts[0].X, $h)))
+    $Area.Points = $ap
+}
+
+function Add-Hist([string]$Key, [double]$Value) {
+    $l = $script:Hist[$Key]
+    $l.Add($Value)
+    while ($l.Count -gt 40) { $l.RemoveAt(0) }
 }
 
 # ----------------------------------------------------------------- toast + drawer + modals
@@ -329,42 +404,37 @@ function Show-Toast([string]$Text, [string]$Kind = 'ok') {
     $script:ToastUntil = (Get-Date).AddSeconds(3.5)
 }
 
-function Hide-Toast {
-    $script:ToastUntil = $null
-    $ui.Toast.Visibility = 'Collapsed'
-}
+function Hide-Toast { $script:ToastUntil = $null; $ui.Toast.Visibility = 'Collapsed' }
 
 function Open-Drawer([string]$Title) {
     $script:Logs.Clear()
     $ui.DrawerTitle.Text = $Title
-    $ui.DrawerStatus.Text = 'يبدأ...'
+    $ui.DrawerStatus.Text = T 'D_Starting'
     $ui.DrawerSpinner.Visibility = 'Visible'
     $ui.DrawerDone.Visibility = 'Collapsed'
     $ui.Drawer.Visibility = 'Visible'
     if (-not $script:NoAnim) {
-        $a = New-Object System.Windows.Media.Animation.DoubleAnimation(280.0, 0.0, (New-Dur 380))
+        $a = New-Object System.Windows.Media.Animation.DoubleAnimation(290.0, 0.0, (New-Dur 380))
         $a.EasingFunction = New-Ease
         $ui.Drawer.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $a)
     }
 }
 
-function Close-Drawer {
-    $ui.Drawer.Visibility = 'Collapsed'
-}
+function Close-Drawer { $ui.Drawer.Visibility = 'Collapsed' }
 
 function Complete-Drawer([bool]$Ok) {
     $ui.DrawerSpinner.Visibility = 'Collapsed'
     $ui.DrawerDone.Visibility = 'Visible'
-    if ($Ok) { $ui.DrawerStatus.Text = 'خلصنا ✓' } else { $ui.DrawerStatus.Text = 'خلص مع ملاحظات - شوف السجل' }
+    if ($Ok) { $ui.DrawerStatus.Text = T 'D_Done' } else { $ui.DrawerStatus.Text = T 'D_Notes' }
 }
 
 function Add-LogLine($Evt) {
     $color = '#FF9A9AB0'
     switch ([string]$Evt.Kind) {
-        'step' { $color = '#FFB794FF' }
-        'ok'   { $color = '#FF2BEBA6' }
-        'warn' { $color = '#FFFFD766' }
-        'skip' { $color = '#FF5D5D78' }
+        'step' { $color = '#FFB9A2FF' }
+        'ok'   { $color = '#FF34F5B4' }
+        'warn' { $color = '#FFFFDD6E' }
+        'skip' { $color = '#FF5A5A76' }
     }
     $script:Logs.Add((New-RoxItem @{ Title = [string]$Evt.Text; Accent = $color; Key = [string]$Evt.Kind }))
     while ($script:Logs.Count -gt 400) { $script:Logs.RemoveAt(0) }
@@ -376,6 +446,7 @@ function Show-Confirm([string]$Title, [string]$Text, [string]$YesText, [scriptbl
     $ui.ConfirmTitle.Text = $Title
     $ui.ConfirmText.Text = $Text
     $ui.ConfirmYes.Content = $YesText
+    $ui.ConfirmNo.Content = T 'S_Cancel'
     $script:ConfirmOnYes = $OnYes
     $script:ConfirmOnAlt = $OnAlt
     if ($AltText) { $ui.ConfirmAlt.Content = $AltText; $ui.ConfirmAlt.Visibility = 'Visible' } else { $ui.ConfirmAlt.Visibility = 'Collapsed' }
@@ -384,8 +455,8 @@ function Show-Confirm([string]$Title, [string]$Text, [string]$YesText, [scriptbl
 }
 
 function Request-Restart {
-    Show-Confirm 'ريستارت الجهاز؟' 'بعض التحسينات تشتغل بعد إعادة التشغيل. احفظ شغلك قبل.' 'ريستارت الحين' { Restart-Computer -Force } '' $null
-    $ui.ConfirmNo.Content = 'بعدين'
+    Show-Confirm (T 'C_RestartTitle') (T 'C_RestartText') (T 'C_RestartYes') { Restart-Computer -Force } '' $null
+    $ui.ConfirmNo.Content = T 'C_Later'
 }
 
 # ----------------------------------------------------------------- background jobs (UI never freezes)
@@ -507,13 +578,23 @@ $script:StatsHandle = $script:StatsPs.BeginInvoke()
 
 function Update-Stats {
     $s = $script:Sync
-    if ($s.Cpu -ge 0) { $ui.CpuText.Text = '{0}%' -f $s.Cpu; Set-Bar $ui.CpuFill $s.Cpu }
-    if ($s.Gpu -ge 0) { $ui.GpuText.Text = '{0}%' -f $s.Gpu; Set-Bar $ui.GpuFill $s.Gpu }
+    if ($s.Cpu -ge 0) { $ui.CpuText.Text = '{0}%' -f $s.Cpu; Add-Hist 'cpu' $s.Cpu }
+    if ($s.Gpu -ge 0) { $ui.GpuText.Text = '{0}%' -f $s.Gpu; Add-Hist 'gpu' $s.Gpu }
     if ($s.RamTotal -gt 0) {
         $ui.RamText.Text = '{0:N1} / {1:N0} GB' -f ($s.RamUsed / 1024), ($s.RamTotal / 1024)
-        Set-Bar $ui.RamFill (100.0 * $s.RamUsed / $s.RamTotal)
+        Add-Hist 'ram' (100.0 * $s.RamUsed / $s.RamTotal)
     }
-    if ($s.Procs -gt 0) { $ui.ProcText.Text = [string]$s.Procs; Set-Bar $ui.ProcFill ([math]::Min(100, $s.Procs / 3.5)) }
+    if ($s.Procs -gt 0) { $ui.ProcText.Text = [string]$s.Procs; Add-Hist 'proc' $s.Procs }
+    Update-Sparks
+}
+
+function Update-Sparks {
+    Update-Spark $ui.CpuChart $ui.CpuLine $ui.CpuArea $script:Hist.cpu 100
+    Update-Spark $ui.GpuChart $ui.GpuLine $ui.GpuArea $script:Hist.gpu 100
+    Update-Spark $ui.RamChart $ui.RamLine $ui.RamArea $script:Hist.ram 100
+    $pmax = 100.0
+    foreach ($v in $script:Hist.proc) { if ($v * 1.2 -gt $pmax) { $pmax = $v * 1.2 } }
+    Update-Spark $ui.ProcChart $ui.ProcLine $ui.ProcArea $script:Hist.proc $pmax
 }
 
 function Update-ScoreAnim {
@@ -523,18 +604,36 @@ function Update-ScoreAnim {
     } else {
         $script:ScoreShown += $d * 0.14
     }
-    $ui.ScoreText.Text = '{0:N0}%' -f $script:ScoreShown
-    $ui.ScoreFill.RenderTransform.ScaleX = [math]::Max(0, [math]::Min(1, $script:ScoreShown / 100))
+    $ui.ScoreText.Text = '{0:N0}%' -f [math]::Max(0, $script:ScoreShown)
+    Set-ScoreRing $script:ScoreShown
 }
 
-# ----------------------------------------------------------------- state / modules
+function Update-HeroText {
+    $k = 'H_Low'
+    if ($script:ScoreTarget -ge 80) { $k = 'H_Good' } elseif ($script:ScoreTarget -ge 50) { $k = 'H_Mid' }
+    $ui.HeroText.Text = T $k
+}
+
+# ----------------------------------------------------------------- modules / state
 function Initialize-Modules {
     $script:Modules.Clear()
     foreach ($d in $script:ModuleDefs) {
         $fav = @($script:Settings.Favorites) -contains $d.Key
-        $script:Modules.Add((New-RoxItem @{ Key = $d.Key; Title = $d.Title; Subtitle = $d.Sub; Icon = $d.Icon; IsOn = $fav; Badge = 'مفعّل'; HasBadge = $false; Tag = $d.Check }))
+        $script:Modules.Add((New-RoxItem @{
+            Key = $d.Key; Icon = [string][char]$d.Icon; Accent = $d.Accent; Tint = ('#22' + $d.Accent.Substring(3))
+            IsOn = $fav; HasBadge = $false; Tag = $d.Check
+        }))
     }
+    Update-ModuleTexts
     Update-HomeModules
+}
+
+function Update-ModuleTexts {
+    foreach ($m in $script:Modules) {
+        $m.Title = T ('M_{0}_t' -f $m.Key)
+        $m.Subtitle = T ('M_{0}_s' -f $m.Key)
+        $m.Badge = T 'Badge_On'
+    }
 }
 
 function Update-HomeModules {
@@ -549,7 +648,7 @@ function Update-Favorites {
 }
 
 function Update-State {
-    Start-RoxJob 'تحديث حالة الجهاز' 'Get-SystemState' -Quiet -OnDone {
+    Start-RoxJob (T 'J_State') 'Get-SystemState' -Quiet -OnDone {
         param($r, $e)
         $st = $r | Select-Object -Last 1
         if (-not $st) { return }
@@ -557,13 +656,14 @@ function Update-State {
         foreach ($m in $script:Modules) { $m.HasBadge = [bool]$st.Checks.($m.Tag) }
         $gpu = @($st.Gpus) | Where-Object { $_ } | Select-Object -First 1
         if ($gpu) { $ui.GpuCardSub.Text = $gpu }
+        Update-HeroText
     }
 }
 
-function Invoke-ModuleJob([string]$Key, [string]$Title) {
-    Start-RoxJob ('تطبيق: ' + $Title) 'Invoke-RoxModule -Id $P.Id' @{ Id = $Key } -OnDone {
+function Invoke-ModuleJob([string]$Key) {
+    Start-RoxJob ((T 'J_Apply') -f (T ('M_{0}_t' -f $Key))) 'Invoke-RoxModule -Id $P.Id' @{ Id = $Key } -OnDone {
         param($r, $e)
-        Show-Toast 'تم التطبيق ✓'
+        Show-Toast (T 'T_Applied')
         Update-State
     }
 }
@@ -573,7 +673,7 @@ function ConvertTo-GameItem($G) {
     $img = $null
     if ($G.Image -and (Test-Path -LiteralPath ([string]$G.Image))) { $img = [string]$G.Image }
     $badge = [string]$G.Source
-    if ($badge -eq 'Manual') { $badge = 'يدوي' }
+    if ($badge -eq 'Manual') { $badge = T 'Src_Manual' }
     $sub = ''
     if ($G.Exe) { $sub = [IO.Path]::GetFileName([string]$G.Exe) }
     return (New-RoxItem @{ Key = [string]$G.Id; Title = [string]$G.Name; Subtitle = $sub; Badge = $badge; Image = $img
@@ -599,12 +699,21 @@ function Update-GameWatch {
         }
     }
     $script:Sync.GameNames = $names.ToArray()
+    Update-WatchText
+}
+
+function Update-WatchText {
+    $n = @($script:Sync.GameNames).Count
+    if ($n -gt 0) { $w = (T 'W_Count') -f $n } else { $w = T 'W_None' }
+    $ui.WatchText.Text = $w
+    $ui.SideWatch.Text = $w
+    if ($script:LastBoost) { $ui.LastBoostText.Text = (T 'L_Last') -f $script:LastBoost } else { $ui.LastBoostText.Text = T 'L_None' }
 }
 
 function Save-Games { Save-RoxGames @($script:GameData) }
 
 function Find-Games([switch]$Quiet) {
-    Start-RoxJob 'البحث عن الألعاب' 'Find-InstalledGames' -Quiet:$Quiet -OnDone {
+    Start-RoxJob (T 'J_FindGames') 'Find-InstalledGames' -Quiet:$Quiet -OnDone {
         param($r, $e)
         $script:GameData.Clear()
         foreach ($g in @($r)) { if ($g -and $g.Id) { [void]$script:GameData.Add($g) } }
@@ -621,13 +730,13 @@ function Set-GameObjectValue($G, [string]$Name, $Value) {
 function Select-GameExe($Item) {
     $g = $Item.Tag
     $dlg = New-Object Microsoft.Win32.OpenFileDialog
-    $dlg.Filter = 'اللعبة (*.exe)|*.exe'
-    $dlg.Title = 'اختار ملف اللعبة نفسها (مو اللانشر)'
+    $dlg.Filter = T 'F_Filter'
+    $dlg.Title = T 'F_Pick'
     if ($g.InstallDir -and (Test-Path -LiteralPath ([string]$g.InstallDir))) { $dlg.InitialDirectory = [string]$g.InstallDir }
     if ($dlg.ShowDialog($window) -ne $true) { return $false }
     $old = [string]$g.Exe
     if ($old -and $g.Optimized -and $old -ne $dlg.FileName) {
-        Start-RoxJob 'إلغاء التسريع القديم' 'Set-GameOptimization -Exe $P.Exe -On $false' @{ Exe = $old } -Quiet
+        Start-RoxJob (T 'J_UndoOld') 'Set-GameOptimization -Exe $P.Exe -On $false' @{ Exe = $old } -Quiet
     }
     Set-GameObjectValue $g 'Exe' $dlg.FileName
     $Item.Subtitle = [IO.Path]::GetFileName($dlg.FileName)
@@ -641,31 +750,30 @@ function Set-GameOpt($Item, [bool]$On) {
     if ($On -and -not $g.Exe) {
         if (-not (Select-GameExe $Item)) { $Item.IsOn = $false; return }
     }
-    Start-RoxJob ('تسريع ' + $g.Name) 'Set-GameOptimization -Exe $P.Exe -On ([bool]$P.On)' @{ Exe = [string]$g.Exe; On = $On } -Quiet -Ctx @{ G = $g; Item = $Item; On = $On } -OnDone {
+    Start-RoxJob ((T 'J_Boost') -f $g.Name) 'Set-GameOptimization -Exe $P.Exe -On ([bool]$P.On)' @{ Exe = [string]$g.Exe; On = $On } -Quiet -Ctx @{ G = $g; Item = $Item; On = $On } -OnDone {
         param($r, $e, $c)
         Set-GameObjectValue $c.G 'Optimized' ([bool]$c.On)
         $c.Item.IsOn = [bool]$c.On
         Save-Games
         Update-GameWatch
-        if ($c.On) { Show-Toast ('{0}: مُسرّعة ✓ - ROX بيسرّعها كل ما تفتحها' -f $c.G.Name) } else { Show-Toast ('{0}: رجعت عادي' -f $c.G.Name) }
+        if ($c.On) { Show-Toast ((T 'T_GameOn') -f $c.G.Name) } else { Show-Toast ((T 'T_GameOff') -f $c.G.Name) }
     }
 }
 
 function Invoke-PlayGame($Item) {
     $g = $Item.Tag
     $close = [bool]$script:Settings.CloseOnGameStart
-    Start-RoxJob ('تجهيز ' + $g.Name) '$r = Invoke-GameBoost -ProcessId 0 -CloseApps ([bool]$P.Close); Start-RoxGame $P.Game; $r' @{ Close = $close; Game = $g } -Quiet -Ctx @{ Name = [string]$g.Name } -OnDone {
+    Start-RoxJob ((T 'J_Prepare') -f $g.Name) '$r = Invoke-GameBoost -ProcessId 0 -CloseApps ([bool]$P.Close); Start-RoxGame $P.Game; $r' @{ Close = $close; Game = $g } -Quiet -Ctx @{ Name = [string]$g.Name } -OnDone {
         param($r, $e, $c)
         $res = $r | Where-Object { $_ -and $_.PSObject.Properties.Name -contains 'FreedMB' } | Select-Object -Last 1
-        if ($res) { Show-Toast ('يلا! {0} - قفلت {1} برامج وفضّيت {2:N0} MB' -f $c.Name, $res.Closed, $res.FreedMB) }
-        else { Show-Toast ('يلا! {0}' -f $c.Name) }
+        if ($res) { Show-Toast ((T 'T_PlayFreed') -f $c.Name, $res.Closed, $res.FreedMB) } else { Show-Toast ((T 'T_Play') -f $c.Name) }
     }
 }
 
 function Add-ManualGame {
     $dlg = New-Object Microsoft.Win32.OpenFileDialog
-    $dlg.Filter = 'اللعبة (*.exe)|*.exe'
-    $dlg.Title = 'اختار ملف اللعبة (.exe)'
+    $dlg.Filter = T 'F_Filter'
+    $dlg.Title = T 'F_Add'
     if ($dlg.ShowDialog($window) -ne $true) { return }
     $exe = $dlg.FileName
     $name = [IO.Path]::GetFileNameWithoutExtension($exe)
@@ -677,7 +785,7 @@ function Add-ManualGame {
         Id = 'manual:' + $exe.ToLower(); Name = $name; Source = 'Manual'; Exe = $exe; InstallDir = (Split-Path -Parent $exe)
         LaunchUri = ''; LaunchExe = ''; LaunchArgs = ''; Image = $null; AppId = ''; Optimized = $false
     }
-    foreach ($x in $script:GameData) { if ($x.Id -eq $g.Id) { Show-Toast 'اللعبة موجودة من قبل' 'warn'; return } }
+    foreach ($x in $script:GameData) { if ($x.Id -eq $g.Id) { Show-Toast (T 'T_GameExists') 'warn'; return } }
     [void]$script:GameData.Add($g)
     Save-Games
     Show-Games
@@ -688,13 +796,14 @@ function Invoke-GameDetected($Evt) {
     if (-not $script:Settings.AutoBoost) { return }
     $name = $script:GameByExe[[string]$Evt.Name]
     if (-not $name) { $name = [string]$Evt.Name }
-    $ui.LiveChip.Text = 'تسريع: ' + $name
-    Start-RoxJob ('تسريع ' + $name) 'Invoke-GameBoost -ProcessId ([int]$P.Pid) -CloseApps ([bool]$P.Close)' @{ Pid = [int]$Evt.Pid; Close = [bool]$script:Settings.CloseOnGameStart } -Quiet -Ctx @{ Name = $name } -OnDone {
+    $script:LastBoost = $name
+    Update-WatchText
+    Start-RoxJob ((T 'J_Boost') -f $name) 'Invoke-GameBoost -ProcessId ([int]$P.Pid) -CloseApps ([bool]$P.Close)' @{ Pid = [int]$Evt.Pid; Close = [bool]$script:Settings.CloseOnGameStart } -Quiet -Ctx @{ Name = $name } -OnDone {
         param($r, $e, $c)
         $res = $r | Where-Object { $_ -and $_.PSObject.Properties.Name -contains 'FreedMB' } | Select-Object -Last 1
-        $line = 'أولوية عالية للعبة'
-        if ($res) { $line = 'قفلت {0} برامج  •  فضّيت {1:N0} MB  •  أولوية عالية' -f $res.Closed, $res.FreedMB }
-        Show-GameToast ('ROX سرّع ' + $c.Name) $line
+        $line = T 'G_Priority'
+        if ($res) { $line = (T 'G_Line') -f $res.Closed, $res.FreedMB }
+        Show-GameToast ((T 'G_Title') -f $c.Name) $line
     }
 }
 
@@ -704,17 +813,13 @@ function Show-GameToast([string]$Title, [string]$Line) {
         $x = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False"
-        SizeToContent="WidthAndHeight" ShowActivated="False" ResizeMode="NoResize" FlowDirection="RightToLeft"
+        SizeToContent="WidthAndHeight" ShowActivated="False" ResizeMode="NoResize"
         FontFamily="Segoe UI Variable Text, Segoe UI">
-  <Border CornerRadius="20" Background="#F2101019" BorderBrush="#772BEBA6" BorderThickness="1" Padding="18,14" Margin="14">
+  <Border CornerRadius="22" Background="#F20E0E17" BorderBrush="#7734F5B4" BorderThickness="1" Padding="16,14" Margin="16">
+    <Border.Effect><DropShadowEffect BlurRadius="26" ShadowDepth="0" Opacity="0.6"/></Border.Effect>
     <StackPanel Orientation="Horizontal">
-      <Border Width="44" Height="44" CornerRadius="14">
-        <Border.Background>
-          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FF8B5CF6" Offset="0"/><GradientStop Color="#FF22D3EE" Offset="1"/></LinearGradientBrush>
-        </Border.Background>
-        <TextBlock Text="R" FontSize="24" FontWeight="Black" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-      </Border>
-      <StackPanel Margin="14,0,4,0" VerticalAlignment="Center">
+      <Viewbox Name="LogoBox" Width="46" Height="46" FlowDirection="LeftToRight"/>
+      <StackPanel Margin="14,0,6,0" VerticalAlignment="Center">
         <TextBlock Name="T1" FontSize="15" FontWeight="Bold" Foreground="White"/>
         <TextBlock Name="T2" FontSize="12" Foreground="#FFB9F5DC" Margin="0,3,0,0"/>
       </StackPanel>
@@ -723,6 +828,8 @@ function Show-GameToast([string]$Title, [string]$Line) {
 </Window>
 '@
         $w = [Windows.Markup.XamlReader]::Parse($x)
+        $w.FlowDirection = $window.FlowDirection
+        $w.FindName('LogoBox').Child = New-LogoElement
         $w.FindName('T1').Text = $Title
         $w.FindName('T2').Text = $Line
         $w.Left = -4000
@@ -730,8 +837,8 @@ function Show-GameToast([string]$Title, [string]$Line) {
         $w.Show()
         $w.UpdateLayout()
         $wa = [System.Windows.SystemParameters]::WorkArea
-        $w.Left = $wa.Right - $w.ActualWidth - 10
-        $w.Top  = $wa.Bottom - $w.ActualHeight - 10
+        $w.Left = $wa.Right - $w.ActualWidth - 8
+        $w.Top  = $wa.Bottom - $w.ActualHeight - 8
         $t = New-Object System.Windows.Threading.DispatcherTimer
         $t.Interval = [TimeSpan]::FromSeconds(5)
         $t.Add_Tick({ $t.Stop(); $w.Close() }.GetNewClosure())
@@ -741,10 +848,11 @@ function Show-GameToast([string]$Title, [string]$Line) {
 
 # ----------------------------------------------------------------- background apps
 function Update-Apps {
-    Start-RoxJob 'قائمة برامج الخلفية' 'Get-BackgroundApps' -Quiet -OnDone { param($r, $e) Show-Apps $r }
+    Start-RoxJob (T 'J_Apps') 'Get-BackgroundApps' -Quiet -OnDone { param($r, $e) Show-Apps $r }
 }
 
 function Show-Apps($List) {
+    $script:LastApps = @($List)
     $script:Apps.Clear()
     $total = 0.0
     foreach ($a in @($List)) {
@@ -752,9 +860,10 @@ function Show-Apps($List) {
         $sub = '{0}.exe' -f $a.ProcessName
         if ($a.Company) { $sub += '  •  ' + $a.Company }
         $cat = [string]$a.Category
+        if (-not $script:CatColor.ContainsKey($cat)) { $cat = 'app' }
         $script:Apps.Add((New-RoxItem @{
             Key = [string]$a.ProcessName; Title = [string]$a.Name; Subtitle = $sub; Detail = ('{0:N0} MB' -f $a.RamMB)
-            Badge = $script:CatText[$cat]; Accent = $script:CatColor[$cat]; Initial = (Get-Initial $a.Name)
+            Badge = (T ('Cat_' + $cat)); Accent = $script:CatColor[$cat]; Initial = (Get-Initial $a.Name)
             IsChecked = [bool]$a.DefaultClose; IsOn = [bool]$a.Keep; Tag = $a
         }))
         $total += [double]$a.RamMB
@@ -766,54 +875,68 @@ function Show-Apps($List) {
 }
 
 function Stop-Apps([string[]]$Names) {
-    if (-not $Names -or $Names.Count -eq 0) { Show-Toast 'اختار برامج أول' 'warn'; return }
-    Start-RoxJob 'قفل برامج الخلفية' 'Stop-BackgroundApps -Names $P.Names' @{ Names = $Names } -Quiet -OnDone {
+    if (-not $Names -or $Names.Count -eq 0) { Show-Toast (T 'T_PickFirst') 'warn'; return }
+    Start-RoxJob (T 'J_CloseApps') 'Stop-BackgroundApps -Names $P.Names' @{ Names = $Names } -Quiet -OnDone {
         param($r, $e)
-        $res = $r | Select-Object -Last 1
+        $res = $r | Where-Object { $_ -and $_.PSObject.Properties.Name -contains 'FreedMB' } | Select-Object -Last 1
         if ($res) {
-            $msg = 'قفلت {0} برامج وفضّيت {1:N0} MB' -f $res.Closed, $res.FreedMB
-            if (@($res.StillOpen).Count -gt 0) { $msg += '  (بعضها مفتوح لأن فيه شغل ما انحفظ)' }
+            $msg = (T 'T_ClosedFreed') -f $res.Closed, $res.FreedMB
+            if (@($res.StillOpen).Count -gt 0) { $msg += T 'T_StillOpen' }
             Show-Toast $msg
         }
         Update-Apps
     }
 }
 
+function Invoke-FreeRam {
+    Start-RoxJob (T 'J_FreeRam') 'Invoke-CleanRam' -Quiet -OnDone {
+        param($r, $e)
+        $x = $r | Where-Object { $_ -and $_.PSObject.Properties.Name -contains 'FreedMB' } | Select-Object -Last 1
+        if ($x) {
+            Show-Toast ((T 'T_FreedRam') -f $x.FreedMB)
+            if (-not $window.IsVisible) { Show-GameToast 'ROX' ((T 'G_Ram') -f $x.FreedMB) }
+        }
+    }
+}
+
 # ----------------------------------------------------------------- crash doctor
 function Invoke-CrashScan {
-    $ui.CrashSummary.Text = 'يفحص...'
-    Start-RoxJob 'فحص الكراشات' 'Get-CrashFindings -Days 14' -Quiet -OnDone { param($r, $e) Show-Crashes $r }
+    $ui.CrashSummary.Text = T 'X_Scanning'
+    Start-RoxJob (T 'J_Crash') 'Get-CrashFindings -Days 14' -Quiet -OnDone { param($r, $e) Show-Crashes $r }
 }
 
 function Get-CauseColor([string]$Cause) {
     switch -Regex ($Cause) {
-        '^gpu|^tdr|^bsod'               { return '#FFFF6464' }
-        '^runtime|^missing'             { return '#FFFFD766' }
-        '^overlay|^anticheat'           { return '#FF5B9BFF' }
-        '^hang|memory'                  { return '#FFB794FF' }
-        '^power|^whea|^disk'            { return '#FFFF9F43' }
+        '^gpu|^tdr|^bsod'     { return '#FFFF7070' }
+        '^runtime|^missing'   { return '#FFFFDD6E' }
+        '^overlay|^anticheat' { return '#FF60A5FA' }
+        '^hang|memory'        { return '#FFB9A2FF' }
+        '^power|^whea|^disk'  { return '#FFFB923C' }
     }
-    return '#FF8A8AA6'
+    return '#FF8C8CA8'
 }
 
 function Show-Crashes($List) {
     $script:CrashScanned = $true
+    $script:LastCrashes = @($List)
     $script:Crashes.Clear()
-    $culture = [Globalization.CultureInfo]::GetCultureInfo('ar-AE')
+    $culture = [Globalization.CultureInfo]::GetCultureInfo((T 'Date_Culture'))
     foreach ($f in @($List)) {
         if (-not $f -or -not $f.Cause) { continue }
-        $txt = $script:CauseText[[string]$f.Cause]
-        if (-not $txt) { $txt = $script:CauseText['unknown'] }
+        $cause = [string]$f.Cause
+        if (-not $script:Strings['en'].ContainsKey("Cause_${cause}_t")) { $cause = 'unknown' }
         $parts = New-Object System.Collections.Generic.List[string]
         if ($f.App) { $parts.Add([string]$f.App) }
-        if ($f.Module -and $f.Module -ne 'hang') { $parts.Add('الملف: ' + $f.Module) }
-        if ($f.Code -and $f.Code -ne 'hang') { $parts.Add('الكود: ' + $f.Code) }
-        try { $parts.Add('آخر مرة: ' + ([datetime]$f.Last).ToString('dd MMM HH:mm', $culture)) } catch { }
+        if ($f.Module -and $f.Module -ne 'hang') { $parts.Add((T 'X_File') + $f.Module) }
+        if ($f.Code -and $f.Code -ne 'hang') { $parts.Add((T 'X_Code') + $f.Code) }
+        try { $parts.Add((T 'X_Last') + ([datetime]$f.Last).ToString('dd MMM HH:mm', $culture)) } catch { }
         $fix = [string]$f.FixId
+        $fixText = ''
+        if ($fix) { $fixText = T ('Fix_' + $fix) }
         $script:Crashes.Add((New-RoxItem @{
-            Key = $fix; Title = $txt[0]; Detail = $txt[1]; Subtitle = ($parts -join '   •   ')
-            Badge = ('{0} مرة' -f $f.Count); Accent = (Get-CauseColor ([string]$f.Cause))
-            ActionText = $script:FixText[$fix]; HasAction = [bool]($fix -and $script:FixText.ContainsKey($fix)); Tag = $f
+            Key = $fix; Title = (T "Cause_${cause}_t"); Detail = (T "Cause_${cause}_d"); Subtitle = ($parts -join '   •   ')
+            Badge = ((T 'X_Times') -f $f.Count); Accent = (Get-CauseColor ([string]$f.Cause))
+            ActionText = $fixText; HasAction = [bool]($fix -and $script:Strings['en'].ContainsKey('Fix_' + $fix)); Tag = $f
         }))
     }
     if ($script:Crashes.Count -eq 0) {
@@ -821,30 +944,31 @@ function Show-Crashes($List) {
         $ui.CrashSummary.Text = ''
     } else {
         $ui.CrashEmpty.Visibility = 'Collapsed'
-        $ui.CrashSummary.Text = 'لقينا {0} نوع مشاكل - اضغط الزر الأخضر عشان ROX يصلّحها' -f $script:Crashes.Count
+        $ui.CrashSummary.Text = (T 'X_Summary') -f $script:Crashes.Count
     }
 }
 
-# ----------------------------------------------------------------- settings
+# ----------------------------------------------------------------- settings: GPU + language
 function Update-VendorTiles {
     $sel = [string]$script:Settings.GpuVendor
     $map = @{ amd = 'SetAmd'; nvidia = 'SetNvidia'; intel = 'SetIntel' }
-    $glow = @{ amd = '#FFFF6464'; nvidia = '#FF2BEBA6'; intel = '#FF5B9BFF' }
+    $glow = @{ amd = '#FFFF7070'; nvidia = '#FF34F5B4'; intel = '#FF60A5FA' }
+    $bc = New-Object System.Windows.Media.BrushConverter
     foreach ($k in $map.Keys) {
         $b = $ui[$map[$k]]
         if ($k -eq $sel) {
-            $b.BorderBrush = (New-Object System.Windows.Media.BrushConverter).ConvertFromString($glow[$k])
+            $b.BorderBrush = $bc.ConvertFromString($glow[$k])
             $b.BorderThickness = New-Object System.Windows.Thickness(2.5)
         } else {
-            $b.BorderBrush = (New-Object System.Windows.Media.BrushConverter).ConvertFromString('#22FFFFFF')
+            $b.BorderBrush = $bc.ConvertFromString('#22FFFFFF')
             $b.BorderThickness = New-Object System.Windows.Thickness(1.5)
         }
     }
     $guess = Get-GpuVendorGuess
-    $txt = ''
-    if ($guess) { $txt = 'اكتشفنا في جهازك: ' + $script:VendorName[$guess] }
-    if ($sel)   { $txt += '   •   اختيارك: ' + $script:VendorName[$sel] }
-    $ui.SetGpuDetected.Text = $txt
+    $parts = @()
+    if ($guess) { $parts += (T 'V_Detected') -f $script:VendorName[$guess] }
+    if ($sel)   { $parts += (T 'V_Chosen') -f $script:VendorName[$sel] }
+    $ui.SetGpuDetected.Text = ($parts -join '   •   ')
 }
 
 function Set-GpuVendor([string]$V) {
@@ -853,47 +977,91 @@ function Set-GpuVendor([string]$V) {
     Save-RoxSettings $script:Settings
     $ui.ModalGpu.Visibility = 'Collapsed'
     Update-VendorTiles
-    Show-Toast ('تمام! ROX بيضبط لك إعدادات {0}' -f $script:VendorName[$V])
+    Show-Toast ((T 'T_GpuSet') -f $script:VendorName[$V])
 }
 
 function Show-GpuModal {
     $guess = Get-GpuVendorGuess
-    if ($guess) { $ui.ModalDetected.Text = 'اكتشفنا في جهازك كرت ' + $script:VendorName[$guess] } else { $ui.ModalDetected.Text = '' }
+    if ($guess) { $ui.ModalDetected.Text = (T 'V_Detected') -f $script:VendorName[$guess] } else { $ui.ModalDetected.Text = '' }
     $tiles = @{ amd = 'ModalAmd'; nvidia = 'ModalNvidia'; intel = 'ModalIntel' }
+    $bc = New-Object System.Windows.Media.BrushConverter
     foreach ($k in $tiles.Keys) {
-        $b = $ui[$tiles[$k]]
         if ($k -eq $guess) {
-            $b.BorderBrush = (New-Object System.Windows.Media.BrushConverter).ConvertFromString('#FFFFFFFF')
-            $b.BorderThickness = New-Object System.Windows.Thickness(2.5)
+            $ui[$tiles[$k]].BorderBrush = $bc.ConvertFromString('#FFFFFFFF')
+            $ui[$tiles[$k]].BorderThickness = New-Object System.Windows.Thickness(2.5)
         }
     }
     $ui.ModalGpu.Visibility = 'Visible'
     Start-FadeIn $ui.ModalGpu -FromY 0
 }
 
-# Copies ROX to C:\ProgramData\ROX\app and makes a desktop shortcut that opens it as administrator.
+function Set-Language([string]$Code, [switch]$Save) {
+    if ($Code -ne 'en') { $Code = 'ar' }
+    if ($script:LangBusy) { return }
+    $script:LangBusy = $true
+    try {
+        $script:Lang = $Code
+        $tbl = $script:Strings[$Code]
+        foreach ($k in @($tbl.Keys)) { if ($k.StartsWith('S_')) { $window.Resources[$k] = $tbl[$k] } }
+        if ($Code -eq 'ar') {
+            $window.FlowDirection = [System.Windows.FlowDirection]::RightToLeft
+            $window.Resources['LogAlign'] = [System.Windows.TextAlignment]::Right
+            $ui.SeeAllArrow.Text = [string][char]0xE72B
+        } else {
+            $window.FlowDirection = [System.Windows.FlowDirection]::LeftToRight
+            $window.Resources['LogAlign'] = [System.Windows.TextAlignment]::Left
+            $ui.SeeAllArrow.Text = [string][char]0xE72A
+        }
+        $ui.LangAr.IsChecked = ($Code -eq 'ar')
+        $ui.LangEn.IsChecked = ($Code -eq 'en')
+        $ui.ModalLangAr.IsChecked = ($Code -eq 'ar')
+        $ui.ModalLangEn.IsChecked = ($Code -eq 'en')
+        $culture = [Globalization.CultureInfo]::GetCultureInfo((T 'Date_Culture'))
+        $ui.DateText.Text = (Get-Date).ToString('dddd  d MMMM yyyy', $culture)
+        $ui.VersionText.Text = (T 'Version') -f $script:RoxVersion
+        $ui.TitleText.Text = T ('S_Nav' + $script:CurrentPage.Substring(4))
+        Update-ModuleTexts
+        Update-HeroText
+        Update-WatchText
+        Update-VendorTiles
+        Show-Games
+        if ($null -ne $script:LastApps) { Show-Apps $script:LastApps }
+        if ($null -ne $script:LastCrashes) { Show-Crashes $script:LastCrashes }
+        Update-TrayTexts
+        if ($Save) {
+            $script:Settings.Language = $Code
+            Save-RoxSettings $script:Settings
+            Show-Toast (T 'T_Lang')
+        }
+    } finally { $script:LangBusy = $false }
+}
+
+# Copies ROX to C:\ProgramData\ROX\app and keeps a desktop shortcut that opens it as administrator.
 function Install-RoxCopy {
     try {
         if (-not (Test-Path -LiteralPath $script:AppDir)) { New-Item -ItemType Directory -Path $script:AppDir -Force | Out-Null }
         if ($script:Here.TrimEnd('\') -ne $script:AppDir.TrimEnd('\')) {
-            foreach ($f in 'ROX.ps1', 'ROX.xaml', 'RoxEngine.ps1', 'ROX.bat') {
+            foreach ($f in 'ROX.ps1', 'ROX.xaml', 'RoxEngine.ps1', 'RoxStrings.ps1', 'ROX.bat') {
                 $src = Join-Path $script:Here $f
                 if (Test-Path -LiteralPath $src) { Copy-Item -LiteralPath $src -Destination (Join-Path $script:AppDir $f) -Force }
             }
         }
         $lnkPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'ROX.lnk'
+        if ((Test-Path -LiteralPath $lnkPath) -and [int]$script:Settings.IconVersion -ge $script:IconVersion) { return }
         $wsh = New-Object -ComObject WScript.Shell
         $lnk = $wsh.CreateShortcut($lnkPath)
-        $lnk.TargetPath   = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-        $lnk.Arguments    = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f (Join-Path $script:AppDir 'ROX.ps1')
-        $lnk.Description  = 'ROX - gaming optimizer'
-        $lnk.WindowStyle  = 7
-        $ico = Join-Path $script:DataDir 'rox.ico'
+        $lnk.TargetPath  = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        $lnk.Arguments   = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f (Join-Path $script:AppDir 'ROX.ps1')
+        $lnk.Description = 'ROX - game booster'
+        $lnk.WindowStyle = 7
+        $ico = Join-Path $script:DataDir 'rox-v3.ico'
         if (Test-Path -LiteralPath $ico) { $lnk.IconLocation = $ico }
         $lnk.Save()
         $bytes = [IO.File]::ReadAllBytes($lnkPath)
         $bytes[0x15] = $bytes[0x15] -bor 0x20          # "Run as administrator"
         [IO.File]::WriteAllBytes($lnkPath, $bytes)
+        $script:Settings.IconVersion = $script:IconVersion
+        Save-RoxSettings $script:Settings
     } catch { Write-Log "install copy: $($_.Exception.Message)" }
 }
 
@@ -917,26 +1085,25 @@ function Hide-ToTray {
     $window.Hide()
     $script:Sync.Visible = $false
     if (-not $script:Settings.TrayHintShown -and $script:TrayIcon) {
-        $script:TrayIcon.ShowBalloonTip(4000, 'ROX شغّال جنب الساعة', 'يراقب ألعابك ويسرّعها. اضغط الأيقونة عشان تفتحه.', [System.Windows.Forms.ToolTipIcon]::Info)
+        $script:TrayIcon.ShowBalloonTip(4000, (T 'Tr_HintTitle'), (T 'Tr_HintText'), [System.Windows.Forms.ToolTipIcon]::Info)
         $script:Settings.TrayHintShown = $true
         Save-RoxSettings $script:Settings
     }
 }
 
+$script:TrayItems = @{}
 function New-TrayIcon {
     try {
         $ni = New-Object System.Windows.Forms.NotifyIcon
         try {
-            $bmp = New-Object System.Drawing.Bitmap($script:IconPng)
-            $small = New-Object System.Drawing.Bitmap($bmp, 32, 32)
-            $ni.Icon = [System.Drawing.Icon]::FromHandle($small.GetHicon())
+            $bmp = New-Object System.Drawing.Bitmap((Join-Path $script:DataDir 'rox-v3-32.png'))
+            $ni.Icon = [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
         } catch { $ni.Icon = [System.Drawing.SystemIcons]::Application }
         $ni.Text = 'ROX'
         $menu = New-Object System.Windows.Forms.ContextMenuStrip
-        $menu.RightToLeft = 'Yes'
-        [void]$menu.Items.Add('افتح ROX', $null, { Show-Main })
-        [void]$menu.Items.Add('فضّي الرام', $null, { Start-RoxJob 'تفضية الرام' 'Invoke-CleanRam' -Quiet -OnDone { param($r, $e) $x = $r | Select-Object -Last 1; if ($x) { Show-GameToast 'ROX' ('فضّيت {0:N0} MB' -f $x.FreedMB) } } })
-        [void]$menu.Items.Add('خروج', $null, { Exit-Rox })
+        $script:TrayItems.open = $menu.Items.Add('ROX', $null, { Show-Main })
+        $script:TrayItems.ram  = $menu.Items.Add('RAM', $null, { Invoke-FreeRam })
+        $script:TrayItems.exit = $menu.Items.Add('Exit', $null, { Exit-Rox })
         $ni.ContextMenuStrip = $menu
         $ni.Add_MouseClick({ param($s, $e) if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) { Show-Main } })
         $ni.Visible = $true
@@ -944,27 +1111,35 @@ function New-TrayIcon {
     } catch { Write-Log "tray: $($_.Exception.Message)"; return $null }
 }
 
+function Update-TrayTexts {
+    if (-not $script:TrayIcon) { return }
+    try {
+        $script:TrayItems.open.Text = T 'Tr_Open'
+        $script:TrayItems.ram.Text  = T 'Tr_FreeRam'
+        $script:TrayItems.exit.Text = T 'Tr_Exit'
+        if ($script:Lang -eq 'ar') { $script:TrayIcon.ContextMenuStrip.RightToLeft = 'Yes' } else { $script:TrayIcon.ContextMenuStrip.RightToLeft = 'No' }
+    } catch { }
+}
+
 # ----------------------------------------------------------------- navigation
 $script:Pages = [ordered]@{
     NavHome = 'PageHome'; NavOptimize = 'PageOptimize'; NavGames = 'PageGames'
     NavApps = 'PageApps'; NavCrash = 'PageCrash'; NavSettings = 'PageSettings'
 }
-$script:PageTitles = @{
-    PageHome = 'الرئيسية'; PageOptimize = 'التحسينات'; PageGames = 'الألعاب'
-    PageApps = 'برامج الخلفية'; PageCrash = 'طبيب الكراش'; PageSettings = 'الإعدادات'
-}
 
 function Show-Page([string]$Page) {
     foreach ($p in $script:Pages.Values) { if ($p -ne $Page) { $ui[$p].Visibility = 'Collapsed' } }
+    $script:CurrentPage = $Page
     $pg = $ui[$Page]
     $pg.Visibility = 'Visible'
     $pg.ScrollToTop()
-    $ui.TitleText.Text = $script:PageTitles[$Page]
+    $ui.TitleText.Text = T ('S_Nav' + $Page.Substring(4))
     Start-FadeIn $pg
     switch ($Page) {
         'PageApps'     { Update-Apps }
         'PageCrash'    { if (-not $script:CrashScanned) { Invoke-CrashScan } }
         'PageSettings' { Update-VendorTiles; $ui.ChkSetHvci.IsChecked = (Get-MemoryIntegrityOn) }
+        'PageHome'     { Update-Sparks }
     }
 }
 
@@ -987,12 +1162,20 @@ $window.Add_Closing({
         if ($script:Settings.AutoBoost -and $script:TrayIcon) { Hide-ToTray } else { Exit-Rox }
     }
 })
+$window.Add_SizeChanged({ Update-Sparks })
 
-$ui.ConfirmYes.Add_Click({ $ui.ModalConfirm.Visibility = 'Collapsed'; $ui.ConfirmNo.Content = 'إلغاء'; if ($script:ConfirmOnYes) { & $script:ConfirmOnYes } })
-$ui.ConfirmAlt.Add_Click({ $ui.ModalConfirm.Visibility = 'Collapsed'; $ui.ConfirmNo.Content = 'إلغاء'; if ($script:ConfirmOnAlt) { & $script:ConfirmOnAlt } })
-$ui.ConfirmNo.Add_Click({ $ui.ModalConfirm.Visibility = 'Collapsed'; $ui.ConfirmNo.Content = 'إلغاء'; if ($script:ConfirmOnNo) { & $script:ConfirmOnNo; $script:ConfirmOnNo = $null } })
+$ui.ConfirmYes.Add_Click({ $ui.ModalConfirm.Visibility = 'Collapsed'; if ($script:ConfirmOnYes) { & $script:ConfirmOnYes } })
+$ui.ConfirmAlt.Add_Click({ $ui.ModalConfirm.Visibility = 'Collapsed'; if ($script:ConfirmOnAlt) { & $script:ConfirmOnAlt } })
+$ui.ConfirmNo.Add_Click({ $ui.ModalConfirm.Visibility = 'Collapsed' })
 $ui.BtnDrawerClose.Add_Click({ Close-Drawer })
 
+# language
+$ui.LangAr.Add_Checked({ if (-not $script:LangBusy) { Set-Language 'ar' -Save } })
+$ui.LangEn.Add_Checked({ if (-not $script:LangBusy) { Set-Language 'en' -Save } })
+$ui.ModalLangAr.Add_Checked({ if (-not $script:LangBusy) { Set-Language 'ar' -Save } })
+$ui.ModalLangEn.Add_Checked({ if (-not $script:LangBusy) { Set-Language 'en' -Save } })
+
+# GPU
 $ui.ModalAmd.Add_Click({ Set-GpuVendor 'amd' })
 $ui.ModalNvidia.Add_Click({ Set-GpuVendor 'nvidia' })
 $ui.ModalIntel.Add_Click({ Set-GpuVendor 'intel' })
@@ -1002,22 +1185,26 @@ $ui.SetIntel.Add_Click({ Set-GpuVendor 'intel' })
 
 # home
 $ui.BtnFixAll.Add_Click({
-    Show-Confirm 'حدّث وصلّح كل شي؟' ('ROX بيطبّق كل التحسينات، يحدّث التعريفات والبرامج وملفات تشغيل الألعاب، ويصلّح مشاكل الكراش وملفات ويندوز.' + "`n" + 'الإصلاح العميق ياخذ 15 إلى 40 دقيقة. تقدر تستخدم الجهاز عادي وهو شغّال.') `
-        'كل شي (مع الإصلاح العميق)' { Start-RoxJob 'تحديث وإصلاح كل شي' 'Invoke-UpdateAndFixAll -DeepRepair $true' -OnDone { param($r, $e) Update-State; Request-Restart } } `
-        'بدون الإصلاح العميق (أسرع)' { Start-RoxJob 'تحديث وإصلاح كل شي' 'Invoke-UpdateAndFixAll -DeepRepair $false' -OnDone { param($r, $e) Update-State; Request-Restart } }
-})
-$ui.BtnGaming.Add_Click({ Invoke-ModuleJob 'gaming' 'تحسين الألعاب' })
-$ui.BtnGpu.Add_Click({ Invoke-ModuleJob 'gpu' 'إعدادات الكرت' })
-$ui.BtnPower.Add_Click({ Invoke-ModuleJob 'power' 'الطاقة والمعالج' })
-$ui.BtnSeeAll.Add_Click({ $ui.NavOptimize.IsChecked = $true })
-$ui.BtnSeeAll2.Add_Click({ $ui.NavOptimize.IsChecked = $true })
-
-# optimize
-$ui.BtnOptimizeAll.Add_Click({
-    Show-Confirm 'تطبيق كل التحسينات؟' 'ROX بيسوي نقطة استعادة، وبعدين يطبّق كل التحسينات. كل شي ينحفظ وتقدر ترجّعه من الإعدادات.' 'طبّق الحين' {
-        Start-RoxJob 'تطبيق كل التحسينات' 'Invoke-OptimizeAll' -OnDone { param($r, $e) Update-State; Request-Restart }
+    Show-Confirm (T 'C_FixTitle') (T 'C_FixText') (T 'C_FixAll') {
+        Start-RoxJob (T 'J_FixAll') 'Invoke-UpdateAndFixAll -DeepRepair $true' -OnDone { param($r, $e) Update-State; Request-Restart }
+    } (T 'C_FixQuick') {
+        Start-RoxJob (T 'J_FixAll') 'Invoke-UpdateAndFixAll -DeepRepair $false' -OnDone { param($r, $e) Update-State; Request-Restart }
     }
 })
+$applyAll = {
+    Show-Confirm (T 'C_OptTitle') (T 'C_OptText') (T 'C_OptYes') {
+        Start-RoxJob (T 'J_OptAll') 'Invoke-OptimizeAll' -OnDone { param($r, $e) Update-State; Request-Restart }
+    }
+}
+$ui.BtnApplyAllHome.Add_Click($applyAll)
+$ui.BtnOptimizeAll.Add_Click($applyAll)
+$ui.BtnGaming.Add_Click({ Invoke-ModuleJob 'gaming' })
+$ui.BtnGpu.Add_Click({ Invoke-ModuleJob 'gpu' })
+$ui.BtnPower.Add_Click({ Invoke-ModuleJob 'power' })
+$ui.BtnQuickClean.Add_Click({ Invoke-FreeRam })
+$ui.BtnSeeAll.Add_Click({ $ui.NavOptimize.IsChecked = $true })
+$ui.BtnOpenGames.Add_Click({ $ui.NavGames.IsChecked = $true })
+
 $moduleClick = {
     param($s, $e)
     $src = $e.OriginalSource
@@ -1025,7 +1212,7 @@ $moduleClick = {
     $item = $src.DataContext
     if (-not ($item -is [RoxItem])) { return }
     switch ([string]$src.Tag) {
-        'run' { Invoke-ModuleJob $item.Key $item.Title }
+        'run' { Invoke-ModuleJob $item.Key }
         'fav' { Update-Favorites }
     }
 }
@@ -1047,21 +1234,33 @@ $ui.GamesList.AddHandler([System.Windows.Controls.Primitives.ButtonBase]::ClickE
         'exe'  { [void](Select-GameExe $item) }
     }
 })
-$ui.ChkAutoBoost.Add_Click({ $script:Settings.AutoBoost = [bool]$ui.ChkAutoBoost.IsChecked; $ui.ChkSetAuto.IsChecked = $script:Settings.AutoBoost; Save-RoxSettings $script:Settings })
-$ui.ChkSetAuto.Add_Click({ $script:Settings.AutoBoost = [bool]$ui.ChkSetAuto.IsChecked; $ui.ChkAutoBoost.IsChecked = $script:Settings.AutoBoost; Save-RoxSettings $script:Settings })
-$ui.ChkCloseOnStart.Add_Click({ $script:Settings.CloseOnGameStart = [bool]$ui.ChkCloseOnStart.IsChecked; $ui.ChkSetClose.IsChecked = $script:Settings.CloseOnGameStart; Save-RoxSettings $script:Settings })
-$ui.ChkSetClose.Add_Click({ $script:Settings.CloseOnGameStart = [bool]$ui.ChkSetClose.IsChecked; $ui.ChkCloseOnStart.IsChecked = $script:Settings.CloseOnGameStart; Save-RoxSettings $script:Settings })
+
+function Set-AutoBoost([bool]$On) {
+    $script:Settings.AutoBoost = $On
+    $ui.ChkAutoBoost.IsChecked = $On
+    $ui.ChkSetAuto.IsChecked = $On
+    $ui.ChkHomeAuto.IsChecked = $On
+    Save-RoxSettings $script:Settings
+}
+function Set-CloseOnStart([bool]$On) {
+    $script:Settings.CloseOnGameStart = $On
+    $ui.ChkCloseOnStart.IsChecked = $On
+    $ui.ChkSetClose.IsChecked = $On
+    Save-RoxSettings $script:Settings
+}
+$ui.ChkAutoBoost.Add_Click({ Set-AutoBoost ([bool]$ui.ChkAutoBoost.IsChecked) })
+$ui.ChkSetAuto.Add_Click({ Set-AutoBoost ([bool]$ui.ChkSetAuto.IsChecked) })
+$ui.ChkHomeAuto.Add_Click({ Set-AutoBoost ([bool]$ui.ChkHomeAuto.IsChecked) })
+$ui.ChkCloseOnStart.Add_Click({ Set-CloseOnStart ([bool]$ui.ChkCloseOnStart.IsChecked) })
+$ui.ChkSetClose.Add_Click({ Set-CloseOnStart ([bool]$ui.ChkSetClose.IsChecked) })
 
 # background apps
 $ui.BtnRefreshApps.Add_Click({ Update-Apps })
-$ui.BtnCleanRam.Add_Click({
-    Start-RoxJob 'تفضية الرام' 'Invoke-CleanRam' -Quiet -OnDone { param($r, $e) $x = $r | Select-Object -Last 1; if ($x) { Show-Toast ('فضّيت {0:N0} MB من الرام' -f $x.FreedMB) } }
-})
+$ui.BtnCleanRam.Add_Click({ Invoke-FreeRam })
 $ui.BtnCloseSelected.Add_Click({ Stop-Apps @($script:Apps | Where-Object { $_.IsChecked } | ForEach-Object { $_.Key }) })
 $ui.BtnCloseAll.Add_Click({
-    $names = @($script:Apps | Where-Object { -not $_.IsOn } | ForEach-Object { $_.Key })
-    $script:PendingClose = $names
-    Show-Confirm 'قفّل كل برامج الخلفية؟' ('بنقفل {0} برامج (إلا اللي عليها نجمة). البرامج اللي فيها شغل ما انحفظ ما بتنقفل غصب.' -f $names.Count) 'قفّلها' { Stop-Apps $script:PendingClose }
+    $script:PendingClose = @($script:Apps | Where-Object { -not $_.IsOn } | ForEach-Object { $_.Key })
+    Show-Confirm (T 'C_CloseTitle') ((T 'C_CloseText') -f $script:PendingClose.Count) (T 'C_CloseYes') { Stop-Apps $script:PendingClose }
 })
 $ui.AppsList.AddHandler([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent, [System.Windows.RoutedEventHandler]{
     param($s, $e)
@@ -1073,7 +1272,7 @@ $ui.AppsList.AddHandler([System.Windows.Controls.Primitives.ButtonBase]::ClickEv
         $n = $item.Key.ToLower()
         $keep = New-Object System.Collections.Generic.List[string]
         foreach ($k in @($script:Settings.KeepApps)) { if ($k -and ([string]$k).ToLower() -ne $n) { $keep.Add(([string]$k).ToLower()) } }
-        if ($item.IsOn) { $keep.Add($n); $item.IsChecked = $false; Show-Toast ($item.Title + ': ROX ما بيقفله أبد') }
+        if ($item.IsOn) { $keep.Add($n); $item.IsChecked = $false; Show-Toast ((T 'T_KeepForever') -f $item.Title) }
         $script:Settings.KeepApps = $keep.ToArray()
         Save-RoxSettings $script:Settings
     }
@@ -1082,8 +1281,8 @@ $ui.AppsList.AddHandler([System.Windows.Controls.Primitives.ButtonBase]::ClickEv
 # crash doctor
 $ui.BtnScanCrash.Add_Click({ Invoke-CrashScan })
 $ui.BtnDeepRepair.Add_Click({
-    Show-Confirm 'إصلاح عميق للويندوز؟' 'ROX بيشغّل DISM و SFC عشان يصلّح ملفات ويندوز الخربانة. ياخذ 10 إلى 30 دقيقة ويحتاج إنترنت.' 'ابدأ الإصلاح' {
-        Start-RoxJob 'إصلاح ملفات ويندوز' 'Invoke-SystemRepair' -OnDone { param($r, $e) Request-Restart }
+    Show-Confirm (T 'C_RepairTitle') (T 'C_RepairText') (T 'C_RepairYes') {
+        Start-RoxJob (T 'J_Repair') 'Invoke-SystemRepair' -OnDone { param($r, $e) Request-Restart }
     }
 })
 $ui.CrashList.AddHandler([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent, [System.Windows.RoutedEventHandler]{
@@ -1095,7 +1294,7 @@ $ui.CrashList.AddHandler([System.Windows.Controls.Primitives.ButtonBase]::ClickE
     $f = $item.Tag
     Start-RoxJob ($item.ActionText) 'Invoke-RoxFix -FixId $P.Fix -Extra $P.Extra' @{ Fix = [string]$f.FixId; Extra = [string]$f.Extra } -OnDone {
         param($r, $e)
-        Show-Toast 'تم - إذا طلب ريستارت سوّه عشان يشتغل الإصلاح'
+        Show-Toast (T 'T_FixDone')
     }
 })
 
@@ -1104,25 +1303,25 @@ $ui.ChkSetStartup.Add_Click({
     $on = [bool]$ui.ChkSetStartup.IsChecked
     $script:Settings.StartWithWindows = $on
     Save-RoxSettings $script:Settings
-    Start-RoxJob 'التشغيل مع ويندوز' 'Set-RoxAutostart -On ([bool]$P.On) -ScriptPath $P.Path' @{ On = $on; Path = (Join-Path $script:AppDir 'ROX.ps1') } -Quiet -OnDone {
+    Start-RoxJob (T 'J_Startup') 'Set-RoxAutostart -On ([bool]$P.On) -ScriptPath $P.Path' @{ On = $on; Path = (Join-Path $script:AppDir 'ROX.ps1') } -Quiet -OnDone {
         param($r, $e)
-        if ($e) { Show-Toast 'ما قدرنا نفعّلها' 'warn' } else { Show-Toast 'تم ✓' }
+        if ($e) { Show-Toast (T 'T_Failed') 'warn' } else { Show-Toast (T 'T_Done') }
     }
 })
 $ui.ChkSetHvci.Add_Click({
     if ($ui.ChkSetHvci.IsChecked) {
-        Start-RoxJob 'تشغيل Memory Integrity' 'Set-MemoryIntegrity -Enable $true' -Quiet -OnDone { param($r, $e) Show-Toast 'بتشتغل بعد الريستارت' }
+        Start-RoxJob (T 'J_HvciOn') 'Set-MemoryIntegrity -Enable $true' -Quiet -OnDone { param($r, $e) Show-Toast (T 'T_HvciOn') }
     } else {
         $ui.ChkSetHvci.IsChecked = $true
-        Show-Confirm 'تقفل Memory Integrity؟' 'مايكروسوفت تقول قفلها يعطي فريمات أكثر في الألعاب، بس يقلل الحماية ضد بعض الفيروسات. إذا لعبة اشتكت (Anti-cheat) رجّعه من هنا.' 'قفّلها' {
+        Show-Confirm (T 'C_HvciTitle') (T 'C_HvciText') (T 'C_HvciYes') {
             $ui.ChkSetHvci.IsChecked = $false
-            Start-RoxJob 'قفل Memory Integrity' 'Set-MemoryIntegrity -Enable $false' -Quiet -OnDone { param($r, $e) Show-Toast 'بتنقفل بعد الريستارت' }
+            Start-RoxJob (T 'J_HvciOff') 'Set-MemoryIntegrity -Enable $false' -Quiet -OnDone { param($r, $e) Show-Toast (T 'T_HvciOff') }
         }
     }
 })
 $ui.BtnUndoAll.Add_Click({
-    Show-Confirm 'ترجّع كل شي مثل ما كان؟' 'ROX بيلغي كل التحسينات ويرجّع إعداداتك الأصلية (الخدمات، خطة الطاقة، الريجستري، تسريع الألعاب).' 'رجّع كل شي' {
-        Start-RoxJob 'إرجاع الإعدادات الأصلية' 'Invoke-RoxRestore' -OnDone {
+    Show-Confirm (T 'C_UndoTitle') (T 'C_UndoText') (T 'C_UndoYes') {
+        Start-RoxJob (T 'J_Undo') 'Invoke-RoxRestore' -OnDone {
             param($r, $e)
             foreach ($g in $script:GameData) { Set-GameObjectValue $g 'Optimized' $false }
             Save-Games
@@ -1147,7 +1346,7 @@ $script:Timer.Add_Tick({
         while ($n -lt 80 -and $script:LogQueue.TryDequeue([ref]$evt)) { Add-LogLine $evt; $n++ }
         if ($null -ne $script:Job -and $script:Job.Handle.IsCompleted) { Complete-RoxJob }
         $script:TickCount++
-        if ($script:TickCount % 12 -eq 1) { Update-Stats }
+        if ($script:TickCount % 12 -eq 1 -and $script:Sync.Visible) { Update-Stats }
         Update-ScoreAnim
         $g = $null
         while ($script:Sync.GameEvents.TryDequeue([ref]$g)) { Invoke-GameDetected $g }
@@ -1157,14 +1356,22 @@ $script:Timer.Add_Tick({
 })
 
 # ----------------------------------------------------------------- start
+$lang = [string]$script:Settings.Language
+if (-not $lang) {
+    if ($script:Settings.FirstRunDone -or [Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName -eq 'ar' -or
+        [Globalization.CultureInfo]::CurrentCulture.TwoLetterISOLanguageName -eq 'ar') { $lang = 'ar' } else { $lang = 'en' }
+}
 Initialize-Modules
+Set-Language $lang
 $ui.ChkAutoBoost.IsChecked    = [bool]$script:Settings.AutoBoost
 $ui.ChkSetAuto.IsChecked      = [bool]$script:Settings.AutoBoost
+$ui.ChkHomeAuto.IsChecked     = [bool]$script:Settings.AutoBoost
 $ui.ChkCloseOnStart.IsChecked = [bool]$script:Settings.CloseOnGameStart
 $ui.ChkSetClose.IsChecked     = [bool]$script:Settings.CloseOnGameStart
 $ui.ChkSetStartup.IsChecked   = [bool]$script:Settings.StartWithWindows
 foreach ($g in @(Get-RoxGames)) { if ($g -and $g.Id) { [void]$script:GameData.Add($g) } }
 Show-Games
+Set-ScoreRing 0
 $script:Timer.Start()
 Update-State
 Find-Games -Quiet
@@ -1181,13 +1388,24 @@ function Invoke-Pump([int]$Times = 1) {
     }
 }
 
+function Save-Png($Visual, [int]$W, [int]$H, [string]$Name) {
+    $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap($W, $H, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $rtb.Render($Visual)
+    $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+    $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($rtb))
+    $path = Join-Path $RenderTest "$Name.png"
+    $fs = [IO.File]::Create($path)
+    $enc.Save($fs)
+    $fs.Close()
+    Write-Host "shot: $path ($W x $H)"
+}
+
 function Save-Shot([string]$Name) {
     Invoke-Pump 8
     $root = $ui.Root
     $w = [int][math]::Max(1, $root.ActualWidth)
     $h = [int][math]::Max(1, $root.ActualHeight)
-    # Paint the window background, and re-apply the right-to-left mirror that Windows applies
-    # to the whole window (rendering the content directly would give a mirrored picture).
+    # Paint the window background and re-apply the right-to-left mirror Windows applies to the window.
     $dv = New-Object System.Windows.Media.DrawingVisual
     $dc = $dv.RenderOpen()
     $full = New-Object System.Windows.Rect(0, 0, $w, $h)
@@ -1201,45 +1419,67 @@ function Save-Shot([string]$Name) {
     $dc.DrawRectangle($vb, $null, $full)
     if ($rtl) { $dc.Pop() }
     $dc.Close()
-    $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap($w, $h, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
-    $rtb.Render($dv)
-    $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
-    $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($rtb))
-    $path = Join-Path $RenderTest "$Name.png"
-    $fs = [IO.File]::Create($path)
-    $enc.Save($fs)
-    $fs.Close()
-    Write-Host "shot: $path ($w x $h)"
+    Save-Png $dv $w $h $Name
 }
 
 if ($RenderTest) {
     New-Item -ItemType Directory -Path $RenderTest -Force | Out-Null
     $window.WindowStartupLocation = 'Manual'
-    $window.Left = 0; $window.Top = 0; $window.Width = 1280; $window.Height = 800
+    $window.Left = 0; $window.Top = 0; $window.Width = 1366; $window.Height = 860
     $window.ShowActivated = $false
     try { $window.Show() } catch { Write-Host "Show failed: $($_.Exception.Message)" }
     Update-Apps
     Invoke-CrashScan
     $deadline = (Get-Date).AddSeconds(240)
     while (((Get-Date) -lt $deadline) -and ($null -ne $script:Job -or $script:JobQueue.Count -gt 0)) { Invoke-Pump 5 }
-    Write-Host ("jobs finished: queue={0} running={1} score={2} games={3} apps={4} crashes={5}" -f $script:JobQueue.Count, ($null -ne $script:Job), $script:ScoreTarget, $script:GameData.Count, $script:Apps.Count, $script:Crashes.Count)
-    foreach ($l in $script:Logs) { Write-Host ("log: " + $l.Title) }
+    Write-Host ("jobs finished: score={0} games={1} apps={2} crashes={3}" -f $script:ScoreTarget, $script:GameData.Count, $script:Apps.Count, $script:Crashes.Count)
+
+    # icon preview: dark + light background, several sizes
+    $strip = New-Object System.Windows.Controls.StackPanel
+    $strip.Orientation = 'Horizontal'
+    foreach ($bg in @('#FF06060B', '#FFF3F3F3')) {
+        foreach ($s in @(256, 64, 32, 16)) {
+            $cell = New-Object System.Windows.Controls.Border
+            $cell.Width = 272; $cell.Height = 272
+            $cell.Background = (New-Object System.Windows.Media.BrushConverter).ConvertFromString($bg)
+            $vb2 = New-Object System.Windows.Controls.Viewbox
+            $vb2.Width = $s; $vb2.Height = $s
+            $vb2.Child = New-LogoElement
+            $cell.Child = $vb2
+            [void]$strip.Children.Add($cell)
+        }
+    }
+    $strip.Measure((New-Object System.Windows.Size(2176, 272)))
+    $strip.Arrange((New-Object System.Windows.Rect(0, 0, 2176, 272)))
+    $strip.UpdateLayout()
+    Save-Png $strip 2176 272 '00-icon'
+
+    $script:ScoreTarget = [math]::Max($script:ScoreTarget, 72)
     $script:ScoreShown = $script:ScoreTarget
     Update-ScoreAnim
-    $script:Sync.Cpu = 23; $script:Sync.Gpu = 61; $script:Sync.RamUsed = 6300; $script:Sync.RamTotal = 16384; $script:Sync.Procs = 142
-    Update-Stats
+    Update-HeroText
+    $rnd = New-Object System.Random(7)
+    for ($i = 0; $i -lt 40; $i++) {
+        Add-Hist 'cpu' (18 + 22 * [math]::Abs([math]::Sin($i / 4.0)) + $rnd.Next(0, 8))
+        Add-Hist 'gpu' (40 + 35 * [math]::Abs([math]::Sin($i / 6.0 + 1)) + $rnd.Next(0, 6))
+        Add-Hist 'ram' (38 + $i / 4.0 + $rnd.Next(0, 3))
+        Add-Hist 'proc' (150 - $i + $rnd.Next(0, 6))
+    }
+    $script:Sync.Stop = $true
+    $ui.CpuText.Text = '27%'; $ui.GpuText.Text = '68%'; $ui.RamText.Text = '6.4 / 16 GB'; $ui.ProcText.Text = '112'
+    $script:LastBoost = 'VALORANT'
     if ($script:Games.Count -eq 0) {
         foreach ($d in @(@('VALORANT', 'Riot', $true), @('Counter-Strike 2', 'Steam', $true), @('Fortnite', 'Epic', $false), @('Call of Duty', 'Steam', $false), @('Minecraft', 'Manual', $false))) {
-            $script:GameData.Add([pscustomobject]@{ Id = 'demo:' + $d[0]; Name = $d[0]; Source = $d[1]; Exe = 'C:\Games\game.exe'; Optimized = $d[2]; Image = $null }) | Out-Null
+            [void]$script:GameData.Add([pscustomobject]@{ Id = 'demo:' + $d[0]; Name = $d[0]; Source = $d[1]; Exe = ('C:\Games\{0}.exe' -f $d[0].Replace(' ', '')); Optimized = $d[2]; Image = $null })
         }
         Show-Games
     }
     if ($script:Apps.Count -lt 3) {
         Show-Apps @(
-            [pscustomobject]@{ ProcessName = 'chrome'; Name = 'Google Chrome'; Company = 'Google LLC'; Category = 'app'; RamMB = 1840; Keep = $false; DefaultClose = $true },
+            [pscustomobject]@{ ProcessName = 'chrome'; Name = 'Google Chrome'; Company = 'Google LLC'; Category = 'browser'; RamMB = 1840; Keep = $false; DefaultClose = $false },
+            [pscustomobject]@{ ProcessName = 'Spotify'; Name = 'Spotify'; Company = 'Spotify AB'; Category = 'app'; RamMB = 410; Keep = $false; DefaultClose = $true },
             [pscustomobject]@{ ProcessName = 'Discord'; Name = 'Discord'; Company = 'Discord Inc.'; Category = 'chat'; RamMB = 512; Keep = $true; DefaultClose = $false },
-            [pscustomobject]@{ ProcessName = 'steamwebhelper'; Name = 'Steam Client WebHelper'; Company = 'Valve'; Category = 'launcher'; RamMB = 430; Keep = $false; DefaultClose = $false },
-            [pscustomobject]@{ ProcessName = 'OneDrive'; Name = 'Microsoft OneDrive'; Company = 'Microsoft Corporation'; Category = 'app'; RamMB = 160; Keep = $false; DefaultClose = $true }
+            [pscustomobject]@{ ProcessName = 'steamwebhelper'; Name = 'Steam Client WebHelper'; Company = 'Valve'; Category = 'launcher'; RamMB = 430; Keep = $false; DefaultClose = $false }
         )
     }
     if ($script:Crashes.Count -eq 0) {
@@ -1249,26 +1489,30 @@ if ($RenderTest) {
             [pscustomobject]@{ Cause = 'tdr'; App = ''; Module = ''; Code = ''; Count = 2; Last = (Get-Date).AddDays(-3); FixId = 'gpu'; Extra = '' }
         )
     }
-    $ui.NavHome.IsChecked = $true;     Show-Page 'PageHome'; Save-Shot '01-home'
-    $ui.NavOptimize.IsChecked = $true; Save-Shot '02-optimize'
-    $ui.NavGames.IsChecked = $true;    Save-Shot '03-games'
-    $ui.NavApps.IsChecked = $true
-    Invoke-Pump 3
-    $deadline = (Get-Date).AddSeconds(60)
-    while (((Get-Date) -lt $deadline) -and ($null -ne $script:Job -or $script:JobQueue.Count -gt 0)) { Invoke-Pump 5 }
-    if ($script:Apps.Count -lt 3) {
-        Show-Apps @(
-            [pscustomobject]@{ ProcessName = 'chrome'; Name = 'Google Chrome'; Company = 'Google LLC'; Category = 'app'; RamMB = 1840; Keep = $false; DefaultClose = $true },
-            [pscustomobject]@{ ProcessName = 'Discord'; Name = 'Discord'; Company = 'Discord Inc.'; Category = 'chat'; RamMB = 512; Keep = $true; DefaultClose = $false }
-        )
+    Update-WatchText
+    $shots = {
+        param($Suffix)
+        $ui.NavHome.IsChecked = $true; Show-Page 'PageHome'; Invoke-Pump 3; Update-Sparks; Save-Shot ('01-home' + $Suffix)
+        $ui.NavOptimize.IsChecked = $true; Save-Shot ('02-optimize' + $Suffix)
+        $ui.NavGames.IsChecked = $true;    Save-Shot ('03-games' + $Suffix)
+        $ui.NavApps.IsChecked = $true
+        $deadline = (Get-Date).AddSeconds(60)
+        while (((Get-Date) -lt $deadline) -and ($null -ne $script:Job -or $script:JobQueue.Count -gt 0)) { Invoke-Pump 5 }
+        if ($script:Apps.Count -lt 3) {
+            Show-Apps @(
+                [pscustomobject]@{ ProcessName = 'chrome'; Name = 'Google Chrome'; Company = 'Google LLC'; Category = 'browser'; RamMB = 1840; Keep = $false; DefaultClose = $false },
+                [pscustomobject]@{ ProcessName = 'Spotify'; Name = 'Spotify'; Company = 'Spotify AB'; Category = 'app'; RamMB = 410; Keep = $false; DefaultClose = $true }
+            )
+        }
+        Save-Shot ('04-apps' + $Suffix)
+        $ui.NavCrash.IsChecked = $true;    Save-Shot ('05-crash' + $Suffix)
+        $ui.NavSettings.IsChecked = $true; Save-Shot ('06-settings' + $Suffix)
+        $ui.NavHome.IsChecked = $true
     }
-    Save-Shot '04-apps'
-    $ui.NavCrash.IsChecked = $true;    Save-Shot '05-crash'
-    $ui.NavSettings.IsChecked = $true; Save-Shot '06-settings'
-    $ui.NavHome.IsChecked = $true
-    Show-GpuModal;            Save-Shot '07-gpu-modal'
+    & $shots ''
+    Show-GpuModal;            Save-Shot '07-welcome'
     $ui.ModalGpu.Visibility = 'Collapsed'
-    Open-Drawer 'تحديث وإصلاح كل شي'
+    Open-Drawer (T 'J_FixAll')
     foreach ($t in @(@('step', 'Power: maximum-performance plan'), @('ok', 'ROX power plan active: CPU at full speed + Turbo'), @('step', 'Games: Game Mode ON'), @('warn', 'Could not install NVIDIA app automatically'), @('info', 'Found GPU: NVIDIA GeForce RTX 4070'))) {
         Add-LogLine ([pscustomobject]@{ Kind = $t[0]; Text = $t[1] })
     }
@@ -1277,9 +1521,13 @@ if ($RenderTest) {
     $ui.BtnFixAll.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)))
     Save-Shot '09-confirm'
     $ui.ModalConfirm.Visibility = 'Collapsed'
-    Show-GameToast 'ROX سرّع VALORANT' 'قفلت 6 برامج  •  فضّيت 1,240 MB  •  أولوية عالية'
+    Set-Language 'en'
+    & $shots '-en'
+    Show-GpuModal; Save-Shot '07-welcome-en'
+    $ui.ModalGpu.Visibility = 'Collapsed'
+    Set-Language 'ar'
+    Show-GameToast ((T 'G_Title') -f 'VALORANT') ((T 'G_Line') -f 6, 1240)
     Invoke-Pump 5
-    $script:Sync.Stop = $true
     $seen = @{}
     foreach ($er in @($Error)) {
         $msg = '{0} @ {1}' -f $er.Exception.Message, $er.InvocationInfo.PositionMessage
@@ -1293,9 +1541,9 @@ if ($RenderTest) {
 }
 
 # ----------------------------------------------------------------- run
-if (-not $script:Settings.FirstRunDone) { Install-RoxCopy }
-elseif ($script:Here.TrimEnd('\') -ne $script:AppDir.TrimEnd('\')) { Install-RoxCopy }
+Install-RoxCopy
 $script:TrayIcon = New-TrayIcon
+Update-TrayTexts
 if (-not $Tray) {
     $window.Show()
     if (-not $script:Settings.FirstRunDone) { Show-GpuModal }

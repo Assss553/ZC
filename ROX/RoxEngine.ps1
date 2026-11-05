@@ -12,7 +12,7 @@
 Set-StrictMode -Off
 
 # ----------------------------------------------------------------- constants
-$script:RoxVersion      = '2.0'
+$script:RoxVersion      = '3.0'
 $script:DataDir         = Join-Path $env:ProgramData 'ROX'
 $script:AppDir          = Join-Path $script:DataDir 'app'
 $script:BackupFile      = Join-Path $script:DataDir 'backup.json'
@@ -213,6 +213,8 @@ function Get-RoxSettings {
         CloseOnGameStart = $true
         StartWithWindows = $false
         TrayHintShown    = $false
+        Language         = ''
+        IconVersion      = 0
         KeepApps         = @()
         Favorites        = @('win', 'cleanup', 'network', 'input')
     }
