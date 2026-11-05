@@ -470,7 +470,6 @@ const MDT = {
                     <div class="ni" data-a="openFine"><i class="fa-solid fa-file-invoice-dollar"></i>Citations</div>
                     <div class="ni" data-a="quick" data-k="impound"><i class="fa-solid fa-truck-pickup"></i>Impound Nearest</div>
                     <div class="ni" data-a="quick" data-k="strip"><i class="fa-solid fa-masks-theater"></i>Remove Mask</div>
-                    ${App.init && App.init.boss ? '<div class="ni" data-a="app" data-p="boss"><i class="fa-solid fa-briefcase"></i>Management</div>' : ''}
                 </div>
                 <div class="me"><div class="avatar">${initials(o.name)}</div><div class="who"><b>${esc(o.name || 'Officer')}</b><span>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</span></div><span class="badge ok">on duty</span></div>
             </div>
@@ -811,8 +810,6 @@ const Boss = {
                 <div class="brand"><div class="logo"><i class="fa-solid fa-briefcase"></i></div><div><b>Management</b><span>${esc((o.jobLabel || 'POLICE').toUpperCase())}</span></div></div>
                 <div class="nav"><div class="sep">DATABASE</div>
                     ${nav.map(([k, ic, l, c]) => `<div class="ni ${S.page === k || (k === 'employees' && S.page === 'profile') ? 'on' : ''}" data-a="bnav" data-p="${k}"><i class="fa-solid fa-${ic}"></i>${l}${c ? `<span class="count">${c}</span>` : ''}</div>`).join('')}
-                    <div class="sep">APPS</div>
-                    <div class="ni" data-a="app" data-p="mdt"><i class="fa-solid fa-shield-halved"></i>MDT</div>
                 </div>
                 <div class="me"><div class="avatar">${initials(o.name)}</div><div class="who"><b>${esc(o.name || '')}</b><span>${esc(o.grade || '')}</span></div></div>
             </div>
