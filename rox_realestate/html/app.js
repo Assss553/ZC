@@ -420,7 +420,7 @@ Views.detail = () => {
         const styles = S.st.decorStyles || [];
         extra = `<div class="section-title">${t('decor_title')}</div>
             <div class="decor-grid">${styles.map((d) => `<button class="decor-opt ${p.decor === d.key ? 'on' : ''}" data-act="setdecor" data-id="${p.id}" data-v="${d.key}">
-                ${icon({ logistics: 'box', storage: 'grid', workshop: 'briefcase', off: 'x' }[d.key] || 'box')}<b>${esc(LANG === 'ar' && d.labelAr ? d.labelAr : d.label)}</b></button>`).join('')}</div>
+                ${icon({ empty: 'building', logistics: 'box', storage: 'grid', workshop: 'briefcase', off: 'x' }[d.key] || 'box')}<b>${esc(LANG === 'ar' && d.labelAr ? d.labelAr : d.label)}</b></button>`).join('')}</div>
             <div class="hint">${t('decor_hint')}</div>` + extra;
     }
     const alert = p.isOwner && p.overdue > 0 ? `<div class="alert">${icon('alert')}${t('overdue_alert', p.overdue, S.st.maxOverdue)}</div>` : '';
@@ -1020,12 +1020,12 @@ if (!IS_GAME) {
     const P = (id, label, interior, status, x, y, extra = {}) => ({ id, label, interior, status, ptype: 'sale', price: 180000 + id * 25000, rentPrice: 2500, rentDays: 7, door: { x, y, z: 30, h: 0 }, street: 'Alta St, Pillbox Hill', locked: true, rooms: 2, realtorName: 'Saad Realty', ...extra });
     Mock.data = {
         name: 'Jaber Ali', money: 42347, serverId: 1, isRealtor: true, canManage: true, grade: 3, apps: { create: true, manage: true, contracts: true },
-        properties: [P(1, 'ROX Logistics Depot', 'rox_wh_large', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [], hasDecor: true, decor: 'logistics' }),
+        properties: [P(1, 'ROX Logistics Depot', 'rox_wh_large', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [], hasDecor: true, decor: 'empty' }),
             P(2, 'Vinewood Villa', 'franklin_vinewood', 'available', 7, 538), P(3, 'Grove Room', 'low_apartment', 'rented', -14, -1440, { ptype: 'rent', isOwner: true, hasKey: true, ownerName: 'Jaber Ali', overdue: 1, rentDue: Date.now() / 1000 + 86400 }),
             P(4, 'Conker Hills', 'north_conker', 'owned', 342, 437, { ownerName: 'Omar', salePrice: 650000 }), P(5, 'Mirror Park 4', 'medium_apartment', 'available', 1100, -500, { ptype: 'rent' })],
         contracts: [{ id: 7, propertyId: 2, ctype: 'sale', price: 230000, rentPrice: 0, rentDays: 7, buyerName: 'Jaber Ali', realtorName: 'Saad Realty', status: 'pending', isMine: true, createdAt: Date.now() / 1000, expiresAt: Date.now() / 1000 + 1700, label: 'Vinewood Villa', interior: 'franklin_vinewood', street: 'Wild Oats Dr', rooms: 4 }],
     };
-    const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true, decorStyles: [{ key: 'logistics', label: 'Logistics Hub', labelAr: 'مركز لوجستي' }, { key: 'off', label: 'Empty', labelAr: 'فاضي' }, { key: 'storage', label: 'Dense Storage', labelAr: 'تخزين كثيف' }, { key: 'workshop', label: 'Workshop Garage', labelAr: 'ورشة وكراج' }] };
+    const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true, decorStyles: [{ key: 'empty', label: 'ROX Empty · Detailed', labelAr: 'ROX فاضي · بالتفاصيل' }, { key: 'logistics', label: 'Logistics Hub', labelAr: 'مركز لوجستي' }, { key: 'off', label: 'Bare (no details)', labelAr: 'بدون أي إضافات' }, { key: 'storage', label: 'Dense Storage', labelAr: 'تخزين كثيف' }, { key: 'workshop', label: 'Workshop Garage', labelAr: 'ورشة وكراج' }] };
     const q = new URLSearchParams(location.search);
     if (q.get('lang')) S.settings.lang = q.get('lang');
     if (q.get('wall')) S.settings.wallpaper = `img/wallpapers/${q.get('wall')}.jpg`;

@@ -4,7 +4,7 @@
 ]]
 
 -- Procedural ROX warehouse design (see shared/decor.lua)
-ROXDecor = { entities = {}, lights = {}, active = false }
+ROXDecor = { entities = {}, lights = {}, spots = {}, polys = {}, fx = {}, active = false }
 
 local Debug = false
 
@@ -112,10 +112,56 @@ local function Builder(room, entry, seed)
     end
 
     -- heading so the model's local +Y points along +U (facing the far end) / its long side runs along U
-    function B.headingU(extra) -- extra: 0 = face far end, 180 = face entrance, 90/-90 = face sides
-        local base = B.longX and -90.0 or 0.0
-        if B.flip then base = base + 180.0 end
-        return (base + (extra or 0.0)) % 360.0
+    -- heading (GTA: 0 = +Y, 90 = -X) for a direction given in room space (du along U, dv along V)
+    function B.headingToward(du, dv)
+        local x0, y0 = B.world(10, 10)
+        local x1, y1 = B.world(10 + du, 10 + dv)
+        return math.deg(math.atan(-(x1 - x0), y1 - y0)) % 360.0
+    end
+
+    -- extra: 0 = face the far end, 180 = face the entrance, 90 = face +V side, -90 = face the V=0 side
+    function B.headingU(extra)
+        local r = math.rad(extra or 0.0)
+        return B.headingToward(math.cos(r), math.sin(r))
+    end
+
+    -- floor paint: quad from room-space corners (u, v) list, drawn every frame
+    function B.paint(pts, c)
+        local w = {}
+        for i, p in ipairs(pts) do
+            local x, y = B.world(p[1], p[2])
+            w[i] = vector3(x, y, room.floorZ + 0.015)
+        end
+        ROXDecor.polys[#ROXDecor.polys + 1] = { w[1], w[2], w[3], w[4] or w[3], c[1], c[2], c[3], c[4] or 200 }
+    end
+    function B.line(u0, v0, u1, v1, width, c)
+        local du, dv = u1 - u0, v1 - v0
+        local len = math.sqrt(du * du + dv * dv)
+        if len < 0.01 then return end
+        local nu, nv = -dv / len * width / 2, du / len * width / 2
+        B.paint({ { u0 + nu, v0 + nv }, { u1 + nu, v1 + nv }, { u1 - nu, v1 - nv }, { u0 - nu, v0 - nv } }, c)
+    end
+    function B.rect(u0, v0, u1, v1, width, c)
+        B.line(u0, v0, u1, v0, width, c); B.line(u1, v0, u1, v1, width, c)
+        B.line(u1, v1, u0, v1, width, c); B.line(u0, v1, u0, v0, width, c)
+    end
+
+    -- mount a prop flat against a wall. side: 'v0' | 'vW' | 'uL' | 'u0'; at = position along that wall; h = height
+    function B.wall(role, side, at, h, opts)
+        opts = opts or {}
+        local model = opts.model or pick(role, B.rnd)
+        if not model then return nil end
+        local hash = LoadModel(model)
+        if not hash then return nil end
+        local mn, mx = GetModelDimensions(hash)
+        local depth = math.min(mx.x - mn.x, mx.y - mn.y)
+        local u, v, du, dv
+        if side == 'v0' then u, v, du, dv = at, depth / 2 + 0.03, 0, 1
+        elseif side == 'vW' then u, v, du, dv = at, B.W - depth / 2 - 0.03, 0, -1
+        elseif side == 'uL' then u, v, du, dv = B.L - depth / 2 - 0.03, at, -1, 0
+        else u, v, du, dv = depth / 2 + 0.03, at, 1, 0 end
+        local heading = (B.headingToward(du, dv) + (DecorWallFlip[model] and 180.0 or 0.0)) % 360.0
+        return B.place(role, u, v, { model = model, heading = heading, z = room.floorZ + (h or 0.0) - (h and mn.z or 0) , force = opts.force ~= false, wallOk = true })
     end
 
     -- place a role at (u, v). opts: { heading, alongU = true (long side along U), z = abs z, force, onFloor = true }
@@ -320,13 +366,96 @@ local function buildSafety(B)
 end
 
 ---------------------------------------------------------------------
+-- empty but detailed: the building itself
+---------------------------------------------------------------------
+local YELLOW, WHITE, BLACK, RED, GREEN = { 236, 186, 20, 190 }, { 225, 225, 225, 150 }, { 20, 20, 20, 190 }, { 205, 45, 35, 170 }, { 40, 170, 90, 160 }
+
+local function buildMarkings(B, style)
+    local m = 0.9
+    -- pedestrian walkway around the room (double yellow line)
+    B.rect(m, m, B.L - m, B.W - m, 0.10, YELLOW)
+    B.rect(m + 0.9, m + 0.9, B.L - m - 0.9, B.W - m - 0.9, 0.06, YELLOW)
+    -- entrance hazard band (diagonal yellow / black) and keep-clear box
+    local band = 1.2
+    for v = m + 0.9, B.W - m - 0.9 - 0.5, 0.5 do
+        B.paint({ { band, v }, { band + 0.6, v + 0.25 }, { band + 0.6, v + 0.5 }, { band, v + 0.25 } }, YELLOW)
+        B.paint({ { band, v + 0.25 }, { band + 0.6, v + 0.5 }, { band + 0.6, v + 0.75 }, { band, v + 0.5 } }, BLACK)
+    end
+    local ev = math.max(m + 1.5, math.min(B.W - m - 1.5, B.entryV))
+    B.rect(0.2, ev - 1.4, 2.6, ev + 1.4, 0.08, RED)
+    B.line(0.4, ev - 1.2, 2.4, ev + 1.2, 0.06, RED); B.line(0.4, ev + 1.2, 2.4, ev - 1.2, 0.06, RED)
+    if not style.bays then return end
+    -- forklift lane down the middle + storage bays on both sides
+    local laneW = math.min(4.0, B.W * 0.28)
+    local c = B.W / 2
+    B.line(4.5, c - laneW / 2, B.L - m - 0.9, c - laneW / 2, 0.12, YELLOW)
+    B.line(4.5, c + laneW / 2, B.L - m - 0.9, c + laneW / 2, 0.12, YELLOW)
+    for u = 5.0, B.L - m - 2.0, 3.0 do B.line(u, c - 0.4, u + 1.4, c, 0.10, WHITE); B.line(u + 1.4, c, u, c + 0.4, 0.10, WHITE) end
+    local bayD = (B.W - laneW) / 2 - m - 1.3
+    if bayD > 1.6 then
+        local bayL = math.max(2.4, math.min(3.6, bayD * 0.9))
+        for u = 5.0, B.L - m - 1.2 - bayL, bayL + 0.25 do
+            B.rect(u, m + 1.15, u + bayL, m + 1.15 + bayD, 0.07, WHITE)
+            B.rect(u, B.W - m - 1.15 - bayD, u + bayL, B.W - m - 1.15, 0.07, WHITE)
+        end
+    end
+    -- far wall: green loading box
+    B.rect(B.L - m - 4.2, c - laneW / 2 + 0.3, B.L - m - 1.1, c + laneW / 2 - 0.3, 0.10, GREEN)
+end
+
+local function buildArchitecture(B)
+    -- utilities on the entrance wall and the side walls
+    B.wall('keypad', 'u0', B.entryV + 1.2, 1.25)
+    B.wall('elecbox', 'v0', 2.0, 0.9)
+    B.wall('elecbox', 'v0', 3.1, 0.9)
+    B.wall('riser', 'vW', 2.2, 0.0)
+    B.wall('hosereel', 'vW', 3.4, 1.0)
+    B.wall('firstaid', 'u0', B.entryV - 1.4, 1.35)
+    -- every 8 m: wall light high up, extinguisher + alarm by the walkway
+    for u = 6.0, B.L - 2.0, 8.0 do
+        B.wall('walllight', 'v0', u, B.room.ceilZ - B.room.floorZ - 1.6)
+        B.wall('walllight', 'vW', u + 4.0, B.room.ceilZ - B.room.floorZ - 1.6)
+        B.wall('extinguisher', 'v0', u + 1.0, 0.0)
+        B.wall('extinguisher', 'vW', u + 5.0, 0.0)
+        B.wall('alarm', 'v0', u + 1.0, 1.5)
+        B.wall('vent', 'vW', u + 2.0, B.room.ceilZ - B.room.floorZ - 2.6)
+    end
+    -- far wall: ventilation + electrical
+    B.wall('vent', 'uL', B.W * 0.3, B.room.ceilZ - B.room.floorZ - 2.4)
+    B.wall('vent', 'uL', B.W * 0.7, B.room.ceilZ - B.room.floorZ - 2.4)
+    B.wall('elecbox', 'uL', 1.5, 0.9)
+    -- cleaning corner + bins + CCTV
+    B.place('bucket', 1.2, B.W - 1.2, { wallOk = true })
+    B.place('broom', 1.6, B.W - 0.35, { wallOk = true })
+    B.place('wetsign', 2.4, B.W - 1.0, { heading = B.headingU(180) })
+    B.place('bin', B.L - 1.2, 1.1, { wallOk = true })
+    B.place('bin', B.L - 1.2, B.W - 1.1, { wallOk = true })
+    local cz = B.room.ceilZ - 0.7
+    for _, c in ipairs({ { 0.6, 0.6, 45 }, { 0.6, B.W - 0.6, -45 }, { B.L - 0.6, 0.6, 135 }, { B.L - 0.6, B.W - 0.6, -135 } }) do
+        B.place('cctv', c[1], c[2], { heading = B.headingU(c[3]), z = cz, force = true })
+    end
+end
+
+-- even grid of ceiling spot lights + hanging lamp props
+local function buildLightGrid(B, style)
+    local stepU, stepV = 6.0, math.max(5.0, B.W / math.max(2, math.floor(B.W / 6.0)))
+    for u = 3.0, B.L - 2.0, stepU do
+        for v = stepV / 2, B.W - 0.5, stepV do
+            ROXDecor.spots[#ROXDecor.spots + 1] = { u = u, v = v }
+            B.place('lamp', u, v, { z = B.room.ceilZ - 1.4, force = true })
+        end
+    end
+end
+
+---------------------------------------------------------------------
 -- public
 ---------------------------------------------------------------------
 function ROXDecor.Clear()
     for _, e in ipairs(ROXDecor.entities) do
         if DoesEntityExist(e) then DeleteEntity(e) end
     end
-    ROXDecor.entities, ROXDecor.lights, ROXDecor.active = {}, {}, false
+    for _, f in ipairs(ROXDecor.fx) do StopParticleFxLooped(f, false) end
+    ROXDecor.entities, ROXDecor.lights, ROXDecor.spots, ROXDecor.polys, ROXDecor.fx, ROXDecor.active = {}, {}, {}, {}, {}, false
 end
 
 -- center: vec3/vec4 entry point inside the interior; seed: property id
@@ -351,12 +480,15 @@ function ROXDecor.Build(styleKey, center, seed)
     local uFrontEnd = u0 + frontZone
     local uDock = (style.dock and B.L > 18) and B.L * 0.76 or B.L - 0.6
 
+    if style.markings then buildMarkings(B, style) end
+    if style.architecture then buildArchitecture(B) end
+    if style.lightGrid then buildLightGrid(B, style) end
     if style.office then buildOffice(B, u0, uFrontEnd) end
     if style.workshop then buildWorkshop(B, style, u0, uFrontEnd) end
     if style.racks or style.wallRacks then buildRacks(B, style, uFrontEnd + 0.8, uDock - 0.6) end
     if style.garage then buildGarageFloor(B, uFrontEnd + 1.0, uDock - 1.0) end
     if style.dock and B.L > 18 then buildDock(B, style, uDock, B.L - 0.6) end
-    buildSafety(B)
+    if not style.architecture then buildSafety(B) end
 
     -- resolve light positions to world space
     local lights = {}
@@ -366,20 +498,55 @@ function ROXDecor.Build(styleKey, center, seed)
         lights[#lights + 1] = { x = x, y = y, z = room.ceilZ - 1.2, r = c[1], g = c[2], b = c[3] }
     end
     ROXDecor.lights = lights
+    local spots = {}
+    for _, l in ipairs(ROXDecor.spots) do
+        local x, y = B.world(l.u, l.v)
+        local c = style.light or { 255, 236, 205 }
+        spots[#spots + 1] = { x = x, y = y, z = room.ceilZ - 1.5, r = c[1], g = c[2], b = c[3] }
+    end
+    ROXDecor.spots = spots
+    ROXDecor.spotDist = (room.ceilZ - room.floorZ) + 2.0
     ROXDecor.range, ROXDecor.intensity = style.lightRange or 10.0, style.lightIntensity or 1.4
+    -- floating dust in the light beams
+    if style.dust then
+        RequestNamedPtfxAsset('core')
+        local tt = GetGameTimer() + 2000
+        while not HasNamedPtfxAssetLoaded('core') and GetGameTimer() < tt do Wait(10) end
+        for i = 1, math.min(6, #spots), 2 do
+            UseParticleFxAssetNextCall('core')
+            local f = StartParticleFxLoopedAtCoord('ent_amb_dust_motes', spots[i].x, spots[i].y, room.floorZ + 2.5, 0.0, 0.0, 0.0, 1.5, false, false, false, false)
+            if f and f ~= 0 then ROXDecor.fx[#ROXDecor.fx + 1] = f end
+        end
+    end
     ROXDecor.active = true
-    if Debug then print(('[ROX decor] %s %.1fx%.1f placed %d props, %d lights'):format(styleKey, B.L, B.W, B.placed, #lights)) end
+    if Debug then print(('[ROX decor] %s %.1fx%.1f placed %d props, %d lights, %d spots, %d floor marks'):format(styleKey, B.L, B.W, B.placed, #lights, #spots, #ROXDecor.polys)) end
     return B.placed
 end
 
--- real light for the warehouse (cheap: only while inside and only the closest lights)
+-- lights + floor paint (only while inside a ROX warehouse)
+local function poly(a, b, c, r, g, bl, al)
+    DrawPoly(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, r, g, bl, al)
+    DrawPoly(c.x, c.y, c.z, b.x, b.y, b.z, a.x, a.y, a.z, r, g, bl, al)
+end
+
 CreateThread(function()
     while true do
-        if ROXDecor.active and #ROXDecor.lights > 0 then
+        if ROXDecor.active then
             local pc = GetEntityCoords(PlayerPedId())
             for _, l in ipairs(ROXDecor.lights) do
                 if math.abs(l.x - pc.x) < 40.0 and math.abs(l.y - pc.y) < 40.0 then
                     DrawLightWithRange(l.x, l.y, l.z, l.r, l.g, l.b, ROXDecor.range, ROXDecor.intensity)
+                end
+            end
+            for _, l in ipairs(ROXDecor.spots) do
+                if math.abs(l.x - pc.x) < 45.0 and math.abs(l.y - pc.y) < 45.0 then
+                    DrawSpotLight(l.x, l.y, l.z, 0.0, 0.0, -1.0, l.r, l.g, l.b, ROXDecor.spotDist, 5.0, 0.0, 48.0, 30.0)
+                end
+            end
+            for _, q in ipairs(ROXDecor.polys) do
+                if math.abs(q[1].x - pc.x) < 40.0 and math.abs(q[1].y - pc.y) < 40.0 then
+                    poly(q[1], q[2], q[3], q[5], q[6], q[7], q[8])
+                    poly(q[1], q[3], q[4], q[5], q[6], q[7], q[8])
                 end
             end
             Wait(0)

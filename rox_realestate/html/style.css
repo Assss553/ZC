@@ -497,3 +497,4 @@ html[dir="rtl"] .fp-head h2 { font-family: 'Cairo'; font-style: normal; font-wei
 .decor-opt.on svg { color: var(--accent); }
 .icard .ph .rox-chip { inset-inline-start: auto; inset-inline-end: 8px; background: linear-gradient(135deg, #ff7a3d, #e0441a); color: #fff; }
 .icard .ph .rox-chip + .chip { inset-inline-end: 52px; }
+.decor-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }

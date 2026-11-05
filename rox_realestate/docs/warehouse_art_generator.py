@@ -4,7 +4,7 @@ C, S_ = math.cos(math.radians(30)), math.sin(math.radians(30))
 def make(variant, W, D, H, seed, title):
     random.seed(seed)
     scale = 560 / (W + D) * 1.55
-    ox, oy = 600 + (D - W) * C * scale / 2, 140
+    ox, oy = 600 + (D - W) * C * scale / 2, 185
     def P(x, y, z):
         return (ox + (x - y) * C * scale, oy + (x + y) * S_ * scale - z * scale)
     def poly(pts, fill, stroke='none', sw=0, op=1, extra=''):
@@ -80,7 +80,8 @@ def make(variant, W, D, H, seed, title):
     def lane(y0):
         out.append(poly([P(0.6, y0, 0.01), P(W - 0.6, y0, 0.01), P(W - 0.6, y0 + 0.12, 0.01), P(0.6, y0 + 0.12, 0.01)], '#f2c200', op=.9))
     dockX = W * 0.74
-    out.append(poly([P(dockX, 0.4, 0.01), P(dockX + 0.5, 0.4, 0.01), P(dockX + 0.5, D - 0.4, 0.01), P(dockX, D - 0.4, 0.01)], 'url(#haz)', op=.9))
+    if not variant.startswith('empty'):
+        out.append(poly([P(dockX, 0.4, 0.01), P(dockX + 0.5, 0.4, 0.01), P(dockX + 0.5, D - 0.4, 0.01), P(dockX, D - 0.4, 0.01)], 'url(#haz)', op=.9))
     # racks
     rackRows = []
     y = 0.6
@@ -106,7 +107,63 @@ def make(variant, W, D, H, seed, title):
             s += box(px, y0, 0, 0.1, 0.1, levels * 1.25 + 0.2, '#2f6fd6')
             s += box(px, y0 + dep - 0.1, 0, 0.1, 0.1, levels * 1.25 + 0.2, '#2f6fd6')
         return s
-    if variant != 'vehicle':
+    EMPTY = variant.startswith('empty')
+    def flat(pts, fill, op=1):
+        out.append(poly([P(x, y, 0.012) for x, y in pts], fill, op=op))
+    def fline(x0, y0, x1, y1, w, col, op=.95):
+        dx, dy = x1 - x0, y1 - y0; L = math.hypot(dx, dy); nx, ny = -dy / L * w / 2, dx / L * w / 2
+        flat([(x0 + nx, y0 + ny), (x1 + nx, y1 + ny), (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)], col, op)
+    def frect(x0, y0, x1, y1, w, col, op=.95):
+        fline(x0, y0, x1, y0, w, col, op); fline(x1, y0, x1, y1, w, col, op); fline(x1, y1, x0, y1, w, col, op); fline(x0, y1, x0, y0, w, col, op)
+    if EMPTY:
+        m = 0.9
+        frect(m, m, W - m, D - m, 0.12, '#f2c200'); frect(m + 0.9, m + 0.9, W - m - 0.9, D - m - 0.9, 0.08, '#f2c200')
+        c = D / 2; lw = min(4.0, D * 0.28)
+        fline(4.5, c - lw / 2, W - 1.8, c - lw / 2, 0.14, '#f2c200'); fline(4.5, c + lw / 2, W - 1.8, c + lw / 2, 0.14, '#f2c200')
+        u = 5.0
+        while u < W - 3.5:
+            fline(u, c - 0.45, u + 1.4, c, 0.12, '#e8e8e8'); fline(u + 1.4, c, u, c + 0.45, 0.12, '#e8e8e8'); u += 3.0
+        bayD = (D - lw) / 2 - m - 1.3; bayL = max(2.4, min(3.6, bayD * 0.9)); u = 5.0
+        n = 1
+        while u + bayL < W - m - 1.2:
+            for (y0, y1) in ((m + 1.15, m + 1.15 + bayD), (D - m - 1.15 - bayD, D - m - 1.15)):
+                frect(u, y0, u + bayL, y1, 0.08, '#e9e9e9', .85)
+                tp = P(u + bayL / 2, (y0 + y1) / 2, 0.02)
+                out.append(f'<text x="{tp[0]:.1f}" y="{tp[1]:.1f}" font-family="Arial" font-weight="800" font-size="{scale*0.42:.0f}" fill="#ffffff" fill-opacity=".35" text-anchor="middle" transform="rotate(0)">{"A" if y0 < c else "B"}{n:02d}</text>')
+            u += bayL + 0.25; n += 1
+        y = m + 0.9
+        while y < D - m - 1.4:
+            flat([(1.2, y), (1.8, y + 0.25), (1.8, y + 0.5), (1.2, y + 0.25)], '#f2c200')
+            flat([(1.2, y + 0.25), (1.8, y + 0.5), (1.8, y + 0.75), (1.2, y + 0.5)], '#151515')
+            y += 0.5
+        frect(0.2, c - 1.4, 2.6, c + 1.4, 0.1, '#d23a2a'); fline(0.4, c - 1.2, 2.4, c + 1.2, 0.08, '#d23a2a'); fline(0.4, c + 1.2, 2.4, c - 1.2, 0.08, '#d23a2a')
+        frect(W - m - 4.2, c - lw / 2 + 0.3, W - m - 1.1, c + lw / 2 - 0.3, 0.12, '#2fbf6a')
+        # wall details: right wall (y=0) and left wall (x=0)
+        def wallbox_r(x, z, w, h, col, depth=0.25):
+            add(x, 0, 5, box(x, 0, z, w, depth, h, col))
+        def wallbox_l(y, z, w, h, col, depth=0.25):
+            add(0, y, 5, box(0, y, z, depth, w, h, col))
+        for k, x in enumerate([2.0, 3.1]):
+            wallbox_r(x, 0.9, 0.8, 1.0, '#7d828b'); wallbox_r(x + 0.15, 1.4, 0.5, 0.06, '#f2c200', 0.27)
+        add(0, 2, 5, box(0, 2.2, 0, 0.18, 0.18, H - 1.4, '#c62828'))
+        wallbox_l(3.4, 1.0, 0.8, 0.8, '#b71c1c')
+        for x in [6 + i * 8 for i in range(int((W - 6) / 8) + 1)]:
+            if x > W - 2: break
+            wallbox_r(x + 1.0, 0.0, 0.3, 0.55, '#d32f2f', 0.3)
+            wallbox_r(x + 1.0, 1.5, 0.2, 0.2, '#ff3b30', 0.1)
+            wallbox_r(x, H - 1.6, 0.6, 0.25, '#fff1cc', 0.12)
+            wallbox_r(x + 2.0, H - 2.6, 1.2, 0.8, '#5c626b', 0.2)
+        for y in [D * 0.3, D * 0.7]:
+            wallbox_l(y, H - 2.4, 1.4, 0.9, '#5c626b', 0.2)
+        # pipes along the ceiling edge of both walls
+        out.append(poly([P(0, 0.05, H - 0.9), P(W, 0.05, H - 0.9), P(W, 0.05, H - 0.75), P(0, 0.05, H - 0.75)], '#8c939c'))
+        out.append(poly([P(0.05, 0, H - 1.2), P(0.05, D, H - 1.2), P(0.05, D, H - 1.05), P(0.05, 0, H - 1.05)], '#2b6fd6'))
+        # cleaning corner, bins
+        add(0.8, D - 1.0, 5, box(0.9, D - 1.4, 0, 0.5, 0.5, 0.5, '#f2c200'))
+        add(W - 1.4, 0.9, 5, box(W - 1.6, 0.8, 0, 0.6, 0.6, 0.9, '#2e7d32'))
+    if EMPTY:
+        pass
+    elif variant != 'vehicle':
         for ry in rackRows:
             x = 5.5
             while x + 3.2 < dockX - 0.8:
@@ -126,50 +183,53 @@ def make(variant, W, D, H, seed, title):
                     s += f'<ellipse cx="{w[0]:.1f}" cy="{w[1]:.1f}" rx="7" ry="4" fill="#0b0b0b"/>'
                 add(x, ry, 1, s)
             lane(ry + 2.1)
-    # dock pallets
-    for gx in [dockX + 1.0 + i * 1.5 for i in range(int((W - dockX - 1.5) / 1.5))]:
-        for gy in [0.8 + j * 1.6 for j in range(int((D - 1.2) / 1.6))]:
-            if abs(gy - D / 2) < 1.6 or random.random() < 0.25: continue
-            s = box(gx, gy, 0, 1.2, 1.2, 0.14, '#9a7348')
-            h = random.uniform(0.6, 1.6)
-            col = random.choice(['#c3925c', '#b78450', '#d0a06a', '#8aa0b5'])
-            s += box(gx + 0.04, gy + 0.04, 0.14, 1.12, 1.12, h, col)
-            a, b = P(gx + 0.04, gy + 1.16, 0.3), P(gx + 1.16, gy + 1.16, 0.14 + h)
-            s += f'<line x1="{a[0]:.1f}" y1="{a[1]:.1f}" x2="{b[0]:.1f}" y2="{b[1]:.1f}" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>'
-            add(gx, gy, 2, s)
-    # forklift
-    fx, fy = dockX - 0.2 + (W - dockX) * 0.35, D / 2 - 0.6
-    s = box(fx, fy, 0.25, 1.6, 1.1, 0.8, '#f2b705') + box(fx + 0.2, fy + 0.15, 1.05, 0.9, 0.8, 0.9, '#262626', '#3a3a3a')
-    s += box(fx + 0.3, fy + 0.1, 1.9, 1.1, 0.9, 0.08, '#f2b705')
-    s += box(fx - 0.2, fy + 0.1, 0, 0.12, 0.9, 2.4, '#333333') + box(fx - 1.1, fy + 0.2, 0.1, 0.9, 0.1, 0.06, '#888888') + box(fx - 1.1, fy + 0.8, 0.1, 0.9, 0.1, 0.06, '#888888')
-    for wx, wy in ((fx + 0.3, fy + 1.1), (fx + 1.3, fy + 1.1)):
-        w = P(wx, wy, 0.25); s += f'<ellipse cx="{w[0]:.1f}" cy="{w[1]:.1f}" rx="{scale*0.32:.0f}" ry="{scale*0.2:.0f}" fill="#111"/>'
-    add(fx, fy, 3, s)
-    # cones on the dock line
-    for cy in [D / 2 - 1.8, D / 2 - 0.6, D / 2 + 0.6, D / 2 + 1.8]:
-        b = P(dockX - 0.3, cy, 0); t = P(dockX - 0.3, cy, 0.7)
-        add(dockX - 0.3, cy, 4, f'<polygon points="{b[0]-6:.1f},{b[1]:.1f} {b[0]+6:.1f},{b[1]:.1f} {t[0]:.1f},{t[1]:.1f}" fill="#ff5a1f"/><line x1="{b[0]-3:.1f}" y1="{b[1]-6:.1f}" x2="{b[0]+3:.1f}" y2="{b[1]-6:.1f}" stroke="#fff" stroke-width="2"/>')
-    # glass office in the front-left corner
-    ox_, oy_ = 0.4, D - 4.6
-    s = box(ox_, oy_, 0, 4.2, 4.2, 0.08, '#2a2d33')
-    s += box(ox_ + 0.6, oy_ + 1.0, 0, 1.8, 0.8, 0.78, '#6b4b33') + box(ox_ + 1.2, oy_ + 1.1, 0.78, 0.6, 0.08, 0.45, '#101215', '#2c7be5')
-    s += box(ox_ + 3.2, oy_ + 0.3, 0, 0.6, 0.5, 1.3, '#7b808a') + box(ox_ + 0.3, oy_ + 3.2, 0, 0.5, 0.5, 0.9, '#3b7d4a')
-    s += poly([P(ox_ + 4.2, oy_, 0), P(ox_ + 4.2, oy_ + 4.2, 0), P(ox_ + 4.2, oy_ + 4.2, 3.0), P(ox_ + 4.2, oy_, 3.0)], '#9fd3ff', '#cde9ff', 1, .16)
-    s += poly([P(ox_, oy_ + 4.2, 0), P(ox_ + 4.2, oy_ + 4.2, 0), P(ox_ + 4.2, oy_ + 4.2, 3.0), P(ox_, oy_ + 4.2, 3.0)], '#9fd3ff', '#cde9ff', 1, .12)
-    s += poly([P(ox_, oy_, 3.0), P(ox_ + 4.2, oy_, 3.0), P(ox_ + 4.2, oy_ + 4.2, 3.0), P(ox_, oy_ + 4.2, 3.0)], '#cfe6ff', '#e6f3ff', 1.2, .14)
-    add(ox_ + 2, oy_ + 2, 0, s)
-    # workshop corner: bench, tool chest, barrels
-    wx_, wy_ = 0.4, 0.4
-    s = box(wx_, wy_, 0, 2.6, 0.8, 0.9, '#5a5f68') + box(wx_ + 2.9, wy_, 0, 0.7, 0.5, 1.1, '#c0151f')
-    for i in range(3):
-        b = P(wx_ + 0.6 + i * 0.7, wy_ + 1.6, 0)
-        s += f'<ellipse cx="{b[0]:.1f}" cy="{b[1]-scale*0.45:.1f}" rx="{scale*0.3:.0f}" ry="{scale*0.16:.0f}" fill="#1d4f9c"/><rect x="{b[0]-scale*0.3:.1f}" y="{b[1]-scale*0.45:.1f}" width="{scale*0.6:.1f}" height="{scale*0.45:.1f}" fill="#163f7e"/><ellipse cx="{b[0]:.1f}" cy="{b[1]-scale*0.45:.1f}" rx="{scale*0.3:.0f}" ry="{scale*0.16:.0f}" fill="#2660bd"/>'
-    add(wx_ + 1, wy_ + 1, 0, s)
+    if not EMPTY:
+        # dock pallets
+        for gx in [dockX + 1.0 + i * 1.5 for i in range(int((W - dockX - 1.5) / 1.5))]:
+            for gy in [0.8 + j * 1.6 for j in range(int((D - 1.2) / 1.6))]:
+                if abs(gy - D / 2) < 1.6 or random.random() < 0.25: continue
+                s = box(gx, gy, 0, 1.2, 1.2, 0.14, '#9a7348')
+                h = random.uniform(0.6, 1.6)
+                col = random.choice(['#c3925c', '#b78450', '#d0a06a', '#8aa0b5'])
+                s += box(gx + 0.04, gy + 0.04, 0.14, 1.12, 1.12, h, col)
+                a, b = P(gx + 0.04, gy + 1.16, 0.3), P(gx + 1.16, gy + 1.16, 0.14 + h)
+                s += f'<line x1="{a[0]:.1f}" y1="{a[1]:.1f}" x2="{b[0]:.1f}" y2="{b[1]:.1f}" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>'
+                add(gx, gy, 2, s)
+        # forklift
+        fx, fy = dockX - 0.2 + (W - dockX) * 0.35, D / 2 - 0.6
+        s = box(fx, fy, 0.25, 1.6, 1.1, 0.8, '#f2b705') + box(fx + 0.2, fy + 0.15, 1.05, 0.9, 0.8, 0.9, '#262626', '#3a3a3a')
+        s += box(fx + 0.3, fy + 0.1, 1.9, 1.1, 0.9, 0.08, '#f2b705')
+        s += box(fx - 0.2, fy + 0.1, 0, 0.12, 0.9, 2.4, '#333333') + box(fx - 1.1, fy + 0.2, 0.1, 0.9, 0.1, 0.06, '#888888') + box(fx - 1.1, fy + 0.8, 0.1, 0.9, 0.1, 0.06, '#888888')
+        for wx, wy in ((fx + 0.3, fy + 1.1), (fx + 1.3, fy + 1.1)):
+            w = P(wx, wy, 0.25); s += f'<ellipse cx="{w[0]:.1f}" cy="{w[1]:.1f}" rx="{scale*0.32:.0f}" ry="{scale*0.2:.0f}" fill="#111"/>'
+        add(fx, fy, 3, s)
+        # cones on the dock line
+        for cy in [D / 2 - 1.8, D / 2 - 0.6, D / 2 + 0.6, D / 2 + 1.8]:
+            b = P(dockX - 0.3, cy, 0); t = P(dockX - 0.3, cy, 0.7)
+            add(dockX - 0.3, cy, 4, f'<polygon points="{b[0]-6:.1f},{b[1]:.1f} {b[0]+6:.1f},{b[1]:.1f} {t[0]:.1f},{t[1]:.1f}" fill="#ff5a1f"/><line x1="{b[0]-3:.1f}" y1="{b[1]-6:.1f}" x2="{b[0]+3:.1f}" y2="{b[1]-6:.1f}" stroke="#fff" stroke-width="2"/>')
+        # glass office in the front-left corner
+        ox_, oy_ = 0.4, D - 4.6
+        s = box(ox_, oy_, 0, 4.2, 4.2, 0.08, '#2a2d33')
+        s += box(ox_ + 0.6, oy_ + 1.0, 0, 1.8, 0.8, 0.78, '#6b4b33') + box(ox_ + 1.2, oy_ + 1.1, 0.78, 0.6, 0.08, 0.45, '#101215', '#2c7be5')
+        s += box(ox_ + 3.2, oy_ + 0.3, 0, 0.6, 0.5, 1.3, '#7b808a') + box(ox_ + 0.3, oy_ + 3.2, 0, 0.5, 0.5, 0.9, '#3b7d4a')
+        s += poly([P(ox_ + 4.2, oy_, 0), P(ox_ + 4.2, oy_ + 4.2, 0), P(ox_ + 4.2, oy_ + 4.2, 3.0), P(ox_ + 4.2, oy_, 3.0)], '#9fd3ff', '#cde9ff', 1, .16)
+        s += poly([P(ox_, oy_ + 4.2, 0), P(ox_ + 4.2, oy_ + 4.2, 0), P(ox_ + 4.2, oy_ + 4.2, 3.0), P(ox_, oy_ + 4.2, 3.0)], '#9fd3ff', '#cde9ff', 1, .12)
+        s += poly([P(ox_, oy_, 3.0), P(ox_ + 4.2, oy_, 3.0), P(ox_ + 4.2, oy_ + 4.2, 3.0), P(ox_, oy_ + 4.2, 3.0)], '#cfe6ff', '#e6f3ff', 1.2, .14)
+        add(ox_ + 2, oy_ + 2, 0, s)
+        # workshop corner: bench, tool chest, barrels
+        wx_, wy_ = 0.4, 0.4
+        s = box(wx_, wy_, 0, 2.6, 0.8, 0.9, '#5a5f68') + box(wx_ + 2.9, wy_, 0, 0.7, 0.5, 1.1, '#c0151f')
+        for i in range(3):
+            b = P(wx_ + 0.6 + i * 0.7, wy_ + 1.6, 0)
+            s += f'<ellipse cx="{b[0]:.1f}" cy="{b[1]-scale*0.45:.1f}" rx="{scale*0.3:.0f}" ry="{scale*0.16:.0f}" fill="#1d4f9c"/><rect x="{b[0]-scale*0.3:.1f}" y="{b[1]-scale*0.45:.1f}" width="{scale*0.6:.1f}" height="{scale*0.45:.1f}" fill="#163f7e"/><ellipse cx="{b[0]:.1f}" cy="{b[1]-scale*0.45:.1f}" rx="{scale*0.3:.0f}" ry="{scale*0.16:.0f}" fill="#2660bd"/>'
+        add(wx_ + 1, wy_ + 1, 0, s)
+
     for _, svg in sorted(items, key=lambda t: t[0]):
         out.append(svg)
     # lights
-    for lx_ in [W * f for f in (0.2, 0.45, 0.7, 0.92)]:
-        for ly_ in [D * f for f in (0.3, 0.7)]:
+    grid = [(x, y) for x in [3.0 + i * 6.0 for i in range(int((W - 4) / 6) + 1)] for y in ([D * 0.25, D * 0.5, D * 0.75] if D > 13 else [D * 0.3, D * 0.7])] if variant.startswith('empty') else [(x, y) for x in [W * f for f in (0.2, 0.45, 0.7, 0.92)] for y in [D * f for f in (0.3, 0.7)]]
+    for lx_, ly_ in grid:
+        if True:
             c = P(lx_, ly_, H - 0.4); f = P(lx_, ly_, 0)
             out.append(f'<polygon points="{c[0]-6:.1f},{c[1]:.1f} {c[0]+6:.1f},{c[1]:.1f} {f[0]+scale*2.2:.1f},{f[1]:.1f} {f[0]-scale*2.2:.1f},{f[1]:.1f}" fill="url(#cone)"/>')
             out.append(f'<rect x="{c[0]-16:.1f}" y="{c[1]-3:.1f}" width="32" height="5" rx="2" fill="#fff6e0"/><circle cx="{c[0]:.1f}" cy="{c[1]:.1f}" r="38" fill="url(#glow)"/>')
@@ -180,10 +240,10 @@ def make(variant, W, D, H, seed, title):
 
 outdir = sys.argv[1]
 for key, args in {
-    'rox_wh_small':   ('logistics', 16, 11, 6.5, 3, 'SMALL WAREHOUSE'),
-    'rox_wh_medium':  ('logistics', 22, 14, 7.5, 5, 'MEDIUM WAREHOUSE'),
-    'rox_wh_large':   ('logistics', 30, 18, 9.0, 7, 'LARGE WAREHOUSE'),
-    'rox_wh_vehicle': ('vehicle',   26, 16, 8.0, 9, 'VEHICLE WAREHOUSE'),
+    'rox_wh_small':   ('empty', 16, 11, 6.5, 3, 'SMALL WAREHOUSE'),
+    'rox_wh_medium':  ('empty', 22, 14, 7.5, 5, 'MEDIUM WAREHOUSE'),
+    'rox_wh_large':   ('empty', 30, 18, 9.0, 7, 'LARGE WAREHOUSE'),
+    'rox_wh_vehicle': ('empty_vehicle', 26, 16, 8.0, 9, 'VEHICLE WAREHOUSE'),
 }.items():
     open(f'{outdir}/{key}.svg', 'w').write(make(*args))
 print('ok')
