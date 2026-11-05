@@ -1032,7 +1032,7 @@ if (!IS_GAME) {
     if (q.get('lang')) S.settings.lang = q.get('lang');
     if (q.get('wall')) S.settings.wallpaper = `img/wallpapers/${q.get('wall')}.jpg`;
     setTimeout(() => {
-        const ext = q.get('police') ? [['mdt', '', 'MDT', 'shield', '#ff7a3d', '#d8400f'], ['jail', '', 'Prison', 'jail', '#ff9466', '#e0571f'], ['fine', '', 'Citations', 'ticket', '#57d07a', '#1f9e4a'], ['mdt', 'vehicles', 'Vehicles', 'car', '#3cc7dc', '#167f9a'], ['boss', '', 'Management', 'users', '#9b7bff', '#5b33e6']]
+        const ext = q.get('police') ? [['mdt', '', 'MDT', 'shield', '#ff7a3d', '#d8400f'], ['boss', '', 'Management', 'users', '#9b7bff', '#5b33e6']]
             .map(([app, page, label, icon, c1, c2]) => ({ res: 'rox_police', app, page, label, icon, c1, c2 })) : [];
         window.postMessage({ action: 'open', data: Mock.data, static: st, app: q.get('app') || 'home', ext }, '*');
         if (q.get('dialog')) setTimeout(() => confirmDialog('Someone wants to buy your property. Do you want to allow it?', null, null, 'Sale Request'), 100);

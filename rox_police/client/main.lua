@@ -254,6 +254,18 @@ RegisterNUICallback('handoff', function(data, cb)
     end)
 end)
 
+-- MDT tools: impound nearest vehicle / remove mask (closes the iPad, opens the side panel)
+RegisterNUICallback('quick', function(data, cb)
+    cb('ok')
+    local action = type(data) == 'table' and data.action
+    if action ~= 'impound' and action ~= 'strip' then return end
+    close()
+    CreateThread(function()
+        Wait(150)
+        if action == 'impound' then OpenImpound() else OpenStrip() end
+    end)
+end)
+
 -- wallpaper / size are shared by every ROX iPad app
 RegisterNUICallback('ipadSettings', function(data, cb)
     cb('ok')
@@ -267,10 +279,6 @@ exports('IpadApps', function()
     if not lastAccess.ok then return {} end
     local apps = {
         { res = 'rox_police', app = 'mdt', label = 'MDT', labelAr = 'MDT', icon = 'shield', c1 = '#ff7a3d', c2 = '#d8400f' },
-        { res = 'rox_police', app = 'jail', label = 'Prison', labelAr = 'السجن', icon = 'jail', c1 = '#ff9466', c2 = '#e0571f' },
-        { res = 'rox_police', app = 'fine', label = 'Citations', labelAr = 'المخالفات', icon = 'ticket', c1 = '#57d07a', c2 = '#1f9e4a' },
-        { res = 'rox_police', app = 'mdt', page = 'vehicles', label = 'Vehicles', labelAr = 'السيارات', icon = 'car', c1 = '#3cc7dc', c2 = '#167f9a' },
-        { res = 'rox_police', app = 'mdt', page = 'impound', label = 'Impound', labelAr = 'الحجز', icon = 'truck', c1 = '#ffc24a', c2 = '#d98a0c' },
     }
     if lastAccess.boss then apps[#apps + 1] = { res = 'rox_police', app = 'boss', label = 'Management', labelAr = 'الإدارة', icon = 'users', c1 = '#9b7bff', c2 = '#5b33e6' } end
     return apps

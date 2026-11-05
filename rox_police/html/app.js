@@ -145,6 +145,7 @@ root.addEventListener('click', (e) => {
     if (k === 'close') return closeAll();
     if (k === 'back') return goBack();
     if (k === 'home') return goHome();
+    if (k === 'quick') { if (!RES) return openPanel(a.dataset.k === 'impound' ? 'impound' : 'strip', a.dataset.k === 'impound' ? { vehicle: { plate: '20HRX818', model: 'Karin Sultan RS', owner: 'Faisal Al-Harbi', registered: true } } : {}); return post('quick', { action: a.dataset.k }); }
     if (k === 'handoff') { if (!RES) return toast('[preview] opens ' + a.dataset.res + ' → ' + a.dataset.app, 'info'); return post('handoff', { res: a.dataset.res, app: a.dataset.app }); }
     if (k === 'app') { const p = a.dataset.p, pg = a.dataset.page; if (p === 'mdt' && pg) { openPanel('mdt', { page: pg }); return; } return openPanel(p); }
     H[k] && H[k](a, e);
@@ -467,6 +468,8 @@ const MDT = {
                     <div class="sep">QUICK ACTIONS</div>
                     <div class="ni" data-a="openJail"><i class="fa-solid fa-building-shield"></i>Prison Management</div>
                     <div class="ni" data-a="openFine"><i class="fa-solid fa-file-invoice-dollar"></i>Citations</div>
+                    <div class="ni" data-a="quick" data-k="impound"><i class="fa-solid fa-truck-pickup"></i>Impound Nearest</div>
+                    <div class="ni" data-a="quick" data-k="strip"><i class="fa-solid fa-masks-theater"></i>Remove Mask</div>
                     ${App.init && App.init.boss ? '<div class="ni" data-a="app" data-p="boss"><i class="fa-solid fa-briefcase"></i>Management</div>' : ''}
                 </div>
                 <div class="me"><div class="avatar">${initials(o.name)}</div><div class="who"><b>${esc(o.name || 'Officer')}</b><span>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</span></div><span class="badge ok">on duty</span></div>
@@ -742,16 +745,7 @@ const Home = {
             ${d.activity && d.activity.length ? `<div class="home-feed glass"><h4><i class="fa-solid fa-wave-square"></i>Live Activity</h4>${d.activity.slice(0, 5).map(a => `<div class="fi"><i class="fa-solid fa-${icons[a.kind] || 'circle'}"></i><div>${esc(a.text)}<small>${esc(a.officer || 'System')} · ${ago(a.t)}</small></div></div>`).join('')}</div>` : ''}
             <div class="home-brand">ROX POLICE OS</div>
             <div class="dock">
-                ${app('mdt', 'shield-halved', 'MDT', '255,90,31')}
-                ${app('mdt:citizens', 'id-card', 'Citizens', '77,141,255')}
-                ${app('mdt:vehicles', 'car', 'Vehicles', '40,180,200')}
-                ${app('mdt:impound', 'truck-pickup', 'Impound', '255,176,32')}
-                ${app('jail', 'building-shield', 'Prison', '255,110,50')}
-                ${app('fine', 'file-invoice-dollar', 'Citations', '52,180,110')}
-                ${app('mdt:warrants', 'user-ninja', 'Warrants', '255,77,94', st.warrants, true)}
-                ${app('mdt:reports', 'file-lines', 'Reports', '200,200,215', 0, true)}
-                ${app('mdt:bolo', 'binoculars', 'BOLO', '255,150,40', st.bolos, true)}
-                <span class="sep"></span>
+                ${app('mdt', 'shield-halved', 'MDT', '255,90,31', (st.warrants || 0) + (st.bolos || 0))}
                 ${App.init && App.init.boss ? app('boss', 'briefcase', 'Management', '130,100,255') : ''}
                 ${(App.ext || []).length ? '<span class="sep"></span>' + App.ext.map(x => `<div class="dock-app" data-a="handoff" data-res="${esc(x.res)}" data-app="${esc(x.app)}" style="--c:${esc(x.c || '255,90,31')}">${x.img ? `<img class="aicon" src="${esc(x.img)}" alt="">` : `<span class="aicon dark"><i class="fa-solid fa-${esc(x.icon)}"></i></span>`}<span class="dock-tip">${esc(x.label)}</span></div>`).join('') : ''}
                 <div class="dock-app" data-a="app" data-p="settings"><img class="aicon" src="img/icons/settings.jpg" alt=""><span class="dock-tip">Settings</span></div>
