@@ -80,9 +80,11 @@ local schema = {
 function DB.Init()
     for _, q in ipairs(schema) do MySQL.query.await(q) end
     -- v1.2: custom / MLO interiors store the inside point
-    local col = MySQL.query.await("SHOW COLUMNS FROM `rox_properties` LIKE 'inside'")
-    if not col or #col == 0 then
-        MySQL.query.await('ALTER TABLE `rox_properties` ADD COLUMN `inside` LONGTEXT DEFAULT NULL')
+    for _, column in ipairs({ 'inside', 'options' }) do
+        local col = MySQL.query.await(("SHOW COLUMNS FROM `rox_properties` LIKE '%s'"):format(column))
+        if not col or #col == 0 then
+            MySQL.query.await(('ALTER TABLE `rox_properties` ADD COLUMN `%s` LONGTEXT DEFAULT NULL'):format(column))
+        end
     end
 end
 
@@ -116,10 +118,10 @@ end
 function DB.SaveProperty(p)
     MySQL.update.await([[UPDATE rox_properties SET label=?, interior=?, image=?, ptype=?, price=?, rent_price=?, rent_days=?,
         status=?, owner=?, owner_name=?, realtor=?, realtor_name=?, door=?, street=?, locked=?, keyholders=?, sale_price=?,
-        rent_due=?, overdue=?, inside=? WHERE id=?]],
+        rent_due=?, overdue=?, inside=?, options=? WHERE id=?]],
         { p.label, p.interior, p.image, p.ptype, p.price, p.rent_price, p.rent_days, p.status, p.owner, p.owner_name,
           p.realtor, p.realtor_name, json.encode(p.door), p.street, p.locked and 1 or 0, json.encode(p.keyholders or {}),
-          p.sale_price, p.rent_due, p.overdue or 0, p.inside and json.encode(p.inside) or nil, p.id })
+          p.sale_price, p.rent_due, p.overdue or 0, p.inside and json.encode(p.inside) or nil, json.encode(p.options or {}), p.id })
 end
 
 function DB.DeleteProperty(id)

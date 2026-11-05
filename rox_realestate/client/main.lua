@@ -135,7 +135,11 @@ function EnterProperty(id)
         return
     end
     local prop = FindProperty(id)
-    if data.ipl then RequestIpl(data.ipl) end
+    if type(data.ipl) == 'table' then
+        for _, ipl in ipairs(data.ipl) do RequestIpl(ipl) end
+    elseif data.ipl then
+        RequestIpl(data.ipl)
+    end
     CurrentHouse = {
         id = data.id, label = data.label, spawn = data.spawn, canFurnish = data.canFurnish,
         door = prop and prop.door,
@@ -164,7 +168,18 @@ function EnterProperty(id)
         end
         SetModelAsNoLongerNeeded(hash)
     end
-    Teleport(data.spawn.x, data.spawn.y, data.spawn.z, data.spawn.w, data.shell ~= nil)
+    Teleport(data.spawn.x, data.spawn.y, data.spawn.z, data.spawn.w, data.shell ~= nil, function()
+        -- interior entity sets (e.g. styled warehouses)
+        if data.entitySets and #data.entitySets > 0 then
+            local interior = GetInteriorAtCoords(data.spawn.x, data.spawn.y, data.spawn.z)
+            if interior ~= 0 then
+                for _, set in ipairs(data.entitySets) do ActivateInteriorEntitySet(interior, set) end
+                RefreshInterior(interior)
+            end
+        end
+        -- ROX warehouse design (built while the screen is still black)
+        if data.decor then ROXDecor.Build(data.decor, data.spawn, data.id) end
+    end)
     SpawnAllFurniture(data.furniture or {})
     if data.canFurnish then Notify(L('furniture_hint'), 'info') end
 end
@@ -176,6 +191,7 @@ function ExitProperty()
     local _, door = ServerCall('exit')
     door = door or house.door
     DeleteAllFurniture()
+    ROXDecor.Clear()
     CurrentHouse = nil
     if door then
         DoScreenFadeOut(300)
@@ -187,6 +203,15 @@ function ExitProperty()
 end
 
 RegisterNetEvent('rox_re:forceExit', function() ExitProperty() end)
+
+-- owner changed the warehouse design while we are inside
+RegisterNetEvent('rox_re:decor', function(propertyId, style)
+    if not CurrentHouse or CurrentHouse.id ~= propertyId then return end
+    DoScreenFadeOut(300)
+    while not IsScreenFadedOut() do Wait(0) end
+    ROXDecor.Build(style, CurrentHouse.spawn, propertyId)
+    DoScreenFadeIn(400)
+end)
 
 ---------------------------------------------------------------------
 -- Door / exit interaction loop
@@ -264,6 +289,7 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     clearBlips()
     DeleteAllFurniture()
+    ROXDecor.Clear()
     deleteShell()
     SetNuiFocus(false, false)
     if CurrentHouse and CurrentHouse.door then

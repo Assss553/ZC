@@ -124,7 +124,13 @@ function Detect.Run()
     local saved = {}
     for _, row in ipairs(DB.LoadShells()) do
         local o = row.offset and json.decode(row.offset)
-        saved[row.model] = { label = row.label, offset = o and vec4(o.x, o.y, o.z, o.h or 0.0) }
+        if o and o.abs then
+            -- saved entry for a GTA interior
+            local i = Interiors[row.model]
+            if i and not i.shell then i.spawn = vec4(o.x, o.y, o.z, o.h or 0.0) end
+        else
+            saved[row.model] = { label = row.label, offset = o and vec4(o.x, o.y, o.z, o.h or 0.0) }
+        end
     end
 
     -- remove previously auto-registered entries (rescan)
@@ -193,14 +199,25 @@ RegisterCallback('saveEntry', function(src, label)
     if not IsRealtor(src) then return false, L('not_realtor') end
     local prop = GetProp(Inside[src])
     local interior = prop and Interiors[prop.interior]
-    if not interior or not interior.shell then return false, L('not_inside') end
-    local _, shellPos = GetInteriorSpawn(prop.interior, prop.door, prop.inside)
-    local ped = GetPlayerPed(src)
-    local c = GetEntityCoords(ped)
-    local o = { x = c.x - shellPos.x, y = c.y - shellPos.y, z = c.z - shellPos.z, h = GetEntityHeading(ped) }
-    if math.abs(o.x) > 60 or math.abs(o.y) > 60 or math.abs(o.z) > 30 then return false, L('too_far_place') end
+    if not interior or interior.custom then return false, L('not_inside') end
     label = type(label) == 'string' and label:gsub('[<>]', ''):sub(1, 48) or nil
     if label == '' then label = nil end
+
+    local ped = GetPlayerPed(src)
+    local c = GetEntityCoords(ped)
+    if not interior.shell then
+        -- GTA interior: save the absolute entry point (ped centre, like the built-in spawns)
+        local a = { x = c.x, y = c.y, z = c.z, h = GetEntityHeading(ped), abs = true }
+        DB.SaveShell(prop.interior, label, a)
+        interior.spawn = vec4(a.x, a.y, a.z, a.h)
+        Registry.interiors = InteriorsForUI()
+        TriggerClientEvent('rox_re:registry', -1, Registry)
+        Bridge.Notify(src, LP(src, 'entry_saved', prop.interior), 'success')
+        return true
+    end
+    local _, shellPos = GetInteriorSpawn(prop.interior, prop.door, prop.inside)
+    local o = { x = c.x - shellPos.x, y = c.y - shellPos.y, z = c.z - shellPos.z, h = GetEntityHeading(ped) }
+    if math.abs(o.x) > 60 or math.abs(o.y) > 60 or math.abs(o.z) > 30 then return false, L('too_far_place') end
     DB.SaveShell(interior.shell, label or (interior.auto and interior.label) or nil, o)
     for _, i in pairs(Interiors) do
         if i.shell == interior.shell then

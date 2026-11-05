@@ -1,0 +1,392 @@
+--[[
+    ROX Real Estate  ·  © ROX Store – All rights reserved.
+    Made for ROX Store. Do not resell or redistribute without permission.
+]]
+
+-- Procedural ROX warehouse design (see shared/decor.lua)
+ROXDecor = { entities = {}, lights = {}, active = false }
+
+local Debug = false
+
+---------------------------------------------------------------------
+-- helpers
+---------------------------------------------------------------------
+local function makeRng(seed)
+    local s = math.floor(seed) % 2147483647
+    if s <= 0 then s = s + 2147483646 end
+    return function(a, b)
+        s = (s * 16807) % 2147483647
+        local r = (s - 1) / 2147483646
+        if a then return a + r * (b - a) end
+        return r
+    end
+end
+
+local function ray(a, b)
+    local h = StartExpensiveSynchronousShapeTestLosProbe(a.x, a.y, a.z, b.x, b.y, b.z, 1, PlayerPedId(), 4)
+    local _, hit, c = GetShapeTestResult(h)
+    return hit == 1, c
+end
+
+-- true when nothing (map or objects) intersects the box
+local function boxFree(cx, cy, cz, sx, sy, sz, heading)
+    local h = StartShapeTestBox(cx, cy, cz, sx, sy, sz, 0.0, 0.0, heading, 2, 1 + 16, PlayerPedId(), 4)
+    local status, hit
+    local t = GetGameTimer() + 500
+    repeat
+        status, hit = GetShapeTestResult(h)
+        if status == 1 then Wait(0) end
+    until status ~= 1 or GetGameTimer() > t
+    return hit ~= 1
+end
+
+local existsCache = {}
+local function exists(model)
+    if existsCache[model] == nil then existsCache[model] = IsModelInCdimage(joaat(model)) and true or false end
+    return existsCache[model]
+end
+
+local function pick(role, rnd)
+    local list = DecorProps[role] or {}
+    local ok = {}
+    for _, m in ipairs(list) do if exists(m) then ok[#ok + 1] = m end end
+    if #ok == 0 then return nil end
+    return ok[math.floor(rnd(1, #ok + 0.999))]
+end
+
+---------------------------------------------------------------------
+-- room measurement
+---------------------------------------------------------------------
+local function median3(a, b, c)
+    if a > b then a, b = b, a end
+    if b > c then b, c = c, b end
+    if a > b then a, b = b, a end
+    return b
+end
+
+local function measure(center)
+    local okF, f = ray(center + vector3(0, 0, 1.0), center - vector3(0, 0, 6.0))
+    local floorZ = okF and f.z or (center.z - 1.0)
+    local mid = vector3(center.x, center.y, floorZ)
+    local minX, maxX, minY, maxY
+    -- cast from 3 parallel origins and take the median, so one pillar does not shrink the room
+    local function wall(o, dx, dy)
+        local hit, c = ray(o, o + vector3(dx, dy, 0.0) * 70.0)
+        local p = hit and c or (o + vector3(dx, dy, 0.0) * 35.0)
+        return dx ~= 0 and p.x or p.y
+    end
+    for _ = 1, 3 do
+        local z = floorZ + 1.6
+        local o = vector3(mid.x, mid.y, z)
+        local ox, oy = vector3(0, 1.6, 0), vector3(1.6, 0, 0)
+        minX = median3(wall(o, -1, 0), wall(o + ox, -1, 0), wall(o - ox, -1, 0))
+        maxX = median3(wall(o, 1, 0), wall(o + ox, 1, 0), wall(o - ox, 1, 0))
+        minY = median3(wall(o, 0, -1), wall(o + oy, 0, -1), wall(o - oy, 0, -1))
+        maxY = median3(wall(o, 0, 1), wall(o + oy, 0, 1), wall(o - oy, 0, 1))
+        mid = vector3((minX + maxX) / 2, (minY + maxY) / 2, floorZ)
+    end
+    local okC, c = ray(vector3(mid.x, mid.y, floorZ + 1.0), vector3(mid.x, mid.y, floorZ + 30.0))
+    local ceilZ = okC and c.z or (floorZ + 7.0)
+    return { minX = minX, maxX = maxX, minY = minY, maxY = maxY, floorZ = floorZ, ceilZ = ceilZ }
+end
+
+---------------------------------------------------------------------
+-- builder
+---------------------------------------------------------------------
+local function Builder(room, entry, seed)
+    local B = { room = room, rnd = makeRng(seed), placed = 0, entry = entry }
+    local sx, sy = room.maxX - room.minX, room.maxY - room.minY
+    B.longX = sx >= sy
+    B.L = B.longX and sx or sy          -- length along U (long axis)
+    B.W = B.longX and sy or sx          -- width along V
+    -- U = 0 at the entrance end
+    local eu = B.longX and (entry.x - room.minX) or (entry.y - room.minY)
+    B.flip = eu > B.L / 2
+    local ev = B.longX and (entry.y - room.minY) or (entry.x - room.minX)
+    B.entryV = ev
+
+    function B.world(u, v)
+        if B.flip then u = B.L - u end
+        if B.longX then return room.minX + u, room.minY + v end
+        return room.minX + v, room.minY + u
+    end
+
+    -- heading so the model's local +Y points along +U (facing the far end) / its long side runs along U
+    function B.headingU(extra) -- extra: 0 = face far end, 180 = face entrance, 90/-90 = face sides
+        local base = B.longX and -90.0 or 0.0
+        if B.flip then base = base + 180.0 end
+        return (base + (extra or 0.0)) % 360.0
+    end
+
+    -- place a role at (u, v). opts: { heading, alongU = true (long side along U), z = abs z, force, onFloor = true }
+    function B.place(role, u, v, opts)
+        opts = opts or {}
+        local model = opts.model or pick(role, B.rnd)
+        if not model then return nil end
+        local hash = LoadModel(model)
+        if not hash then return nil end
+        local mn, mx = GetModelDimensions(hash)
+        local size = mx - mn
+        local heading = opts.heading or B.headingU(0)
+        if opts.alongU then
+            -- make the long side of the model run along U
+            if size.x > size.y then heading = (heading + 90.0) % 360.0 end
+        end
+        local wx, wy = B.world(u, v)
+        -- keep the spot where players appear free
+        if not opts.force and (wx - B.entry.x) ^ 2 + (wy - B.entry.y) ^ 2 < 3.4 ^ 2 then return nil end
+        -- footprint centre offset, rotated
+        local r = math.rad(heading)
+        local ox, oy = (mn.x + mx.x) / 2, (mn.y + mx.y) / 2
+        local rx, ry = ox * math.cos(r) - oy * math.sin(r), ox * math.sin(r) + oy * math.cos(r)
+        local px, py = wx - rx, wy - ry
+        local pz = opts.z or (room.floorZ - mn.z + 0.01)
+
+        -- stay inside the room
+        local half = math.max(size.x, size.y) / 2
+        local fu = opts.wallOk and 0.05 or 0.35
+        if not opts.force then
+            if wx - half * 0.7 < room.minX + fu or wx + half * 0.7 > room.maxX - fu or wy - half * 0.7 < room.minY + fu or wy + half * 0.7 > room.maxY - fu then
+                if not opts.wallOk then return nil end
+            end
+            local bz = (opts.z and (opts.z + (mn.z + mx.z) / 2)) or (room.floorZ + size.z / 2 + 0.12)
+            if not boxFree(wx, wy, bz, size.x * 0.9, size.y * 0.9, math.max(0.2, size.z * 0.8), heading) then return nil end
+        end
+
+        local ent
+        if role == 'forklift' then
+            ent = CreateVehicle(hash, px, py, room.floorZ + 0.3, heading, false, false)
+            SetVehicleDoorsLocked(ent, 2)
+            SetEntityInvincible(ent, true)
+            SetVehicleOnGroundProperly(ent)
+        else
+            ent = CreateObject(hash, px, py, pz, false, false, false)
+            SetEntityHeading(ent, heading)
+        end
+        FreezeEntityPosition(ent, true)
+        SetModelAsNoLongerNeeded(hash)
+        ROXDecor.entities[#ROXDecor.entities + 1] = ent
+        B.placed = B.placed + 1
+        if B.placed % 6 == 0 then Wait(0) end
+        return ent, size, model
+    end
+
+    return B
+end
+
+---------------------------------------------------------------------
+-- zones
+---------------------------------------------------------------------
+local function buildRacks(B, style, u0, u1)
+    local rackModel = pick('rack', B.rnd)
+    if not rackModel then return end
+    local hash = LoadModel(rackModel)
+    if not hash then return end
+    local mn, mx = GetModelDimensions(hash)
+    local len, depth = math.max(mx.x - mn.x, mx.y - mn.y), math.min(mx.x - mn.x, mx.y - mn.y)
+    local gap = style.rackGap or 3.2
+    local margin = 0.45
+    local rows = {}
+    if style.racks then
+        -- wall row, then back-to-back double rows separated by aisles
+        local v = margin + depth / 2
+        rows[#rows + 1] = v
+        v = v + depth / 2 + gap
+        while v + depth * 1.5 + margin < B.W - margin - depth - gap do
+            rows[#rows + 1] = v + depth / 2
+            rows[#rows + 1] = v + depth * 1.5 + 0.05
+            v = v + depth * 2 + gap
+        end
+        rows[#rows + 1] = B.W - margin - depth / 2
+    elseif style.wallRacks then
+        rows = { margin + depth / 2, B.W - margin - depth / 2 }
+    end
+    local crossAt = style.crossAisle and (u0 + (u1 - u0) / 2) or nil
+    for _, v in ipairs(rows) do
+        local u = u0 + len / 2
+        while u + len / 2 <= u1 do
+            if crossAt and math.abs(u - crossAt) < len / 2 + 1.2 then
+                u = crossAt + 1.4 + len / 2
+            else
+                B.place('rack', u, v, { model = rackModel, alongU = true })
+                u = u + len + 0.08
+            end
+        end
+    end
+    -- worklights on the aisle ends and lights over each aisle
+    for i = 1, #rows - 1 do
+        local av = (rows[i] + rows[i + 1]) / 2
+        if rows[i + 1] - rows[i] > depth + 1.0 then
+            for lu = u0 + 3.0, u1 - 2.0, 7.0 do ROXDecor.lights[#ROXDecor.lights + 1] = { u = lu, v = av } end
+            if B.rnd() > 0.4 then B.place('handtruck', u0 + 0.8, av + B.rnd(-0.4, 0.4), { heading = B.headingU(B.rnd(-25, 25)) }) end
+        end
+    end
+end
+
+local function buildDock(B, style, u0, u1)
+    local laneV = B.W / 2
+    local step = 2.3
+    local density = style.dockDensity or 0.7
+    for u = u0 + 1.4, u1 - 1.0, step do
+        for v = 1.3, B.W - 1.0, step do
+            if math.abs(v - laneV) > 2.4 and B.rnd() < density then
+                local role = B.rnd() < 0.62 and 'pallet' or 'crate'
+                B.place(role, u + B.rnd(-0.15, 0.15), v + B.rnd(-0.15, 0.15), { heading = B.headingU(B.rnd() < 0.5 and 0 or 90) + B.rnd(-4, 4) })
+            end
+        end
+    end
+    -- empty pallets stacked near a wall, forklift on the lane, cones marking the lane
+    for i = 0, 2 do B.place('emptyPallet', u1 - 1.2 - i * 1.4, 0.9, { alongU = true, wallOk = true }) end
+    B.place('forklift', u0 + (u1 - u0) * 0.45, laneV, { heading = B.headingU(180 + B.rnd(-12, 12)) })
+    B.place('handtruck', u0 + (u1 - u0) * 0.7, laneV + 1.3, { heading = B.headingU(B.rnd(0, 360)) })
+    for v = laneV - 2.0, laneV + 2.0, 1.3 do B.place('cone', u0 + 0.4, v, {}) end
+    B.place('barrier', u0 + 0.6, 1.0, { alongU = false })
+    B.place('barrier', u0 + 0.6, B.W - 1.0, { alongU = false })
+    for lu = u0 + 2.0, u1 - 1.0, 6.5 do
+        ROXDecor.lights[#ROXDecor.lights + 1] = { u = lu, v = laneV - 3.0 }
+        ROXDecor.lights[#ROXDecor.lights + 1] = { u = lu, v = laneV + 3.0 }
+    end
+end
+
+local function buildOffice(B, u0, u1)
+    -- office corner on the side away from the entrance door
+    local left = B.entryV > B.W / 2
+    local function V(d) return left and d or (B.W - d) end
+    local face = left and 90.0 or -90.0
+    local desk = B.place('desk', u0 + 1.6, V(1.3), { heading = B.headingU(face) })
+    if desk then
+        local mn, mx = GetModelDimensions(GetEntityModel(desk))
+        local top = B.room.floorZ + (mx.z - mn.z)
+        B.place('monitor', u0 + 1.3, V(1.05), { heading = B.headingU(face), z = top, force = true })
+        B.place('laptop', u0 + 2.0, V(1.25), { heading = B.headingU(face + 15), z = top, force = true })
+        B.place('officeChair', u0 + 1.6, V(2.25), { heading = B.headingU(face + 180) })
+    end
+    B.place('filecab', u0 + 0.5, V(0.45), { heading = B.headingU(face), wallOk = true })
+    B.place('filecab', u0 + 1.0, V(0.45), { heading = B.headingU(face), wallOk = true })
+    B.place('printer', u0 + 3.1, V(0.6), { heading = B.headingU(face), wallOk = true })
+    B.place('safe', u0 + 3.9, V(0.55), { heading = B.headingU(face), wallOk = true })
+    B.place('cooler', u1 - 0.6, V(0.45), { heading = B.headingU(face), wallOk = true })
+    B.place('vending', u1 - 1.6, V(0.55), { heading = B.headingU(face), wallOk = true })
+    B.place('plant', u0 + 0.4, V(2.8), {})
+    B.place('bin', u0 + 2.7, V(1.9), {})
+    B.place('sofa', u0 + 4.2, V(2.6), { heading = B.headingU(face + 180) })
+    ROXDecor.lights[#ROXDecor.lights + 1] = { u = u0 + 2.0, v = V(1.8), warm = true }
+end
+
+local function buildWorkshop(B, style, u0, u1)
+    local left = B.entryV <= B.W / 2
+    local function V(d) return left and d or (B.W - d) end
+    local face = left and 90.0 or -90.0
+    B.place('bench', u0 + 1.8, V(0.55), { heading = B.headingU(face), alongU = true, wallOk = true })
+    B.place('toolchest', u0 + 3.6, V(0.45), { heading = B.headingU(face), wallOk = true })
+    B.place('toolchest', u0 + 0.4, V(0.45), { heading = B.headingU(face), wallOk = true })
+    B.place('generator', u1 - 0.9, V(0.9), { heading = B.headingU(face) })
+    B.place('compressor', u1 - 2.1, V(0.6), { heading = B.headingU(face), wallOk = true })
+    B.place('gas', u0 + 4.5, V(0.4), { wallOk = true })
+    B.place('gas', u0 + 4.8, V(0.45), { wallOk = true })
+    B.place('barrel', u1 - 0.7, V(2.3), {})
+    B.place('oil', u0 + 2.6, V(1.4), {})
+    B.place('ladder', u0 + 5.4, V(0.25), { heading = B.headingU(face), wallOk = true })
+    B.place('worklight', u0 + 3.0, V(1.8), { heading = B.headingU(face + 180) })
+    if style.garage then
+        B.place('hoist', u0 + 2.4, V(3.4), { heading = B.headingU(B.rnd(0, 360)) })
+        B.place('tyres', u1 - 1.0, V(3.6), {})
+        B.place('tyres', u1 - 1.0, V(4.6), {})
+    end
+    ROXDecor.lights[#ROXDecor.lights + 1] = { u = u0 + 2.5, v = V(1.6), warm = true }
+end
+
+local function buildGarageFloor(B, u0, u1)
+    -- workshop style: open floor with bays, tyre stacks and tool islands
+    for u = u0 + 2.0, u1 - 2.0, 6.0 do
+        B.place('toolchest', u, B.W / 2 - 2.6, { heading = B.headingU(90) })
+        B.place('tyres', u + 1.2, B.W / 2 + 2.6, {})
+        B.place('worklight', u + 2.5, B.W / 2, { heading = B.headingU(B.rnd(0, 360)) })
+        ROXDecor.lights[#ROXDecor.lights + 1] = { u = u + 1.5, v = B.W / 2 }
+    end
+end
+
+local function buildSafety(B)
+    for u = 3.0, B.L - 2.0, 9.0 do
+        B.place('extinguisher', u, 0.25, { wallOk = true })
+        B.place('extinguisher', u + 4.5, B.W - 0.25, { wallOk = true })
+    end
+    -- CCTV in the four corners, under the ceiling, looking at the centre
+    local cz = B.room.ceilZ - 0.7
+    for _, c in ipairs({ { 0.6, 0.6, 45 }, { 0.6, B.W - 0.6, 135 }, { B.L - 0.6, 0.6, -45 }, { B.L - 0.6, B.W - 0.6, -135 } }) do
+        B.place('cctv', c[1], c[2], { heading = B.headingU(c[3]), z = cz, force = true })
+    end
+    B.place('bin', 1.0, B.W - 0.7, { wallOk = true })
+end
+
+---------------------------------------------------------------------
+-- public
+---------------------------------------------------------------------
+function ROXDecor.Clear()
+    for _, e in ipairs(ROXDecor.entities) do
+        if DoesEntityExist(e) then DeleteEntity(e) end
+    end
+    ROXDecor.entities, ROXDecor.lights, ROXDecor.active = {}, {}, false
+end
+
+-- center: vec3/vec4 entry point inside the interior; seed: property id
+function ROXDecor.Build(styleKey, center, seed)
+    ROXDecor.Clear()
+    local style = DecorStyles[styleKey or DecorDefaultStyle]
+    if not style or styleKey == 'off' then return 0 end
+
+    local ped = PlayerPedId()
+    local interior = GetInteriorFromEntity(ped)
+    local t = GetGameTimer() + 4000
+    while interior ~= 0 and not IsInteriorReady(interior) and GetGameTimer() < t do Wait(50) end
+    Wait(250)
+
+    local room = measure(vector3(center.x, center.y, center.z))
+    local B = Builder(room, vector3(center.x, center.y, center.z), seed or 1)
+    if B.L < 8.0 or B.W < 6.0 then return 0 end
+
+    local entryZone = math.min(4.5, B.L * 0.14)
+    local frontZone = (style.office or style.workshop) and math.min(6.5, B.L * 0.2) or 0
+    local u0 = entryZone
+    local uFrontEnd = u0 + frontZone
+    local uDock = (style.dock and B.L > 18) and B.L * 0.76 or B.L - 0.6
+
+    if style.office then buildOffice(B, u0, uFrontEnd) end
+    if style.workshop then buildWorkshop(B, style, u0, uFrontEnd) end
+    if style.racks or style.wallRacks then buildRacks(B, style, uFrontEnd + 0.8, uDock - 0.6) end
+    if style.garage then buildGarageFloor(B, uFrontEnd + 1.0, uDock - 1.0) end
+    if style.dock and B.L > 18 then buildDock(B, style, uDock, B.L - 0.6) end
+    buildSafety(B)
+
+    -- resolve light positions to world space
+    local lights = {}
+    for _, l in ipairs(ROXDecor.lights) do
+        local x, y = B.world(l.u, l.v)
+        local c = l.warm and { 255, 214, 170 } or style.light
+        lights[#lights + 1] = { x = x, y = y, z = room.ceilZ - 1.2, r = c[1], g = c[2], b = c[3] }
+    end
+    ROXDecor.lights = lights
+    ROXDecor.range, ROXDecor.intensity = style.lightRange or 10.0, style.lightIntensity or 1.4
+    ROXDecor.active = true
+    if Debug then print(('[ROX decor] %s %.1fx%.1f placed %d props, %d lights'):format(styleKey, B.L, B.W, B.placed, #lights)) end
+    return B.placed
+end
+
+-- real light for the warehouse (cheap: only while inside and only the closest lights)
+CreateThread(function()
+    while true do
+        if ROXDecor.active and #ROXDecor.lights > 0 then
+            local pc = GetEntityCoords(PlayerPedId())
+            for _, l in ipairs(ROXDecor.lights) do
+                if math.abs(l.x - pc.x) < 40.0 and math.abs(l.y - pc.y) < 40.0 then
+                    DrawLightWithRange(l.x, l.y, l.z, l.r, l.g, l.b, ROXDecor.range, ROXDecor.intensity)
+                end
+            end
+            Wait(0)
+        else
+            Wait(500)
+        end
+    end
+end)
+
+RegisterCommand('roxdecor_debug', function() Debug = not Debug print('ROX decor debug', Debug) end, false)

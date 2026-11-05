@@ -51,7 +51,7 @@ function StreetAt(coords)
     return street
 end
 
-function Teleport(x, y, z, h, exact)
+function Teleport(x, y, z, h, exact, beforeFadeIn)
     local ped = PlayerPedId()
     DoScreenFadeOut(400)
     while not IsScreenFadedOut() do Wait(0) end
@@ -61,6 +61,7 @@ function Teleport(x, y, z, h, exact)
     local t = GetGameTimer() + 3000
     while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < t do Wait(0) end
     Wait(300)
+    if beforeFadeIn then pcall(beforeFadeIn) end
     DoScreenFadeIn(500)
 end
 

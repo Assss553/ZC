@@ -38,6 +38,7 @@ local function staticData()
         marketplace = Config.Marketplace.Enabled, marketTax = Config.Marketplace.Tax,
         sellBack = Config.Furniture.SellBack, maxKeys = Config.MaxKeys, maxOverdue = Config.Rent.MaxOverdue,
         contractMinutes = Config.ContractExpireMinutes, visit = Config.AllowVisitAvailable,
+        decorStyles = DecorStylesForUI(),
     }
 end
 

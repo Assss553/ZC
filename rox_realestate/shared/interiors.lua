@@ -170,7 +170,34 @@ Interiors = {
     shell_warehouse = {
         label = 'Warehouse', labelAr = 'مستودع',
         tier = 'high', rooms = 1, image = 'img/houses/shell_warehouse.jpg',
-        shell = 'shell_warehouse1', offset = vec4(-8.95, 0.51, 1.04, 268.82),
+        shell = 'shell_warehouse1', offset = vec4(-8.95, 0.51, 1.04, 268.82), decor = true,
+    },
+
+    ------------------------------------------------------------------
+    -- ROX WAREHOUSES: real GTA warehouse interiors + the procedural ROX design (shared/decor.lua)
+    -- The owner picks the design from the iPad (Logistics Hub / Dense Storage / Workshop Garage / Empty)
+    ------------------------------------------------------------------
+    rox_wh_small = {
+        label = 'ROX Warehouse · Small', labelAr = 'مخزن ROX · صغير',
+        tier = 'high', rooms = 1, image = 'img/houses/rox_wh_small.png', order = -2, decor = true,
+        spawn = vec4(1094.99, -3101.78, -39.00, 90.0),
+    },
+    rox_wh_medium = {
+        label = 'ROX Warehouse · Medium', labelAr = 'مخزن ROX · متوسط',
+        tier = 'high', rooms = 1, image = 'img/houses/rox_wh_medium.png', order = -2, decor = true,
+        spawn = vec4(1056.49, -3105.72, -39.00, 90.0),
+    },
+    rox_wh_large = {
+        label = 'ROX Warehouse · Large', labelAr = 'مخزن ROX · كبير',
+        tier = 'luxury', rooms = 1, image = 'img/houses/rox_wh_large.png', order = -2, decor = true,
+        spawn = vec4(1006.97, -3102.08, -39.00, 90.0),
+    },
+    rox_wh_vehicle = {
+        label = 'ROX Vehicle Warehouse', labelAr = 'مخزن سيارات ROX',
+        tier = 'luxury', rooms = 1, image = 'img/houses/rox_wh_vehicle.png', order = -2, decor = true,
+        spawn = vec4(994.59, -3002.59, -39.65, 270.0),
+        ipl = 'imp_impexp_interior_placement_interior_1_impexp_intwaremed_milo_',
+        entitySets = { 'branded_style_set' },
     },
 }
 
@@ -206,7 +233,7 @@ function InteriorsForUI()
         list[#list + 1] = {
             key = key, label = v.label, labelAr = v.labelAr, tier = v.tier,
             rooms = v.rooms, image = v.image, shell = v.shell, custom = v.custom or false,
-            auto = v.auto or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
+            auto = v.auto or false, decor = v.decor or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
         }
     end
     table.sort(list, function(a, b)

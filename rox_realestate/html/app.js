@@ -415,6 +415,14 @@ Views.detail = () => {
     } else if (p.salePrice) {
         acts += `<button class="btn primary" data-act="marketbuy" data-id="${p.id}">${icon('cart')}${t('a_buy', moneyText(p.salePrice))}</button>`;
     }
+    const canDecor = p.hasDecor && (p.isOwner || (S.data.apps && S.data.apps.manage));
+    if (canDecor) {
+        const styles = S.st.decorStyles || [];
+        extra = `<div class="section-title">${t('decor_title')}</div>
+            <div class="decor-grid">${styles.map((d) => `<button class="decor-opt ${p.decor === d.key ? 'on' : ''}" data-act="setdecor" data-id="${p.id}" data-v="${d.key}">
+                ${icon({ logistics: 'box', storage: 'grid', workshop: 'briefcase', off: 'x' }[d.key] || 'box')}<b>${esc(LANG === 'ar' && d.labelAr ? d.labelAr : d.label)}</b></button>`).join('')}</div>
+            <div class="hint">${t('decor_hint')}</div>` + extra;
+    }
     const alert = p.isOwner && p.overdue > 0 ? `<div class="alert">${icon('alert')}${t('overdue_alert', p.overdue, S.st.maxOverdue)}</div>` : '';
     return `<div class="page">${appbar(esc(p.label), `#${p.id} · ${esc(p.street || '')}`)}
         <div class="detail">
@@ -510,7 +518,7 @@ Views.create = () => {
             <div class="grow" style="flex:1"></div><button class="btn ghost" data-act="rescan" style="height:34px">${icon('search')}${t('rescan')}</button></div>
             <div class="igrid">${list.map((i) => {
             const off = i.available === false;
-            const tags = [i.custom ? `<span class="chip blue">MLO</span>` : '', i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
+            const tags = [i.decor ? `<span class="chip rox-chip">ROX</span>` : '', i.custom ? `<span class="chip blue">MLO</span>` : '', i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
             return `<div class="card icard ${c.interior === i.key ? 'on' : ''} ${off ? 'off' : ''}" ${off ? '' : `data-act="pickinterior" data-key="${i.key}"`}>
             <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span>${tags}</div>
             <div class="ib"><b>${esc(interiorName(i))}</b><small>${off ? `<span style="color:var(--red)">${t('not_installed')}</span>` : i.needsEntry ? t('auto_entry_short') : i.custom ? t('custom_hint') : t('rooms', i.rooms)}</small></div></div>`;
@@ -818,6 +826,7 @@ const A = {
     aiminside: () => { S.pickTarget = { type: 'createInside' }; post('pickLocation', { mode: 'floor' }); },
     ifilter: (el) => { S.interiorFilter = el.dataset.f; render(); },
     rescan: async () => { await call('rescan'); },
+    setdecor: async (el) => { await call('setDecor', Number(el.dataset.id), el.dataset.v); },
     minside: (el) => { S.pickTarget = { type: 'inside', id: Number(el.dataset.id) }; post('pickLocation', { mode: 'floor' }); },
     csubmit: async (el) => {
         const c = S.create;
@@ -1000,7 +1009,9 @@ if (!IS_GAME) {
     document.body.style.background = 'linear-gradient(160deg,#3a4c5c,#1b2530)';
     const ints = [['low_apartment', 'Low-End Apartment', 'شقة اقتصادية', 'low', 1], ['medium_apartment', 'Medium Apartment', 'شقة متوسطة', 'mid', 2], ['integrity_way', '4 Integrity Way Apt', 'شقة انتغريتي واي', 'high', 2], ['north_conker', 'North Conker Villa', 'فيلا نورث كونكر', 'high', 3], ['franklin_vinewood', 'Vinewood Hills Villa', 'فيلا فاينوود هيلز', 'luxury', 4], ['penthouse_modern', 'Eclipse Penthouse - Modern', 'بنتهاوس إكلبس - مودرن', 'luxury', 3]]
         .map(([key, label, labelAr, tier, rooms]) => ({ key, label, labelAr, tier, rooms, image: `img/houses/${key}.jpg` }))
-        .concat([{ key: 'custom', label: 'Custom location / MLO', labelAr: 'موقع مخصص / MLO', tier: 'mid', rooms: 1, custom: true },
+        .concat([{ key: 'rox_wh_large', label: 'ROX Warehouse · Large', labelAr: 'مخزن ROX · كبير', tier: 'luxury', rooms: 1, image: 'img/houses/rox_wh_large.png', decor: true },
+            { key: 'rox_wh_vehicle', label: 'ROX Vehicle Warehouse', labelAr: 'مخزن سيارات ROX', tier: 'luxury', rooms: 1, image: 'img/houses/rox_wh_vehicle.png', decor: true },
+            { key: 'custom', label: 'Custom location / MLO', labelAr: 'موقع مخصص / MLO', tier: 'mid', rooms: 1, custom: true },
             { key: 'shell_ranch', label: 'Ranch House', labelAr: 'بيت مزرعة', tier: 'mid', rooms: 3, shell: 'shell_ranch', available: true },
             { key: 'shell_highend', label: 'Highend', labelAr: 'Highend', tier: 'mid', rooms: 1, shell: 'shell_highend', auto: true, needsEntry: true, available: true },
             { key: 'shell_michael', label: 'Grand Mansion (Shell)', labelAr: 'قصر فخم', tier: 'luxury', rooms: 5, shell: 'shell_michael', available: false }]);
@@ -1009,12 +1020,12 @@ if (!IS_GAME) {
     const P = (id, label, interior, status, x, y, extra = {}) => ({ id, label, interior, status, ptype: 'sale', price: 180000 + id * 25000, rentPrice: 2500, rentDays: 7, door: { x, y, z: 30, h: 0 }, street: 'Alta St, Pillbox Hill', locked: true, rooms: 2, realtorName: 'Saad Realty', ...extra });
     Mock.data = {
         name: 'Jaber Ali', money: 42347, serverId: 1, isRealtor: true, canManage: true, grade: 3, apps: { create: true, manage: true, contracts: true },
-        properties: [P(1, 'Alta Street 12', 'integrity_way', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [] }),
+        properties: [P(1, 'ROX Logistics Depot', 'rox_wh_large', 'owned', -47, -585, { isOwner: true, hasKey: true, ownerName: 'Jaber Ali', keys: [], hasDecor: true, decor: 'logistics' }),
             P(2, 'Vinewood Villa', 'franklin_vinewood', 'available', 7, 538), P(3, 'Grove Room', 'low_apartment', 'rented', -14, -1440, { ptype: 'rent', isOwner: true, hasKey: true, ownerName: 'Jaber Ali', overdue: 1, rentDue: Date.now() / 1000 + 86400 }),
             P(4, 'Conker Hills', 'north_conker', 'owned', 342, 437, { ownerName: 'Omar', salePrice: 650000 }), P(5, 'Mirror Park 4', 'medium_apartment', 'available', 1100, -500, { ptype: 'rent' })],
         contracts: [{ id: 7, propertyId: 2, ctype: 'sale', price: 230000, rentPrice: 0, rentDays: 7, buyerName: 'Jaber Ali', realtorName: 'Saad Realty', status: 'pending', isMine: true, createdAt: Date.now() / 1000, expiresAt: Date.now() / 1000 + 1700, label: 'Vinewood Villa', interior: 'franklin_vinewood', street: 'Wild Oats Dr', rooms: 4 }],
     };
-    const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true };
+    const st = { locale: 'en', defaultLocale: 'en', wallpaper: 'img/wallpapers/street.jpg', currency: '$', interiors: ints, furniture: furn, categories: cats, maxFurniture: 25, furnitureImage: false, map: { image: 'img/map.jpg', minX: -4140, maxX: 4860, minY: -4300, maxY: 8400 }, rentDays: 7, directPurchase: true, marketplace: true, marketTax: 0.05, sellBack: 0.5, maxKeys: 5, maxOverdue: 3, contractMinutes: 30, visit: true, decorStyles: [{ key: 'logistics', label: 'Logistics Hub', labelAr: 'مركز لوجستي' }, { key: 'off', label: 'Empty', labelAr: 'فاضي' }, { key: 'storage', label: 'Dense Storage', labelAr: 'تخزين كثيف' }, { key: 'workshop', label: 'Workshop Garage', labelAr: 'ورشة وكراج' }] };
     const q = new URLSearchParams(location.search);
     if (q.get('lang')) S.settings.lang = q.get('lang');
     if (q.get('wall')) S.settings.wallpaper = `img/wallpapers/${q.get('wall')}.jpg`;

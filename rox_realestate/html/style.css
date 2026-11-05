@@ -487,3 +487,13 @@ html[dir="rtl"] .fp-head h2 { font-family: 'Cairo'; font-style: normal; font-wei
 .citem .thumb .ph-ic, .ftile .thumb .ph-ic { width: 30px; height: 30px; font-size: 15px; }
 .icard.off { opacity: .45; cursor: not-allowed; filter: grayscale(.6); }
 .icard .ph .chip + .chip { inset-inline-start: auto; inset-inline-end: 8px; }
+
+/* ---------------------------------------------------------- ROX warehouse design picker */
+.decor-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.decor-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); font-size: 11px; transition: .15s; }
+.decor-opt svg { font-size: 20px; color: var(--muted); }
+.decor-opt:hover { border-color: #3c3c44; }
+.decor-opt.on { border-color: var(--accent); background: var(--accent-bg); }
+.decor-opt.on svg { color: var(--accent); }
+.icard .ph .rox-chip { inset-inline-start: auto; inset-inline-end: 8px; background: linear-gradient(135deg, #ff7a3d, #e0441a); color: #fff; }
+.icard .ph .rox-chip + .chip { inset-inline-end: 52px; }

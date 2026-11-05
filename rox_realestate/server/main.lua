@@ -119,6 +119,8 @@ local function propForClient(prop, src, identifier, realtor)
         rentDue = private and prop.rent_due or nil, overdue = private and prop.overdue or nil,
         rooms = Interiors[prop.interior] and Interiors[prop.interior].rooms or 1,
         inside = realtor and prop.inside or nil,
+        hasDecor = Interiors[prop.interior] and Interiors[prop.interior].decor or false,
+        decor = (prop.options and prop.options.decor) or DecorDefaultStyle,
     }
 end
 
@@ -173,6 +175,7 @@ MySQL.ready(function()
         row.door = decode(row.door, { x = 0, y = 0, z = 0, h = 0 })
         row.keyholders = decode(row.keyholders, {})
         row.inside = decode(row.inside, nil)
+        row.options = decode(row.options, {})
         row.locked = row.locked == 1 or row.locked == true
         Properties[row.id] = row
     end
@@ -564,6 +567,22 @@ RegisterCallback('updateProperty', function(src, id, data)
     return true
 end)
 
+-- ROX warehouse design picked by the owner (or a managing realtor)
+RegisterCallback('setDecor', function(src, id, style)
+    local prop = GetProp(id)
+    if not prop or not DecorStyles[style] then return false, L('invalid_data') end
+    if GetAccess(src, prop) ~= 'owner' and not HasApp(src, 'manage') then return false, L('no_access') end
+    prop.options = prop.options or {}
+    prop.options.decor = style
+    DB.SaveProperty(prop)
+    for s, pid in pairs(Inside) do
+        if pid == prop.id then TriggerClientEvent('rox_re:decor', s, prop.id, style) end
+    end
+    Bridge.Notify(src, LP(src, 'property_updated'), 'success')
+    SyncAll()
+    return true
+end)
+
 RegisterCallback('setInside', function(src, id, inside)
     if not HasApp(src, 'manage') then return false, L('not_realtor') end
     local prop = GetProp(id)
@@ -652,6 +671,8 @@ RegisterCallback('enter', function(src, id)
     return true, {
         id = prop.id, label = prop.label, spawn = spawn, ipl = interior.ipl,
         shell = interior.shell, shellPos = shellPos, autoEntry = auto, interior = prop.interior,
+        entitySets = interior.entitySets,
+        decor = interior.decor and ((prop.options and prop.options.decor) or DecorDefaultStyle) or nil,
         isRealtor = IsRealtor(src),
         furniture = GetPlacedFurniture(prop.id), canFurnish = access ~= nil,
     }

@@ -22,6 +22,7 @@ shared_scripts {
     'shared/locale.lua',
     'shared/interiors.lua',
     'shared/furniture.lua',
+    'shared/decor.lua',
 }
 
 server_scripts {
@@ -42,6 +43,7 @@ client_scripts {
     'client/main.lua',
     'client/tablet.lua',
     'client/furniture.lua',
+    'client/decor.lua',
 }
 
 ui_page 'html/index.html'
