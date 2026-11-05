@@ -145,6 +145,20 @@ end, false)
 local H = {}
 BossOnly = {}
 
+-- actions used from the third eye: per action rank (Config.Target)
+local TARGET_ACTION = { jail = { 'player', 'jail' }, fine = { 'player', 'fine' }, strip = { 'player', 'strip' }, impound = { 'vehicle', 'impound' } }
+function TargetGate(src, action)
+    local t = TARGET_ACTION[action]
+    if not t then return nil end
+    local group = Config.Target and Config.Target[t[1]] or {}
+    local v = group[t[2]]
+    if v == false then return 'This action is disabled' end
+    local min = type(v) == 'number' and v or (Config.MdtMinGrade or 0)
+    local c = Bridge.GetChar(src)
+    if not c or (not c.isboss and (c.gradeLevel or 0) < min) then return 'Your rank is too low for this' end
+    return nil
+end
+
 local function officerName(src) local c = Bridge.GetChar(src) return c and c.name or GetPlayerName(src) end
 
 local function stats()
@@ -503,6 +517,8 @@ RegisterNetEvent('rox_police:server:req', function(reqId, action, data)
         res = { ok = false, msg = 'Police only', denied = true }
     elseif BossOnly[action] and not Bridge.IsBoss(src) then
         res = { ok = false, msg = 'Management only', denied = true }
+    elseif TargetGate(src, action) then
+        res = { ok = false, msg = TargetGate(src, action), denied = true }
     else
         local ok, r = pcall(h, src, type(data) == 'table' and data or {})
         if ok then res = r else print('[rox_police] ' .. action .. ': ' .. tostring(r)); res = { ok = false, msg = 'Server error' } end

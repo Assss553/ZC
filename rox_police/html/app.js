@@ -473,11 +473,6 @@ const MDT = {
                 <div class="brand"><div class="logo svg">${Emblem.app('mdt')}</div><div><b>ROX MDT</b><span>MOBILE DATA TERMINAL</span></div></div>
                 <div class="nav">
                     ${nav.map(([k, ic, l, c]) => `<div class="ni ${S.page === k ? 'on' : ''}" data-a="nav" data-p="${k}"><i class="fa-solid fa-${ic}"></i>${l}${c ? `<span class="count">${c}</span>` : ''}</div>`).join('')}
-                    <div class="sep">QUICK ACTIONS</div>
-                    <div class="ni" data-a="openJail"><i class="fa-solid fa-building-shield"></i>Prison Management</div>
-                    <div class="ni" data-a="openFine"><i class="fa-solid fa-file-invoice-dollar"></i>Citations</div>
-                    <div class="ni" data-a="quick" data-k="impound"><i class="fa-solid fa-truck-pickup"></i>Impound Nearest</div>
-                    <div class="ni" data-a="quick" data-k="strip"><i class="fa-solid fa-masks-theater"></i>Remove Mask</div>
                 </div>
                 <div class="me" style="flex-wrap:wrap"><div class="avatar">${initials(o.name)}</div><div class="who"><b>${esc(o.name || 'Officer')}</b><span>${esc(o.jobLabel || 'Police')}${o.grade ? ' · ' + esc(o.grade) : ''}</span></div><span class="badge ok">on duty</span>
                     ${(App.init.myDivisions || []).length ? `<div style="display:flex;gap:5px;flex-wrap:wrap;width:100%">${divChips(App.init.myDivisions)}</div>` : ''}</div>
@@ -541,7 +536,6 @@ const MDT = {
                             ${p.owed ? `<span class="badge warn">owes ${money(p.owed)}</span>` : ''}
                         </div></div>
                     <div style="display:flex;gap:8px">
-                        ${p.online ? `<button class="btn" data-a="jailP" data-id="${p.id}"><i class="fa-solid fa-lock"></i> Jail</button><button class="btn" data-a="fineP" data-id="${p.id}"><i class="fa-solid fa-file-invoice-dollar"></i> Cite</button>` : ''}
                         <button class="btn danger" data-a="warrantP"><i class="fa-solid fa-user-ninja"></i> Warrant</button>
                     </div></div>
                 <div class="kv"><div><span>Server ID</span><b>${p.id || '—'}</b></div><div><span>Phone</span><b>${esc(p.phone || '—')}</b></div><div><span>Date of Birth</span><b>${esc(p.dob || '—')}</b></div><div><span>Job</span><b>${esc(p.job || '—')}</b></div></div>

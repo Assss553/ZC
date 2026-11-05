@@ -148,6 +148,7 @@ Config.Certifications = {
 ---------------------------------------------------------------------------
 Config.Target = {
     enabled = true,
+    -- each option: true = from Config.MdtMinGrade, false = off, number = minimum police grade for it
     vehicle = { impound = true },                          -- on any vehicle: Impound / Depot
     player  = { jail = true, fine = true, strip = true },  -- on a player: Prison, Citation, Remove mask
     playerDistance = 2.5,

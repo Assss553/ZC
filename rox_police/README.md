@@ -87,13 +87,15 @@ tablet = { name = 'tablet', label = 'Police iPad', weight = 500, type = 'item', 
 ```
 
 ## العين الثالثة
-كل خيارات العين للشرطة بس (`Config.PoliceJobs`) ومن رتبة `Config.MdtMinGrade` وفوق. تقدر تطفي أي خيار من `Config.Target`:
+السجن والمخالفات والحجز ونزع الماسك **بالعين بس** (مو داخل الـ MDT)، للشرطة (`Config.PoliceJobs`) وكل خيار له رتبة:
 ```lua
 Config.Target = {
+    -- true = رتبة Config.MdtMinGrade ، false = مطفي ، رقم = أقل رتبة لهذا الخيار
     vehicle = { impound = true },
-    player  = { jail = true, fine = true, strip = true },
+    player  = { jail = 2, fine = true, strip = true },   -- مثال: السجن من رتبة 2 وفوق
 }
 ```
+والسيرفر يتحقق من الرتبة مرة ثانية.
 السجن والمخالفة يفتحون الايباد على اللوحة مباشرة ورقم اللاعب مكتوب.
 
 ## الرتب (مين يشوف وش)

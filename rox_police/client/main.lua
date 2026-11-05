@@ -357,31 +357,35 @@ CreateThread(function()
     local T = Config.Target or {}
     if T.enabled == false or Config.Impound.useTarget == false then return end
     Wait(1000)
-    -- police jobs only, from the MDT minimum grade (the server checks job + grade again on every action)
-    local jobs = {}
-    for _, j in ipairs(Config.PoliceJobs) do jobs[j] = Config.MdtMinGrade or 0 end
+    -- police jobs only, each option with its own minimum grade (the server checks job + grade again)
+    local function jobsFor(v)
+        local g = type(v) == 'number' and v or (Config.MdtMinGrade or 0)
+        local t = {}
+        for _, j in ipairs(Config.PoliceJobs) do t[j] = g end
+        return t
+    end
     local pd = T.playerDistance or 2.5
 
     local veh, ply = {}, {}
-    if T.vehicle == nil or T.vehicle.impound ~= false then
-        veh[#veh + 1] = { name = 'rox_impound', icon = 'truck-pickup', label = 'Impound / Depot Vehicle', fn = function(ent) OpenImpound(ent) end }
+    local V, P = T.vehicle or {}, T.player or {}
+    if V.impound ~= false then
+        veh[#veh + 1] = { name = 'rox_impound', icon = 'truck-pickup', label = 'Impound / Depot Vehicle', jobs = jobsFor(V.impound), fn = function(ent) OpenImpound(ent) end }
     end
-    local P = T.player or {}
     if P.jail ~= false then
-        ply[#ply + 1] = { name = 'rox_jail', icon = 'building-shield', label = 'Send to Prison', fn = function(ent) open('jail', { id = targetId(ent) }) end }
+        ply[#ply + 1] = { name = 'rox_jail', icon = 'building-shield', label = 'Send to Prison', jobs = jobsFor(P.jail), fn = function(ent) open('jail', { id = targetId(ent) }) end }
     end
     if P.fine ~= false then
-        ply[#ply + 1] = { name = 'rox_fine', icon = 'file-invoice-dollar', label = 'Issue Citation', fn = function(ent) open('fine', { id = targetId(ent) }) end }
+        ply[#ply + 1] = { name = 'rox_fine', icon = 'file-invoice-dollar', label = 'Issue Citation', jobs = jobsFor(P.fine), fn = function(ent) open('fine', { id = targetId(ent) }) end }
     end
     if P.strip ~= false then
-        ply[#ply + 1] = { name = 'rox_strip', icon = 'masks-theater', label = 'Remove Mask / Hat', fn = function(ent) OpenStrip(targetId(ent)) end }
+        ply[#ply + 1] = { name = 'rox_strip', icon = 'masks-theater', label = 'Remove Mask / Hat', jobs = jobsFor(P.strip), fn = function(ent) OpenStrip(targetId(ent)) end }
     end
 
     if GetResourceState('ox_target') == 'started' then
         local function ox(list, dist)
             local out = {}
             for _, o in ipairs(list) do
-                out[#out + 1] = { name = o.name, icon = 'fa-solid fa-' .. o.icon, label = o.label, groups = jobs, distance = dist,
+                out[#out + 1] = { name = o.name, icon = 'fa-solid fa-' .. o.icon, label = o.label, groups = o.jobs, distance = dist,
                     onSelect = function(d) CreateThread(function() o.fn(d.entity) end) end }
             end
             return out
@@ -392,7 +396,7 @@ CreateThread(function()
         local function qb(list)
             local out = {}
             for _, o in ipairs(list) do
-                out[#out + 1] = { icon = 'fas fa-' .. o.icon, label = o.label, job = jobs, action = function(ent) CreateThread(function() o.fn(ent) end) end }
+                out[#out + 1] = { icon = 'fas fa-' .. o.icon, label = o.label, job = o.jobs, action = function(ent) CreateThread(function() o.fn(ent) end) end }
             end
             return out
         end
