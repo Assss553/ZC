@@ -5,7 +5,7 @@
   "description": "ROX — متجر ملابس بتصاميم يولّدها الذكاء الاصطناعي، مع لوحة تحكم وقاعدة بيانات وإيميلات وحماية",
   "type": "module",
   "engines": {
-    "node": ">=22.13"
+    "node": "22.x"
   },
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server.js",
