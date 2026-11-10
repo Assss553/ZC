@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ROX | متجر</title>
+<meta name="description" content="ROX — ملابس شارع بتصاميم أصلية ما تتكرر.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 96 50 50 96 4 50Z' fill='%23e1281c'/%3E%3Cpath d='M31 31 69 69M69 31 31 69' stroke='%23000' stroke-width='9'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/store.css">
+<script src="/store.js" defer></script>
+</head>
+<body>
+
+<div id="loader" aria-hidden="true">
+  <svg viewBox="0 0 200 200"><path class="lo-out" d="M100 8 192 100 100 192 8 100Z"/><path class="lo-x" d="M62 62 138 138M138 62 62 138"/></svg>
+  <b class="lat" id="lpct">0</b>
+</div>
+
+<div id="mt" hidden>
+  <div class="mt-in"><div class="lat logo xl">RO<b>X</b></div><h1>تحت الصيانة</h1><p id="mtm"></p><p id="mtd" class="mute"></p></div>
+</div>
+
+<header id="hd">
+  <a class="logo lat" href="#top" aria-label="الرئيسية">RO<b>X</b></a>
+  <nav class="hnav" aria-label="القائمة">
+    <a href="#shop">المتجر</a><a href="#drop">الإصدار الجاي</a><a href="#track">تتبّع طلبك</a><a href="#social" id="navsoc">حساباتنا</a>
+  </nav>
+  <button id="cartBtn" type="button" aria-label="السلة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8Zm4 0a3 3 0 0 1 6 0"/></svg><span>السلة</span><b id="cc">0</b></button>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="slash"></div><div class="slash s2"></div>
+    <div class="big lat" aria-hidden="true"><span>R</span><span>O</span><em>X</em></div>
+    <div class="hero-c">
+      <p class="kicker lat">STREETWEAR <b>/</b> ORIGINAL DESIGNS</p>
+      <h1 id="tagline">تصاميم ما تتكرر.</h1>
+      <p class="mute">كل قطعة مولودة من فكرة. كميات محدودة، طباعة عالية الجودة، وشحن لكل مدن المملكة.</p>
+      <div class="hero-cta"><a class="btn red" href="#shop">تسوّق التشكيلة</a><a class="btn line" href="#track">تتبّع طلبك</a></div>
+    </div>
+    <div class="ticker" aria-hidden="true"><div class="lat" id="tick"></div></div>
+  </section>
+
+  <section class="perks">
+    <div><b class="lat">01</b><span>طباعة سكرين وDTG<small>ألوان ما تبهت مع الغسيل</small></span></div>
+    <div><b class="lat">02</b><span>شحن سريع<small id="perkship">لكل مدن المملكة</small></span></div>
+    <div><b class="lat">03</b><span>دفع عند الاستلام<small>أو تحويل بنكي</small></span></div>
+    <div><b class="lat">04</b><span>استبدال خلال 7 أيام<small>إذا المقاس ما ضبط</small></span></div>
+  </section>
+
+  <section id="shop" class="sec">
+    <div class="sh">
+      <h2>التشكيلة <em>الحالية</em></h2>
+      <div class="tools">
+        <div class="chips" id="chips" role="tablist" aria-label="نوع المنتج"></div>
+        <label class="sort"><span class="sr">الترتيب</span><select id="sort"><option value="new">الأحدث</option><option value="lo">السعر: الأقل</option><option value="hi">السعر: الأعلى</option></select></label>
+      </div>
+    </div>
+    <div class="grid" id="grid"><p class="mute">جاري تحميل المنتجات…</p></div>
+  </section>
+
+  <section id="drop" class="drop">
+    <div class="nx lat">THE NEXT <b>DROP</b></div>
+    <div class="flip" id="flip"></div>
+    <p class="mute" id="dropTxt">الإصدار الجاي من ROX قريب. خلك أول واحد يعرف.</p>
+  </section>
+
+  <section id="track" class="sec narrow">
+    <h2>تتبّع <em>طلبك</em></h2>
+    <p class="mute">اكتب رقم الطلب والإيميل اللي طلبت فيه.</p>
+    <form id="tf" class="tf" novalidate>
+      <label>رقم الطلب<input name="code" dir="ltr" placeholder="ROX-XXXXXX" autocomplete="off" required maxlength="20"></label>
+      <label>الإيميل<input name="email" type="email" dir="ltr" autocomplete="email" required maxlength="160"></label>
+      <button class="btn red" type="submit">تتبّع</button>
+    </form>
+    <div id="tr" aria-live="polite"></div>
+  </section>
+
+  <section id="social" class="sec">
+    <h2 class="c">كل <em>حساباتنا</em></h2>
+    <div class="soc" id="soc"></div>
+  </section>
+</main>
+
+<footer><div class="lat logo">RO<b>X</b></div><p class="mute" id="foot"></p></footer>
+
+<!-- تفاصيل المنتج -->
+<div id="pd" class="ov" hidden role="dialog" aria-modal="true" aria-labelledby="pdn">
+  <div class="pd">
+    <button class="x" data-close type="button" aria-label="إغلاق">✕</button>
+    <div class="pdv" id="pdv"><div class="pdg lat" id="pdg"></div><img id="pdi" alt=""><div class="pdt" id="pdt"></div></div>
+    <div class="pdb">
+      <small class="mute" id="pdty"></small>
+      <h2 id="pdn"></h2>
+      <div class="pdp"><b class="lat" id="pdp"></b><s class="lat" id="pdc"></s><small>ر.س</small></div>
+      <p id="pdd"></p>
+      <div id="pds"></div>
+      <div class="qtyrow"><span>الكمية</span><div class="qt"><button type="button" data-q="-1" aria-label="أقل">−</button><b id="pdq">1</b><button type="button" data-q="1" aria-label="أكثر">+</button></div></div>
+      <small id="pde" class="err" role="alert"></small>
+      <button class="btn red wide" id="pda" type="button">أضف للسلة</button>
+      <dl id="pdsp"></dl>
+    </div>
+  </div>
+</div>
+
+<!-- السلة -->
+<div id="cart" class="ov side" hidden role="dialog" aria-modal="true" aria-label="السلة">
+  <div class="drawer">
+    <div class="dh"><h3>سلتك</h3><button class="x" data-close type="button" aria-label="إغلاق">✕</button></div>
+    <div id="fs" class="fs"></div>
+    <div id="ci" class="ci"></div>
+    <div class="sum">
+      <div><span>المجموع</span><b class="lat" id="st">0</b></div>
+      <div><span>الشحن</span><b class="lat" id="sp">0</b></div>
+      <div class="tot"><span>الإجمالي</span><b class="lat" id="tot">0</b></div>
+      <button class="btn red wide" id="go" type="button">إتمام الطلب</button>
+    </div>
+  </div>
+</div>
+
+<!-- إتمام الطلب -->
+<div id="co" class="ov" hidden role="dialog" aria-modal="true" aria-labelledby="coh">
+  <div class="sheet">
+    <button class="x" data-close type="button" aria-label="إغلاق">✕</button>
+    <div id="cof">
+      <h2 id="coh">إتمام الطلب</h2>
+      <form id="cform" novalidate>
+        <div class="two"><label>الاسم الكامل<input name="name" autocomplete="name" required maxlength="80"></label>
+        <label>رقم الجوال<input name="phone" type="tel" dir="ltr" inputmode="tel" autocomplete="tel" placeholder="05XXXXXXXX" required maxlength="20"></label></div>
+        <label>الإيميل <small class="mute">(نرسل لك التأكيد عليه)</small><input name="email" type="email" dir="ltr" autocomplete="email" required maxlength="160"></label>
+        <div class="two"><label>المدينة<select name="city" id="city" required></select></label>
+        <label>الحي والشارع<input name="address" autocomplete="street-address" required maxlength="300"></label></div>
+        <label>ملاحظات <small class="mute">(اختياري)</small><textarea name="notes" rows="2" maxlength="500"></textarea></label>
+        <label class="hp" aria-hidden="true">الموقع<input name="website" tabindex="-1" autocomplete="off"></label>
+        <fieldset class="pay" id="pay"><legend>طريقة الدفع</legend></fieldset>
+        <div class="cosum" id="cosum"></div>
+        <small id="coe" class="err" role="alert"></small>
+        <button class="btn red wide" id="cosub" type="submit">أكّد الطلب</button>
+      </form>
+    </div>
+    <div id="cok" hidden></div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+</body>
+</html>

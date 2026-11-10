@@ -1,0 +1,23 @@
+{
+  "name": "rox-store",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ROX — متجر ملابس بتصاميم يولّدها الذكاء الاصطناعي، مع لوحة تحكم وقاعدة بيانات وإيميلات وحماية",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch server.js",
+    "create-admin": "node --disable-warning=ExperimentalWarning scripts/create-admin.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.7.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "nodemailer": "10.2.1"
+  }
+}
