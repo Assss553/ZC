@@ -241,7 +241,16 @@ async function generate() {
   let k = 0; const pr = $('#gprog'); pr.textContent = STEPS[0];
   const timer = setInterval(() => { k = Math.min(k + 1, STEPS.length - 1); const el = $('#gprog'); if (el) el.textContent = STEPS[k]; }, 7000);
   try {
-    const r = await send('/ai/generate', 'POST', { brief, type: $('#gt').value, count: Math.min(6, Math.max(1, +$('#gc').value || 3)), publish: $('#gp').checked });
+    const { job } = await send('/ai/generate', 'POST', { brief, type: $('#gt').value, count: Math.min(6, Math.max(1, +$('#gc').value || 3)), publish: $('#gp').checked });
+    // التصميم يشتغل بالخلفية، نتابعه لين يخلص (حد أقصى 15 دقيقة)
+    let r;
+    for (let i = 0; i < 300; i++) {
+      await new Promise((ok) => setTimeout(ok, 3000));
+      r = await api('/ai/jobs/' + job);
+      if (r.status === 'done') break;
+      if (r.status === 'error') throw new Error(r.error || 'تعذّر التصميم');
+    }
+    if (r.status !== 'done') throw new Error('التصميم طوّل أكثر من اللازم. شوف المسودات بعد شوي.');
     r.products.forEach(upsert); lastGen = r.products.map((p) => p.id);
     toast(`تم تصميم ${r.products.length} منتج ✦`);
   } catch (x) { toast(x.message); genBusy = false; clearInterval(timer); if (at === 3) { await tab(3, 1); $('#gprog').textContent = x.message; } return; }

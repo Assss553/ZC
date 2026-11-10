@@ -1,4 +1,5 @@
 // طبقة الحماية: كلمات مرور مشفّرة، جلسات آمنة، CSRF، قفل الحساب، تحقق من المدخلات
+import './env.js';
 import { scrypt, randomBytes, timingSafeEqual, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import { one, run, audit } from './db.js';
@@ -26,7 +27,8 @@ export async function verifyPassword(pw, stored) {
 }
 
 // نفس الوقت تقريبًا سواء كان الإيميل موجود أو لا (يمنع تخمين الحسابات)
-const DUMMY_HASH = await hashPassword(randomBytes(12).toString('hex'));
+let dummyHash;
+const DUMMY_HASH = () => (dummyHash ??= hashPassword(randomBytes(12).toString('hex')));
 
 export function passwordProblem(pw) {
   if (typeof pw !== 'string' || pw.length < 10) return 'كلمة المرور لازم تكون 10 أحرف أو أكثر';
@@ -42,7 +44,7 @@ export const randomToken = (n = 32) => randomBytes(n).toString('base64url');
 export async function login(email, password, ip, ua) {
   const a = await one('SELECT * FROM admins WHERE email = ?', String(email || '').trim().toLowerCase());
   const now = Date.now();
-  if (!a) { await verifyPassword(String(password || 'x'), DUMMY_HASH); return { error: 'الإيميل أو كلمة المرور غلط' }; }
+  if (!a) { await verifyPassword(String(password || 'x'), await DUMMY_HASH()); return { error: 'الإيميل أو كلمة المرور غلط' }; }
   if (a.locked_until > now) {
     const mins = Math.ceil((a.locked_until - now) / 60000);
     return { error: `الحساب مقفل مؤقتًا بسبب محاولات كثيرة. حاول بعد ${mins} دقيقة.` };

@@ -1,4 +1,5 @@
 // استوديو التصميم بالذكاء الاصطناعي (Claude)
+import './env.js';
 // من فكرة مكتوبة ← يولّد: اسم المنتج، الوصف، السعر، الألوان، المواصفات، والرسمة نفسها.
 import Anthropic from '@anthropic-ai/sdk';
 import { TYPES } from './svg.js';

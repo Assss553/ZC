@@ -57,7 +57,26 @@ npm start
 
 تشغيل الاختبارات: `npm test` (على PGlite)، أو على Postgres حقيقي: `TEST_DATABASE_URL=postgres://... npm test`
 
-## النشر المجاني (Render + Neon)
+## النشر المجاني على Netlify (الطريقة الموصى بها)
+
+ما يحتاج أي مفتاح ولا موقع ثاني: Netlify يسوي **قاعدة بيانات PostgreSQL تلقائيًا** (Netlify Database) أول ما ينشر المتجر، والموقع **ما ينام**.
+
+1. ادخل https://netlify.com وسجّل بـ **GitHub**.
+2. **Add new project ← Import an existing project ← GitHub** واختر `Assss553/ZC`، الفرع `main`، واضغط **Deploy**.
+   الإعدادات كلها جاهزة في `netlify.toml` (الصفحات من `public/` والخادم من `netlify/functions/`).
+3. غيّر الاسم: **Project configuration ← Change project name** واكتب `rox` ← يصير الرابط `rox.netlify.app` (إذا الاسم متاح).
+4. **Project configuration ← Environment variables** وأضف:
+   - `SETUP_TOKEN` = كلمة سرية تختارها (لإنشاء أول أدمن)
+   - `ANTHROPIC_API_KEY` = مفتاح Claude (اختياري)
+   - `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` للإيميلات (اختياري)
+5. **Deploys ← Trigger deploy** عشان تنطبق المتغيرات، وافتح `/admin/`.
+
+تأكد إنه شغال: افتح `/healthz` لازم يطلع `{"ok":true,"db":"postgres"}`.
+
+> استوديو الذكاء الاصطناعي يشتغل على Netlify كـ **دالة بالخلفية** (لين 15 دقيقة) لأن التصميم ياخذ أكثر من مهلة الطلب العادية.
+> الخطة المجانية فيها 300 رصيد بالشهر؛ إذا خلص الرصيد يتوقف الموقع لين الشهر الجاي.
+
+## النشر المجاني على Render + Neon (بديل)
 
 الموقع يشتغل على **Render** (استضافة مجانية) وقاعدة البيانات على **Neon** (PostgreSQL مجانية ودائمة، 0.5 جيجا).
 ليش قاعدة خارجية؟ لأن قرص الاستضافة المجانية ينمسح مع كل تشغيل، فلو خلّينا البيانات عليه بتضيع الطلبات.

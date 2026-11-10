@@ -1,4 +1,5 @@
 // قاعدة البيانات: PostgreSQL
+import './env.js';
 // - في الاستضافة: تتصل بقاعدة Postgres حقيقية عبر DATABASE_URL (مثل Neon أو Supabase أو Render).
 // - محليًا وبالاختبارات: PGlite (نسخة Postgres مدمجة) بدون تثبيت أي شي.
 // كل الاستعلامات مُعاملة (parameterized) لمنع حقن SQL.
@@ -88,6 +89,20 @@ CREATE TABLE IF NOT EXISTS audit_log (
   detail TEXT,
   ip TEXT,
   at BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ai_jobs (
+  id SERIAL PRIMARY KEY,
+  admin_id INTEGER NOT NULL,
+  token_hash TEXT NOT NULL,
+  brief TEXT NOT NULL,
+  type TEXT NOT NULL,
+  count INTEGER NOT NULL,
+  publish INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL CHECK (status IN ('pending','running','done','error')),
+  result TEXT,
+  error TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS email_log (
   id SERIAL PRIMARY KEY,
@@ -184,7 +199,7 @@ export const DEFAULT_SETTINGS = {
 
 export async function getSettings() {
   const out = structuredClone(DEFAULT_SETTINGS);
-  for (const r of await all('SELECT key, value FROM settings')) {
+  for (const r of await all("SELECT key, value FROM settings WHERE key NOT LIKE '\_%'")) {
     try { out[r.key] = JSON.parse(r.value); } catch { /* تجاهل القيم التالفة */ }
   }
   return out;
