@@ -11,8 +11,8 @@ const dir = mkdtempSync(join(tmpdir(), 'rox-'));
 let srv, cookie = '', csrf = '';
 
 before(async () => {
-  srv = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', 'server.js'], { env: { ...process.env, PORT, DB_PATH: join(dir, 'db'), SETUP_TOKEN: 'tok-1234567', ANTHROPIC_API_KEY: '', SMTP_HOST: '' }, stdio: 'ignore' });
-  for (let i = 0; i < 50; i++) { try { await fetch(B + '/api/store'); return; } catch { await new Promise((r) => setTimeout(r, 100)); } }
+  srv = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', 'server.js'], { env: { ...process.env, PORT, PGLITE_PATH: join(dir, 'db'), DATABASE_URL: process.env.TEST_DATABASE_URL || '', SETUP_TOKEN: 'tok-1234567', ANTHROPIC_API_KEY: '', SMTP_HOST: '' }, stdio: 'ignore' });
+  for (let i = 0; i < 150; i++) { try { await fetch(B + '/api/store'); return; } catch { await new Promise((r) => setTimeout(r, 100)); } }
 });
 after(() => { srv.kill(); rmSync(dir, { recursive: true, force: true }); });
 
@@ -86,4 +86,15 @@ test('login locks after repeated failures', async () => {
   for (let i = 0; i < 5; i++) await req('/api/admin/login', { method: 'POST', body: { email: 'a@b.co', password: 'wrong' + i } });
   const r = await req('/api/admin/login', { method: 'POST', body: { email: 'a@b.co', password: 'Strongpass123' } });
   assert.equal(r.status, 401); assert.match(r.body.error, /مقفل|قفل/);
+});
+
+test('stock cannot be oversold, cancelling restores it', async () => {
+  const login = await req('/api/admin/products', { method: 'POST', auth: true, body: { name: 'محدود', price: 50, type: 'pad', sizes: [], stock: 2, status: 'published' } });
+  const id = login.body.product.id;
+  const base = { name: 'عميل', email: 'z@d.co', phone: '0551234567', city: 'الرياض', address: 'حي', payment: 'cod' };
+  const results = await Promise.all([1, 2, 3].map(() => req('/api/orders', { method: 'POST', body: { ...base, items: [{ id, qty: 1 }] }, headers: { 'X-Forwarded-For': '1.1.1.' + Math.random() } })));
+  const ok = results.filter((r) => r.status === 201).length;
+  assert.ok(ok <= 2, 'sold more than stock');
+  const prods = (await req('/api/admin/products', { auth: true })).body.products;
+  assert.equal(prods.find((p) => p.id === id).stock, 2 - ok);
 });

@@ -30,8 +30,8 @@ const ART = {
   ],
 };
 
-export function seed() {
-  if (one('SELECT COUNT(*) AS n FROM products').n > 0) return;
+export async function seed() {
+  if ((await one('SELECT COUNT(*) AS n FROM products')).n > 0) return;
   const now = Date.now();
   const CL = JSON.stringify(['S', 'M', 'L', 'XL', 'XXL']);
   const items = [
@@ -41,7 +41,7 @@ export function seed() {
     ['ماوس باد الفصل الجاي', 'ماوس باد كبير بسطح ناعم وقاعدة مطاط ما تنزلق.', 'pad', 89, 0, '#2a2725', '#0b0a09', ART.chapter, '[]', [['المقاس', '90×40 سم'], ['السماكة', '4 ملم']]],
   ];
   for (const [name, desc, type, price, cmp, bg, fg, art, sizes, specs] of items) {
-    run(`INSERT INTO products(slug, name, description, type, price, compare_price, bg, fg, art_svg, sizes, specs, tags, status, created_at, updated_at)
+    await run(`INSERT INTO products(slug, name, description, type, price, compare_price, bg, fg, art_svg, sizes, specs, tags, status, created_at, updated_at)
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'published', ?, ?)`,
       randomToken(6).toLowerCase().replace(/[^a-z0-9]/g, 'x'), name, desc, type, price, cmp || null, bg, fg,
       JSON.stringify(art), sizes, JSON.stringify(specs.map(([label, value]) => ({ label, value }))), '["ROX"]', now, now);

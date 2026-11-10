@@ -15,9 +15,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",
+    "@electric-sql/pglite": "0.5.10",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
-    "nodemailer": "10.2.1"
+    "nodemailer": "10.2.1",
+    "pg": "8.23.1"
   }
 }

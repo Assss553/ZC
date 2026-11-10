@@ -1,12 +1,19 @@
 // ROX Store — الخادم الرئيسي
 import { existsSync } from 'node:fs';
 if (existsSync('.env')) process.loadEnvFile('.env');
+// على Render ياخذ رابط الموقع تلقائيًا
+if (!process.env.PUBLIC_URL && process.env.RENDER_EXTERNAL_URL) process.env.PUBLIC_URL = process.env.RENDER_EXTERNAL_URL;
+// في الإنتاج لازم قاعدة بيانات خارجية: قرص الاستضافة المجانية يُمسح مع كل تشغيل
+if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL && process.env.ALLOW_LOCAL_DB !== 'true') {
+  console.error('\n✗ DATABASE_URL غير مضبوط. أضف رابط قاعدة PostgreSQL (مثل Neon) في متغيرات البيئة.\n');
+  process.exit(1);
+}
 
 import express from 'express';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { randomInt } from 'node:crypto';
-import { db, one, all, run, tx, getSettings, setSettings, audit, DEFAULT_SETTINGS } from './src/db.js';
+import { ready, one, all, run, tx, getSettings, setSettings, audit, DEFAULT_SETTINGS } from './src/db.js';
 import * as sec from './src/security.js';
 import { str, int, InputError } from './src/security.js';
 import { renderMockup, TYPES } from './src/svg.js';
@@ -19,7 +26,8 @@ const PORT = Number(process.env.PORT || 3000);
 const CLOTHING = ['hood', 'tee', 'crew'];
 const DEFAULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 
-seed();
+const DB_KIND = await ready;
+await seed();
 
 const app = express();
 app.disable('x-powered-by');
@@ -78,8 +86,8 @@ function adminProduct(p) {
 }
 const PRODUCT_COLS = 'id, slug, name, description, type, price, compare_price, bg, fg, sizes, specs, tags, stock, status, ai, prompt, art_svg, photo_type, created_at, updated_at';
 
-function publicSettings() {
-  const s = getSettings();
+async function publicSettings() {
+  const s = await getSettings();
   return {
     storeName: s.storeName, tagline: s.tagline, maintenance: !!s.maintenance, maintenanceMsg: s.maintenanceMsg,
     maintenanceUntil: s.maintenanceUntil, dropDate: s.dropDate, shippingFee: s.shippingFee, freeShippingOver: s.freeShippingOver,
@@ -90,42 +98,45 @@ function publicSettings() {
 // =====================================================================
 //                              واجهة المتجر
 // =====================================================================
-app.get('/api/store', (req, res) => {
-  const products = all(`SELECT ${PRODUCT_COLS} FROM products WHERE status = 'published' ORDER BY created_at DESC`).map(pub);
-  res.json({ settings: publicSettings(), products: getSettings().maintenance ? [] : products, types: TYPES });
-});
+app.get('/healthz', ah(async (req, res) => { await one('SELECT 1 AS ok'); res.json({ ok: true, db: DB_KIND }); }));
+
+app.get('/api/store', ah(async (req, res) => {
+  const settings = await publicSettings();
+  const products = settings.maintenance ? [] : (await all(`SELECT ${PRODUCT_COLS} FROM products WHERE status = 'published' ORDER BY created_at DESC`)).map(pub);
+  res.json({ settings, products, types: TYPES });
+}));
 
 // صورة المنتج (SVG مبني من قائمة بيضاء + سياسة تمنع أي محتوى نشط)
 function imageHeaders(res, type) {
   res.set({ 'Content-Type': type, 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox", 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'public, max-age=86400' });
 }
-function visibleProduct(req, id) {
-  const p = one('SELECT * FROM products WHERE id = ?', id);
+async function visibleProduct(req, id) {
+  const p = await one('SELECT * FROM products WHERE id = ?', id);
   if (!p) return null;
   if (p.status === 'published') return p;
-  return sec.sessionFrom(req) ? p : null; // المسودات تظهر للأدمن فقط
+  return (await sec.sessionFrom(req)) ? p : null; // المسودات تظهر للأدمن فقط
 }
-app.get('/img/:id.svg', (req, res) => {
-  const p = visibleProduct(req, Number(req.params.id) || 0);
+app.get('/img/:id.svg', ah(async (req, res) => {
+  const p = await visibleProduct(req, int(req.params.id, 1, 2e9, 0) || 0);
   if (!p) return res.status(404).end();
   imageHeaders(res, 'image/svg+xml; charset=utf-8');
   if (p.status !== 'published') res.set('Cache-Control', 'private, no-store');
   res.send(renderMockup(p));
-});
-app.get('/img/:id/photo', (req, res) => {
-  const p = visibleProduct(req, Number(req.params.id) || 0);
+}));
+app.get('/img/:id/photo', ah(async (req, res) => {
+  const p = await visibleProduct(req, int(req.params.id, 1, 2e9, 0) || 0);
   if (!p || !p.photo) return res.status(404).end();
   imageHeaders(res, p.photo_type);
   if (p.status !== 'published') res.set('Cache-Control', 'private, no-store');
   res.send(Buffer.from(p.photo));
-});
+}));
 
 // ---------- إنشاء طلب ----------
 const ALPH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const newCode = () => 'ROX-' + Array.from({ length: 6 }, () => ALPH[randomInt(ALPH.length)]).join('');
 
 app.post('/api/orders', limiter(10, 6, 'طلبات كثيرة من نفس الجهاز. حاول بعد شوي.'), json, ah(async (req, res) => {
-  const s = getSettings();
+  const s = await getSettings();
   if (s.maintenance) return res.status(503).json({ error: 'المتجر تحت الصيانة حاليًا' });
   const b = req.body || {};
   if (b.website) return res.status(400).json({ error: 'طلب غير صالح' }); // فخ للبوتات
@@ -138,30 +149,30 @@ app.post('/api/orders', limiter(10, 6, 'طلبات كثيرة من نفس الج
   if (!c.payment) throw new InputError('اختر طريقة دفع متاحة');
   if (!Array.isArray(b.items) || !b.items.length || b.items.length > 20) throw new InputError('السلة فاضية أو كبيرة جدًا');
 
-  const order = tx(() => {
+  const order = await tx(async (t) => {
     let subtotal = 0;
-    const lines = b.items.map((it) => {
-      const p = one('SELECT * FROM products WHERE id = ? AND status = ?', int(it.id, 1, 1e9), 'published');
+    const lines = [];
+    for (const it of b.items) {
+      const p = await t.one('SELECT * FROM products WHERE id = ? AND status = ? FOR UPDATE', int(it.id, 1, 2e9), 'published');
       if (!p) throw new InputError('منتج في السلة لم يعد متوفرًا. حدّث الصفحة.');
       const qty = int(it.qty, 1, 10);
       const sizes = parse(p.sizes, []);
       const size = sizes.length ? str(it.size, 8) : '';
       if (sizes.length && !sizes.includes(size)) throw new InputError(`اختر مقاس صحيح لـ ${p.name}`);
       if (p.stock != null) {
-        if (p.stock < qty) throw new InputError(`الكمية المتوفرة من ${p.name}: ${p.stock}`);
-        run('UPDATE products SET stock = stock - ? WHERE id = ?', qty, p.id);
+        const u = await t.run('UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?', qty, p.id, qty);
+        if (!u.changes) throw new InputError(`الكمية المتوفرة من ${p.name}: ${p.stock}`);
       }
       subtotal += p.price * qty; // السعر من قاعدة البيانات، مو من المتصفح
-      return { product_id: p.id, name: p.name, size, qty, unit_price: p.price };
-    });
+      lines.push({ product_id: p.id, name: p.name, size, qty, unit_price: p.price });
+    }
     const shipping = s.freeShippingOver && subtotal >= s.freeShippingOver ? 0 : Number(s.shippingFee) || 0;
     const now = Date.now();
-    let code; do { code = newCode(); } while (one('SELECT 1 FROM orders WHERE code = ?', code));
-    const r = run(`INSERT INTO orders(code, customer_name, email, phone, city, address, notes, payment, status, subtotal, shipping, total, ip, created_at, updated_at)
-      VALUES (?,?,?,?,?,?,?,?,0,?,?,?,?,?,?)`, code, c.name, c.email, c.phone, c.city, c.address, c.notes, c.payment, subtotal, shipping, subtotal + shipping, ip(req), now, now);
-    const ins = db.prepare('INSERT INTO order_items(order_id, product_id, name, size, qty, unit_price) VALUES (?,?,?,?,?,?)');
-    for (const l of lines) ins.run(r.lastInsertRowid, l.product_id, l.name, l.size, l.qty, l.unit_price);
-    return { id: Number(r.lastInsertRowid), code, customer_name: c.name, email: c.email, phone: c.phone, city: c.city, address: c.address, payment: c.payment, subtotal, shipping, total: subtotal + shipping, status: 0, items: lines };
+    let code; do { code = newCode(); } while (await t.one('SELECT 1 FROM orders WHERE code = ?', code));
+    const r = await t.run(`INSERT INTO orders(code, customer_name, email, phone, city, address, notes, payment, status, subtotal, shipping, total, ip, created_at, updated_at)
+      VALUES (?,?,?,?,?,?,?,?,0,?,?,?,?,?,?) RETURNING id`, code, c.name, c.email, c.phone, c.city, c.address, c.notes, c.payment, subtotal, shipping, subtotal + shipping, ip(req), now, now);
+    for (const l of lines) await t.run('INSERT INTO order_items(order_id, product_id, name, size, qty, unit_price) VALUES (?,?,?,?,?,?)', r.id, l.product_id, l.name, l.size, l.qty, l.unit_price);
+    return { id: r.id, code, customer_name: c.name, email: c.email, phone: c.phone, city: c.city, address: c.address, payment: c.payment, subtotal, shipping, total: subtotal + shipping, status: 0, items: lines };
   });
 
   // الإيميلات تنرسل بالخلفية عشان ما يتأخر العميل
@@ -171,33 +182,33 @@ app.post('/api/orders', limiter(10, 6, 'طلبات كثيرة من نفس الج
 }));
 
 // ---------- تتبّع الطلب (يحتاج رقم الطلب + الإيميل) ----------
-app.post('/api/track', limiter(10, 20), json, (req, res) => {
+app.post('/api/track', limiter(10, 20), json, ah(async (req, res) => {
   const code = str(req.body?.code, 20).toUpperCase();
   const em = String(req.body?.email || '').trim().toLowerCase();
-  const o = one('SELECT * FROM orders WHERE code = ?', code);
+  const o = await one('SELECT * FROM orders WHERE code = ?', code);
   if (!o || o.email !== em) return res.status(404).json({ error: 'ما لقينا طلب بهذي البيانات' });
-  const items = all('SELECT name, size, qty, unit_price FROM order_items WHERE order_id = ?', o.id);
+  const items = await all('SELECT name, size, qty, unit_price FROM order_items WHERE order_id = ? ORDER BY id', o.id);
   res.json({ code: o.code, status: o.status, statusName: mail.STATUS[o.status], total: o.total, shipping: o.shipping, createdAt: o.created_at, updatedAt: o.updated_at, items });
-});
+}));
 
 // =====================================================================
 //                              لوحة التحكم
 // =====================================================================
-const adminCount = () => one('SELECT COUNT(*) AS n FROM admins').n;
+const adminCount = async () => (await one('SELECT COUNT(*) AS n FROM admins')).n;
 const SETUP_TOKEN = process.env.SETUP_TOKEN || sec.randomToken(12);
 
-app.get('/api/admin/status', (req, res) => res.json({ needsSetup: adminCount() === 0 }));
+app.get('/api/admin/status', ah(async (req, res) => res.json({ needsSetup: (await adminCount()) === 0 })));
 
 // إنشاء أول حساب أدمن (يتطلب رمز الإعداد اللي يظهر في سجل الخادم)
 app.post('/api/admin/setup', limiter(15, 5), json, ah(async (req, res) => {
-  if (adminCount() > 0) return res.status(403).json({ error: 'تم إنشاء الأدمن مسبقًا' });
+  if ((await adminCount()) > 0) return res.status(403).json({ error: 'تم إنشاء الأدمن مسبقًا' });
   if (!sec.sameOrigin(req)) return res.status(403).json({ error: 'طلب مرفوض' });
   if (String(req.body?.setupToken || '') !== SETUP_TOKEN) return res.status(403).json({ error: 'رمز الإعداد غلط. تلقاه في سجل الخادم.' });
   const em = sec.email(req.body?.email);
   const prob = sec.passwordProblem(req.body?.password);
   if (prob) throw new InputError(prob);
-  run('INSERT INTO admins(email, pass_hash, created_at) VALUES (?,?,?)', em, await sec.hashPassword(req.body.password), Date.now());
-  audit(null, 'admin.setup', em, ip(req));
+  await run('INSERT INTO admins(email, pass_hash, created_at) VALUES (?,?,?) ON CONFLICT (email) DO NOTHING', em, await sec.hashPassword(req.body.password), Date.now());
+  await audit(null, 'admin.setup', em, ip(req));
   res.json({ ok: true });
 }));
 
@@ -215,29 +226,29 @@ app.use('/api/admin', admin);
 
 admin.get('/me', (req, res) => res.json({ admin: { id: req.admin.id, email: req.admin.email }, csrf: req.admin.csrf, mail: mail.mailReady(), ai: !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) }));
 
-admin.post('/logout', (req, res) => {
-  sec.logout(req.admin.token);
+admin.post('/logout', ah(async (req, res) => {
+  await sec.logout(req.admin.token);
   res.clearCookie(sec.SESSION_COOKIE, { ...sec.cookieOptions(), maxAge: undefined });
   res.json({ ok: true });
-});
+}));
 
 admin.post('/password', json, ah(async (req, res) => {
-  const a = one('SELECT * FROM admins WHERE id = ?', req.admin.id);
+  const a = await one('SELECT * FROM admins WHERE id = ?', req.admin.id);
   if (!(await sec.verifyPassword(String(req.body?.current || ''), a.pass_hash))) return res.status(400).json({ error: 'كلمة المرور الحالية غلط' });
   const prob = sec.passwordProblem(req.body?.next);
   if (prob) throw new InputError(prob);
-  run('UPDATE admins SET pass_hash = ? WHERE id = ?', await sec.hashPassword(req.body.next), a.id);
-  run('DELETE FROM sessions WHERE admin_id = ? AND csrf != ?', a.id, req.admin.csrf); // يطلع كل الأجهزة الثانية
-  audit(a.id, 'password.change', null, ip(req));
+  await run('UPDATE admins SET pass_hash = ? WHERE id = ?', await sec.hashPassword(req.body.next), a.id);
+  await run('DELETE FROM sessions WHERE admin_id = ? AND csrf != ?', a.id, req.admin.csrf); // يطلع كل الأجهزة الثانية
+  await audit(a.id, 'password.change', null, ip(req));
   res.json({ ok: true });
 }));
 
 // ---------- الإحصائيات ----------
-admin.get('/stats', (req, res) => {
+admin.get('/stats', ah(async (req, res) => {
   const days = int(req.query.days, 1, 365, 30);
   const DAY = 864e5, now = Date.now();
   const from = now - days * DAY, prevFrom = now - 2 * days * DAY;
-  const rows = all('SELECT total, created_at FROM orders WHERE status != 4 AND created_at >= ?', prevFrom);
+  const rows = await all('SELECT total, created_at FROM orders WHERE status != 4 AND created_at >= ?', prevFrom);
   const series = Array(days).fill(0);
   let sum = 0, prev = 0, n = 0;
   for (const r of rows) {
@@ -245,65 +256,73 @@ admin.get('/stats', (req, res) => {
     else prev += r.total;
   }
   const byStatus = [0, 0, 0, 0, 0];
-  for (const r of all('SELECT status, COUNT(*) AS n FROM orders GROUP BY status')) byStatus[r.status] = r.n;
-  const top = all(`SELECT oi.name, SUM(oi.qty) AS qty, SUM(oi.qty * oi.unit_price) AS revenue FROM order_items oi
+  for (const r of await all('SELECT status, COUNT(*) AS n FROM orders GROUP BY status')) byStatus[r.status] = r.n;
+  const top = await all(`SELECT oi.name, SUM(oi.qty) AS qty, SUM(oi.qty * oi.unit_price) AS revenue FROM order_items oi
     JOIN orders o ON o.id = oi.order_id WHERE o.status != 4 GROUP BY oi.name ORDER BY revenue DESC LIMIT 5`);
-  const pending = all('SELECT * FROM orders WHERE status = 0 ORDER BY created_at DESC LIMIT 4').map(orderOut);
+  const pending = await withItems(await all('SELECT * FROM orders WHERE status = 0 ORDER BY created_at DESC LIMIT 4'));
   res.json({
     days, series, sum, prev, orders: n, avg: n ? Math.round(sum / n) : 0, byStatus, top, pending,
-    customers: one('SELECT COUNT(DISTINCT email) AS n FROM orders').n,
-    products: one("SELECT COUNT(*) AS n FROM products WHERE status = 'published'").n,
-    drafts: one("SELECT COUNT(*) AS n FROM products WHERE status = 'draft'").n,
+    customers: (await one('SELECT COUNT(DISTINCT email) AS n FROM orders')).n,
+    products: (await one("SELECT COUNT(*) AS n FROM products WHERE status = 'published'")).n,
+    drafts: (await one("SELECT COUNT(*) AS n FROM products WHERE status = 'draft'")).n,
   });
-});
+}));
 
 // ---------- الطلبات ----------
-function orderOut(o) {
-  return { ...o, ip: undefined, items: all('SELECT name, size, qty, unit_price, product_id FROM order_items WHERE order_id = ?', o.id) };
+// يجيب منتجات كل الطلبات باستعلام واحد
+async function withItems(orders) {
+  if (!orders.length) return [];
+  const items = await all(`SELECT order_id, name, size, qty, unit_price, product_id FROM order_items WHERE order_id = ANY(?::int[]) ORDER BY id`, orders.map((o) => o.id));
+  return orders.map((o) => ({ ...o, ip: undefined, items: items.filter((i) => i.order_id === o.id) }));
 }
-admin.get('/orders', (req, res) => {
+const orderOut = async (o) => (await withItems([o]))[0];
+admin.get('/orders', ah(async (req, res) => {
   const st = req.query.status === undefined || req.query.status === '' ? null : int(req.query.status, 0, 4);
   const q = str(req.query.q, 80);
-  const like = `%${q.replace(/[%_\\]/g, (m) => '\\' + m)}%`;
-  const rows = all(`SELECT * FROM orders WHERE (? IS NULL OR status = ?) AND (? = '' OR code LIKE ? ESCAPE '\\' OR customer_name LIKE ? ESCAPE '\\' OR phone LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\')
-    ORDER BY created_at DESC LIMIT 300`, st, st, q, like, like, like, like);
+  const where = [], params = [];
+  if (st !== null) { where.push('status = ?'); params.push(st); }
+  if (q) {
+    const like = `%${q.replace(/[%_\\]/g, (m) => '\\' + m)}%`;
+    where.push('(code ILIKE ? OR customer_name ILIKE ? OR phone ILIKE ? OR email ILIKE ?)'); params.push(like, like, like, like);
+  }
+  const rows = await all(`SELECT * FROM orders ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 300`, ...params);
   const counts = [0, 0, 0, 0, 0];
-  for (const r of all('SELECT status, COUNT(*) AS n FROM orders GROUP BY status')) counts[r.status] = r.n;
-  res.json({ orders: rows.map(orderOut), counts });
-});
+  for (const r of await all('SELECT status, COUNT(*) AS n FROM orders GROUP BY status')) counts[r.status] = r.n;
+  res.json({ orders: await withItems(rows), counts });
+}));
 
 admin.patch('/orders/:id', json, ah(async (req, res) => {
-  const o = one('SELECT * FROM orders WHERE id = ?', int(req.params.id, 1, 1e9));
+  const o = await one('SELECT * FROM orders WHERE id = ?', int(req.params.id, 1, 2e9));
   if (!o) return res.status(404).json({ error: 'الطلب غير موجود' });
   const status = int(req.body?.status, 0, 4);
   const changed = status !== o.status;
-  tx(() => {
-    run('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?', status, Date.now(), o.id);
+  await tx(async (t) => {
+    await t.run('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?', status, Date.now(), o.id);
     // عند الإلغاء نرجّع الكمية للمخزون، وعند التراجع عن الإلغاء نخصمها
     if (changed && (status === 4 || o.status === 4)) {
       const sign = status === 4 ? 1 : -1;
-      for (const it of all('SELECT product_id, qty FROM order_items WHERE order_id = ?', o.id))
-        if (it.product_id) run('UPDATE products SET stock = MAX(0, stock + ?) WHERE id = ? AND stock IS NOT NULL', sign * it.qty, it.product_id);
+      for (const it of await t.all('SELECT product_id, qty FROM order_items WHERE order_id = ?', o.id))
+        if (it.product_id) await t.run('UPDATE products SET stock = GREATEST(0, stock + ?) WHERE id = ? AND stock IS NOT NULL', sign * it.qty, it.product_id);
     }
   });
-  audit(req.admin.id, 'order.status', `${o.code} → ${status}`, ip(req));
+  await audit(req.admin.id, 'order.status', `${o.code} → ${status}`, ip(req));
   let emailed = false;
   if (changed && req.body?.notify !== false) emailed = await mail.sendStatusUpdate({ ...o, status });
-  res.json({ ok: true, emailed, order: orderOut(one('SELECT * FROM orders WHERE id = ?', o.id)) });
+  res.json({ ok: true, emailed, order: await orderOut(await one('SELECT * FROM orders WHERE id = ?', o.id)) });
 }));
 
-admin.delete('/orders/:id', (req, res) => {
-  const o = one('SELECT code FROM orders WHERE id = ?', int(req.params.id, 1, 1e9));
+admin.delete('/orders/:id', ah(async (req, res) => {
+  const o = await one('SELECT id, code FROM orders WHERE id = ?', int(req.params.id, 1, 2e9));
   if (!o) return res.status(404).json({ error: 'الطلب غير موجود' });
-  run('DELETE FROM orders WHERE id = ?', Number(req.params.id));
-  audit(req.admin.id, 'order.delete', o.code, ip(req));
+  await run('DELETE FROM orders WHERE id = ?', o.id);
+  await audit(req.admin.id, 'order.delete', o.code, ip(req));
   res.json({ ok: true });
-});
+}));
 
 admin.post('/orders/:id/resend', ah(async (req, res) => {
-  const o = one('SELECT * FROM orders WHERE id = ?', int(req.params.id, 1, 1e9));
+  const o = await one('SELECT * FROM orders WHERE id = ?', int(req.params.id, 1, 2e9));
   if (!o) return res.status(404).json({ error: 'الطلب غير موجود' });
-  const ok = await mail.sendOrderConfirmation(orderOut(o));
+  const ok = await mail.sendOrderConfirmation(await orderOut(o));
   res.json({ ok });
 }));
 
@@ -324,46 +343,55 @@ function readProduct(b, old = {}) {
     art_svg: Array.isArray(b.art) ? JSON.stringify(b.art.slice(0, 60)) : old.art_svg ?? '[]',
   };
 }
-const slug = () => sec.randomToken(6).toLowerCase().replace(/[^a-z0-9]/g, 'x');
+const slug = () => sec.randomToken(8).toLowerCase().replace(/[^a-z0-9]/g, 'x');
+const getProduct = async (id) => adminProduct(await one(`SELECT ${PRODUCT_COLS} FROM products WHERE id = ?`, id));
+async function insertProduct(p, extra = {}) {
+  const now = Date.now();
+  const r = await run(`INSERT INTO products(slug, name, description, type, price, compare_price, bg, fg, sizes, specs, tags, stock, status, art_svg, ai, prompt, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`, slug(), p.name, p.description, p.type, p.price, p.compare_price, p.bg, p.fg,
+  p.sizes, p.specs, p.tags, p.stock, p.status, p.art_svg, extra.ai ? 1 : 0, extra.prompt ?? null, now, now);
+  return r.id;
+}
+const pid = (req) => int(req.params.id, 1, 2e9);
 
-admin.get('/products', (req, res) => {
-  res.json({ products: all(`SELECT ${PRODUCT_COLS} FROM products ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'published' THEN 1 ELSE 2 END, created_at DESC`).map(adminProduct) });
-});
-admin.post('/products', bigJson, (req, res) => {
-  const p = readProduct(req.body || {}), now = Date.now();
-  const r = run(`INSERT INTO products(slug, name, description, type, price, compare_price, bg, fg, sizes, specs, tags, stock, status, art_svg, created_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, slug(), p.name, p.description, p.type, p.price, p.compare_price, p.bg, p.fg, p.sizes, p.specs, p.tags, p.stock, p.status, p.art_svg, now, now);
-  audit(req.admin.id, 'product.create', p.name, ip(req));
-  res.status(201).json({ product: adminProduct(one(`SELECT ${PRODUCT_COLS} FROM products WHERE id = ?`, r.lastInsertRowid)) });
-});
-admin.put('/products/:id', bigJson, (req, res) => {
-  const old = one('SELECT * FROM products WHERE id = ?', int(req.params.id, 1, 1e9));
+admin.get('/products', ah(async (req, res) => {
+  const rows = await all(`SELECT ${PRODUCT_COLS} FROM products ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'published' THEN 1 ELSE 2 END, created_at DESC`);
+  res.json({ products: rows.map(adminProduct) });
+}));
+admin.post('/products', bigJson, ah(async (req, res) => {
+  const p = readProduct(req.body || {});
+  const id = await insertProduct(p);
+  await audit(req.admin.id, 'product.create', p.name, ip(req));
+  res.status(201).json({ product: await getProduct(id) });
+}));
+admin.put('/products/:id', bigJson, ah(async (req, res) => {
+  const old = await one('SELECT * FROM products WHERE id = ?', pid(req));
   if (!old) return res.status(404).json({ error: 'المنتج غير موجود' });
   const p = readProduct(req.body || {}, old);
-  run(`UPDATE products SET name=?, description=?, type=?, price=?, compare_price=?, bg=?, fg=?, sizes=?, specs=?, tags=?, stock=?, status=?, art_svg=?, updated_at=? WHERE id=?`,
+  await run(`UPDATE products SET name=?, description=?, type=?, price=?, compare_price=?, bg=?, fg=?, sizes=?, specs=?, tags=?, stock=?, status=?, art_svg=?, updated_at=? WHERE id=?`,
     p.name, p.description, p.type, p.price, p.compare_price, p.bg, p.fg, p.sizes, p.specs, p.tags, p.stock, p.status, p.art_svg, Date.now(), old.id);
-  audit(req.admin.id, 'product.update', `${old.id} ${p.name} [${p.status}]`, ip(req));
-  res.json({ product: adminProduct(one(`SELECT ${PRODUCT_COLS} FROM products WHERE id = ?`, old.id)) });
-});
-admin.patch('/products/:id/status', json, (req, res) => {
+  await audit(req.admin.id, 'product.update', `${old.id} ${p.name} [${p.status}]`, ip(req));
+  res.json({ product: await getProduct(old.id) });
+}));
+admin.patch('/products/:id/status', json, ah(async (req, res) => {
   const st = ['draft', 'published', 'archived'].includes(req.body?.status) ? req.body.status : null;
   if (!st) throw new InputError('حالة غير صالحة');
-  const r = run('UPDATE products SET status = ?, updated_at = ? WHERE id = ?', st, Date.now(), int(req.params.id, 1, 1e9));
+  const r = await run('UPDATE products SET status = ?, updated_at = ? WHERE id = ?', st, Date.now(), pid(req));
   if (!r.changes) return res.status(404).json({ error: 'المنتج غير موجود' });
-  audit(req.admin.id, 'product.status', `${req.params.id} → ${st}`, ip(req));
+  await audit(req.admin.id, 'product.status', `${req.params.id} → ${st}`, ip(req));
   res.json({ ok: true });
-});
-admin.delete('/products/:id', (req, res) => {
-  const p = one('SELECT name FROM products WHERE id = ?', int(req.params.id, 1, 1e9));
+}));
+admin.delete('/products/:id', ah(async (req, res) => {
+  const p = await one('SELECT id, name FROM products WHERE id = ?', pid(req));
   if (!p) return res.status(404).json({ error: 'المنتج غير موجود' });
-  run('DELETE FROM products WHERE id = ?', Number(req.params.id));
-  audit(req.admin.id, 'product.delete', p.name, ip(req));
+  await run('DELETE FROM products WHERE id = ?', p.id);
+  await audit(req.admin.id, 'product.delete', p.name, ip(req));
   res.json({ ok: true });
-});
+}));
 
 // رفع صورة حقيقية للمنتج (PNG/JPEG/WEBP فقط، يتم التحقق من محتوى الملف نفسه)
-admin.post('/products/:id/photo', bigJson, (req, res) => {
-  const id = int(req.params.id, 1, 1e9);
+admin.post('/products/:id/photo', bigJson, ah(async (req, res) => {
+  const id = pid(req);
   const m = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(req.body?.data || ''));
   if (!m) throw new InputError('صيغة الصورة غير مدعومة (PNG / JPG / WEBP)');
   const buf = Buffer.from(m[2], 'base64');
@@ -373,15 +401,16 @@ admin.post('/products/:id/photo', bigJson, (req, res) => {
     : sig[0] === 0xff && sig[1] === 0xd8 && sig[2] === 0xff ? 'image/jpeg'
       : sig.toString('latin1', 0, 4) === 'RIFF' && sig.toString('latin1', 8, 12) === 'WEBP' ? 'image/webp' : null;
   if (!real) throw new InputError('الملف ليس صورة حقيقية');
-  const r = run('UPDATE products SET photo = ?, photo_type = ?, updated_at = ? WHERE id = ?', buf, real, Date.now(), id);
+  const r = await run('UPDATE products SET photo = ?, photo_type = ?, updated_at = ? WHERE id = ?', buf, real, Date.now(), id);
   if (!r.changes) return res.status(404).json({ error: 'المنتج غير موجود' });
-  audit(req.admin.id, 'product.photo', String(id), ip(req));
-  res.json({ product: adminProduct(one(`SELECT ${PRODUCT_COLS} FROM products WHERE id = ?`, id)) });
-});
-admin.delete('/products/:id/photo', (req, res) => {
-  run('UPDATE products SET photo = NULL, photo_type = NULL, updated_at = ? WHERE id = ?', Date.now(), int(req.params.id, 1, 1e9));
-  res.json({ product: adminProduct(one(`SELECT ${PRODUCT_COLS} FROM products WHERE id = ?`, Number(req.params.id))) });
-});
+  await audit(req.admin.id, 'product.photo', String(id), ip(req));
+  res.json({ product: await getProduct(id) });
+}));
+admin.delete('/products/:id/photo', ah(async (req, res) => {
+  const id = pid(req);
+  await run('UPDATE products SET photo = NULL, photo_type = NULL, updated_at = ? WHERE id = ?', Date.now(), id);
+  res.json({ product: await getProduct(id) });
+}));
 
 // ---------- استوديو الذكاء الاصطناعي ----------
 admin.post('/ai/generate', limiter(60, 30, 'وصلت الحد المسموح من التوليد هذي الساعة.'), json, ah(async (req, res) => {
@@ -390,7 +419,6 @@ admin.post('/ai/generate', limiter(60, 30, 'وصلت الحد المسموح م�
   const count = int(req.body?.count, 1, 6, 3);
   const publish = req.body?.publish === true;
   const { products } = await generateProducts({ brief, type, count });
-  const now = Date.now();
   const created = [];
   for (const g of products) {
     try {
@@ -400,18 +428,16 @@ admin.post('/ai/generate', limiter(60, 30, 'وصلت الحد المسموح م�
         bg: g.background, fg: g.garment, tags: g.tags, specs: g.specs, art: g.artwork,
         sizes: CLOTHING.includes(t) ? DEFAULT_SIZES : [], status: publish ? 'published' : 'draft',
       });
-      const r = run(`INSERT INTO products(slug, name, description, type, price, compare_price, bg, fg, sizes, specs, tags, stock, status, art_svg, ai, prompt, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?)`, slug(), p.name, p.description, p.type, p.price, p.compare_price, p.bg, p.fg, p.sizes, p.specs, p.tags, null, p.status, p.art_svg, brief, now, now);
-      created.push(adminProduct(one(`SELECT ${PRODUCT_COLS} FROM products WHERE id = ?`, r.lastInsertRowid)));
+      created.push(await getProduct(await insertProduct(p, { ai: true, prompt: brief })));
     } catch (e) { console.warn('[ai] skipped product:', e.message); }
   }
-  audit(req.admin.id, 'ai.generate', `${created.length} × "${brief.slice(0, 80)}"`, ip(req));
+  await audit(req.admin.id, 'ai.generate', `${created.length} × "${brief.slice(0, 80)}"`, ip(req));
   res.json({ products: created });
 }));
 
 // ---------- الإعدادات ----------
-admin.get('/settings', (req, res) => res.json({ settings: getSettings() }));
-admin.put('/settings', json, (req, res) => {
+admin.get('/settings', ah(async (req, res) => res.json({ settings: await getSettings() })));
+admin.put('/settings', json, ah(async (req, res) => {
   const b = req.body || {}, out = {};
   const S = DEFAULT_SETTINGS;
   if ('storeName' in b) out.storeName = str(b.storeName, 40, { required: true });
@@ -428,26 +454,26 @@ admin.put('/settings', json, (req, res) => {
   if ('socials' in b) out.socials = Object.fromEntries(Object.keys(S.socials).map((k) => [k, sec.url(b.socials?.[k])]));
   if ('payments' in b) out.payments = { cod: b.payments?.cod !== false, bank: b.payments?.bank !== false };
   if ('cities' in b && Array.isArray(b.cities)) out.cities = b.cities.map((c) => str(c, 40)).filter(Boolean).slice(0, 60);
-  setSettings(out);
-  audit(req.admin.id, 'settings.update', Object.keys(out).join(','), ip(req));
-  res.json({ settings: getSettings() });
-});
+  await setSettings(out);
+  await audit(req.admin.id, 'settings.update', Object.keys(out).join(','), ip(req));
+  res.json({ settings: await getSettings() });
+}));
 
 admin.post('/mail/test', json, ah(async (req, res) => {
   if (!mail.mailReady()) return res.status(400).json({ error: 'SMTP غير مضبوط في ملف .env' });
   res.json({ ok: await mail.sendTest(sec.email(req.body?.to || req.admin.email)) });
 }));
-admin.get('/logs', (req, res) => res.json({
-  audit: all('SELECT l.*, a.email FROM audit_log l LEFT JOIN admins a ON a.id = l.admin_id ORDER BY l.id DESC LIMIT 100'),
-  emails: all('SELECT * FROM email_log ORDER BY id DESC LIMIT 100'),
-  sessions: all('SELECT ip, ua, created_at, expires_at FROM sessions WHERE admin_id = ? AND expires_at > ? ORDER BY created_at DESC', req.admin.id, Date.now()),
-}));
-admin.post('/logout-all', (req, res) => {
-  sec.logoutAll(req.admin.id);
-  audit(req.admin.id, 'sessions.revoke', null, ip(req));
+admin.get('/logs', ah(async (req, res) => res.json({
+  audit: await all('SELECT l.*, a.email FROM audit_log l LEFT JOIN admins a ON a.id = l.admin_id ORDER BY l.id DESC LIMIT 100'),
+  emails: await all('SELECT * FROM email_log ORDER BY id DESC LIMIT 100'),
+  sessions: await all('SELECT ip, ua, created_at, expires_at FROM sessions WHERE admin_id = ? AND expires_at > ? ORDER BY created_at DESC', req.admin.id, Date.now()),
+})));
+admin.post('/logout-all', ah(async (req, res) => {
+  await sec.logoutAll(req.admin.id);
+  await audit(req.admin.id, 'sessions.revoke', null, ip(req));
   res.clearCookie(sec.SESSION_COOKIE, { ...sec.cookieOptions(), maxAge: undefined });
   res.json({ ok: true });
-});
+}));
 
 // ---------- الملفات الثابتة ----------
 app.use('/api', (req, res) => res.status(404).json({ error: 'غير موجود' }));
@@ -464,10 +490,20 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'صار خطأ في الخادم. حاول مرة ثانية.' });
 });
 
+// تنظيف دوري: الجلسات المنتهية والسجلات القديمة (أكثر من 180 يوم)
+setInterval(() => {
+  const now = Date.now(), old = now - 180 * 864e5;
+  run('DELETE FROM sessions WHERE expires_at < ?', now).catch(() => {});
+  run('DELETE FROM audit_log WHERE at < ?', old).catch(() => {});
+  run('DELETE FROM email_log WHERE at < ?', old).catch(() => {});
+}, 6 * 60 * 60 * 1000).unref();
+
+const needsAdmin = (await adminCount()) === 0;
 app.listen(PORT, () => {
   console.log(`\n  ROX Store يعمل على  http://localhost:${PORT}`);
   console.log(`  لوحة التحكم:        http://localhost:${PORT}/admin/`);
-  if (adminCount() === 0) console.log(`\n  ⚠ لا يوجد حساب أدمن بعد. رمز الإعداد (Setup token): ${SETUP_TOKEN}\n`);
+  console.log(`  قاعدة البيانات:      ${DB_KIND === 'postgres' ? 'PostgreSQL (DATABASE_URL)' : 'PGlite محلية (data/pglite)'}`);
+  if (needsAdmin) console.log(`\n  ⚠ لا يوجد حساب أدمن بعد. رمز الإعداد (Setup token): ${SETUP_TOKEN}\n`);
   if (!mail.mailReady()) console.log('  ℹ SMTP غير مضبوط — الإيميلات تُسجّل فقط ولا تُرسل.');
   if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) console.log('  ℹ ANTHROPIC_API_KEY غير مضبوط — استوديو الذكاء الاصطناعي معطّل.');
 });

@@ -20,27 +20,27 @@ function tr() {
   }));
 }
 
+const log = (...a) => run('INSERT INTO email_log(recipient, subject, status, error, at) VALUES (?,?,?,?,?)', ...a).catch((e) => console.error('[mail:log]', e.message));
 async function send(to, subject, html, text) {
   const t = tr();
   const at = Date.now();
   if (!t) {
-    run('INSERT INTO email_log(recipient, subject, status, error, at) VALUES (?,?,?,?,?)', to, subject, 'skipped', 'SMTP غير مضبوط', at);
+    await log(to, subject, 'skipped', 'SMTP غير مضبوط', at);
     console.log(`[mail:skipped] → ${to} | ${subject}`);
     return false;
   }
   try {
     await t.sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to: clean(to), subject: clean(subject), html, text });
-    run('INSERT INTO email_log(recipient, subject, status, at) VALUES (?,?,?,?)', to, subject, 'sent', at);
+    await log(to, subject, 'sent', null, at);
     return true;
   } catch (e) {
-    run('INSERT INTO email_log(recipient, subject, status, error, at) VALUES (?,?,?,?,?)', to, subject, 'failed', String(e.message).slice(0, 300), at);
+    await log(to, subject, 'failed', String(e.message).slice(0, 300), at);
     console.error('[mail:failed]', e.message);
     return false;
   }
 }
 
-function layout(title, body) {
-  const s = getSettings();
+function layout(title, body, s) {
   return `<!doctype html><html lang="ar" dir="rtl"><body style="margin:0;background:#efeae2;font-family:Tahoma,Arial,sans-serif;color:#14110f">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#efeae2;padding:24px 0"><tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff">
@@ -60,8 +60,8 @@ function itemsTable(o) {
 
 const trackLink = (o) => process.env.PUBLIC_URL ? `<p><a href="${esc(new URL('/#track', process.env.PUBLIC_URL).href)}" style="display:inline-block;background:#000;color:#efeae2;padding:12px 22px;text-decoration:none;font-weight:700">تتبّع طلبك</a></p>` : '';
 
-export function sendOrderConfirmation(o) {
-  const s = getSettings();
+export async function sendOrderConfirmation(o) {
+  const s = await getSettings();
   const pay = o.payment === 'bank'
     ? `<p style="background:#f6f2ec;padding:12px 14px"><b>الدفع بتحويل بنكي:</b><br>${esc(s.bankInfo || 'سيتم التواصل معك ببيانات التحويل.').replace(/\n/g, '<br>')}<br>اكتب رقم الطلب <b dir="ltr">${esc(o.code)}</b> في ملاحظة التحويل.</p>`
     : '<p>الدفع عند الاستلام.</p>';
@@ -69,33 +69,33 @@ export function sendOrderConfirmation(o) {
 <p>رقم الطلب: <b dir="ltr" style="font-size:18px">${esc(o.code)}</b></p>${itemsTable(o)}${pay}
 <p style="color:#6b655e">العنوان: ${esc(o.city)} — ${esc(o.address)}</p>${trackLink(o)}`;
   const text = `طلبك ${o.code} وصلنا. الإجمالي ${o.total} ر.س.`;
-  return send(o.email, `تأكيد طلبك ${o.code} — ${s.storeName}`, layout('شكرًا على طلبك', body), text);
+  return send(o.email, `تأكيد طلبك ${o.code} — ${s.storeName}`, layout('شكرًا على طلبك', body, s), text);
 }
 
-export function sendStatusUpdate(o) {
-  const s = getSettings();
+export async function sendStatusUpdate(o) {
+  const s = await getSettings();
   const msg = {
     1: 'بدأنا نجهّز طلبك.',
     2: 'طلبك انشحن وفي الطريق لك!',
     3: 'تم توصيل طلبك. نتمنى يعجبك!',
     4: 'تم إلغاء طلبك. إذا عندك أي استفسار رد على هذا الإيميل.',
   }[o.status];
-  if (!msg) return Promise.resolve(false);
+  if (!msg) return false;
   const body = `<p>هلا ${esc(o.customer_name)}،</p><p style="font-size:18px;font-weight:700">${msg}</p>
 <p>رقم الطلب: <b dir="ltr">${esc(o.code)}</b> — الحالة: <b>${STATUS[o.status]}</b></p>${trackLink(o)}`;
-  return send(o.email, `تحديث طلبك ${o.code}: ${STATUS[o.status]}`, layout('تحديث على طلبك', body), `${msg} (${o.code})`);
+  return send(o.email, `تحديث طلبك ${o.code}: ${STATUS[o.status]}`, layout('تحديث على طلبك', body, s), `${msg} (${o.code})`);
 }
 
-export function notifyOwner(o) {
-  const s = getSettings();
+export async function notifyOwner(o) {
+  const s = await getSettings();
   const to = s.notifyEmail || process.env.ADMIN_NOTIFY_EMAIL;
-  if (!to) return Promise.resolve(false);
+  if (!to) return false;
   const body = `<p>طلب جديد من <b>${esc(o.customer_name)}</b> (${esc(o.phone)}) — ${esc(o.city)}</p>${itemsTable(o)}`;
-  return send(to, `طلب جديد ${o.code} — ${o.total} ر.س`, layout('طلب جديد', body), `طلب جديد ${o.code}`);
+  return send(to, `طلب جديد ${o.code} — ${o.total} ر.س`, layout('طلب جديد', body, s), `طلب جديد ${o.code}`);
 }
 
-export function sendTest(to) {
-  return send(to, 'رسالة تجريبية من متجرك', layout('الإيميلات شغّالة ✓', '<p>إذا وصلتك هذه الرسالة فإعدادات SMTP صحيحة.</p>'), 'SMTP OK');
+export async function sendTest(to) {
+  return send(to, 'رسالة تجريبية من متجرك', layout('الإيميلات شغّالة ✓', '<p>إذا وصلتك هذه الرسالة فإعدادات SMTP صحيحة.</p>', await getSettings()), 'SMTP OK');
 }
 
 export { STATUS };

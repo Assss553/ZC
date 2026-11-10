@@ -40,7 +40,7 @@ export const randomToken = (n = 32) => randomBytes(n).toString('base64url');
 
 // ---------- تسجيل الدخول ----------
 export async function login(email, password, ip, ua) {
-  const a = one('SELECT * FROM admins WHERE email = ?', String(email || '').trim());
+  const a = await one('SELECT * FROM admins WHERE email = ?', String(email || '').trim().toLowerCase());
   const now = Date.now();
   if (!a) { await verifyPassword(String(password || 'x'), DUMMY_HASH); return { error: 'الإيميل أو كلمة المرور غلط' }; }
   if (a.locked_until > now) {
@@ -51,21 +51,21 @@ export async function login(email, password, ip, ua) {
   if (!ok) {
     const failed = a.failed + 1;
     const lock = failed >= MAX_FAILED ? now + LOCK_MS : 0;
-    run('UPDATE admins SET failed = ?, locked_until = ? WHERE id = ?', lock ? 0 : failed, lock, a.id);
-    audit(a.id, lock ? 'login.locked' : 'login.failed', null, ip);
+    await run('UPDATE admins SET failed = ?, locked_until = ? WHERE id = ?', lock ? 0 : failed, lock, a.id);
+    await audit(a.id, lock ? 'login.locked' : 'login.failed', null, ip);
     return { error: lock ? 'تم قفل الحساب 15 دقيقة بسبب محاولات كثيرة.' : 'الإيميل أو كلمة المرور غلط' };
   }
-  run('UPDATE admins SET failed = 0, locked_until = 0 WHERE id = ?', a.id);
-  run('DELETE FROM sessions WHERE expires_at < ?', now);
+  await run('UPDATE admins SET failed = 0, locked_until = 0 WHERE id = ?', a.id);
+  await run('DELETE FROM sessions WHERE expires_at < ?', now);
   const token = randomToken(32), csrf = randomToken(24);
-  run('INSERT INTO sessions(token_hash, admin_id, csrf, ip, ua, created_at, expires_at) VALUES (?,?,?,?,?,?,?)',
+  await run('INSERT INTO sessions(token_hash, admin_id, csrf, ip, ua, created_at, expires_at) VALUES (?,?,?,?,?,?,?)',
     sha256(token), a.id, csrf, ip, String(ua || '').slice(0, 200), now, now + SESSION_TTL);
-  audit(a.id, 'login.ok', null, ip);
+  await audit(a.id, 'login.ok', null, ip);
   return { token, csrf, admin: { id: a.id, email: a.email } };
 }
 
-export function logout(token) { if (token) run('DELETE FROM sessions WHERE token_hash = ?', sha256(token)); }
-export function logoutAll(adminId) { run('DELETE FROM sessions WHERE admin_id = ?', adminId); }
+export async function logout(token) { if (token) await run('DELETE FROM sessions WHERE token_hash = ?', sha256(token)); }
+export async function logoutAll(adminId) { await run('DELETE FROM sessions WHERE admin_id = ?', adminId); }
 
 export function cookieOptions() {
   return {
@@ -87,15 +87,15 @@ function readCookie(req, name) {
 }
 
 // ---------- وسيط التحقق من الأدمن ----------
-export function sessionFrom(req) {
+export async function sessionFrom(req) {
   const token = readCookie(req, SESSION_COOKIE);
-  const s = token && one(
+  const s = token && await one(
     `SELECT s.*, a.email FROM sessions s JOIN admins a ON a.id = s.admin_id WHERE s.token_hash = ?`, sha256(token));
   return s && s.expires_at > Date.now() ? { ...s, token } : null;
 }
 
-export function requireAdmin(req, res, next) {
-  const s = sessionFrom(req);
+export async function requireAdmin(req, res, next) {
+  const s = await sessionFrom(req);
   if (!s) return res.status(401).json({ error: 'سجّل الدخول من جديد' });
 
   // حماية CSRF: كل طلب يغيّر البيانات لازم يحمل الرمز السري للجلسة + يكون من نفس الموقع
