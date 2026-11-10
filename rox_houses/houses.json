@@ -1,6 +1,87 @@
 {
     "_help": "Optional. Every .ydr in stream/ is detected automatically. Add an entry to \"houses\" to give it a name, picture, entry point or ROX design. Copy from \"_examples\" (examples are NOT loaded).",
-    "houses": [],
+    "houses": [
+        {
+            "model": "rox_shell_apartment",
+            "label": "ROX Modern Apartment",
+            "labelAr": "شقة ROX مودرن",
+            "rooms": 6,
+            "tier": "mid",
+            "image": "rox_shell_apartment.png",
+            "entry": {
+                "x": 4.0,
+                "y": 0.48,
+                "z": 1.0,
+                "h": 90.0
+            },
+            "design": null,
+            "gangOnly": false
+        },
+        {
+            "model": "rox_shell_garage",
+            "label": "ROX Industrial Unit (3 bays)",
+            "labelAr": "ورشة ROX صناعية (3 أقسام)",
+            "rooms": 3,
+            "tier": "high",
+            "image": "rox_shell_garage.png",
+            "entry": {
+                "x": 7.1,
+                "y": -3.5,
+                "z": 1.0,
+                "h": 0.0
+            },
+            "design": null,
+            "gangOnly": false
+        },
+        {
+            "model": "rox_shell_office",
+            "label": "ROX Loft Office",
+            "labelAr": "مكتب ROX لوفت",
+            "rooms": 2,
+            "tier": "high",
+            "image": "rox_shell_office.png",
+            "entry": {
+                "x": -3.65,
+                "y": -5.0,
+                "z": 1.0,
+                "h": 0.0
+            },
+            "design": null,
+            "gangOnly": false
+        },
+        {
+            "model": "rox_shell_oldhouse",
+            "label": "ROX Old Family House",
+            "labelAr": "بيت ROX القديم",
+            "rooms": 7,
+            "tier": "mid",
+            "image": "rox_shell_oldhouse.png",
+            "entry": {
+                "x": -0.8,
+                "y": -4.0,
+                "z": 1.0,
+                "h": 0.0
+            },
+            "design": null,
+            "gangOnly": false
+        },
+        {
+            "model": "rox_shell_showroom",
+            "label": "ROX Showroom Hall",
+            "labelAr": "صالة عرض ROX",
+            "rooms": 2,
+            "tier": "luxury",
+            "image": "rox_shell_showroom.png",
+            "entry": {
+                "x": 7.0,
+                "y": -5.8,
+                "z": 1.0,
+                "h": 90.0
+            },
+            "design": null,
+            "gangOnly": false
+        }
+    ],
     "_examples": [
         {
             "model": "my_villa_shell",
