@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- ROX Real Estate · © ROX Store – All rights reserved. -->
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROX Real Estate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="tablet" class="hidden">
+        <div class="bezel">
+            <span class="screw s1"></span><span class="screw s2"></span><span class="screw s3"></span><span class="screw s4"></span>
+            <span class="cam"></span>
+            <span class="side-btn b1"></span><span class="side-btn b2"></span><span class="side-btn b3"></span><span class="side-btn b4"></span>
+            <div class="screen" id="screen">
+                <div class="app-layer"></div>
+                <div class="statusbar">
+                    <span id="clock">00:00</span>
+                    <span class="sb-brand" id="sbBrand">ROX REALTY</span>
+                    <span class="sb-icons">
+                        <svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01"/></svg>
+                        <span class="battery"><i></i></span>
+                    </span>
+                </div>
+                <div id="view"></div>
+                <div class="homebar" data-act="home"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay" class="hidden"></div>
+    <div id="furniturePanel" class="hidden"></div>
+    <div id="placeHint" class="hidden"></div>
+    <div id="toasts"></div>
+
+    <script src="i18n.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
