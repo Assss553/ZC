@@ -518,7 +518,7 @@ Views.create = () => {
             <div class="grow" style="flex:1"></div><button class="btn ghost" data-act="rescan" style="height:34px">${icon('search')}${t('rescan')}</button></div>
             <div class="igrid">${list.map((i) => {
             const off = i.available === false;
-            const tags = [i.gangOnly ? `<span class="chip gang-chip">GANG</span>` : i.decor ? `<span class="chip rox-chip">ROX</span>` : '', i.custom ? `<span class="chip blue">MLO</span>` : '', i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
+            const tags = [i.gangOnly ? `<span class="chip gang-chip">GANG</span>` : i.decor ? `<span class="chip rox-chip">ROX</span>` : '', i.custom ? `<span class="chip blue">MLO</span>` : '', i.uploaded ? `<span class="chip upload-chip">UPLOAD</span>` : i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
             return `<div class="card icard ${c.interior === i.key ? 'on' : ''} ${off ? 'off' : ''}" ${off ? '' : `data-act="pickinterior" data-key="${i.key}"`}>
             <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span>${tags}</div>
             <div class="ib"><b>${esc(interiorName(i))}</b><small>${off ? `<span style="color:var(--red)">${t('not_installed')}</span>` : i.needsEntry ? t('auto_entry_short') : i.custom ? t('custom_hint') : t('rooms', i.rooms)}</small></div></div>`;

@@ -77,6 +77,45 @@ local function prettify(model)
     return (s:gsub('(%a)([%w]*)', function(a, b) return a:upper() .. b end))
 end
 
+local UP = Config.Detect.UploadResource
+
+local function uploadStarted()
+    return UP and GetResourceState(UP) == 'started'
+end
+
+-- picture uploaded in rox_houses/images (served to the NUI with nui://)
+local function findUploadImage(names)
+    if not uploadStarted() then return nil end
+    for _, name in ipairs(names) do
+        if name then
+            if name:find('%.') and LoadResourceFile(UP, 'images/' .. name) then return ('nui://%s/images/%s'):format(UP, name) end
+            for _, ext in ipairs(IMG_EXT) do
+                if LoadResourceFile(UP, 'images/' .. name .. ext) then return ('nui://%s/images/%s%s'):format(UP, name, ext) end
+            end
+        end
+    end
+end
+
+-- rox_houses/houses.json
+local function uploadManifest()
+    if not uploadStarted() then return {} end
+    local raw = LoadResourceFile(UP, 'houses.json')
+    if not raw then return {} end
+    local ok, data = pcall(json.decode, raw)
+    if not ok or type(data) ~= 'table' then
+        print(('^1[rox_realestate]^7 %s/houses.json is not valid JSON'):format(UP))
+        return {}
+    end
+    return type(data.houses) == 'table' and data.houses or {}
+end
+
+local function vec4From(t)
+    if type(t) ~= 'table' then return nil end
+    local x, y, z = tonumber(t.x), tonumber(t.y), tonumber(t.z)
+    if not (x and y and z) then return nil end
+    return vec4(x, y, z, tonumber(t.h) or 0.0)
+end
+
 local function findImage(folder, names)
     for _, name in ipairs(names) do
         if name then
@@ -96,10 +135,14 @@ local function scanShellFiles()
     -- our own drop folder: everything counts
     local own = GetResourcePath(RES) .. '/' .. Config.Detect.OwnFolder
     for _, f in ipairs(listFiles(own, 'ydr')) do found[baseName(f)] = RES end
+    -- upload resource (rox_houses/stream): everything counts too
+    if uploadStarted() then
+        for _, f in ipairs(listFiles(GetResourcePath(UP) .. '/stream', 'ydr')) do found[baseName(f)] = UP end
+    end
     -- other started resources: only names that look like shells
     for i = 0, GetNumResources() - 1 do
         local res = GetResourceByFindIndex(i)
-        if res and res ~= RES and GetResourceState(res) == 'started' then
+        if res and res ~= RES and res ~= UP and GetResourceState(res) == 'started' then
             local path = GetResourcePath(res)
             if path and path ~= '' then
                 for _, f in ipairs(listFiles(path, 'ydr')) do
@@ -155,6 +198,37 @@ function Detect.Run()
         end
     end
 
+    -- houses.json entries from the upload resource (names, pictures, entry, ROX design, MLOs)
+    for _, h in ipairs(uploadManifest()) do
+        if type(h) == 'table' then
+            local isMlo = h.type == 'mlo'
+            local key = tostring(h.key or h.model or ''):gsub('[^%w_%-]', ''):lower()
+            if key ~= '' and (not Interiors[key] or Interiors[key].auto) then
+                local s = (h.model and saved[h.model]) or {}
+                local design = (h.design == 'warehouse' or h.design == 'hideout') and h.design or nil
+                local entry = {
+                    label = h.label or prettify(key), labelAr = h.labelAr or h.label or prettify(key),
+                    tier = ({ low = 1, mid = 1, high = 1, luxury = 1 })[h.tier] and h.tier or 'mid',
+                    rooms = tonumber(h.rooms) or 1, auto = true, uploaded = true, source = UP,
+                    decor = design, gangOnly = h.gangOnly == true, order = -1,
+                }
+                if isMlo then
+                    entry.spawn = vec4From(h.spawn)
+                else
+                    entry.shell = tostring(h.model):lower()
+                    entry.offset = s.offset or vec4From(h.entry)
+                end
+                if (isMlo and entry.spawn) or (not isMlo and h.model) then
+                    entry.image = findUploadImage({ h.image, key, h.model })
+                    if not Interiors[key] then added = added + 1 end
+                    -- the json entry replaces the plain detected one for the same model
+                    if not isMlo and Interiors[entry.shell] and Interiors[entry.shell].auto and entry.shell ~= key then Interiors[entry.shell] = nil end
+                    Interiors[key] = entry
+                end
+            end
+        end
+    end
+
     -- saved offsets also fix built-in shells
     for _, i in pairs(Interiors) do
         if i.shell and not i.auto and saved[i.shell] and saved[i.shell].offset then i.offset = saved[i.shell].offset end
@@ -162,8 +236,8 @@ function Detect.Run()
 
     -- pictures for every interior: key first, then shell model
     for key, i in pairs(Interiors) do
-        local img = findImage('houses', { key, i.shell })
-        if img then i.image = img elseif i.auto then i.image = nil end
+        local img = findUploadImage({ key, i.shell }) or findImage('houses', { key, i.shell })
+        if img then i.image = img elseif i.auto and not i.uploaded then i.image = nil end
     end
 
     Registry.furnitureImages = {}

@@ -193,3 +193,17 @@ Config.Realtor.Apps = { create = 0, manage = 1, contracts = 0 }
 **لون العصابة**: المالك يختار من الايباد: أحمر · بنفسجي · أصفر · أخضر · أزرق (ضوء الوكر يتغير باللون).
 الأوكار اللي على شل (`shell_trevor` / `shell_frankaunt`) تحتاج ريسورس k4mb1 starter shells.
 تقدر تصدّر أي وكر كملف ماب بـ `/roxdecor_export`.
+
+## v1.6 — مجلد الرفع `rox_houses` (ملفات الماب + الصور)
+
+ريسورس جديد بجنب السكربت: **`rox_houses`** — هو مجلد الرفع:
+```
+rox_houses/stream/   ← ملفات البيوت (.ydr .ytyp .ytd .ybn .ymap)
+rox_houses/images/   ← صورة كل بيت بنفس اسم الموديل (png / jpg / webp)
+rox_houses/houses.json ← (اختياري) الاسم، الغرف، نقطة الدخول، تصميم ROX، للعصابات
+```
+`server.cfg`: `ensure rox_houses` **قبل** `ensure rox_realestate`.
+كل `.ydr` داخل `rox_houses/stream` ينعرف تلقائياً (أي اسم)، ويطلع في الايباد بعلامة **UPLOAD** مع صورته.
+بعد ما ترفع: **Rescan** من الايباد أو `/realestate_scan`، وبعدها `/houseentry` داخل البيت لحفظ الدخول.
+
+**بيوت بغرف**: أي بيت (شل) فيه تصميم ROX، السكربت يدوّر على كل الغرف داخله (حتى الدورين) ويحط إضاءة سقف بكل غرفة.

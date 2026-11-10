@@ -135,6 +135,7 @@ Config.Detect = {
     ScanFiles    = true,               -- scan resource folders for .ydr files (needs io.popen, falls back silently)
     NamePatterns = { 'shell', 'k4mb1', 'furnitured', 'house', 'apart', 'mlo' }, -- .ydr names containing one of these
     OwnFolder    = 'stream/houses',    -- everything in this folder counts as a shell, whatever its name
+    UploadResource = 'rox_houses',     -- upload folder resource: stream/ (map files) + images/ (pictures) + houses.json
     Extra        = {},                 -- extra shell model names, e.g. { 'my_villa_shell' }
     Command      = 'realestate_scan',  -- ace 'rox_realestate.realtor' or realtor: rescan without restart
     EntryCommand = 'houseentry',       -- realtor inside a detected shell: save the entry point where you stand

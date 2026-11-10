@@ -262,7 +262,7 @@ function InteriorsForUI()
         list[#list + 1] = {
             key = key, label = v.label, labelAr = v.labelAr, tier = v.tier,
             rooms = v.rooms, image = v.image, shell = v.shell, custom = v.custom or false,
-            auto = v.auto or false, decor = (v.decor == true and 'warehouse') or v.decor or false, gangOnly = v.gangOnly or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
+            auto = v.auto or false, decor = (v.decor == true and 'warehouse') or v.decor or false, gangOnly = v.gangOnly or false, uploaded = v.uploaded or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
         }
     end
     table.sort(list, function(a, b)

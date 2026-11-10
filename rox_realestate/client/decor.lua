@@ -539,6 +539,40 @@ local function buildHideout(B, style)
     B.place('cctv', 0.6, 0.6, { heading = B.headingU(45), z = B.room.ceilZ - 0.7, force = true })
 end
 
+---------------------------------------------------------------------
+-- multi-room shells: find every room inside the shell and light it
+---------------------------------------------------------------------
+local function shellRoomLights(obj, color)
+    local out = {}
+    if not obj or not DoesEntityExist(obj) then return out end
+    local mn, mx = GetModelDimensions(GetEntityModel(obj))
+    local p = GetEntityCoords(obj)
+    local floors = {}
+    -- sample a grid at a few heights so two-storey shells get both floors
+    for _, zf in ipairs({ 0.3, 0.55, 0.8 }) do
+        local midz = p.z + mn.z + (mx.z - mn.z) * zf
+        for x = mn.x + 1.4, mx.x - 1.4, 3.2 do
+            for y = mn.y + 1.4, mx.y - 1.4, 3.2 do
+                local wx, wy = p.x + x, p.y + y
+                local hitF, f = ray(vector3(wx, wy, midz), vector3(wx, wy, p.z + mn.z - 1.0))
+                local hitC, c = ray(vector3(wx, wy, midz), vector3(wx, wy, p.z + mx.z + 1.0))
+                if hitF and hitC then
+                    local h = c.z - f.z
+                    if h > 2.1 and h < 7.0 then
+                        local key = ('%d:%d:%d'):format(math.floor(wx / 3.2), math.floor(wy / 3.2), math.floor(f.z))
+                        if not floors[key] then
+                            floors[key] = true
+                            out[#out + 1] = { x = wx, y = wy, z = c.z - 0.4, r = color[1], g = color[2], b = color[3] }
+                        end
+                    end
+                end
+            end
+        end
+        if #out >= 28 then break end
+    end
+    return out
+end
+
 -- even grid of ceiling spot lights + hanging lamp props
 local function buildLightGrid(B, style)
     local stepU, stepV = 6.0, math.max(5.0, B.W / math.max(2, math.floor(B.W / 6.0)))
@@ -614,6 +648,11 @@ function ROXDecor.Build(styleKey, center, seed)
         flick[#flick + 1] = { x = x, y = y, z = room.floorZ + (l.h or 1.5), r = l.c[1], g = l.c[2], b = l.c[3], range = l.range, base = l.base, broken = l.broken, seed = math.random() * 10 }
     end
     ROXDecor.flicker = flick
+    -- shells with several rooms: every room gets a soft ceiling light
+    if ShellObject and DoesEntityExist(ShellObject) then
+        local warm = style.builder == 'hideout' and { 255, 170, 110 } or { 255, 232, 200 }
+        for _, l in ipairs(shellRoomLights(ShellObject, warm)) do lights[#lights + 1] = l end
+    end
     ROXDecor.lights = lights
     local spots = {}
     for _, l in ipairs(ROXDecor.spots) do

@@ -1,0 +1,54 @@
+{
+    "_help": "Optional. Every .ydr in stream/ is detected automatically. Add an entry to \"houses\" to give it a name, picture, entry point or ROX design. Copy from \"_examples\" (examples are NOT loaded).",
+    "houses": [],
+    "_examples": [
+        {
+            "model": "my_villa_shell",
+            "label": "Palm Villa",
+            "labelAr": "فيلا النخيل",
+            "rooms": 4,
+            "tier": "luxury",
+            "image": "my_villa_shell.png",
+            "entry": {
+                "x": 0.0,
+                "y": -6.0,
+                "z": 1.0,
+                "h": 0.0
+            },
+            "design": null,
+            "gangOnly": false
+        },
+        {
+            "model": "my_warehouse_shell",
+            "label": "Big Storage",
+            "labelAr": "مخزن كبير",
+            "rooms": 2,
+            "tier": "high",
+            "design": "warehouse"
+        },
+        {
+            "model": "my_trap_house",
+            "label": "Trap House",
+            "labelAr": "بيت العصابة",
+            "rooms": 3,
+            "tier": "low",
+            "design": "hideout",
+            "gangOnly": true
+        },
+        {
+            "key": "my_mlo_house",
+            "type": "mlo",
+            "label": "Beach House (MLO)",
+            "labelAr": "بيت البحر (MLO)",
+            "rooms": 3,
+            "tier": "high",
+            "image": "my_mlo_house.jpg",
+            "spawn": {
+                "x": -1100.0,
+                "y": -1500.0,
+                "z": 4.5,
+                "h": 90.0
+            }
+        }
+    ]
+}
