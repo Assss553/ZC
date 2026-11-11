@@ -533,7 +533,7 @@ const CATS = [
   { id:'eup',    h:160, en:'CLOTHING', ar:'ملابس EUP', d:'زي رسمي وملابس مدنية',      long:'زي رسمي وملابس مدنية بخامات نظيفة، للرجالي والنسائي.', ic:'<path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3a4 4 0 0 1-8 0Z"/>' },
   { id:'bundle', h:275, en:'BUNDLES',  ar:'باقات',     d:'وفّر أكثر مع الباقات',       long:'', ic:'<path d="m12 3 9 5-9 5-9-5 9-5ZM3 13l9 5 9-5M3 17.5l9 5 9-5"/>' }
 ];
-const PRODUCTS = [
+let PRODUCTS = [
   { id:'pd',        cat:'mlo',    art:'ROX PD',    name:'مركز الشرطة — ROX PD',    desc:'مركز كامل: استقبال، زنازين، غرفة تحقيق، مخزن سلاح وكراج.', price:59.99, fw:['MLO','YMAP'], h:215, tag:'الأكثر مبيعًا' },
   { id:'med',       cat:'mlo',    art:'MEDICAL',   name:'مستشفى Central Medical',  desc:'طوارئ، غرف عمليات، صيدلية ومهبط طيران على السطح.',       price:39.99, fw:['MLO','YMAP'], h:200 },
   { id:'tuner',     cat:'mlo',    art:'TUNER',     name:'ورشة Tuner Garage',       desc:'ورشة تعديل برافعات، غرفة صبغ، ومعرض للسيارات.',           price:34.99, fw:['MLO'], h:232, tag:'جديد', isNew:true },
@@ -548,6 +548,12 @@ const PRODUCTS = [
   { id:'eup',       cat:'eup',    art:'EUP',       name:'باقة ملابس Police + EMS', desc:'زي رسمي كامل للشرطة والإسعاف، رجالي ونسائي.',             price:19.99, fw:['EUP'], h:160 },
   { id:'bundle-starter', cat:'bundle', art:'STARTER', name:'باقة تشغيل ROX',       desc:'سكربتات + مابات + سيارات في باقة وحدة متوافقة.',           price:149.99, old:239.99, fw:['ESX','QB','QBOX'], h:4, tag:'وفّر 37%' }
 ];
+/* المنتجات والإعدادات المحفوظة من لوحة التحكم (rox-fivem-admin.html) تغطّي على القيم اللي فوق */
+try {
+  const sp = JSON.parse(localStorage.getItem('rox_products')), sc = JSON.parse(localStorage.getItem('rox_config'));
+  if (Array.isArray(sp) && sp.some(p => p.id === 'bundle-starter')) PRODUCTS = sp;
+  if (sc) Object.assign(CONFIG, sc);
+} catch (e) {}
 /* آراء العملاء — هذي نصوص مثال، استبدلها بآراء حقيقية من الديسكورد حقك قبل النشر */
 const REVIEWS = [
   { q:'مركز الشرطة غيّر شكل السيرفر كامل. التفاصيل من برا ومن جوا ما شفت مثلها، والدعم ردّ علي بنفس اليوم.', n:'اسم العميل', s:'على ROX PD' },
@@ -628,7 +634,7 @@ function card(p, c, wide) {
   </div></article>`;
 }
 /* كل قسم يأخذ شكله حسب عدد منتجاته: 1–2 بطاقات عريضة، 3 بطاقة رئيسية + ثنتين، 4+ شبكة */
-$('#shop').innerHTML = CATS.filter(c => c.id !== 'bundle').map((c, i) => {
+$('#shop').innerHTML = CATS.filter(c => c.id !== 'bundle' && PRODUCTS.some(p => p.cat === c.id)).map((c, i) => {
   const list = PRODUCTS.filter(p => p.cat === c.id), wide = list.length <= 2;
   return `<section class="cat sec wrap" id="cat-${c.id}" style="--h:${c.h}">
     <div class="cat-h rv"><b class="cat-n lat">0${i + 1}</b>
