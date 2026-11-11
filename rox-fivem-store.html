@@ -5,283 +5,313 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ROX Store | متجر FiveM</title>
 <meta name="description" content="ROX Store — سكربتات، مابات MLO، سيارات وباقات جاهزة لسيرفرات FiveM.">
-<meta name="theme-color" content="#050506">
+<meta name="theme-color" content="#000000">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 96 50 50 96 4 50Z' fill='%23e1281c'/%3E%3Cpath d='M31 31 69 69M69 31 31 69' stroke='%23000' stroke-width='9'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Geist:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#050506;--s1:#0c0b0d;--s2:#141216;--s3:#1c1920;--fg:#f2eee8;--mute:#948e96;--line:#2a2630;
-  --red:#e1281c;--rt:#ff5a4d;--glow:rgba(225,40,28,.55);--ok:#4cc38a;--r:18px;color-scheme:dark
+  --bg:#000;--s1:#09090a;--s2:#111113;--s3:#18181b;--line:#232327;--line2:#34343a;
+  --fg:#fafafa;--mute:#a1a1aa;--dim:#71717a;--red:#e1281c;--rt:#ff4d3d;--glow:rgba(225,40,28,.5);--ok:#22c55e;--blurple:#5865f2;
+  --r:10px;color-scheme:dark
 }
 *{box-sizing:border-box;margin:0}
-html{scroll-behavior:smooth;scroll-padding-top:84px}
-body{background:var(--bg);color:var(--fg);font-family:Tajawal,system-ui,"Segoe UI",sans-serif;line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{background:var(--bg);color:var(--fg);font-family:Geist,Tajawal,system-ui,"Segoe UI",sans-serif;line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 body.lock{overflow:hidden}
-.lat{font-family:"Bebas Neue",Impact,"Arial Narrow",sans-serif;letter-spacing:.04em;font-weight:400}
+.lat{font-family:"Bebas Neue",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:.03em}
 a{color:inherit;text-decoration:none}
 button,input{font:inherit;color:inherit}
 button{background:none;border:0;cursor:pointer}
-:focus-visible{outline:2px solid var(--rt);outline-offset:3px;border-radius:6px}
+:focus-visible{outline:2px solid var(--rt);outline-offset:3px}
 [hidden]{display:none!important}
-.wrap{width:min(1240px,100% - 32px);margin-inline:auto}
+.wrap{width:min(1120px,100% - 32px);margin-inline:auto}
 .mute{color:var(--mute)}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
-/* ====== الخلفية ثلاثية الأبعاد ====== */
+/* الخلفية */
 #space{position:fixed;inset:0;width:100%;height:100%;z-index:-2;pointer-events:none}
-.aura{position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:radial-gradient(600px circle at var(--cx,50%) var(--cy,30%),rgba(225,40,28,.13),transparent 65%),
-             linear-gradient(180deg,transparent 0,rgba(5,5,6,.55) 55%,var(--bg) 100%)}
+.ember{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(70% 50% at 50% 110%,rgba(225,40,28,.12),transparent 70%)}
 body:after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opacity:.05;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* ====== الهيدر ====== */
-#hd{position:fixed;top:12px;inset-inline:0;z-index:50}
-.hd-in{display:flex;align-items:center;gap:18px;padding:10px 14px 10px 10px;border:1px solid var(--line);border-radius:16px;
-  background:rgba(12,11,13,.72);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);
-  box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05)}
-.logo{display:flex;align-items:center;gap:10px;font-size:28px;line-height:1;direction:ltr}
-.logo svg{width:34px;height:34px;filter:drop-shadow(0 0 10px var(--glow))}
-.logo b{color:var(--red);font-weight:400}
-.logo small{font-size:13px;letter-spacing:.3em;color:var(--mute);margin-top:3px}
-.nav{display:flex;gap:4px;margin-inline-start:auto}
-.nav a{padding:8px 14px;border-radius:10px;font-weight:700;font-size:15px;color:#cfc9d0;transition:.2s}
-.nav a:hover{background:var(--s3);color:#fff}
-.hbtn{display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--s2);font-weight:700;transition:.2s}
-.hbtn:hover{border-color:var(--red);box-shadow:0 0 22px -6px var(--glow)}
-.hbtn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.hbtn.dc svg{fill:currentColor;stroke:none}
-#cc{min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--red);font-size:13px;display:grid;place-items:center}
+/* الهيدر */
+#hd{position:fixed;top:0;inset-inline:0;z-index:50;border-bottom:1px solid transparent;transition:background .3s,border-color .3s}
+#hd.solid{background:rgba(0,0,0,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:var(--line)}
+.hd-in{display:flex;align-items:center;gap:34px;height:72px;padding-inline:clamp(16px,3vw,40px)}
+.logo{display:flex;align-items:center;gap:9px;direction:ltr;font:800 15px/1 Geist,sans-serif;letter-spacing:.02em}
+.logo svg{width:32px;height:32px;filter:drop-shadow(0 0 10px var(--glow))}
+.logo span{display:block;line-height:1.05}
+.logo b{color:var(--rt)}
+.nav{display:flex;gap:26px}
+.nav a{font-size:15px;font-weight:500;color:#d4d4d8;transition:color .2s}
+.nav a:hover{color:#fff}
+.icons{display:flex;align-items:center;gap:10px;margin-inline-start:auto}
+.ib{position:relative;display:grid;place-items:center;width:42px;height:40px;border-radius:8px;border:1px solid var(--line2);background:rgba(0,0,0,.4);transition:.2s}
+.ib:hover{border-color:#52525b;background:var(--s3)}
+.ib.dc{background:rgba(88,101,242,.16);border-color:rgba(88,101,242,.55);color:#8b95ff}
+.ib.dc:hover{background:rgba(88,101,242,.28)}
+.ib.dc svg{width:20px;height:20px;fill:currentColor}
+.ib.cart{color:var(--rt)}
+#cc{position:absolute;top:-7px;inset-inline-end:-7px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font:700 11px/19px Geist,sans-serif;text-align:center}
+#cc[data-n="0"]{display:none}
 #menuBtn{display:none}
 
-/* ====== الأزرار ====== */
-.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 28px;border-radius:14px;font-weight:900;font-size:17px;transition:transform .2s,box-shadow .2s,background .2s}
-.btn.red{background:linear-gradient(180deg,#ff3b2e,#c21c12);box-shadow:0 6px 0 #7d0f08,0 18px 40px -8px var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
-.btn.red:hover{transform:translateY(-2px);box-shadow:0 8px 0 #7d0f08,0 24px 50px -8px var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
-.btn.red:active{transform:translateY(4px);box-shadow:0 2px 0 #7d0f08,0 8px 20px -8px var(--glow)}
-.btn.line{border:1px solid var(--line);background:rgba(20,18,22,.7)}
-.btn.line:hover{border-color:#5a5360;background:var(--s3)}
+/* الأزرار */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;height:56px;padding:0 26px;font-weight:800;font-size:17px;border-radius:2px;transition:transform .2s,background .2s,box-shadow .2s,border-color .2s}
+.btn.white{background:#fff;color:#000}
+.btn.white:hover{transform:translateY(-2px);box-shadow:0 14px 40px -12px rgba(255,255,255,.45)}
+.btn.line{border:1px solid #52525b;background:rgba(0,0,0,.35)}
+.btn.line:hover{border-color:#a1a1aa;background:rgba(255,255,255,.06)}
+.btn.red{background:var(--red);color:#fff;box-shadow:0 10px 40px -10px var(--glow)}
+.btn.red:hover{background:#f0331f;transform:translateY(-2px);box-shadow:0 16px 50px -10px var(--glow)}
+.btn .i{width:20px;height:20px}
+.arr{transition:transform .2s}
+.btn:hover .arr,.more:hover .i{transform:translateX(-4px)}
 
-/* ====== الهيرو ====== */
-.hero{position:relative;min-height:100svh;display:grid;grid-template-columns:1.05fr 1fr;align-items:center;gap:20px;padding:120px 0 70px}
-.kicker{display:inline-flex;align-items:center;gap:10px;padding:6px 14px;border:1px solid var(--line);border-radius:99px;background:rgba(20,18,22,.7);font-size:15px;color:#d9d2da;direction:ltr}
-.kicker i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(76,195,138,.2);animation:pulse 2s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 9px rgba(76,195,138,0)}}
-.hero h1{font-size:clamp(40px,6.2vw,84px);line-height:1.08;font-weight:900;margin:22px 0 18px;text-wrap:balance}
-.hero h1 em{font-style:normal;color:transparent;background:linear-gradient(100deg,#ff8a7f,var(--red) 45%,#ff8a7f 90%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;animation:shine 5s linear infinite;
-  filter:drop-shadow(0 0 24px rgba(225,40,28,.45))}
-@keyframes shine{to{background-position:-200% 0}}
-.hero p.lead{font-size:clamp(16px,1.5vw,20px);color:#bdb6be;max-width:520px}
-.cta{display:flex;flex-wrap:wrap;gap:14px;margin:30px 0 34px}
-.facts{display:flex;flex-wrap:wrap;gap:10px 28px}
-.facts div{display:flex;flex-direction:column;align-items:flex-start;line-height:1.25}
-.facts b{font-size:34px;color:#fff;direction:ltr}
-.facts span{font-size:14px;color:var(--mute)}
+.eyebrow{display:block;direction:ltr;text-align:right;font:600 13px/1 Geist,sans-serif;letter-spacing:.32em;color:var(--rt);margin-bottom:14px}
+h2{font-size:clamp(30px,4vw,44px);font-weight:800;line-height:1.2;letter-spacing:-.01em}
+h2 em{font-style:normal;color:var(--rt)}
 
-/* المشهد 3D */
-.stage{perspective:1200px;height:min(560px,70vw);display:grid;place-items:center;direction:ltr}
-.scene{position:relative;width:min(440px,82vw);aspect-ratio:1/1;transform-style:preserve-3d;
-  transform:rotateX(calc(8deg + var(--ty,0)*-12deg)) rotateY(calc(-18deg + var(--tx,0)*18deg));transition:transform .25s ease-out}
-.scene>*{position:absolute;transform-style:preserve-3d}
-.bigrox{inset:auto 0 62% 0;text-align:center;font-size:clamp(150px,22vw,250px);line-height:.8;color:#151216;transform:translateZ(-180px) scale(1.25);
-  text-shadow:0 1px 0 #2a0b08,0 2px 0 #3a0e0a,0 3px 0 #4a110c,0 4px 0 #5a140e,0 5px 0 #6a1710,0 6px 0 #7a1a12,0 0 60px rgba(225,40,28,.35);-webkit-text-stroke:1px rgba(225,40,28,.5)}
-.ring{inset:-6%;border-radius:50%;border:1px dashed rgba(225,40,28,.55);transform:translateZ(-60px) rotateX(72deg);animation:spin 26s linear infinite}
-.ring.r2{inset:10%;border:1px solid rgba(255,255,255,.12);border-top-color:var(--red);transform:translateZ(-20px) rotateX(72deg);animation-duration:14s;animation-direction:reverse}
-@keyframes spin{to{transform:translateZ(var(--z,-60px)) rotateX(72deg) rotateZ(360deg)}}
-.ring.r2{--z:-20px}
-.pane{border-radius:18px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(160deg,rgba(34,30,38,.92),rgba(12,11,13,.92));
-  box-shadow:0 40px 80px rgba(0,0,0,.65),0 0 0 1px rgba(225,40,28,.15),inset 0 1px 0 rgba(255,255,255,.12)}
-.hud{inset:14% 4% 20% 6%;transform:translateZ(30px);padding:14px;overflow:hidden;animation:bob 7s ease-in-out infinite}
-@keyframes bob{50%{translate:0 -10px}}
-.hud:before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 70% 0,rgba(225,40,28,.35),transparent 60%),repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px)}
-.hud-top{position:relative;display:flex;justify-content:space-between;font-size:15px;color:#d8d2d9}
-.hud-top b{color:var(--ok);font-weight:400}
-.road{position:absolute;inset:38px 14px 62px;border-radius:10px;overflow:hidden;background:linear-gradient(180deg,#1a0f14 0,#2b0d0c 48%,#0b0a0c 50%,#131116 100%)}
-.road:before{content:"";position:absolute;left:50%;bottom:0;width:200%;height:50%;transform:translateX(-50%) perspective(160px) rotateX(62deg);transform-origin:bottom;
-  background:repeating-linear-gradient(90deg,transparent 0 48%,rgba(255,255,255,.5) 48% 52%,transparent 52% 100%),repeating-linear-gradient(0deg,rgba(225,40,28,.35) 0 2px,transparent 2px 26px);background-size:100% 100%,100% 26px;animation:drive 1s linear infinite}
-@keyframes drive{to{background-position:0 0,0 26px}}
-.road:after{content:"";position:absolute;left:50%;top:50%;width:120px;height:120px;border-radius:50%;transform:translate(-50%,-62%);background:radial-gradient(circle,#ff6b5f 0,#e1281c 45%,transparent 70%);opacity:.8;filter:blur(2px)}
-.mini{position:absolute;left:14px;bottom:12px;width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:conic-gradient(from 40deg,#1e2a22,#152018,#243528,#1e2a22)}
-.mini:after{content:"";position:absolute;inset:50% auto auto 50%;width:0;height:0;border:5px solid transparent;border-bottom:10px solid #fff;transform:translate(-50%,-60%) rotate(25deg)}
-.bars{position:absolute;left:68px;bottom:16px;display:grid;gap:5px;width:36%}
-.bars i{height:7px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}
-.bars i:after{content:"";display:block;height:100%;width:var(--w);background:var(--c);border-radius:4px}
-.speed{position:absolute;right:16px;bottom:8px;text-align:right;line-height:.85}
-.speed b{font-size:44px;font-weight:400;color:#fff;text-shadow:0 0 18px var(--glow)}
-.speed span{font-size:13px;color:var(--mute);display:block}
-.code{left:-6%;bottom:2%;width:56%;padding:12px 14px;transform:translateZ(120px) rotateY(10deg);font:12px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#b9b2ba;animation:bob 6s ease-in-out -2s infinite}
-.code u{text-decoration:none;color:var(--rt)}.code s{text-decoration:none;color:#8fd3a8}.code q{quotes:none;color:#e9c46a}
-.chip{padding:7px 14px;border-radius:99px;font-size:17px;background:rgba(20,18,22,.9);border:1px solid rgba(255,255,255,.16);box-shadow:0 14px 30px rgba(0,0,0,.6);animation:bob 5s ease-in-out infinite}
-.chip b{color:var(--red);font-weight:400}
-.c1{top:4%;left:2%;transform:translateZ(150px)}
-.c2{top:22%;right:-8%;transform:translateZ(190px);animation-delay:-1.5s}
-.c3{bottom:26%;right:-4%;transform:translateZ(110px);animation-delay:-3s}
-.gem{top:-6%;right:8%;width:26%;transform:translateZ(230px);animation:bob 4.5s ease-in-out -1s infinite;filter:drop-shadow(0 20px 30px rgba(225,40,28,.55))}
-.ms{bottom:6%;right:6%;transform:translateZ(170px);padding:10px 16px;border-radius:14px;background:linear-gradient(180deg,#ff3b2e,#b3170e);box-shadow:0 20px 40px -6px var(--glow);line-height:1;animation:bob 5.5s ease-in-out -2.5s infinite}
-.ms b{font-size:30px;font-weight:400;display:block}.ms span{font-size:12px;letter-spacing:.14em;opacity:.85}
+/* الهيرو */
+.hero{position:relative;min-height:100svh;display:grid;place-items:center;text-align:center;overflow:hidden;isolation:isolate;padding:110px 16px 120px}
+.hero:before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(60% 55% at 50% 45%,rgba(225,40,28,.22),transparent 70%),radial-gradient(120% 80% at 50% 0,#140707 0,transparent 60%)}
+.hero:after{content:"";position:absolute;inset:auto 0 0;height:40%;z-index:-1;background:linear-gradient(transparent,var(--bg))}
+.beams{position:absolute;inset:-30% -20%;z-index:-1;pointer-events:none;filter:blur(10px);
+  background:
+   linear-gradient(105deg,transparent 0 16%,rgba(255,255,255,.07) 17% 21%,transparent 22% 100%),
+   linear-gradient(105deg,transparent 0 33%,rgba(225,40,28,.18) 34% 36%,transparent 37% 100%),
+   linear-gradient(105deg,transparent 0 58%,rgba(255,255,255,.06) 59% 64%,transparent 65% 100%),
+   linear-gradient(105deg,transparent 0 77%,rgba(255,120,80,.13) 78% 80%,transparent 81% 100%);
+  animation:beams 14s ease-in-out infinite alternate}
+@keyframes beams{to{transform:translateX(6%)}}
+.skyline{position:absolute;inset:auto 0 0;width:100%;height:42%;z-index:-1;opacity:.6;pointer-events:none}
+.scan{position:absolute;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
+.hero-c{max-width:900px}
+.hero .eyebrow{text-align:center;margin-bottom:22px}
+.t3d{perspective:900px;margin:0 0 26px}
+.t3d h1{display:inline-block;direction:ltr;font:900 clamp(54px,11.5vw,150px)/.95 Geist,sans-serif;letter-spacing:-.035em;color:#fff;
+  transform:rotateX(calc(var(--ty,0)*-14deg)) rotateY(calc(var(--tx,0)*20deg));transition:transform .2s ease-out;
+  text-shadow:0 1px 0 #d9d9d9,0 2px 0 #b52015,0 3px 0 #a01c12,0 4px 0 #8b1810,0 5px 0 #76140d,0 6px 0 #61100b,0 7px 0 #4c0c08,0 8px 0 #380906,0 18px 26px rgba(0,0,0,.8),0 0 80px rgba(225,40,28,.35)}
+.t3d h1 b{font-weight:900;color:var(--rt)}
+.lead{font-size:clamp(17px,1.8vw,21px);color:#d4d4d8;max-width:620px;margin:0 auto}
+.cta{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin:40px 0 64px}
+.dots{list-style:none;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 44px;color:var(--mute);font-size:15px}
+.dots li{display:flex;align-items:center;gap:9px}
+.dots li:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.mouse{position:absolute;bottom:26px;left:50%;width:24px;height:38px;margin-left:-12px;border:2px solid #52525b;border-radius:12px}
+.mouse:after{content:"";position:absolute;top:7px;left:50%;width:3px;height:8px;margin-left:-1.5px;border-radius:2px;background:#a1a1aa;animation:wheel 1.6s ease-in-out infinite}
+@keyframes wheel{60%{transform:translateY(10px);opacity:0}}
 
-/* ====== الشريط المتحرك ====== */
-.tickw{overflow:hidden;padding:18px 0}
-.tick{border-block:1px solid var(--line);background:rgba(12,11,13,.8);overflow:hidden;direction:ltr;transform:rotate(-1.2deg) scale(1.03)}
-.tick span,.tick b{padding:0 22px}
-.tick div{display:flex;width:max-content;padding:14px 0;font-size:24px;color:#6f6973;animation:mq 34s linear infinite}
-.tick b{color:var(--red);font-weight:400}
-@keyframes mq{to{transform:translateX(-50%)}}
-
-/* ====== الأقسام ====== */
-.sec{padding:96px 0 20px}
-.sh{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:18px;margin-bottom:34px}
-.eyebrow{font-size:17px;color:var(--red);direction:ltr;display:block;text-align:right;letter-spacing:.2em}
-h2{font-size:clamp(30px,4vw,50px);font-weight:900;line-height:1.15}
-h2 em{font-style:normal;color:var(--red)}
+/* الأقسام */
+.sec{padding:110px 0 0}
+.sh{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:18px;margin-bottom:30px}
+.more{display:flex;align-items:center;gap:8px;color:var(--mute);font-size:15px}
+.more:hover{color:#fff}.more .i{transition:transform .2s}
 
 /* الأبعاد الخمسة */
-.dims{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;perspective:1400px}
-.dim{position:relative;min-height:230px;padding:18px;border-radius:var(--r);border:1px solid var(--line);background:linear-gradient(170deg,var(--s3),var(--s1));overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;text-align:start;
-  transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s;transform-origin:bottom}
-.dim:hover,.dim.on{transform:translateY(-10px) rotateX(8deg);border-color:var(--red);box-shadow:0 30px 50px -20px var(--glow)}
-.dim .n{position:absolute;top:2px;left:14px;font-size:92px;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.14);direction:ltr;transition:.3s}
-.dim:hover .n,.dim.on .n{-webkit-text-stroke-color:var(--red);text-shadow:0 0 30px var(--glow)}
-.dim svg{width:44px;height:44px;stroke:var(--rt);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:auto}
-.dim h3{font-size:21px;font-weight:900}
-.dim small{color:var(--mute);font-size:14px;direction:ltr;text-align:right}
-.dim span{font-size:13px;color:#cfc9d0;margin-top:6px}
+.dims{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;perspective:1200px}
+.dim{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:18px;border-radius:var(--r);border:1px solid var(--line);background:linear-gradient(170deg,var(--s3),var(--s1));text-align:right;overflow:hidden;transform-origin:bottom;transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s}
+.dim:hover,.dim.on{transform:translateY(-8px) rotateX(10deg);border-color:var(--red);box-shadow:0 30px 40px -24px var(--glow)}
+.dim .n{position:absolute;top:6px;left:14px;font-size:64px;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.14);transition:.3s}
+.dim:hover .n,.dim.on .n{-webkit-text-stroke-color:var(--rt);text-shadow:0 0 24px var(--glow)}
+.dim svg{width:34px;height:34px;color:var(--rt);margin-bottom:22px}
+.dim small{direction:ltr;font:600 11px/1.6 Geist,sans-serif;letter-spacing:.24em;color:var(--dim)}
+.dim h3{font-size:18px;font-weight:800}
+.dim span{font-size:13px;color:var(--mute)}
 
 /* المنتجات */
-.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chips button{padding:8px 16px;border-radius:99px;border:1px solid var(--line);background:var(--s1);font-weight:700;font-size:15px;color:#cfc9d0;transition:.2s}
-.chips button:hover{border-color:#5a5360}
-.chips button[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 8px 24px -8px var(--glow)}
-.search{position:relative}
-.search input{height:42px;width:210px;padding:0 40px 0 14px;border-radius:99px;border:1px solid var(--line);background:var(--s1)}
-.search input:focus{outline:0;border-color:var(--red)}
-.search svg{position:absolute;inset-inline-start:13px;top:12px;width:18px;height:18px;stroke:var(--mute);fill:none;stroke-width:2;stroke-linecap:round}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px}
-.pc{perspective:1000px}
-.pc-in{position:relative;height:100%;display:flex;flex-direction:column;border-radius:var(--r);border:1px solid var(--line);background:linear-gradient(170deg,var(--s3),var(--s1) 60%);
-  transform-style:preserve-3d;transform:rotateX(calc(var(--ty,0)*-13deg)) rotateY(calc(var(--tx,0)*13deg));transition:transform .18s ease-out,border-color .3s,box-shadow .3s}
-.pc:hover .pc-in{border-color:rgba(225,40,28,.7);box-shadow:0 40px 60px -30px var(--glow),0 30px 50px rgba(0,0,0,.5)}
-.pc-in:after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
-  background:radial-gradient(340px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.14),transparent 60%)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.chips button{padding:7px 15px;border-radius:99px;border:1px solid var(--line);background:var(--s1);font-weight:600;font-size:14px;color:#d4d4d8;transition:.2s}
+.chips button:hover{border-color:var(--line2)}
+.chips button[aria-pressed=true]{background:#fff;border-color:#fff;color:#000}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.pc{perspective:1100px}
+.pc-in{position:relative;height:100%;display:flex;flex-direction:column;border-radius:var(--r);border:1px solid var(--line);background:var(--s2);transform-style:preserve-3d;
+  transform:rotateX(calc(var(--ty,0)*-10deg)) rotateY(calc(var(--tx,0)*12deg));transition:transform .18s ease-out,border-color .3s,box-shadow .3s}
+.pc:hover .pc-in{border-color:rgba(255,77,61,.65);box-shadow:0 40px 60px -34px var(--glow),0 24px 40px rgba(0,0,0,.6)}
+.pc-in:after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(320px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.12),transparent 60%)}
 .pc:hover .pc-in:after{opacity:1}
-.art{position:relative;aspect-ratio:16/10;margin:10px 10px 0;border-radius:12px;overflow:hidden;
-  background:radial-gradient(90% 90% at 50% 110%,hsl(var(--h) 80% 38%/.85),transparent 70%),linear-gradient(180deg,hsl(var(--h) 30% 9%),hsl(var(--h) 45% 14%))}
-.art:before{content:"";position:absolute;inset:50% -40% -10%;background:repeating-linear-gradient(90deg,hsl(var(--h) 90% 65%/.35) 0 1px,transparent 1px 28px),repeating-linear-gradient(0deg,hsl(var(--h) 90% 65%/.35) 0 1px,transparent 1px 18px);transform:perspective(200px) rotateX(64deg);transform-origin:top}
-.glyph{position:absolute;top:10px;inset-inline:10px;aspect-ratio:16/10;display:grid;place-items:center;pointer-events:none;transform:translateZ(36px)}
-.glyph svg{width:62%;max-height:84%;filter:drop-shadow(0 18px 18px rgba(0,0,0,.55));transition:transform .4s cubic-bezier(.2,.8,.2,1)}
-.pc:hover .glyph svg{transform:scale(1.12) translateY(-4px)}
-.bdg{position:absolute;top:20px;inset-inline-start:20px;transform:translateZ(30px);padding:3px 10px;border-radius:8px;font-size:14px;background:var(--red);box-shadow:0 8px 18px -4px var(--glow)}
+.art{position:relative;aspect-ratio:16/9;border-radius:var(--r) var(--r) 0 0;overflow:hidden;
+  background:radial-gradient(90% 90% at 50% 115%,hsl(var(--h) 85% 45%/.9),transparent 70%),linear-gradient(180deg,hsl(var(--h) 35% 12%),hsl(var(--h) 45% 7%))}
+.art:before{content:"";position:absolute;inset:55% -40% -10%;background:repeating-linear-gradient(90deg,hsl(var(--h) 90% 70%/.3) 0 1px,transparent 1px 30px),repeating-linear-gradient(0deg,hsl(var(--h) 90% 70%/.3) 0 1px,transparent 1px 18px);transform:perspective(200px) rotateX(64deg);transform-origin:top}
+.art-t{position:absolute;inset:auto 0 8px;text-align:center;direction:ltr;font-size:clamp(46px,5vw,62px);line-height:1;color:transparent;-webkit-text-stroke:1px hsl(var(--h) 90% 78%/.5);white-space:nowrap}
+.glyph{position:absolute;top:0;inset-inline:0;aspect-ratio:16/9;display:grid;place-items:center;pointer-events:none;transform:translateZ(34px)}
+.glyph svg{width:44%;max-height:66%;margin-top:-9%;filter:drop-shadow(0 18px 18px rgba(0,0,0,.55));transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.pc:hover .glyph svg{transform:scale(1.1) translateY(-6px)}
+.glyph{transition:opacity .3s}
+@media (hover:hover){.pc:hover .glyph,.pc:focus-within .glyph{opacity:.12}}
+.bdg{position:absolute;top:12px;inset-inline-start:12px;transform:translateZ(26px);padding:2px 9px;border-radius:4px;font-size:13px;font-weight:700;background:var(--red)}
 .bdg.new{background:#fff;color:#000}
-.pc-b{display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px;flex:1;transform:translateZ(14px)}
-.cat{font-size:14px;color:var(--rt);direction:ltr;text-align:right;letter-spacing:.16em}
-.pc h3{font-size:20px;font-weight:900;line-height:1.3}
-.pc p{font-size:14.5px;color:var(--mute);flex:1}
-.fw{display:flex;gap:6px;flex-wrap:wrap;direction:ltr;justify-content:flex-end}
-.fw span{padding:1px 9px;border-radius:6px;border:1px solid var(--line);font-size:13px;color:#cfc9d0;background:rgba(0,0,0,.3)}
-.row{display:flex;align-items:center;gap:10px;margin-top:6px}
-.price{font-size:32px;line-height:1;direction:ltr}
-.row s{color:var(--mute);font-size:15px;direction:ltr}
-.add{margin-inline-start:auto;height:42px;padding:0 16px;border-radius:11px;background:var(--s3);border:1px solid var(--line);font-weight:900;font-size:15px;transition:.2s;display:flex;align-items:center;gap:6px}
-.add:hover{background:var(--red);border-color:var(--red);box-shadow:0 10px 26px -8px var(--glow)}
-.add.in{background:rgba(76,195,138,.14);border-color:var(--ok);color:var(--ok)}
+.hov{position:absolute;inset:0 0 auto;aspect-ratio:16/9;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:14px;border-radius:var(--r) var(--r) 0 0;
+  background:linear-gradient(transparent 15%,rgba(0,0,0,.9));opacity:0;transition:opacity .3s;transform:translateZ(40px)}
+.pc:hover .hov,.pc:focus-within .hov{opacity:1}
+.hov p{font-size:14px;color:#e4e4e7;line-height:1.55}
+.hov .fw{display:flex;gap:6px;direction:ltr;justify-content:flex-end;flex-wrap:wrap}
+.hov .fw span{padding:0 7px;border-radius:4px;border:1px solid rgba(255,255,255,.25);font:600 11px/20px Geist,sans-serif}
+.add{align-self:flex-start;display:flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:2px;background:#fff;color:#000;font-weight:800;font-size:14px;transition:.2s}
+.add:hover{background:var(--rt);color:#fff}
+.add.in{background:var(--ok);color:#000}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;transform:translateZ(14px)}
+.bar h3{font-size:16px;font-weight:700;line-height:1.35}
+.bar small{display:block;direction:ltr;text-align:right;font:600 11px/1.5 Geist,sans-serif;letter-spacing:.18em;color:var(--dim)}
+.price{flex:none;display:flex;flex-direction:column;align-items:flex-end;direction:ltr;color:#d4d4d8;font-size:15px;line-height:1.3}
+.price s{color:var(--dim);font-size:12px}
 .empty{grid-column:1/-1;text-align:center;padding:50px 0;color:var(--mute)}
 
-/* الباقة */
-.bundle{position:relative;display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center;padding:44px;border-radius:26px;border:1px solid rgba(225,40,28,.45);overflow:hidden;
-  background:radial-gradient(80% 140% at 0% 50%,rgba(225,40,28,.32),transparent 60%),linear-gradient(160deg,var(--s3),var(--s1))}
-.bundle:before{content:"BUNDLE";position:absolute;inset-inline-end:-10px;bottom:-56px;font:400 230px/1 "Bebas Neue",Impact,sans-serif;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.06);pointer-events:none}
-.bundle ul{list-style:none;padding:0;display:grid;gap:8px;margin:18px 0 24px}
-.bundle li{display:flex;gap:10px;align-items:center}
-.bundle li:before{content:"";flex:none;width:18px;height:18px;border-radius:50%;background:var(--red) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='m5 9 3 3 5-6' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
-.bprice{display:flex;align-items:baseline;gap:12px;direction:ltr;justify-content:flex-end;margin-bottom:16px}
-.bprice b{font-size:64px;line-height:1;font-weight:400}.bprice s{color:var(--mute);font-size:22px}
-.stack{position:relative;height:300px;perspective:1000px;direction:ltr}
-.stack i{position:absolute;inset:18% 22%;border-radius:16px;border:1px solid rgba(255,255,255,.14);display:grid;place-items:center;font:400 34px "Bebas Neue",Impact,sans-serif;font-style:normal;color:#fff;
-  background:linear-gradient(160deg,hsl(var(--h) 60% 26%),hsl(var(--h) 50% 9%));box-shadow:0 30px 50px rgba(0,0,0,.6);
-  transform:rotateX(56deg) rotateZ(-34deg) translateZ(calc(var(--i)*46px));animation:lift 5s ease-in-out infinite;animation-delay:calc(var(--i)*-.5s)}
-@keyframes lift{50%{transform:rotateX(56deg) rotateZ(-34deg) translateZ(calc(var(--i)*64px))}}
-.clock{display:flex;gap:8px;direction:ltr;justify-content:flex-end;margin-top:22px}
-.clock div{min-width:62px;padding:8px 6px;border-radius:12px;background:rgba(0,0,0,.45);border:1px solid var(--line);text-align:center;line-height:1.1}
-.clock b{font-size:30px;font-weight:400;display:block}.clock span{font-size:12px;color:var(--mute)}
+/* القطعة الرئيسية */
+.flag{position:relative;margin-top:110px;padding:110px 0;overflow:hidden;isolation:isolate;border-block:1px solid var(--line);background:#040404}
+.flag:before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(50% 80% at 22% 50%,rgba(225,40,28,.25),transparent 70%)}
+.flag-in{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.flag h2{font-size:clamp(32px,4.4vw,52px);margin-bottom:16px}
+.flag p{color:#d4d4d8;max-width:470px;font-size:17px}
+.flag ul{list-style:none;padding:0;display:grid;gap:8px;margin:22px 0 28px;color:#d4d4d8}
+.flag li{display:flex;gap:12px;align-items:center}
+.flag li:before{content:"";flex:none;width:6px;height:6px;background:var(--rt);transform:rotate(45deg)}
+.flag-cta{display:flex;flex-wrap:wrap;align-items:center;gap:22px}
+.flag-cta a{color:var(--mute);font-size:15px}.flag-cta a:hover{color:#fff}
+.priceTag{display:flex;align-items:baseline;gap:12px;direction:ltr;justify-content:flex-end;margin-bottom:18px}
+.priceTag b{font:800 46px/1 Geist,sans-serif}.priceTag s{color:var(--dim);font-size:20px}
+.stack{position:relative;height:380px;perspective:1100px;direction:ltr}
+.stack i{position:absolute;inset:22% 18%;border-radius:12px;border:1px solid rgba(255,255,255,.16);display:grid;place-items:center;font:400 38px "Bebas Neue",Impact,sans-serif;letter-spacing:.06em;color:#fff;
+  background:linear-gradient(160deg,hsl(var(--h) 60% 28%),hsl(var(--h) 50% 9%));box-shadow:0 30px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.12);
+  transform:rotateX(58deg) rotateZ(-36deg) translateZ(calc(var(--i)*44px));animation:lift 5s ease-in-out infinite;animation-delay:calc(var(--i)*-.5s)}
+@keyframes lift{50%{transform:rotateX(58deg) rotateZ(-36deg) translateZ(calc(var(--i)*62px))}}
+.clock{display:flex;gap:8px;direction:ltr;justify-content:flex-end}
+.clock div{min-width:60px;padding:8px 6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center;line-height:1.1}
+.clock b{font:700 24px Geist,sans-serif;display:block}.clock span{font-size:10px;letter-spacing:.14em;color:var(--dim)}
 
-/* المميزات + الخطوات */
-.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.feat{padding:24px;border-radius:var(--r);border:1px solid var(--line);background:rgba(12,11,13,.75);transition:.3s}
-.feat:hover{transform:translateY(-6px);border-color:#5a5360}
-.feat svg{width:38px;height:38px;stroke:var(--rt);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:14px}
-.feat h3{font-size:19px;font-weight:900;margin-bottom:4px}
-.feat p{color:var(--mute);font-size:15px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s}
-.step{position:relative;padding:26px 24px;border-radius:var(--r);background:linear-gradient(170deg,var(--s3),var(--s1));border:1px solid var(--line);counter-increment:s}
-.step:before{content:"0" counter(s);font:400 58px/1 "Bebas Neue",Impact,sans-serif;color:var(--red);display:block;margin-bottom:8px;text-shadow:0 0 30px var(--glow)}
-.step h3{font-size:19px;font-weight:900}.step p{color:var(--mute);font-size:15px}
+/* سيرفر العرض */
+.live{position:relative;display:grid;grid-template-columns:1fr 1.05fr;align-items:center;gap:20px;padding:70px;border:1px solid var(--line);border-radius:4px;background:#000;overflow:hidden}
+.live:after{content:"";position:absolute;top:0;left:0;width:90px;height:110px;opacity:.6;background:radial-gradient(circle,var(--rt) 1.5px,transparent 2px) 0 0/14px 14px;-webkit-mask:linear-gradient(135deg,#000,transparent 70%);mask:linear-gradient(135deg,#000,transparent 70%)}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:99px;border:1px solid rgba(255,77,61,.45);background:rgba(225,40,28,.14);color:var(--rt);font:700 13px/1 Geist,sans-serif;letter-spacing:.08em;direction:ltr}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--rt);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.live h2{font-size:clamp(40px,5.6vw,72px);font-weight:900;line-height:1.1;margin:20px 0 18px}
+.live h2 em{display:block}
+.live p{color:#d4d4d8;max-width:440px;font-size:17px}
+.live .cta{margin:30px 0 0;flex-direction:column;align-items:flex-start;gap:14px}
+.stage{perspective:1200px;height:440px;display:grid;place-items:center;direction:ltr}
+.scene{position:relative;width:min(400px,80vw);aspect-ratio:1/1;transform-style:preserve-3d;transform:rotateX(calc(8deg + var(--ty,0)*-10deg)) rotateY(calc(18deg + var(--tx,0)*16deg));transition:transform .25s ease-out}
+.scene>*{position:absolute;transform-style:preserve-3d}
+.ring{inset:-4%;border-radius:50%;border:1px dashed rgba(225,40,28,.5);transform:translateZ(-60px) rotateX(72deg);animation:spin 26s linear infinite}
+@keyframes spin{to{transform:translateZ(-60px) rotateX(72deg) rotateZ(360deg)}}
+.pane{border-radius:12px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(160deg,rgba(30,30,34,.95),rgba(10,10,11,.95));box-shadow:0 40px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.1)}
+.hud{inset:14% 2% 22% 4%;transform:translateZ(30px);padding:12px;overflow:hidden;animation:bob 7s ease-in-out infinite}
+@keyframes bob{50%{translate:0 -10px}}
+.hud-top{position:relative;display:flex;justify-content:space-between;font-size:15px;color:#d4d4d8}
+.hud-top b{color:var(--ok);font-weight:400}
+.road{position:absolute;inset:36px 12px 60px;border-radius:8px;overflow:hidden;background:linear-gradient(180deg,#160d12 0,#2b0d0c 48%,#0b0a0c 50%,#131116 100%)}
+.road:before{content:"";position:absolute;left:50%;bottom:0;width:200%;height:50%;transform:translateX(-50%) perspective(160px) rotateX(62deg);transform-origin:bottom;
+  background:repeating-linear-gradient(90deg,transparent 0 48%,rgba(255,255,255,.5) 48% 52%,transparent 52% 100%),repeating-linear-gradient(0deg,rgba(225,40,28,.35) 0 2px,transparent 2px 26px);animation:drive 1s linear infinite}
+@keyframes drive{to{background-position:0 0,0 26px}}
+.road svg{position:absolute;inset:auto 0 50%;width:100%;height:60%}
+.mini{position:absolute;left:12px;bottom:10px;width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:conic-gradient(from 40deg,#1e2a22,#152018,#243528,#1e2a22)}
+.mini:after{content:"";position:absolute;inset:50% auto auto 50%;border:5px solid transparent;border-bottom:10px solid #fff;transform:translate(-50%,-60%) rotate(25deg)}
+.bars{position:absolute;left:64px;bottom:14px;display:grid;gap:5px;width:36%}
+.bars i{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.bars i:after{content:"";display:block;height:100%;width:var(--w);background:var(--c)}
+.speed{position:absolute;right:14px;bottom:6px;text-align:right;line-height:.85}
+.speed b{font-size:42px;font-weight:400;color:#fff;text-shadow:0 0 18px var(--glow)}
+.speed span{font-size:12px;color:var(--mute);display:block}
+.code{left:-8%;bottom:2%;width:58%;padding:11px 13px;transform:translateZ(120px) rotateY(-8deg);font:12px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a1a1aa;animation:bob 6s ease-in-out -2s infinite}
+.code u{text-decoration:none;color:var(--rt)}.code s{text-decoration:none;color:#86efac}.code q{quotes:none;color:#fcd34d}
+.chip{padding:6px 13px;border-radius:99px;font-size:16px;background:rgba(17,17,19,.92);border:1px solid rgba(255,255,255,.16);box-shadow:0 14px 30px rgba(0,0,0,.6);animation:bob 5s ease-in-out infinite}
+.chip b{color:var(--rt);font-weight:400}
+.c1{top:4%;left:4%;transform:translateZ(150px)}.c2{top:20%;right:-6%;transform:translateZ(190px);animation-delay:-1.5s}
+.ms{bottom:8%;right:2%;transform:translateZ(170px);padding:10px 14px;border-radius:8px;background:var(--red);box-shadow:0 20px 40px -6px var(--glow);line-height:1;animation:bob 5.5s ease-in-out -2.5s infinite}
+.ms b{font-size:28px;font-weight:400;display:block}.ms span{font-size:11px;letter-spacing:.14em;opacity:.85}
+
+/* الاستوديو */
+.studio{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
+.studio p{color:#d4d4d8;font-size:16.5px;margin-top:18px}
+.stats{display:flex;gap:46px;margin-top:34px}
+.stats b{display:block;font:800 40px/1 Geist,sans-serif;direction:ltr;text-align:right}
+.stats span{font-size:14px;color:var(--mute)}
+.feats{display:grid;gap:12px}
+.feat{display:flex;gap:16px;padding:20px;border-radius:4px;border:1px solid var(--line);background:rgba(17,17,19,.85);transition:border-color .25s,transform .25s}
+.feat:hover{border-color:var(--line2);transform:translateX(-4px)}
+.feat .ic{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:4px;background:rgba(225,40,28,.14);color:var(--rt)}
+.feat .ic svg{width:20px;height:20px}
+.feat h3{font-size:16px;font-weight:700;margin-bottom:2px}
+.feat p{margin:0;font-size:14.5px;color:var(--mute)}
+
+/* الآراء */
+.revs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.rev{display:flex;flex-direction:column;gap:20px;padding:24px;border-radius:4px;border:1px solid var(--line);background:rgba(17,17,19,.85)}
+.rev q{flex:1;color:#e4e4e7;font-size:16px;quotes:"“" "”"}
+.who{display:flex;align-items:center;gap:12px}
+.who i{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--s3);border:1px solid var(--line2);font:700 15px Geist,Tajawal,sans-serif;color:var(--rt)}
+.who b{display:block;font-size:14px}.who small{color:var(--dim);font-size:13px}
 
 /* الأسئلة */
-.faq{display:grid;gap:10px;max-width:860px}
-.faq details{border:1px solid var(--line);border-radius:14px;background:rgba(12,11,13,.8);padding:0 20px}
-.faq details[open]{border-color:rgba(225,40,28,.6)}
-.faq summary{list-style:none;cursor:pointer;padding:18px 0;font-weight:900;font-size:17px;display:flex;justify-content:space-between;gap:14px;align-items:center}
+.faq{display:grid;gap:10px;max-width:820px}
+.faq details{border:1px solid var(--line);border-radius:4px;background:rgba(17,17,19,.85);padding:0 20px;transition:border-color .2s}
+.faq details[open]{border-color:var(--line2)}
+.faq summary{list-style:none;cursor:pointer;padding:18px 0;font-weight:700;font-size:16.5px;display:flex;justify-content:space-between;gap:14px;align-items:center}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary:after{content:"+";font:400 30px/1 "Bebas Neue",Impact,sans-serif;color:var(--red);transition:transform .25s}
+.faq summary:after{content:"+";font:300 26px/1 Geist,sans-serif;color:var(--rt);transition:transform .25s}
 .faq details[open] summary:after{transform:rotate(45deg)}
-.faq p{padding:0 0 18px;color:#bdb6be}
+.faq p{padding:0 0 18px;color:var(--mute)}
 
 /* ديسكورد + الفوتر */
-.dcbox{text-align:center;padding:64px 24px;border-radius:26px;border:1px solid var(--line);background:radial-gradient(60% 120% at 50% 0,rgba(225,40,28,.28),transparent 70%),var(--s1)}
-.dcbox p{color:#bdb6be;max-width:520px;margin:10px auto 26px}
-footer{margin-top:90px;border-top:1px solid var(--line);background:rgba(5,5,6,.9);padding:36px 0 28px}
+.dcbox{position:relative;text-align:center;padding:70px 24px;border-radius:4px;border:1px solid var(--line);overflow:hidden;background:radial-gradient(60% 120% at 50% 0,rgba(88,101,242,.22),transparent 70%),#050505}
+.dcbox .eyebrow{text-align:center;color:#8b95ff}
+.dcbox p{color:var(--mute);max-width:500px;margin:12px auto 28px}
+.btn.dcb{background:var(--blurple);color:#fff}.btn.dcb:hover{background:#4752c4;transform:translateY(-2px)}
+.btn.dcb svg{width:22px;height:22px;fill:currentColor}
+footer{margin-top:110px;border-top:1px solid var(--line);padding:34px 0 26px}
 .ft{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center}
-.ft nav{display:flex;flex-wrap:wrap;gap:6px 20px;color:#cfc9d0;font-size:15px}
-.ft nav a:hover{color:var(--rt)}
-.legal{margin-top:22px;font-size:13px;color:#6f6973;text-align:center}
+.ft nav{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--mute);font-size:14.5px}
+.ft nav a:hover{color:#fff}
+.legal{margin-top:22px;font-size:12.5px;color:var(--dim);text-align:center}
 
 /* السلة */
-#shade{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s}
+#shade{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s}
 #shade.on{opacity:1;pointer-events:auto}
-#cart{position:fixed;top:0;bottom:0;inset-inline-start:0;z-index:61;width:min(420px,100%);display:flex;flex-direction:column;background:var(--s1);border-inline-end:1px solid var(--line);transform:translateX(105%);visibility:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility 0s .35s cubic-bezier(.2,.8,.2,1)}
+#cart{position:fixed;top:0;bottom:0;left:0;z-index:61;width:min(420px,100%);display:flex;flex-direction:column;background:var(--s1);border-right:1px solid var(--line);transform:translateX(-105%);visibility:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility 0s .35s}
 #cart.on{transform:none;visibility:visible;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
 .ct-h{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--line)}
-.ct-h h2{font-size:24px}
-.x{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);font-size:20px}
-.x:hover{border-color:var(--red)}
+.ct-h h2{font-size:22px}
+.x{width:38px;height:38px;border-radius:6px;border:1px solid var(--line2);font-size:18px}
+.x:hover{border-color:var(--rt)}
 #items{flex:1;overflow:auto;padding:14px 20px;display:grid;gap:10px;align-content:start}
-.ci{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--s2)}
-.ci .th{flex:none;width:56px;height:56px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(160deg,hsl(var(--h) 60% 26%),hsl(var(--h) 50% 9%))}
-.ci .th svg{width:38px;height:38px}
-.ci b{display:block;font-weight:900;line-height:1.3}
-.ci span{font:400 20px "Bebas Neue",Impact,sans-serif;color:var(--rt);direction:ltr;display:block;text-align:right}
+.ci{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--s2)}
+.ci .th{flex:none;width:54px;height:54px;border-radius:5px;display:grid;place-items:center;background:linear-gradient(160deg,hsl(var(--h) 60% 26%),hsl(var(--h) 50% 9%))}
+.ci .th svg{width:36px;height:36px}
+.ci b{display:block;font-weight:700;line-height:1.35;font-size:15px}
+.ci span{display:block;direction:ltr;text-align:right;color:var(--rt);font-weight:700;font-size:14px}
 .ci button{margin-inline-start:auto;color:var(--mute);font-size:14px;padding:6px}
 .ci button:hover{color:var(--rt)}
 .ct-f{padding:20px;border-top:1px solid var(--line);display:grid;gap:14px}
-.tot{display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:18px}
-.tot b{font:400 36px "Bebas Neue",Impact,sans-serif;direction:ltr}
+.tot{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:17px}
+.tot b{font:800 30px Geist,sans-serif;direction:ltr}
 .ct-f .btn{width:100%}
-#toast{position:fixed;bottom:24px;left:50%;z-index:90;transform:translate(-50%,120px);padding:12px 20px;border-radius:12px;background:#fff;color:#000;font-weight:900;transition:transform .35s cubic-bezier(.2,.8,.2,1);max-width:calc(100% - 32px);text-align:center}
+.ct-f small{text-align:center;color:var(--dim);font-size:12.5px}
+#toast{position:fixed;bottom:24px;left:50%;z-index:90;transform:translate(-50%,120px);padding:12px 20px;border-radius:6px;background:#fff;color:#000;font-weight:700;transition:transform .35s cubic-bezier(.2,.8,.2,1);max-width:calc(100% - 32px);text-align:center}
 #toast.on{transform:translate(-50%,0)}
 
-/* ظهور عند التمرير */
-.rv{opacity:0;transform:translateY(40px) rotateX(10deg);transform-origin:top;transition:opacity .7s,transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv{opacity:0;transform:translateY(36px);transition:opacity .7s,transform .8s cubic-bezier(.2,.8,.2,1)}
 .rv.in{opacity:1;transform:none}
 
+@media (hover:none){.hov{opacity:1;background:linear-gradient(transparent 45%,rgba(0,0,0,.85))}.hov p,.hov .fw{display:none}}
 @media (max-width:1000px){
-  .hero{grid-template-columns:1fr;padding-top:120px;text-align:center;min-height:0}
-  .hero p.lead{margin-inline:auto}.cta,.facts{justify-content:center}.facts div{align-items:center}
-  .stage{height:min(440px,96vw);margin-top:10px}
-  .scene{width:min(340px,68vw)}
   .dims{grid-template-columns:repeat(2,1fr)}.dims .dim:first-child{grid-column:1/-1}
-  .bundle{grid-template-columns:1fr;padding:28px 22px}.stack{height:230px;margin-top:70px}
-  .feats,.steps{grid-template-columns:1fr}
+  .flag-in,.studio{grid-template-columns:1fr}.studio{gap:34px}
+  .stack{height:300px}.flag:before{background:radial-gradient(70% 50% at 50% 70%,rgba(225,40,28,.22),transparent 70%)}
+  .live{grid-template-columns:1fr;padding:44px 24px}.stage{height:380px}
+  .revs{grid-template-columns:1fr}
 }
 @media (max-width:860px){
-  #menuBtn{display:flex}
-  .nav{position:absolute;top:calc(100% + 8px);inset-inline:16px;flex-direction:column;padding:10px;border:1px solid var(--line);border-radius:14px;background:rgba(12,11,13,.97);display:none}
+  #menuBtn{display:grid}
+  .nav{position:absolute;top:100%;inset-inline:0;flex-direction:column;gap:0;padding:8px 16px 14px;background:rgba(0,0,0,.96);border-bottom:1px solid var(--line);display:none}
+  .nav a{padding:12px 0;border-bottom:1px solid var(--line)}
   .nav.on{display:flex}
-  .hd-in{gap:8px}.logo{margin-inline-end:auto}.logo small{display:none}
-  .hbtn span{display:none}
-  .search,.search input{width:100%}
-  .code,.c3{display:none}.c1{left:-6%}.c2{right:-6%}.ms{right:-2%}
-  .sec{padding-top:70px}
+  .hd-in{gap:12px}
+  .stats{gap:28px}.stats b{font-size:32px}
+  .sec{padding-top:80px}.flag{margin-top:80px;padding:70px 0}
+  .scene{width:min(320px,74vw)}.code{display:none}.c2{right:-2%}.ms{right:0}
+  .btn{height:52px;font-size:16px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{animation:none!important;transition:none!important}
@@ -291,136 +321,156 @@ footer{margin-top:90px;border-top:1px solid var(--line);background:rgba(5,5,6,.9
 </head>
 <body>
 <canvas id="space" aria-hidden="true"></canvas>
-<div class="aura" aria-hidden="true"></div>
+<div class="ember" aria-hidden="true"></div>
 
 <header id="hd">
-  <div class="wrap hd-in">
-    <a class="logo lat" href="#top" aria-label="ROX Store">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 96 50 50 96 4 50Z" fill="#e1281c"/><path d="M31 31 69 69M69 31 31 69" stroke="#050506" stroke-width="9"/></svg>
-      <span>RO<b>X</b></span><small>STORE</small>
+  <div class="hd-in">
+    <a class="logo" href="#top" aria-label="ROX Store">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 96 50 50 96 4 50Z" fill="#e1281c"/><path d="M31 31 69 69M69 31 31 69" stroke="#000" stroke-width="9"/></svg>
+      <span>RO<b>X</b><br>STORE</span>
     </a>
     <nav class="nav" id="nav" aria-label="القائمة">
-      <a href="#dims">الأقسام</a><a href="#shop">المنتجات</a><a href="#bundle">الباقات</a><a href="#how">طريقة الشراء</a><a href="#faq">الأسئلة</a>
+      <a href="#shop">المتجر</a><a href="#bundle">الباقات</a><a href="#live">سيرفر العرض</a><a href="#faq">الأسئلة</a>
     </nav>
-    <a class="hbtn dc" id="dcTop" href="#" target="_blank" rel="noopener" aria-label="ديسكورد"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 5.6A17 17 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a17 17 0 0 0-4.2 1.6C1.7 9.700.9 13.700 1.300 17.600a17 17 0 0 0 5.200 2.600l1.100-1.800-1.700-.8.4-.3a12 12 0 0 0 11.400 0l.4.3-1.700.8 1.100 1.800a17 17 0 0 0 5.200-2.600c.5-4.500-.8-8.500-3.100-12ZM8.700 15.200c-1 0-1.900-.9-1.900-2.100s.8-2.100 1.900-2.100 1.900.9 1.900 2.100-.800 2.100-1.900 2.100Zm6.600 0c-1 0-1.900-.9-1.900-2.100s.8-2.100 1.900-2.100 1.900.9 1.900 2.100-.800 2.100-1.900 2.100Z"/></svg><span>ديسكورد</span></a>
-    <button class="hbtn" id="cartBtn" type="button" aria-label="السلة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8Zm4 0a3 3 0 0 1 6 0"/></svg><span>السلة</span><b id="cc" class="lat">0</b></button>
-    <button class="hbtn" id="menuBtn" type="button" aria-label="القائمة" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="icons">
+      <a class="ib dc js-dc" href="#" target="_blank" rel="noopener" aria-label="ديسكورد"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 5.6A17 17 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a17 17 0 0 0-4.2 1.6C1.7 9.7.9 13.7 1.3 17.6a17 17 0 0 0 5.2 2.6l1.1-1.8-1.7-.8.4-.3a12 12 0 0 0 11.4 0l.4.3-1.7.8 1.1 1.8a17 17 0 0 0 5.2-2.6c.5-4.5-.8-8.5-3.1-12ZM8.7 15.2c-1 0-1.9-.9-1.9-2.1S7.6 11 8.7 11s1.9.9 1.9 2.1-.8 2.1-1.9 2.1Zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1Z"/></svg></a>
+      <button class="ib cart" id="cartBtn" type="button" aria-label="السلة"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h11L21 7H6.2M9 20h.01M18 20h.01"/></svg><b id="cc" data-n="0">0</b></button>
+      <button class="ib" id="menuBtn" type="button" aria-label="القائمة" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
   </div>
 </header>
 
-<main id="top">
-  <section class="hero wrap">
-    <div>
-      <span class="kicker lat"><i></i>FIVEM STORE — SCRIPTS / MLO / VEHICLES</span>
-      <h1>خذ سيرفرك<br>لـ<em>بُعد ثاني.</em></h1>
-      <p class="lead">سكربتات، مابات MLO، سيارات وباقات جاهزة لسيرفرات FiveM. كود نظيف، أداء خفيف، وتسليم فوري على حسابك في Cfx.re.</p>
-      <div class="cta"><a class="btn red" href="#shop">تصفّح المنتجات</a><a class="btn line" href="#bundle">شوف الباقات</a></div>
-      <div class="facts">
-        <div><b class="lat">0.00 MS</b><span>استهلاك وقت الخمول</span></div>
-        <div><b class="lat">ESX · QB · QBOX</b><span>يدعم كل الفريم ووركات</span></div>
-        <div><b class="lat">24/7</b><span>دعم فني على ديسكورد</span></div>
+<main>
+  <section class="hero" id="top">
+    <div class="beams" aria-hidden="true"></div>
+    <svg class="skyline" id="skyline" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="scan" aria-hidden="true"></div>
+    <div class="hero-c">
+      <span class="eyebrow">FIVEM STORE · EST. 2022</span>
+      <div class="t3d"><h1 id="t3d">ROX <b>STORE</b></h1></div>
+      <p class="lead">سكربتات، مابات MLO وسيارات مصنوعة بإتقان لسيرفرات FiveM.<br>كل قطعة مختبرة وخفيفة قبل ما توصلك.</p>
+      <div class="cta">
+        <a class="btn white" href="#shop">تصفّح المتجر <svg class="i arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></a>
+        <a class="btn line" href="#live">جرّبها في السيرفر</a>
       </div>
+      <ul class="dots"><li>تسليم فوري عبر Tebex</li><li>جرّب داخل اللعبة قبل الشراء</li><li>دعم على الديسكورد</li></ul>
     </div>
-    <div class="stage" id="stage" aria-hidden="true">
-      <div class="scene" id="scene">
-        <div class="bigrox lat">ROX</div>
-        <div class="ring"></div><div class="ring r2"></div>
-        <div class="pane hud lat">
-          <div class="hud-top"><span>ROX ROLEPLAY</span><span><b>●</b> ONLINE 128/128</span></div>
-          <div class="road"></div>
-          <div class="mini"></div>
-          <div class="bars"><i style="--w:86%;--c:#4cc38a"></i><i style="--w:62%;--c:#4aa3ff"></i><i style="--w:74%;--c:#e9c46a"></i></div>
-          <div class="speed"><b id="spd">142</b><span>KM/H</span></div>
-        </div>
-        <div class="pane code"><u>RegisterNetEvent</u>(<q>'rox:garage:open'</q>)<br><u>local</u> veh = <s>ROX.GetVehicle</s>(src)<br><u>if</u> veh <u>then</u> <s>Spawn</s>(veh) <u>end</u></div>
-        <div class="chip lat c1"><b>◆</b> ESX</div>
-        <div class="chip lat c2"><b>◆</b> QBCORE</div>
-        <div class="chip lat c3"><b>◆</b> QBOX</div>
-        <svg class="gem" viewBox="0 0 100 100"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset=".5" stop-color="#e1281c"/><stop offset="1" stop-color="#7d0f08"/></linearGradient></defs><path d="M50 4 96 50 50 96 4 50Z" fill="url(#gg)"/><path d="M50 4 96 50 50 50Z" fill="#fff" opacity=".18"/><path d="M33 33 67 67M67 33 33 67" stroke="#050506" stroke-width="8"/></svg>
-        <div class="ms lat"><b>0.00ms</b><span>RESMON</span></div>
-      </div>
-    </div>
+    <span class="mouse" aria-hidden="true"></span>
   </section>
 
-  <div class="tickw" aria-hidden="true"><div class="tick lat"><div id="tick"></div></div></div>
-
   <section id="dims" class="sec wrap">
-    <div class="sh rv"><div><span class="eyebrow lat">5 DIMENSIONS</span><h2>خمسة أبعاد <em>تبني سيرفرك</em></h2></div><p class="mute">اختر البُعد ونفلتر لك المنتجات.</p></div>
+    <div class="sh rv"><div><span class="eyebrow">5 DIMENSIONS</span><h2>خمسة أبعاد <em>تبني سيرفرك</em></h2></div><p class="mute">اختر البُعد ونفلتر لك المنتجات.</p></div>
     <div class="dims rv" id="dimsGrid"></div>
   </section>
 
   <section id="shop" class="sec wrap">
     <div class="sh rv">
-      <div><span class="eyebrow lat">THE STORE</span><h2>كل <em>المنتجات</em></h2></div>
-      <div class="tools">
-        <div class="chips" id="chips" role="group" aria-label="التصنيف"></div>
-        <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></svg><input id="q" type="search" placeholder="ابحث عن منتج…" aria-label="بحث"></label>
-      </div>
+      <div><span class="eyebrow">LATEST WORK</span><h2>جديد من الاستوديو</h2></div>
+      <a class="more" href="#shop" id="showAll">عرض كل المنتجات <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></a>
     </div>
+    <div class="chips rv" id="chips" role="group" aria-label="التصنيف"></div>
     <div class="grid" id="grid"></div>
   </section>
 
-  <section id="bundle" class="sec wrap">
-    <div class="bundle rv">
-      <div>
-        <span class="eyebrow lat">SERVER STARTER BUNDLE</span>
-        <h2>باقة <em>تشغيل السيرفر</em></h2>
+  <section id="bundle" class="flag">
+    <div class="wrap flag-in">
+      <div class="rv">
+        <span class="eyebrow">THE FLAGSHIP</span>
+        <h2>سيرفر كامل،<br>في باقة وحدة.</h2>
+        <p>باقة تشغيل ROX: كل اللي تحتاجه عشان تفتح سيرفرك من اليوم الأول — سكربتات، مابات وسيارات متوافقة مع بعض.</p>
         <ul>
-          <li>كل سكربتات ROX الأساسية (HUD، حقيبة، كراج، بنك، شخصيات)</li>
+          <li>سكربتات ROX الأساسية: HUD، حقيبة، كراج، بنك، شخصيات</li>
           <li>مابين MLO: مركز الشرطة + المستشفى</li>
-          <li>باقة سيارات الدوريات</li>
+          <li>باقة سيارات الدوريات بإضاءات ELS</li>
           <li>تحديثات مجانية وأولوية في الدعم</li>
         </ul>
-        <button class="btn red" type="button" data-add="bundle-starter">أضف الباقة للسلة</button>
-      </div>
-      <div>
-        <div class="stack" aria-hidden="true">
-          <i style="--i:0;--h:260">MLO</i><i style="--i:1;--h:200">VEHICLES</i><i style="--i:2;--h:30">SCRIPTS</i><i style="--i:3;--h:4">ROX</i>
+        <div class="flag-cta">
+          <button class="btn white" type="button" data-add="bundle-starter">أضف الباقة للسلة</button>
+          <a href="#shop">أو اشترِ القطع بشكل منفصل</a>
         </div>
-        <div class="bprice lat"><s id="bOld"></s><b id="bNow"></b></div>
-        <div class="clock lat" id="clock" aria-label="ينتهي العرض بعد"></div>
+      </div>
+      <div class="rv">
+        <div class="stack" aria-hidden="true"><i style="--i:0;--h:260">MLO</i><i style="--i:1;--h:200">VEHICLES</i><i style="--i:2;--h:30">SCRIPTS</i><i style="--i:3;--h:4">ROX</i></div>
+        <div class="priceTag"><s id="bOld"></s><b id="bNow"></b></div>
+        <div class="clock" id="clock" aria-label="ينتهي العرض بعد"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="live" class="sec wrap">
+    <div class="live rv">
+      <div>
+        <span class="pill"><i></i>LIVE SERVER</span>
+        <h2>جرّب قبل<em>ما تشتري</em></h2>
+        <p>ادخل سيرفر العرض حقنا وجرّب كل السكربتات والمابات في بيئة حيّة. بدون وايت لست.</p>
+        <div class="cta">
+          <a class="btn red" id="joinLive" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01M17 6H7a5 5 0 0 0-5 5v1a4 4 0 0 0 7 2.6h6A4 4 0 0 0 22 12v-1a5 5 0 0 0-5-5Z"/></svg>ادخل سيرفر العرض</a>
+          <a class="btn line" href="#shop">تصفّح المتجر <svg class="i arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></a>
+        </div>
+      </div>
+      <div class="stage" aria-hidden="true">
+        <div class="scene" id="scene">
+          <div class="ring"></div>
+          <div class="pane hud lat">
+            <div class="hud-top"><span>ROX SHOWCASE</span><span><b>●</b> ONLINE 64/128</span></div>
+            <div class="road"><svg viewBox="0 0 300 100" preserveAspectRatio="none"><path d="M0 100V70h14V52h10v18h12V30h18v40h10V58h16V20h22v50h8V44h14v26h12V36h20v34h10V60h18V26h16v44h12V50h14v20h20V40h12v60Z" fill="#0b0a0c"/><path d="M58 38h4v4h-4Zm38-10h4v4h-4Zm0 12h4v4h-4Zm60-2h4v4h-4Zm78-6h4v4h-4Zm0 14h4v4h-4Z" fill="#ff4d3d" opacity=".8"/></svg></div>
+            <div class="mini"></div>
+            <div class="bars"><i style="--w:86%;--c:#22c55e"></i><i style="--w:62%;--c:#4aa3ff"></i><i style="--w:74%;--c:#fbbf24"></i></div>
+            <div class="speed"><b id="spd">142</b><span>KM/H</span></div>
+          </div>
+          <div class="pane code"><u>RegisterNetEvent</u>(<q>'rox:garage:open'</q>)<br><u>local</u> veh = <s>ROX.GetVehicle</s>(src)<br><u>if</u> veh <u>then</u> <s>Spawn</s>(veh) <u>end</u></div>
+          <div class="chip lat c1"><b>◆</b> ESX · QBCORE</div>
+          <div class="chip lat c2"><b>◆</b> QBOX</div>
+          <div class="ms lat"><b>0.00ms</b><span>RESMON</span></div>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="sec wrap">
-    <div class="sh rv"><div><span class="eyebrow lat">WHY ROX</span><h2>ليش <em>ROX</em>؟</h2></div></div>
-    <div class="feats rv">
-      <div class="feat"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg><h3>تسليم فوري</h3><p>بعد الدفع ينضاف المنتج تلقائيًا لحسابك في Cfx.re Keymaster.</p></div>
-      <div class="feat"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.700L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.700L3 16M3 21v-5h5"/></svg><h3>تحديثات مجانية</h3><p>كل تحديث وإصلاح يوصلك بدون أي رسوم إضافية.</p></div>
-      <div class="feat"><svg viewBox="0 0 24 24"><path d="M4 18v-6a8 8 0 0 1 16 0v6M4 14h3v6H4zM17 14h3v6h-3z"/></svg><h3>دعم حقيقي</h3><p>تذكرة في الديسكورد وفريقنا يساعدك في التركيب والإعداد.</p></div>
-      <div class="feat"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><h3>أداء خفيف</h3><p>كل سكربت مختبر على resmon وما يثقل على اللاعبين.</p></div>
-      <div class="feat"><svg viewBox="0 0 24 24"><path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 4l-4 16"/></svg><h3>إعدادات مفتوحة</h3><p>ملف config واضح تعدّل منه كل شي: اللغة، الأسعار، الصلاحيات.</p></div>
-      <div class="feat"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.500 8 8 9 4.500-1 8-4 8-9V6l-8-3Zm-3 9 2 2 4-4"/></svg><h3>دفع آمن</h3><p>الدفع عبر بوابة موثوقة، وبياناتك ما تمر على سيرفراتنا.</p></div>
+    <div class="studio">
+      <div class="rv">
+        <span class="eyebrow">THE STUDIO</span>
+        <h2>نبني سيرفرك،<br>قطعة قطعة.</h2>
+        <p>ROX فريق يصمّم ويبرمج لسيرفرات FiveM من 2022. نكتب كل سكربت ونبني كل ماب بنفسنا، ونختبره على resmon قبل ما ينزل المتجر.</p>
+        <p>هدفنا إن سيرفرك يطلع مختلف عن الباقي: أنظمة متكاملة تمشي مع بعض، وتفاصيل تحس فيها إن المدينة عايشة.</p>
+        <div class="stats">
+          <div><b id="stCount">13+</b><span>منتج جاهز</span></div>
+          <div><b>2022</b><span>نبني من</span></div>
+          <div><b>24/7</b><span>دعم على الديسكورد</span></div>
+        </div>
+      </div>
+      <div class="feats rv">
+        <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></span><div><h3>تسليم فوري عبر Tebex</h3><p>تدفع ويوصل المنتج لحسابك في Keymaster خلال ثواني — نظام FiveM الرسمي، بدون انتظار.</p></div></div>
+        <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01M17 6H7a5 5 0 0 0-5 5v1a4 4 0 0 0 7 2.6h6A4 4 0 0 0 22 12v-1a5 5 0 0 0-5-5Z"/></svg></span><div><h3>جرّب كل شي داخل اللعبة</h3><p>سيرفر العرض فيه كل منتجاتنا شغّالة. جرّبها قبل ما تدفع ريال.</p></div></div>
+        <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M4 18v-6a8 8 0 0 1 16 0v6M4 14h3v6H4zM17 14h3v6h-3z"/></svg></span><div><h3>دعم يرد عليك فعلًا</h3><p>التركيب، التعارضات، والحالات الغريبة — الفريق اللي برمج المنتج هو اللي يرد على تذكرتك.</p></div></div>
+        <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><div><h3>أداء خفيف</h3><p>0.00ms وقت الخمول، وإعدادات مفتوحة تعدّل منها اللغة والأسعار والصلاحيات.</p></div></div>
+      </div>
     </div>
   </section>
 
-  <section id="how" class="sec wrap">
-    <div class="sh rv"><div><span class="eyebrow lat">HOW IT WORKS</span><h2>ثلاث خطوات <em>وتشتغل</em></h2></div></div>
-    <div class="steps rv">
-      <div class="step"><h3>اختر وادفع</h3><p>ضيف المنتجات للسلة وسجّل دخولك بحساب Cfx.re عند الدفع.</p></div>
-      <div class="step"><h3>استلم من Keymaster</h3><p>تلقى المنتج فورًا في keymaster.fivem.net تحت Granted Assets.</p></div>
-      <div class="step"><h3>ركّب وشغّل</h3><p>حط المجلد في resources، أضف ensure في server.cfg، وخلاص.</p></div>
-    </div>
+  <section class="sec wrap">
+    <div class="sh rv"><div><span class="eyebrow">FROM THE DISCORD</span><h2>أصحاب السيرفرات يقولون</h2></div></div>
+    <div class="revs rv" id="revs"></div>
   </section>
 
   <section id="faq" class="sec wrap">
-    <div class="sh rv"><div><span class="eyebrow lat">FAQ</span><h2>أسئلة <em>تتكرر</em></h2></div></div>
+    <div class="sh rv"><div><span class="eyebrow">QUESTIONS</span><h2>قبل ما تسأل</h2></div></div>
     <div class="faq rv">
-      <details><summary>كيف يوصلني المنتج بعد الشراء؟</summary><p>ينضاف تلقائيًا لحساب Cfx.re اللي سجّلت فيه وقت الدفع، وتحمّله من Keymaster.</p></details>
-      <details><summary>هل المنتجات تشتغل على ESX و QBCore و QBox؟</summary><p>كل منتج مكتوب تحته الفريم ووركات المدعومة. أغلب السكربتات تدعم الثلاثة، والمابات والسيارات تشتغل على أي سيرفر.</p></details>
-      <details><summary>أقدر أنقل المنتج لحساب ثاني؟</summary><p>إيه، من Keymaster تقدر تسوي Transfer للحساب اللي تبيه مرة واحدة.</p></details>
-      <details><summary>هل الكود مفتوح؟</summary><p>ملفات الإعدادات والواجهات مفتوحة للتعديل، والجزء الأساسي محمي بنظام Asset Escrow من Cfx.re.</p></details>
-      <details><summary>ما سياسة الاسترجاع؟</summary><p>المنتجات رقمية وتتسلّم فورًا، فما فيه استرجاع بعد الاستلام. لو فيه مشكلة تقنية افتح تذكرة ونحلّها لك.</p></details>
+      <details><summary>كيف أستلم الملفات؟</summary><p>بعد الدفع ينضاف المنتج تلقائيًا لحساب Cfx.re اللي سجّلت فيه، وتحمّله من keymaster.fivem.net تحت Granted Assets.</p></details>
+      <details><summary>هل المنتجات خفيفة على السيرفر؟</summary><p>إيه. كل سكربت مختبر على resmon، والمابات مبنية بعدد بولي وتكستشر مضبوط عشان ما تأثر على الفريمات.</p></details>
+      <details><summary>تشتغل على ESX و QBCore و QBox؟</summary><p>كل منتج مكتوب عليه الفريم ووركات المدعومة. أغلب السكربتات تدعم الثلاثة، والمابات والسيارات تشتغل على أي سيرفر.</p></details>
+      <details><summary>تقدمون دعم فني؟</summary><p>أكيد. افتح تذكرة في الديسكورد ونساعدك في التركيب والإعداد وحل أي تعارض.</p></details>
+      <details><summary>أقدر أعدّل على الكود؟</summary><p>ملفات الإعدادات والواجهات مفتوحة للتعديل، والجزء الأساسي محمي بنظام Asset Escrow من Cfx.re.</p></details>
     </div>
   </section>
 
   <section class="sec wrap">
     <div class="dcbox rv">
-      <span class="eyebrow lat" style="text-align:center">COMMUNITY</span>
-      <h2>انضم <em>لديسكورد ROX</em></h2>
+      <span class="eyebrow">COMMUNITY</span>
+      <h2>انضم لديسكورد ROX</h2>
       <p>الدعم الفني، إعلانات التحديثات، والعروض الحصرية كلها هناك.</p>
-      <a class="btn red" id="dcBig" href="#" target="_blank" rel="noopener">ادخل الديسكورد</a>
+      <a class="btn dcb js-dc" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 5.6A17 17 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a17 17 0 0 0-4.2 1.6C1.7 9.7.9 13.7 1.3 17.6a17 17 0 0 0 5.2 2.6l1.1-1.8-1.7-.8.4-.3a12 12 0 0 0 11.4 0l.4.3-1.7.8 1.1 1.8a17 17 0 0 0 5.2-2.6c.5-4.5-.8-8.5-3.1-12ZM8.7 15.2c-1 0-1.9-.9-1.9-2.1S7.6 11 8.7 11s1.9.9 1.9 2.1-.8 2.1-1.9 2.1Zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1Z"/></svg>ادخل الديسكورد</a>
     </div>
   </section>
 </main>
@@ -428,8 +478,8 @@ footer{margin-top:90px;border-top:1px solid var(--line);background:rgba(5,5,6,.9
 <footer>
   <div class="wrap">
     <div class="ft">
-      <a class="logo lat" href="#top"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 96 50 50 96 4 50Z" fill="#e1281c"/><path d="M31 31 69 69M69 31 31 69" stroke="#050506" stroke-width="9"/></svg><span>RO<b>X</b></span><small>STORE</small></a>
-      <nav aria-label="روابط"><a href="#shop">المنتجات</a><a href="#bundle">الباقات</a><a href="#how">طريقة الشراء</a><a href="#faq">الأسئلة</a></nav>
+      <a class="logo" href="#top"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 96 50 50 96 4 50Z" fill="#e1281c"/><path d="M31 31 69 69M69 31 31 69" stroke="#000" stroke-width="9"/></svg><span>RO<b>X</b><br>STORE</span></a>
+      <nav aria-label="روابط"><a href="#shop">المتجر</a><a href="#bundle">الباقات</a><a href="#live">سيرفر العرض</a><a href="#faq">الأسئلة</a></nav>
     </div>
     <p class="legal">© <span id="yr"></span> ROX Store. المتجر غير تابع لـ Rockstar Games أو Take-Two Interactive أو Cfx.re وغير معتمد منها.</p>
   </div>
@@ -439,7 +489,7 @@ footer{margin-top:90px;border-top:1px solid var(--line);background:rgba(5,5,6,.9
 <aside id="cart" aria-label="السلة" aria-hidden="true" inert>
   <div class="ct-h"><h2>السلة</h2><button class="x" id="cartX" type="button" aria-label="إغلاق">✕</button></div>
   <div id="items"></div>
-  <div class="ct-f"><div class="tot"><span>الإجمالي</span><b id="total"></b></div><button class="btn red" id="pay" type="button">إتمام الشراء</button></div>
+  <div class="ct-f"><div class="tot"><span>الإجمالي</span><b id="total"></b></div><button class="btn white" id="pay" type="button">إتمام الشراء</button><small>الدفع والتسليم عبر Tebex إلى حسابك في Keymaster</small></div>
 </aside>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -447,43 +497,50 @@ footer{margin-top:90px;border-top:1px solid var(--line);background:rgba(5,5,6,.9
 /* ============ إعدادات المتجر — عدّلها ============ */
 const CONFIG = {
   currency: '$',
-  discord: '',       // رابط دعوة الديسكورد
-  checkout: '',      // رابط صفحة الدفع (Tebex مثلًا)
+  discord: '',      // رابط دعوة الديسكورد
+  checkout: '',     // رابط صفحة الدفع (Tebex مثلًا)
+  liveServer: '',   // رابط سيرفر العرض، مثل: fivem://connect/cfx.re/join/xxxxxx
   bundleEnds: '2026-12-31T23:59:59+03:00' // نهاية عرض الباقة — بعدها يختفي العدّاد
 };
 const CATS = [
-  { id:'script', en:'SCRIPTS',  ar:'سكربتات',     d:'أنظمة جاهزة لسيرفرك',     ic:'<path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 4l-4 16"/>' },
-  { id:'mlo',    en:'MLO MAPS', ar:'مابات MLO',   d:'مباني داخلية بتفاصيل عالية', ic:'<path d="M3 21V9l9-6 9 6v12M9 21v-7h6v7M3 21h18"/>' },
-  { id:'car',    en:'VEHICLES', ar:'سيارات',      d:'باقات سيارات مضبوطة',      ic:'<path d="M3 16v-3l2-5h14l2 5v3M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6.500 12.500h.01M17.500 12.500h.01"/>' },
-  { id:'eup',    en:'CLOTHING', ar:'ملابس EUP',   d:'زي رسمي وملابس مدنية',     ic:'<path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3a4 4 0 0 1-8 0Z"/>' },
-  { id:'bundle', en:'BUNDLES',  ar:'باقات',       d:'وفّر أكثر مع الباقات',      ic:'<path d="m12 3 9 5-9 5-9-5 9-5ZM3 13l9 5 9-5M3 17.500l9 5 9-5"/>' }
+  { id:'script', en:'SCRIPTS',  ar:'سكربتات',   d:'أنظمة جاهزة لسيرفرك',        ic:'<path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 4l-4 16"/>' },
+  { id:'mlo',    en:'MLO MAPS', ar:'مابات MLO', d:'مباني داخلية بتفاصيل عالية',  ic:'<path d="M3 21V9l9-6 9 6v12M9 21v-7h6v7M3 21h18"/>' },
+  { id:'car',    en:'VEHICLES', ar:'سيارات',    d:'باقات سيارات مضبوطة',        ic:'<path d="M3 16v-3l2-5h14l2 5v3M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6.5 12.5h.01M17.5 12.5h.01"/>' },
+  { id:'eup',    en:'CLOTHING', ar:'ملابس EUP', d:'زي رسمي وملابس مدنية',       ic:'<path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3a4 4 0 0 1-8 0Z"/>' },
+  { id:'bundle', en:'BUNDLES',  ar:'باقات',     d:'وفّر أكثر مع الباقات',        ic:'<path d="m12 3 9 5-9 5-9-5 9-5ZM3 13l9 5 9-5M3 17.5l9 5 9-5"/>' }
 ];
 const PRODUCTS = [
-  { id:'hud',       cat:'script', name:'ROX HUD',              desc:'واجهة لاعب نظيفة: صحة، درع، جوع، عدّاد سرعة وخريطة قابلة للتخصيص.', price:25, fw:['ESX','QB','QBOX'], h:4,   tag:'الأكثر مبيعًا' },
-  { id:'inv',       cat:'script', name:'ROX Inventory',        desc:'حقيبة بالسحب والإفلات، أوزان، متاجر، وصناديق سيارات.',            price:45, old:60, fw:['ESX','QB','QBOX'], h:28 },
-  { id:'garage',    cat:'script', name:'ROX Garage',           desc:'كراجات عامة وخاصة، حجز، ومفاتيح مشتركة بين اللاعبين.',            price:30, fw:['ESX','QB','QBOX'], h:200 },
-  { id:'bank',      cat:'script', name:'ROX Banking',          desc:'حسابات شخصية ومشتركة، فواتير، وسجل عمليات كامل.',                 price:28, fw:['ESX','QB'], h:150 },
-  { id:'multichar', cat:'script', name:'ROX Multichar',        desc:'اختيار شخصيات سينمائي مع نقاط سباون وخانات قابلة للفتح.',          price:22, fw:['QB','QBOX'], h:280, tag:'جديد', isNew:true },
-  { id:'dispatch',  cat:'script', name:'ROX Dispatch',         desc:'بلاغات للشرطة والإسعاف مع أكواد وتتبّع على الخريطة.',              price:35, fw:['ESX','QB','QBOX'], h:215 },
-  { id:'pd',        cat:'mlo',    name:'مركز الشرطة — ROX PD', desc:'مركز كامل: استقبال، زنازين، غرفة تحقيق، سلاح، وكراج.',            price:40, fw:['MLO','YMAP'], h:225 },
-  { id:'med',       cat:'mlo',    name:'مستشفى Central Medical', desc:'طوارئ، غرف عمليات، صيدلية ومهبط طيران على السطح.',             price:38, fw:['MLO','YMAP'], h:170 },
-  { id:'tuner',     cat:'mlo',    name:'ورشة Tuner Garage',    desc:'ورشة تعديل برافعات، غرفة صبغ، ومعرض للسيارات.',                   price:32, fw:['MLO'], h:40, tag:'جديد', isNew:true },
-  { id:'patrol',    cat:'car',    name:'باقة سيارات الدوريات', desc:'8 سيارات شرطة بإضاءات ELS وهاندلنق مضبوط.',                       price:35, fw:['ADDON','ELS'], h:210 },
-  { id:'drift',     cat:'car',    name:'ROX Drift Pack',       desc:'6 سيارات دريفت بأصوات محركات وتعديلات كاملة.',                    price:27, old:34, fw:['ADDON'], h:320 },
-  { id:'eup',       cat:'eup',    name:'باقة ملابس Police + EMS', desc:'زي رسمي كامل للشرطة والإسعاف، رجالي ونسائي.',                 price:20, fw:['EUP','FIVEM'], h:190 },
-  { id:'bundle-starter', cat:'bundle', name:'ROX Server Starter', desc:'كل اللي يحتاجه سيرفرك في باقة وحدة: سكربتات + مابات + سيارات.', price:149, old:240, fw:['ESX','QB','QBOX'], h:4, tag:'وفّر 38%' }
+  { id:'pd',        cat:'mlo',    art:'ROX PD',    name:'مركز الشرطة — ROX PD',    desc:'مركز كامل: استقبال، زنازين، غرفة تحقيق، مخزن سلاح وكراج.', price:59.99, fw:['MLO','YMAP'], h:225, tag:'الأكثر مبيعًا' },
+  { id:'med',       cat:'mlo',    art:'MEDICAL',   name:'مستشفى Central Medical',  desc:'طوارئ، غرف عمليات، صيدلية ومهبط طيران على السطح.',       price:39.99, fw:['MLO','YMAP'], h:170 },
+  { id:'tuner',     cat:'mlo',    art:'TUNER',     name:'ورشة Tuner Garage',       desc:'ورشة تعديل برافعات، غرفة صبغ، ومعرض للسيارات.',           price:34.99, fw:['MLO'], h:40, tag:'جديد', isNew:true },
+  { id:'hud',       cat:'script', art:'HUD',       name:'ROX HUD',                 desc:'واجهة لاعب نظيفة: صحة، درع، جوع، عدّاد سرعة وخريطة.',     price:24.99, fw:['ESX','QB','QBOX'], h:4 },
+  { id:'inv',       cat:'script', art:'INVENTORY', name:'ROX Inventory',           desc:'حقيبة بالسحب والإفلات، أوزان، متاجر، وصناديق سيارات.',    price:44.99, old:59.99, fw:['ESX','QB','QBOX'], h:28 },
+  { id:'garage',    cat:'script', art:'GARAGE',    name:'ROX Garage',              desc:'كراجات عامة وخاصة، حجز، ومفاتيح مشتركة بين اللاعبين.',    price:29.99, fw:['ESX','QB','QBOX'], h:200 },
+  { id:'bank',      cat:'script', art:'BANKING',   name:'ROX Banking',             desc:'حسابات شخصية ومشتركة، فواتير، وسجل عمليات كامل.',         price:27.99, fw:['ESX','QB'], h:150 },
+  { id:'multichar', cat:'script', art:'MULTICHAR', name:'ROX Multichar',           desc:'اختيار شخصيات سينمائي مع نقاط سباون وخانات قابلة للفتح.',  price:21.99, fw:['QB','QBOX'], h:280, tag:'جديد', isNew:true },
+  { id:'dispatch',  cat:'script', art:'DISPATCH',  name:'ROX Dispatch',            desc:'بلاغات للشرطة والإسعاف مع أكواد وتتبّع على الخريطة.',      price:34.99, fw:['ESX','QB','QBOX'], h:215 },
+  { id:'patrol',    cat:'car',    art:'PATROL',    name:'باقة سيارات الدوريات',    desc:'8 سيارات شرطة بإضاءات ELS وهاندلنق مضبوط.',               price:34.99, fw:['ADDON','ELS'], h:210 },
+  { id:'drift',     cat:'car',    art:'DRIFT',     name:'ROX Drift Pack',          desc:'6 سيارات دريفت بأصوات محركات وتعديلات كاملة.',            price:26.99, old:33.99, fw:['ADDON'], h:320 },
+  { id:'eup',       cat:'eup',    art:'EUP',       name:'باقة ملابس Police + EMS', desc:'زي رسمي كامل للشرطة والإسعاف، رجالي ونسائي.',             price:19.99, fw:['EUP'], h:190 },
+  { id:'bundle-starter', cat:'bundle', art:'STARTER', name:'باقة تشغيل ROX',       desc:'سكربتات + مابات + سيارات في باقة وحدة متوافقة.',           price:149.99, old:239.99, fw:['ESX','QB','QBOX'], h:4, tag:'وفّر 37%' }
+];
+/* آراء العملاء — هذي نصوص مثال، استبدلها بآراء حقيقية من الديسكورد حقك قبل النشر */
+const REVIEWS = [
+  { q:'مركز الشرطة غيّر شكل السيرفر كامل. التفاصيل من برا ومن جوا ما شفت مثلها، والدعم ردّ علي بنفس اليوم.', n:'اسم العميل', s:'على ROX PD' },
+  { q:'الـ HUD والحقيبة اشتغلوا من أول تركيب على QBCore، والـ resmon ما تحرّك. أنصح فيهم وبقوة.', n:'اسم العميل', s:'اسم السيرفر' },
+  { q:'أخذنا باقة التشغيل وفتحنا السيرفر خلال يومين. كل شي متوافق مع بعض وما احتجنا نعدّل شي.', n:'اسم العميل', s:'على باقة التشغيل' }
 ];
 
 /* ============ أدوات ============ */
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const money = n => CONFIG.currency + n;
+const money = n => CONFIG.currency + n.toFixed(2);
 const motionOK = !matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canHover = matchMedia('(hover: hover)').matches;
 const byId = id => PRODUCTS.find(p => p.id === id);
+const PLUS = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 
-/* رسمة كل نوع منتج */
 function glyph(cat, h) {
-  const a = `hsl(${h} 90% 62%)`, b = `hsl(${h} 70% 30%)`, w = '#f2eee8';
+  const a = `hsl(${h} 90% 62%)`, b = `hsl(${h} 70% 30%)`, w = '#fafafa';
   switch (cat) {
     case 'mlo': return `<svg viewBox="0 0 200 180"><path d="M100 22 172 58 100 94 28 58Z" fill="${a}"/><path d="M28 58 100 94v66L28 124Z" fill="${b}"/><path d="M172 58 100 94v66l72-36Z" fill="hsl(${h} 60% 18%)"/><path d="m44 82 16 8v18l-16-8Zm26 13 16 8v18l-16-8Zm44 8 16-8v18l-16 8Zm26-13 16-8v18l-16 8Z" fill="${w}" opacity=".85"/><path d="M100 22 172 58 100 94 28 58Z" fill="none" stroke="${w}" stroke-opacity=".5"/></svg>`;
     case 'car': return `<svg viewBox="0 0 232 110"><path d="M8 74q2-17 22-20l26-3q16-22 46-24h36q26 2 42 22l26 5q18 4 18 18v8h-22a19 19 0 0 0-38 0H78a19 19 0 0 0-38 0H8Z" fill="${a}"/><path d="M66 50q12-14 34-15h14v15Zm58-15h14q18 1 30 15h-44Z" fill="#0c0b0d" opacity=".8"/><circle cx="59" cy="80" r="15" fill="#0c0b0d" stroke="${w}" stroke-width="3"/><circle cx="183" cy="80" r="15" fill="#0c0b0d" stroke="${w}" stroke-width="3"/><path d="M206 60h14" stroke="${w}" stroke-width="4" stroke-linecap="round"/></svg>`;
@@ -508,21 +565,21 @@ function toggle(id) {
 function syncButtons() {
   $$('[data-add]').forEach(b => {
     const inC = cart.includes(b.dataset.add);
-    if (b.classList.contains('add')) { b.classList.toggle('in', inC); b.textContent = inC ? '✓ في السلة' : '+ أضف للسلة'; }
+    if (b.classList.contains('add')) { b.classList.toggle('in', inC); b.innerHTML = inC ? '✓ في السلة' : PLUS + 'أضف للسلة'; }
     else b.textContent = inC ? '✓ الباقة في السلة' : 'أضف الباقة للسلة';
   });
 }
 function renderCart() {
-  $('#cc').textContent = cart.length;
-  const box = $('#items');
-  box.innerHTML = cart.length ? cart.map(id => { const p = byId(id);
+  const n = cart.length; $('#cc').textContent = n; $('#cc').dataset.n = n;
+  $('#items').innerHTML = n ? cart.map(id => { const p = byId(id);
     return `<div class="ci"><div class="th" style="--h:${p.h}">${glyph(p.cat, p.h)}</div><div><b>${p.name}</b><span>${money(p.price)}</span></div><button type="button" data-rm="${p.id}">حذف</button></div>`; }).join('')
     : '<p class="mute" style="text-align:center;padding:40px 0">سلتك فاضية.</p>';
   $('#total').textContent = money(cart.reduce((s, id) => s + byId(id).price, 0));
 }
 function openCart(on) {
-  $('#cart').classList.toggle('on', on); $('#shade').classList.toggle('on', on);
-  $('#cart').setAttribute('aria-hidden', !on); $('#cart').inert = !on; document.body.classList.toggle('lock', on);
+  const c = $('#cart'); c.classList.toggle('on', on); $('#shade').classList.toggle('on', on);
+  c.setAttribute('aria-hidden', !on); c.inert = !on; document.body.classList.toggle('lock', on);
+  if (on) $('#cartX').focus();
 }
 $('#cartBtn').onclick = () => openCart(true);
 $('#cartX').onclick = $('#shade').onclick = () => openCart(false);
@@ -535,38 +592,36 @@ $('#pay').onclick = () => {
 document.addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) toggle(b.dataset.add); });
 
 /* ============ المنتجات ============ */
-let cur = 'all', query = '';
+let cur = 'all';
 function renderChips() {
   $('#chips').innerHTML = [{ id:'all', ar:'الكل' }, ...CATS].map(c => `<button type="button" data-cat="${c.id}" aria-pressed="${c.id === cur}">${c.ar}</button>`).join('');
   $$('.dim').forEach(d => d.classList.toggle('on', d.dataset.cat === cur));
 }
 function renderGrid() {
-  const list = PRODUCTS.filter(p => (cur === 'all' || p.cat === cur) && (!query || (p.name + ' ' + p.desc).toLowerCase().includes(query)));
+  const list = PRODUCTS.filter(p => cur === 'all' || p.cat === cur);
   $('#grid').innerHTML = list.length ? list.map(p => {
     const c = CATS.find(x => x.id === p.cat);
-    return `<article class="pc rv in"><div class="pc-in">
-      <div class="art" style="--h:${p.h}"></div><div class="glyph">${glyph(p.cat, p.h)}</div>
+    return `<article class="pc"><div class="pc-in">
+      <div class="art" style="--h:${p.h}"><span class="art-t lat">${p.art}</span></div>
+      <div class="glyph">${glyph(p.cat, p.h)}</div>
       ${p.tag ? `<span class="bdg${p.isNew ? ' new' : ''}">${p.tag}</span>` : ''}
-      <div class="pc-b"><span class="cat lat">${c.en}</span><h3>${p.name}</h3><p>${p.desc}</p>
-        <div class="fw lat">${p.fw.map(f => `<span>${f}</span>`).join('')}</div>
-        <div class="row"><b class="price lat">${money(p.price)}</b>${p.old ? `<s class="lat">${money(p.old)}</s>` : ''}<button class="add" type="button" data-add="${p.id}"></button></div>
-      </div></div></article>`; }).join('') : '<p class="empty">ما لقينا منتج بهالاسم.</p>';
+      <div class="hov"><p>${p.desc}</p><div class="fw">${p.fw.map(f => `<span>${f}</span>`).join('')}</div><button class="add" type="button" data-add="${p.id}"></button></div>
+      <div class="bar"><div><h3>${p.name}</h3><small>${c.en}</small></div><span class="price">${p.old ? `<s>${money(p.old)}</s>` : ''}${money(p.price)}</span></div>
+    </div></article>`; }).join('') : '<p class="empty">ما فيه منتجات في هالقسم حاليًا.</p>';
   syncButtons(); bindTilt();
 }
 function setCat(c) { cur = c; renderChips(); renderGrid(); }
 $('#chips').onclick = e => { const b = e.target.closest('[data-cat]'); if (b) setCat(b.dataset.cat); };
-$('#q').oninput = e => { query = e.target.value.trim().toLowerCase(); renderGrid(); };
-
+$('#showAll').onclick = () => setCat('all');
 $('#dimsGrid').innerHTML = CATS.map((c, i) => `<button type="button" class="dim" data-cat="${c.id}">
-  <b class="n lat">0${i + 1}</b><svg viewBox="0 0 24 24" aria-hidden="true">${c.ic}</svg>
-  <small class="lat">${c.en}</small><h3>${c.ar}</h3><span>${c.d} · ${PRODUCTS.filter(p => p.cat === c.id).length} منتج</span></button>`).join('');
+  <b class="n lat">0${i + 1}</b><svg class="i" viewBox="0 0 24 24" aria-hidden="true">${c.ic}</svg>
+  <small>${c.en}</small><h3>${c.ar}</h3><span>${c.d} · ${PRODUCTS.filter(p => p.cat === c.id).length} منتج</span></button>`).join('');
 $('#dimsGrid').onclick = e => { const b = e.target.closest('.dim'); if (!b) return; setCat(b.dataset.cat); $('#shop').scrollIntoView(); };
 
-/* ============ الميلان 3D ============ */
+/* ============ الحركة ثلاثية الأبعاد ============ */
 function bindTilt() {
   if (!canHover || !motionOK) return;
   $$('.pc').forEach(el => {
-    if (el._t) return; el._t = 1;
     const inn = el.firstElementChild;
     el.addEventListener('pointermove', e => {
       const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
@@ -576,35 +631,38 @@ function bindTilt() {
     el.addEventListener('pointerleave', () => { inn.style.setProperty('--tx', 0); inn.style.setProperty('--ty', 0); });
   });
 }
-let px = 0, py = 0;
-if (motionOK) addEventListener('pointermove', e => {
-  px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5;
-  const s = $('#scene').style; s.setProperty('--tx', px.toFixed(3)); s.setProperty('--ty', py.toFixed(3));
-  const a = $('.aura').style; a.setProperty('--cx', e.clientX + 'px'); a.setProperty('--cy', e.clientY + 'px');
+if (motionOK && canHover) addEventListener('pointermove', e => {
+  const x = (e.clientX / innerWidth - .5).toFixed(3), y = (e.clientY / innerHeight - .5).toFixed(3);
+  for (const el of [$('#t3d'), $('#scene')]) { el.style.setProperty('--tx', x); el.style.setProperty('--ty', y); }
 }, { passive: true });
 
-/* ============ خلفية الفضاء (شبكة + جزيئات بعمق) ============ */
+/* أفق المدينة في الهيرو */
 (function () {
-  const cv = $('#space'), c = cv.getContext('2d'); let W, H, D, t = 0, raf;
-  const N = innerWidth < 700 ? 50 : 110, P = Array.from({ length: N }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() }));
+  let d = '', x = 0, lights = '', s = 7;
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  while (x < 1440) {
+    const w = 30 + rnd() * 70, h = 60 + rnd() * (Math.abs(x - 720) < 300 ? 140 : 260);
+    d += `M${x.toFixed(0)} 400V${(400 - h).toFixed(0)}h${w.toFixed(0)}V400Z`;
+    for (let i = 0; i < 4; i++) if (rnd() > .55) lights += `<rect x="${(x + 6 + rnd() * (w - 12)).toFixed(0)}" y="${(400 - h + 10 + rnd() * (h - 20)).toFixed(0)}" width="3" height="4"/>`;
+    x += w + rnd() * 6;
+  }
+  $('#skyline').innerHTML = `<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0b0a"/><stop offset="1" stop-color="#000"/></linearGradient></defs><path d="${d}" fill="url(#sg)"/><g fill="#ff6a4d" opacity=".55">${lights}</g>`;
+})();
+
+/* جزيئات الجمر في الخلفية */
+(function () {
+  const cv = $('#space'), c = cv.getContext('2d'); let W, H, D, raf;
+  const N = innerWidth < 700 ? 40 : 90, P = Array.from({ length: N }, () => ({ x: Math.random(), y: Math.random(), v: .2 + Math.random() * .8, r: Math.random() }));
   function size() { D = Math.min(devicePixelRatio || 1, 2); W = cv.width = innerWidth * D; H = cv.height = innerHeight * D; }
   function frame() {
     c.clearRect(0, 0, W, H);
-    const sc = Math.min(scrollY / innerHeight, 1), hz = H * (.56 - sc * .12) + py * 30 * D, vx = W / 2 - px * 80 * D;
-    // الأرضية
-    c.lineWidth = D;
-    for (let i = -14; i <= 14; i++) { c.strokeStyle = 'rgba(225,40,28,.16)'; c.beginPath(); c.moveTo(vx, hz); c.lineTo(vx + i * W * .16, H); c.stroke(); }
-    for (let j = 0; j < 16; j++) { const z = (j + t % 1) / 16, y = hz + (H - hz) * z * z; c.strokeStyle = `rgba(225,40,28,${.05 + z * .3})`; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
-    const g = c.createLinearGradient(0, hz - 2, 0, hz + H * .12); g.addColorStop(0, 'rgba(255,90,77,.5)'); g.addColorStop(1, 'rgba(255,90,77,0)');
-    c.fillStyle = g; c.fillRect(0, hz, W, H * .12);
-    // الجزيئات
     for (const p of P) {
-      p.z -= .0022; if (p.z <= .02) { p.z = 1; p.x = Math.random() * 2 - 1; p.y = Math.random() * 2 - 1; }
-      const k = 1 / p.z, sx = vx + p.x * k * W * .22, sy = hz + (p.y - .6) * k * H * .12, r = Math.min(k * .5, 3) * D;
-      if (sx < 0 || sx > W || sy < 0 || sy > hz) continue;
-      c.fillStyle = `rgba(255,${150 + p.y * 60 | 0},${130 + p.x * 50 | 0},${Math.min(1 - p.z, .8)})`; c.beginPath(); c.arc(sx, sy, r, 0, 6.3); c.fill();
+      p.y -= p.v * .0009; p.x += Math.sin(p.y * 20 + p.r * 6) * .0003;
+      if (p.y < -.02) { p.y = 1.02; p.x = Math.random(); }
+      c.fillStyle = `rgba(255,${90 + p.r * 80 | 0},60,${Math.min(1, (1 - p.y) * 1.4) * .7 * p.v})`;
+      c.beginPath(); c.arc(p.x * W, p.y * H, (.6 + p.r * 1.4) * D, 0, 6.3); c.fill();
     }
-    t += .012; if (motionOK) raf = requestAnimationFrame(frame);
+    if (motionOK) raf = requestAnimationFrame(frame);
   }
   size(); frame();
   addEventListener('resize', () => { size(); if (!motionOK) frame(); });
@@ -612,15 +670,19 @@ if (motionOK) addEventListener('pointermove', e => {
 })();
 
 /* ============ تفاصيل ============ */
-$('#tick').innerHTML = Array(2).fill(['ESX','QBCORE','QBOX','STANDALONE','OPTIMIZED','INSTANT DELIVERY','FREE UPDATES','MLO','VEHICLES','EUP'].map(w => `<span>${w}</span><b>◆</b>`).join('')).join('');
 $('#yr').textContent = new Date().getFullYear();
+$('#stCount').textContent = PRODUCTS.length + '+';
 const bun = byId('bundle-starter'); $('#bNow').textContent = money(bun.price); $('#bOld').textContent = money(bun.old);
-['#dcTop', '#dcBig'].forEach(s => { const a = $(s); if (CONFIG.discord) a.href = CONFIG.discord; else a.onclick = e => { e.preventDefault(); toast('حط رابط الديسكورد في CONFIG.discord'); }; });
+$('#revs').innerHTML = REVIEWS.map(r => `<figure class="rev"><q>${r.q}</q><figcaption class="who"><i>${r.n.trim()[0]}</i><div><b>${r.n}</b><small>${r.s}</small></div></figcaption></figure>`).join('');
+$$('.js-dc').forEach(a => { if (CONFIG.discord) a.href = CONFIG.discord; else a.onclick = e => { e.preventDefault(); toast('حط رابط الديسكورد في CONFIG.discord'); }; });
+const jl = $('#joinLive'); if (CONFIG.liveServer) jl.href = CONFIG.liveServer; else jl.onclick = e => { e.preventDefault(); toast('حط رابط سيرفر العرض في CONFIG.liveServer'); };
 $('#menuBtn').onclick = e => { const on = $('#nav').classList.toggle('on'); e.currentTarget.setAttribute('aria-expanded', on); };
-$('#nav').onclick = () => $('#nav').classList.remove('on');
+$('#nav').onclick = () => { $('#nav').classList.remove('on'); $('#menuBtn').setAttribute('aria-expanded', false); };
+const hd = $('#hd'), onScroll = () => hd.classList.toggle('solid', scrollY > 30);
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
 function clock() {
-  let s = Math.max(0, (new Date(CONFIG.bundleEnds) - Date.now()) / 1e3 | 0);
+  const s = Math.max(0, (new Date(CONFIG.bundleEnds) - Date.now()) / 1e3 | 0);
   if (!s) { $('#clock').hidden = true; return; }
   const v = [[s / 86400 | 0, 'DAYS'], [s / 3600 % 24 | 0, 'HRS'], [s / 60 % 60 | 0, 'MIN'], [s % 60, 'SEC']];
   $('#clock').innerHTML = v.map(([n, l]) => `<div><b>${String(n).padStart(2, '0')}</b><span>${l}</span></div>`).join('');
@@ -628,7 +690,7 @@ function clock() {
 clock(); setInterval(clock, 1000);
 if (motionOK) setInterval(() => { $('#spd').textContent = 128 + Math.round(Math.random() * 30); }, 900);
 
-const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .1 });
 $$('.rv').forEach(el => io.observe(el));
 
 renderChips(); renderGrid(); renderCart();
