@@ -447,6 +447,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
 .af{display:grid;gap:10px}
 .af input{height:46px;padding:0 12px;border:1px solid var(--line2);background:var(--s2);border-radius:var(--br)}
 .af input:focus{outline:0;border-color:var(--rt)}
+.shw{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--mute);cursor:pointer}.shw input{width:16px;height:16px;accent-color:var(--rt)}
 .lnk{color:var(--mute);font-size:14px;text-decoration:underline;justify-self:center}.lnk:hover{color:#fff}
 .er{color:#fca5a5;min-height:1.2em;font-size:13.5px;display:block}
 .up{display:flex;align-items:center;justify-content:center;gap:8px;min-height:64px;padding:12px;border:1px dashed var(--line2);border-radius:var(--r2);background:var(--s2);cursor:pointer;color:var(--mute);text-align:center}
@@ -743,6 +744,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     <form id="acctF" class="af" novalidate>
       <input id="aName" placeholder="الاسم" maxlength="60" autocomplete="name" hidden><input id="aDc" placeholder="اسمك في الديسكورد" maxlength="60" hidden>
       <input id="aEm" type="email" placeholder="الإيميل" dir="ltr" autocomplete="email"><input id="aPw" type="password" placeholder="كلمة المرور (8 أحرف أو أكثر)" dir="ltr" autocomplete="current-password">
+      <label class="shw"><input type="checkbox" id="aShow"> إظهار كلمة المرور</label>
       <small class="er" id="aErr" role="alert"></small>
       <button class="btn white" type="submit" id="aGo">دخول</button>
       <button class="lnk" type="button" id="aSw">ما عندك حساب؟ سجّل حساب جديد</button>
@@ -750,6 +752,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     </form></div>
   <div id="acctIn" style="gap:14px" hidden>
     <span class="eyebrow" style="margin:0">MY ACCOUNT</span><h2>حسابي</h2><p class="mute" id="aMail" style="direction:ltr;text-align:right"></p>
+    <a class="btn red" id="aAdmin" href="admin.html" hidden>فتح لوحة التحكم</a>
     <h3 style="font-size:16px">طلباتي</h3><div class="bk-g" id="myOrders"></div>
     <button class="btn line" type="button" id="aOut">تسجيل خروج</button></div>
 </div></dialog>
@@ -984,7 +987,9 @@ async function renderAcct() {
   if (newPw) return;
   $('#acctOut').hidden = !!me; $('#acctIn').hidden = !me; $('#acctIn').style.display = me ? 'grid' : ''; $('#acctOut').style.display = me ? 'none' : 'grid';
   if (!me) return acctMode(reg);
-  $('#aMail').textContent = me.email; $('#myOrders').innerHTML = '<p class="mute">جاري التحميل…</p>';
+  $('#aMail').textContent = me.email; $('#aAdmin').hidden = true;
+  sb.rpc('admin_state').then(({ data }) => { $('#aAdmin').hidden = !(data && data.admin); });
+  $('#myOrders').innerHTML = '<p class="mute">جاري التحميل…</p>';
   const { data } = await sb.from('orders').select('id,ref,total,status,items,created_at').order('created_at', { ascending: false }).limit(20);
   $('#myOrders').innerHTML = (data || []).map(o => `<div class="mo"><div><b>${esc(o.ref)}</b><span class="stt ${esc(o.status)}">${STT[o.status] || ''}</span></div>
     <small>${(o.items || []).map(i => esc(i.n)).join('، ')}</small><div><b>${money(+o.total)}</b>${o.status === 'pending' || o.status === 'review' || o.status === 'rejected' ? `<button type="button" data-up="${o.id}">${o.status === 'pending' ? 'رفع الإيصال' : 'رفع إيصال جديد'}</button>` : ''}</div></div>`).join('') || '<p class="mute">ما عندك طلبات بعد.</p>';
@@ -1005,10 +1010,11 @@ $('#acctF').onsubmit = async e => { e.preventDefault();
   try {
     if (reg) { const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name: $('#aName').value.trim().slice(0, 60), discord: $('#aDc').value.trim().slice(0, 60) } } });
       if (error) err('تعذّر إنشاء الحساب. ممكن الإيميل مسجّل من قبل.'); else if (!data.session) { acctMode(false); err('أرسلنا لك رابط تأكيد على إيميلك. أكّد حسابك ثم سجّل دخولك.'); } }
-    else { const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) err('الإيميل أو كلمة المرور غلط.'); }
+    else { const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) err(/confirm/i.test(error.message || '') ? 'أكّد إيميلك أول من الرابط اللي وصلك، ثم سجّل دخولك.' : 'الإيميل أو كلمة المرور غلط.'); }
   } catch (x) { err('تعذّر الاتصال. حاول مرة ثانية.'); }
-  b.disabled = false; $('#aPw').value = '';
+  b.disabled = false; if (me) $('#aPw').value = '';
 };
+$('#aShow').onchange = e => { $('#aPw').type = e.target.checked ? 'text' : 'password'; };
 $('#aOut').onclick = async () => { reg = false; await sb.auth.signOut(); };
 $('#aFg').onclick = async () => { const email = $('#aEm').value.trim(), err = m => { $('#aErr').textContent = m; };
   if (!/^\S+@\S+\.\S+$/.test(email)) return err('اكتب إيميلك أول ثم اضغط «نسيت كلمة المرور».');
