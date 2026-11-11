@@ -722,6 +722,17 @@ const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting
 $$('.rv').forEach(el => io.observe(el));
 
 syncButtons(); bindTilt(); renderCart();
+
+/* وضع الصيانة — يتفعّل من لوحة التحكم */
+if (CONFIG.maint) {
+  const m = document.createElement('div');
+  m.style.cssText = 'position:fixed;inset:0;z-index:100;background:#000;display:grid;place-items:center;text-align:center;padding:24px';
+  m.innerHTML = '<div style="display:grid;gap:14px;max-width:420px"><div class="logo" style="justify-content:center;font-size:30px">RO<b>X</b></div><h2>تحت الصيانة</h2><p class="mute"></p><p class="mute"></p></div>';
+  const [msg, when] = m.querySelectorAll('p');
+  msg.textContent = CONFIG.mmsg || 'نجهّز لكم شيئًا أفضل. نرجع قريبًا.';
+  if (CONFIG.mdate) when.textContent = 'نرجع ' + new Date(CONFIG.mdate).toLocaleString('ar-u-nu-latn', { dateStyle:'long', timeStyle:'short' });
+  document.body.append(m); document.body.classList.add('lock');
+}
 </script>
 </body>
 </html>
