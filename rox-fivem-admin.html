@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ROX Store | لوحة التحكم</title>
-<meta name="robots" content="noindex">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' data: blob: https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'self'">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 96 50 50 96 4 50Z' fill='%23e1281c'/%3E%3Cpath d='M31 31 69 69M69 31 31 69' stroke='%23000' stroke-width='9'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -123,8 +125,9 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
 #lk:before,#mp:before{content:"ROX";position:absolute;font:400 clamp(200px,62vw,640px)/.8 'Bebas Neue',Impact,sans-serif;color:transparent;-webkit-text-stroke:1px #1f1c1a;direction:ltr}
 .lw{position:relative;display:grid;gap:12px;width:min(86vw,340px)}.lw .lg{font-size:54px;justify-content:center}.lw p{color:#938d85}.lw h2{font-size:34px;font-weight:900}
 .lw .lki{width:44px;height:44px;margin:0 auto;color:var(--red)}
-#pin{text-align:center;font-size:28px;letter-spacing:.4em;color:#efeae2;border-color:#2a2725}
-#go{background:var(--red);color:#000;font-weight:900;padding:13px}#le{color:#ff5448;min-height:1.4em}
+.lw input{text-align:center;font-size:17px;color:#efeae2;border-color:#2a2725}
+.lw .dx{color:#938d85}
+#go{background:var(--red);color:#000;font-weight:900;padding:13px}#go:disabled{opacity:.5}#le{color:#ff5448;min-height:1.4em}
 
 /* الإعدادات والمظهر */
 .mn{border:2px solid var(--red);padding:10px 14px;margin-bottom:14px;font-weight:700;color:var(--rt);display:flex;align-items:center;gap:8px}
@@ -153,6 +156,15 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
 .dc i u{text-decoration:none}
 .dc small{display:block;font-weight:400;font-size:12px;color:var(--mu)}
 .lgr{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--ln);font-size:14px}.lgr small{color:var(--mu);white-space:nowrap}
+/* الإيصال ونتيجة الفحص */
+.rc img{display:block;max-width:100%;max-height:340px;margin:0 auto 12px;border:1px solid var(--ln);background:#fff}
+.vd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;font-weight:900;border:2px solid currentColor;margin-bottom:8px}
+.vd.ok{color:var(--ok)}.vd.review{color:#d99a1c}.vd.sus{color:var(--rt)}.vd b{font-size:24px}
+.ck{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid var(--ln);font-size:14px}
+.ck i{font-style:normal;font-weight:900;text-align:center}.ck.ok i{color:var(--ok)}.ck.warn i{color:#d99a1c}.ck.fail i{color:var(--rt)}.ck.info i{color:var(--mu)}
+.ck small{display:block;color:var(--mu)}
+.vt{font-style:normal;font-size:11px;font-weight:900;padding:1px 7px;vertical-align:middle;border:1px solid currentColor}
+.vt.ok{color:var(--ok)}.vt.review{color:#d99a1c}.vt.sus{color:var(--rt)}
 #eye,#dim{position:fixed;inset:0;z-index:60;pointer-events:none}#eye{background:#ff9d2e;mix-blend-mode:multiply;opacity:var(--eye)}#dim{background:#000;opacity:var(--dim)}
 
 :root[data-ds=soft]{--rad:18px}:root[data-ds=calm]{--rad:8px}
@@ -178,10 +190,16 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
 </style>
 </head>
 <body>
-<div id="lk"><div class="lw">
+<div id="lk"><form class="lw" id="lf" novalidate>
   <svg class="i lki" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-  <div class="lat lg">ROX<b>ADMIN</b></div><p>أدخل رمز الدخول</p>
-  <input id="pin" type="password" inputmode="numeric" autocomplete="off" aria-label="رمز الدخول"><button id="go" type="button">دخول</button><small id="le" role="alert"></small></div></div>
+  <div class="lat lg">ROX<b>ADMIN</b></div><p id="lmsg"></p>
+  <input id="lem" type="email" autocomplete="username" placeholder="الإيميل" dir="ltr" aria-label="الإيميل">
+  <input id="lpw" type="password" autocomplete="current-password" placeholder="كلمة المرور" dir="ltr" aria-label="كلمة المرور">
+  <input id="pin" type="password" autocomplete="off" placeholder="كلمة المرور الثانية" dir="ltr" aria-label="كلمة المرور الثانية" hidden>
+  <input id="pin2" type="password" autocomplete="off" placeholder="أعد كتابتها" dir="ltr" aria-label="تأكيد كلمة المرور الثانية" hidden>
+  <button id="go" type="submit">دخول</button><small id="le" role="alert"></small>
+  <button type="button" id="lout" class="dx" style="justify-content:center" hidden>تسجيل خروج</button>
+</form></div>
 
 <div class="app" id="app" hidden>
   <aside class="sd"><div class="lat lg"><small>ADMIN</small><span>RO<b>X</b></span></div><nav id="nv" aria-label="الأقسام"></nav></aside>
@@ -206,8 +224,10 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
 <div id="mp" hidden><div class="lw"><div class="lat lg">RO<b>X</b></div><h2>تحت الصيانة</h2><p id="mm"></p><p id="md"></p><button class="bt p" id="mx" type="button" style="margin:0;justify-content:center">إغلاق المعاينة</button></div></div>
 <div id="eye"></div><div id="dim"></div><div id="ts" role="status"></div>
 
-<script>
-(function () {
+<script src="rox-config.js"></script>
+<script src="rox-receipt-check.js"></script>
+<script type="module">
+
 const $ = id => document.getElementById(id), RM = matchMedia('(prefers-reduced-motion:reduce)').matches;
 const esc = x => String(x ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
 const clean = x => String(x ?? '').replace(/[<>]/g, '').trim();
@@ -252,7 +272,7 @@ function glyph(cat, h) {
 /* ============ البيانات ============ */
 const CATS = [['script', 'سكربتات', 4], ['mlo', 'مابات MLO', 215], ['car', 'سيارات', 38], ['eup', 'ملابس EUP', 160], ['bundle', 'باقات', 275]];
 const catName = id => (CATS.find(c => c[0] === id) || CATS[0])[1];
-const ST = ['جديد', 'تم التسليم', 'مسترجع'], PAY = [['tebex', 'Tebex'], ['paypal', 'PayPal'], ['card', 'بطاقة']];
+const ST = ['جديد', 'تم التسليم', 'مسترجع'], PAY = [['bank', 'تحويل بنكي'], ['tebex', 'Tebex'], ['paypal', 'PayPal'], ['card', 'بطاقة']];
 const TB = [['نظرة عامة', 'OVERVIEW', 'home'], ['الطلبات', 'ORDERS', 'orders'], ['المنتجات', 'PRODUCTS', 'box'], ['العملاء', 'CUSTOMERS', 'users'], ['التسويق', 'MARKETING', 'mega'], ['الإعدادات', 'SETTINGS', 'set'], ['المظهر', 'THEME', 'theme']];
 const DY = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
 const CFG0 = { currency:'$', discord:'', checkout:'', liveServer:'', bundleEnds:'2026-12-31T23:59:59+03:00', maint:0, mmsg:'', mdate:'', design:'rox', announce:'', coupons:[], sarRate:3.75,
@@ -266,35 +286,47 @@ const REV0 = [
   { q:'الـ HUD والحقيبة اشتغلوا من أول تركيب على QBCore، والـ resmon ما تحرّك. أنصح فيهم وبقوة.', n:'اسم العميل', s:'اسم السيرفر' },
   { q:'أخذنا باقة التشغيل وفتحنا السيرفر خلال يومين. كل شي متوافق مع بعض وما احتجنا نعدّل شي.', n:'اسم العميل', s:'على باقة التشغيل' }
 ];
-const P0 = [
-  { id:'pd',        cat:'mlo',    art:'ROX PD',    name:'مركز الشرطة — ROX PD',    desc:'مركز كامل: استقبال، زنازين، غرفة تحقيق، مخزن سلاح وكراج.', price:59.99, fw:['MLO','YMAP'], h:215, tag:'الأكثر مبيعًا' },
-  { id:'med',       cat:'mlo',    art:'MEDICAL',   name:'مستشفى Central Medical',  desc:'طوارئ، غرف عمليات، صيدلية ومهبط طيران على السطح.',       price:39.99, fw:['MLO','YMAP'], h:200 },
-  { id:'tuner',     cat:'mlo',    art:'TUNER',     name:'ورشة Tuner Garage',       desc:'ورشة تعديل برافعات، غرفة صبغ، ومعرض للسيارات.',           price:34.99, fw:['MLO'], h:232, tag:'جديد', isNew:true },
-  { id:'hud',       cat:'script', art:'HUD',       name:'ROX HUD',                 desc:'واجهة لاعب نظيفة: صحة، درع، جوع، عدّاد سرعة وخريطة.',     price:24.99, fw:['ESX','QB','QBOX'], h:4 },
-  { id:'inv',       cat:'script', art:'INVENTORY', name:'ROX Inventory',           desc:'حقيبة بالسحب والإفلات، أوزان، متاجر، وصناديق سيارات.',    price:44.99, old:59.99, fw:['ESX','QB','QBOX'], h:18 },
-  { id:'garage',    cat:'script', art:'GARAGE',    name:'ROX Garage',              desc:'كراجات عامة وخاصة، حجز، ومفاتيح مشتركة بين اللاعبين.',    price:29.99, fw:['ESX','QB','QBOX'], h:350 },
-  { id:'bank',      cat:'script', art:'BANKING',   name:'ROX Banking',             desc:'حسابات شخصية ومشتركة، فواتير، وسجل عمليات كامل.',         price:27.99, fw:['ESX','QB'], h:28 },
-  { id:'multichar', cat:'script', art:'MULTICHAR', name:'ROX Multichar',           desc:'اختيار شخصيات سينمائي مع نقاط سباون وخانات قابلة للفتح.',  price:21.99, fw:['QB','QBOX'], h:338, tag:'جديد', isNew:true },
-  { id:'dispatch',  cat:'script', art:'DISPATCH',  name:'ROX Dispatch',            desc:'بلاغات للشرطة والإسعاف مع أكواد وتتبّع على الخريطة.',      price:34.99, fw:['ESX','QB','QBOX'], h:10 },
-  { id:'patrol',    cat:'car',    art:'PATROL',    name:'باقة سيارات الدوريات',    desc:'8 سيارات شرطة بإضاءات ELS وهاندلنق مضبوط.',               price:34.99, fw:['ADDON','ELS'], h:38 },
-  { id:'drift',     cat:'car',    art:'DRIFT',     name:'ROX Drift Pack',          desc:'6 سيارات دريفت بأصوات محركات وتعديلات كاملة.',            price:26.99, old:33.99, fw:['ADDON'], h:50 },
-  { id:'eup',       cat:'eup',    art:'EUP',       name:'باقة ملابس Police + EMS', desc:'زي رسمي كامل للشرطة والإسعاف، رجالي ونسائي.',             price:19.99, fw:['EUP'], h:160 },
-  { id:'bundle-starter', cat:'bundle', art:'STARTER', name:'باقة تشغيل ROX',       desc:'سكربتات + مابات + سيارات في باقة وحدة متوافقة.',           price:149.99, old:239.99, fw:['ESX','QB','QBOX'], h:4, tag:'وفّر 37%' }
-];
-let P = get('rox_products', null) || JSON.parse(JSON.stringify(P0));
-let CFG = Object.assign({}, CFG0, get('rox_config', {}));
-let DB = Object.assign({ orders: null, pin: '1234', log: [] }, get('rox_admin', {}));
-CFG.bank = Object.assign({}, CFG0.bank, CFG.bank);
-function lg(m) { DB.log.unshift({ t: Date.now(), m }); DB.log.length = Math.min(DB.log.length, 40); saveDB(); }
-if (!DB.orders) DB.orders = [[0,3,0],[0,12,0],[1,0,1],[2,4,1],[3,9,1],[4,6,1],[6,1,1],[9,5,1],[12,0,1],[16,7,2],[21,2,1],[26,10,1]].map((r, i) => {
-  const q = P0[r[1]]; return { id: String(1040 + 12 - i), t: Date.now() - r[0] * 864e5 - i * 36e5, total: q.price, st: r[2], demo: 1, cu: 'عميل_' + (1012 + i * 7), cfx: '', pay: PAY[i % 3][0], items: [{ n: q.name, p: q.price, q: 1 }] }; });
-const saveDB = () => put('rox_admin', DB), saveP = () => put('rox_products', P), saveC = () => put('rox_config', CFG);
+const SBC = window.ROX_SB || {}; let sb = null;
+if (SBC.url && SBC.key) { try {
+  await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
+  sb = window.supabase.createClient(SBC.url, SBC.key); } catch (e) { console.error(e); } }
+let P = [], CFG = JSON.parse(JSON.stringify(CFG0)), DB = { orders: [], log: [] }, CUS = [], known = { p: new Set(), c: new Set() };
+const run = async (pr, msg) => { const { data, error } = await pr; if (error) { console.error(error); toast(msg || 'تعذّر الحفظ. تأكد من الاتصال.'); throw error; } return data; };
+const fromRow = r => { const p = { id: r.id, cat: r.cat, art: r.art, name: r.name, desc: r.descr, price: +r.price, fw: r.fw || [], h: r.h }; if (r.old_price) p.old = +r.old_price; if (r.tag) { p.tag = r.tag; p.isNew = !!r.is_new; } return p; };
+const toRow = (p, i) => ({ id: p.id, cat: p.cat, art: p.art, name: p.name, descr: p.desc, price: p.price, old_price: p.old || null, fw: p.fw || [], h: p.h, tag: p.tag || null, is_new: !!p.isNew, sort: i + 1, active: true });
+const STN = ['pending', 'delivered', 'refunded'], stIdx = x => x == 'delivered' ? 1 : x == 'refunded' || x == 'rejected' ? 2 : 0;
+const fromOrder = o => ({ id: o.id, ref: o.ref, t: Date.parse(o.created_at), total: +o.total, st: stIdx(o.status), status: o.status, cu: o.cu || '', cfx: o.cfx || '', pay: o.pay, items: o.items || [], nt: o.note || '', uid: o.user_id, rp: o.receipt_path, rh: o.receipt_hash, chk: o.chk });
+async function loadAll() {
+  const [pr, st, cp, od, pf, lx] = await Promise.all([
+    run(sb.from('products').select('*').order('sort')), run(sb.from('settings').select('data').eq('id', 1).maybeSingle()), run(sb.from('coupons').select('*').order('code')),
+    run(sb.from('orders').select('*').order('created_at', { ascending: false }).limit(500)), run(sb.from('profiles').select('*').order('created_at', { ascending: false }).limit(1000)),
+    run(sb.from('activity_log').select('*').order('at', { ascending: false }).limit(40))]);
+  P = pr.map(fromRow); known.p = new Set(P.map(p => p.id));
+  CFG = Object.assign(JSON.parse(JSON.stringify(CFG0)), st ? st.data : {}); CFG.bank = Object.assign({}, CFG0.bank, CFG.bank);
+  CFG.coupons = cp.map(c => ({ code: c.code, pct: c.pct, on: c.active })); known.c = new Set(cp.map(c => c.code));
+  DB.orders = od.map(fromOrder); CUS = pf; DB.log = lx.map(l => ({ t: Date.parse(l.at), m: l.msg }));
+}
+async function saveP() { try {
+  if (P.length) await run(sb.from('products').upsert(P.map(toRow)));
+  const gone = [...known.p].filter(id => !P.some(p => p.id == id)); if (gone.length) await run(sb.from('products').delete().in('id', gone));
+  known.p = new Set(P.map(p => p.id)); } catch (e) {} }
+async function saveC() { try {
+  const d = Object.assign({}, CFG), cp = CFG.coupons || []; delete d.coupons;
+  await run(sb.from('settings').upsert({ id: 1, data: d }));
+  if (cp.length) await run(sb.from('coupons').upsert(cp.map(c => ({ code: c.code, pct: c.pct, active: c.on !== false }))));
+  const gone = [...known.c].filter(c => !cp.some(x => x.code == c)); if (gone.length) await run(sb.from('coupons').delete().in('code', gone));
+  known.c = new Set(cp.map(c => c.code)); } catch (e) {} }
+async function saveOrder(o) { try { await run(sb.from('orders').update({ status: o.status, cu: o.cu, cfx: o.cfx, note: o.nt, items: o.items, total: o.total, pay: o.pay, chk: o.chk || null }).eq('id', o.id)); } catch (e) {} }
+async function delOrder(id) { DB.orders = DB.orders.filter(x => x.id != id); try { await run(sb.from('orders').delete().eq('id', id)); } catch (e) {} }
+const saveDB = () => {};
+function lg(m) { DB.log.unshift({ t: Date.now(), m }); DB.log.length = Math.min(DB.log.length, 40); sb.from('activity_log').insert({ msg: m }).then(() => {}); }
 const money = n => CFG.currency + (+n).toFixed(2);
+const emailOf = id => (CUS.find(c => c.id == id) || {}).email || '';
 let rg = 7, flt = -1, qs = '', at = 0, ed = null;
 
 function toast(m) { const t = $('ts'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 1800); }
 function ago(t) { const m = Math.max(Math.round((Date.now() - t) / 6e4), 1); return m < 60 ? 'قبل ' + m + ' دقيقة' : m < 1440 ? 'قبل ' + Math.round(m / 60) + ' ساعة' : 'قبل ' + Math.round(m / 1440) + ' يوم'; }
-const cnt = () => DB.orders.filter(o => !o.st).length, oid = i => DB.orders.find(o => o.id == i), paid = o => o.st !== 2;
+const cnt = () => DB.orders.filter(o => !o.st).length, oid = i => DB.orders.find(o => o.id == i), paid = o => o.status === 'delivered';
 function cf(b, f) { if (b.dataset.c) { f(); return; } b.dataset.c = 1; const o = b.innerHTML; b.textContent = 'اضغط للتأكيد'; setTimeout(() => { delete b.dataset.c; b.innerHTML = o; }, 2500); }
 function cu(el) { const v = +el.dataset.v, t0 = performance.now(); (function f(n) { const k = Math.min((n - t0) / 900, 1); el.textContent = Math.round(v * (1 - Math.pow(1 - k, 3))).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(f); })(t0); }
 
@@ -318,7 +350,7 @@ function tpr() { const r = {}; DB.orders.filter(paid).forEach(o => o.items.forEa
   const k = Object.keys(r).sort((a, b) => r[b] - r[a]).slice(0, 5), m = r[k[0]] || 1;
   return k.map((n, j) => `<div class="tp"><span>${esc(n)}</span><div><i style="--w:${Math.round(r[n] / m * 100)}%;animation-delay:${.2 + j * .08}s"></i></div><b class="lat">${money(r[n])}</b></div>`).join('') || '<p class="em">ما فيه مبيعات بعد.</p>'; }
 function row(o, a) {
-  return `<div class="tk"><button class="in" data-od="${o.id}"><b class="lat">#${o.id}</b> ${o.demo ? '<i class="dm">تجريبي</i>' : ''}<strong class="cn">${o.cu ? esc(o.cu) : 'بدون اسم'}</strong>
+  return `<div class="tk"><button class="in" data-od="${o.id}"><b class="lat">#${o.id}</b> ${o.rp ? '<i class="dm">إيصال</i>' : ''} ${o.chk ? `<i class="vt ${o.chk.verdict}">${esc(o.chk.label)}</i>` : ''}<strong class="cn">${o.cu ? esc(o.cu) : 'بدون اسم'}</strong>
     ${o.cfx ? `<small><bdi dir="ltr">${esc(o.cfx)}</bdi></small>` : ''}<small>${o.items.map(x => esc(x.n) + (x.q > 1 ? ' ×' + x.q : '')).join('، ')}</small><small>${ago(o.t)} · ${(PAY.find(p => p[0] == o.pay) || PAY[0])[1]}</small></button>
     <div class="sb"><b class="lat">${money(o.total)}</b><button class="st s${o.st}" data-id="${o.id}">${ST[o.st]}</button>${a ? '' : `<button class="dx" data-del="${o.id}">${ic('trash', 's')}حذف</button>`}</div></div>`;
 }
@@ -327,10 +359,10 @@ function ovv() { const q = DB.orders.filter(o => !o.st), dd = Math.ceil((new Dat
     + `<div class="hh">الأعلى مبيعًا</div>${tpr()}<div class="hh">عرض الباقة</div><div class="cd">${ic('tag')}${dd > 0 ? `<span>ينتهي بعد</span><b class="lat">${dd}</b><span>يوم</span>` : '<span>انتهى عرض الباقة والعدّاد مخفي من المتجر.</span>'}</div>`; }
 
 /* ============ الطلبات ============ */
-function ol() { const q = qs.trim().toLowerCase(), L = DB.orders.filter(o => (flt < 0 || o.st == flt) && (!q || (o.id + ' ' + (o.cu || '') + ' ' + (o.cfx || '') + ' ' + o.items.map(x => x.n).join(' ')).toLowerCase().includes(q)));
+function ol() { const q = qs.trim().toLowerCase(), L = DB.orders.filter(o => (flt < 0 || (flt == 3 ? o.status == 'review' : o.st == flt)) && (!q || (o.id + ' ' + o.ref + ' ' + emailOf(o.uid) + ' ' + (o.cu || '') + ' ' + (o.cfx || '') + ' ' + o.items.map(x => x.n).join(' ')).toLowerCase().includes(q)));
   return L.map(o => row(o)).join('') || '<p class="em">ما فيه طلبات تطابق هذا الفلتر.</p>'; }
-function ord() { const c = [DB.orders.length, 0, 0, 0]; DB.orders.forEach(o => c[o.st + 1]++);
-  return `<button class="bt p" data-od="new" style="margin:0 0 12px">${ic('plus', 's')}طلب جديد</button><div class="fl">${['الكل'].concat(ST).map((l, i) => `<button data-f="${i - 1}" class="${i - 1 == flt ? 'on' : ''}">${l} (${c[i]})</button>`).join('')}</div>
+function ord() { const c = [DB.orders.length, 0, 0, 0, DB.orders.filter(o => o.status == 'review').length]; DB.orders.forEach(o => c[o.st + 1]++);
+  return `<button class="bt p" data-od="new" style="margin:0 0 12px">${ic('plus', 's')}طلب جديد</button><div class="fl">${['الكل'].concat(ST, 'إيصال للمراجعة').map((l, i) => `<button data-f="${i - 1}" class="${i - 1 == flt ? 'on' : ''}">${l} (${c[i]})</button>`).join('')}</div>
     <div class="qw">${ic('search', 's')}<input class="q" id="q" type="search" placeholder="ابحث بالاسم أو رقم الطلب أو المنتج" value="${esc(qs)}"></div><p class="hint">اضغط على ختم الحالة لنقل الطلب للمرحلة التالية، أو على الطلب نفسه لتعديله.</p><div id="ol">${ol()}</div>`; }
 
 /* ============ المنتجات ============ */
@@ -368,12 +400,13 @@ function sev() { const c = CFG, d = new Date(c.bundleEnds), dv = isNaN(d) ? '' :
     <label>الآيبان<input id="bib" dir="ltr" value="${esc(c.bank.iban)}"></label>
     <label>رقم الحساب<input id="bac" dir="ltr" inputmode="numeric" value="${esc(c.bank.account)}"></label>
     <label>سعر الدولار بالريال<input id="bsr" type="number" step="0.01" min="0" dir="ltr" value="${esc(c.sarRate)}"></label></div>
-  <div class="hh">الأمان</div><div class="fg"><label>رمز دخول جديد (4 أرقام أو أكثر)<input id="spn" type="password" inputmode="numeric" autocomplete="off"></label></div>
-  <button class="bt p" id="ss">حفظ الإعدادات</button><button class="bt" id="ex">تصدير المنتجات JSON</button><button class="bt" id="cd0">حذف الطلبات التجريبية</button><button class="bt" id="rs">إعادة ضبط الكل</button>
-  <p class="nt">المنتجات والإعدادات تنحفظ في هذا المتصفح فقط، والمتجر يقرأها لما ينفتح من نفس الموقع ونفس المتصفح. رمز الدخول يقفل الشاشة فقط وليس حماية حقيقية — عشان تنشر اللوحة لازم تنربط بخادم وتسجيل دخول.</p>
+  <div class="hh">الأمان</div><div class="fg"><label>كلمة مرور ثانية جديدة (8 أحرف أو أكثر)<input id="spn" type="password" dir="ltr" autocomplete="new-password"></label></div>
+  <button class="bt p" id="ss">حفظ الإعدادات</button><button class="bt" id="ex">تصدير المنتجات JSON</button>
+  <p class="nt">كل البيانات محفوظة في قاعدة بيانات Supabase وتظهر لكل الزوار مباشرة. الدخول للوحة بخطوتين: كلمة مرور الحساب ثم كلمة المرور الثانية، وبعد 5 محاولات غلط تنقفل 15 دقيقة.</p>
   <div class="hh">سجل النشاط</div>${DB.log.slice(0, 15).map(l => `<div class="lgr"><span>${esc(l.m)}</span><small>${ago(l.t)}</small></div>`).join('') || '<p class="em">ما فيه نشاط مسجّل بعد.</p>'}`; }
 function ss() { const d = new Date($('sbe').value), p = $('spn').value.trim();
-  if (p) { if (p.length < 4) { toast('الرمز لازم يكون 4 أرقام أو أكثر'); return; } DB.pin = p; saveDB(); }
+  if (p) { if (p.length < 8) { toast('كلمة المرور الثانية لازم 8 أحرف أو أكثر'); return; }
+    sb.rpc('admin_set_pin', { new_pin: p }).then(({ error }) => toast(error ? 'تعذّر تغيير كلمة المرور الثانية' : 'تم تغيير كلمة المرور الثانية')); }
   Object.assign(CFG, { mmsg: clean($('mmg').value), mdate: $('mdt').value, discord: clean($('sdc').value), checkout: clean($('sck').value), liveServer: clean($('slv').value), currency: clean($('scu').value) || '$', bundleEnds: isNaN(d) ? CFG.bundleEnds : d.toISOString(), sarRate: +$('bsr').value > 0 ? +$('bsr').value : 3.75,
     bank: { bankName: clean($('bnm').value), holder: clean($('bhd').value), iban: clean($('bib').value).replace(/\s/g, '').toUpperCase(), account: clean($('bac').value).replace(/\s/g, '') } });
   saveC(); lg('حفظ الإعدادات'); tab(at, 1); toast('تم حفظ الإعدادات'); }
@@ -383,11 +416,12 @@ function mt(v) { if ($('mmg')) { CFG.mmsg = clean($('mmg').value); CFG.mdate = $
 $('mx').onclick = () => $('mp').hidden = true;
 
 /* ============ العملاء ============ */
-function cus() { const m = {}; DB.orders.forEach(o => { const k = o.cu || 'بدون اسم', c = m[k] ||= { n: k, c: 0, v: 0, last: 0 }; c.c++; if (paid(o)) c.v += o.total; c.last = Math.max(c.last, o.t); });
-  const L = Object.values(m).sort((a, b) => b.v - a.v), tot = L.reduce((s, c) => s + c.v, 0);
-  return `<div class="ks" style="margin-top:0">${ki('عدد العملاء', L.length, 'users')}${ki('عملاء متكررين', L.filter(c => c.c > 1).length, 'star')}${ki(`متوسط إنفاق العميل (${esc(CFG.currency)})`, L.length ? Math.round(tot / L.length) : 0, 'cash')}${ki('إجمالي الطلبات', DB.orders.length, 'orders')}</div>
-    <div class="hh">كل العملاء</div><p class="hint">اضغط على العميل لعرض طلباته.</p>`
-    + (L.map(c => `<button class="cr" data-cu="${esc(c.n)}"><span class="av">${esc(c.n.trim()[0] || '؟')}</span><span><strong>${esc(c.n)}</strong><small>${c.c} طلب · آخر طلب ${ago(c.last)}</small></span><b class="lat">${money(c.v)}</b></button>`).join('') || '<p class="em">ما فيه عملاء بعد.</p>'); }
+function cus() { const by = {}; DB.orders.forEach(o => { if (!o.uid) return; const c = by[o.uid] ||= { c: 0, v: 0 }; c.c++; if (paid(o)) c.v += o.total; });
+  const L = CUS.map(p => Object.assign({ c: 0, v: 0 }, by[p.id], p)).sort((a, b) => b.v - a.v || Date.parse(b.created_at) - Date.parse(a.created_at));
+  const buyers = L.filter(c => c.v > 0), wk = L.filter(c => Date.now() - Date.parse(c.created_at) < 7 * 864e5).length;
+  return `<div class="ks" style="margin-top:0">${ki('الحسابات المسجّلة', L.length, 'users')}${ki('اشتروا من المتجر', buyers.length, 'star')}${ki('حسابات جديدة آخر 7 أيام', wk, 'clock')}${ki(`متوسط إنفاق المشتري (${esc(CFG.currency)})`, buyers.length ? Math.round(buyers.reduce((s, c) => s + c.v, 0) / buyers.length) : 0, 'cash')}</div>
+    <div class="hh">كل الحسابات</div><p class="hint">اضغط على الحساب لعرض طلباته.</p>`
+    + (L.map(c => `<button class="cr" data-cu="${esc(c.email)}"><span class="av">${esc(String(c.name || c.email || '؟').trim()[0])}</span><span><strong>${esc(c.name || 'بدون اسم')}</strong><small><bdi dir="ltr">${esc(c.email)}</bdi>${c.discord ? ' · ' + esc(c.discord) : ''}</small><small>${c.c} طلب · انضم ${ago(Date.parse(c.created_at))}</small></span><b class="lat">${money(c.v)}</b></button>`).join('') || '<p class="em">ما فيه حسابات مسجّلة بعد.</p>'); }
 
 /* ============ التسويق ============ */
 const revs = () => Array.isArray(CFG.reviews) ? CFG.reviews : REV0;
@@ -467,15 +501,13 @@ $('v').addEventListener('click', e => { const b = e.target.closest('button'); if
   else if (s.o) opt(s.o, s.v);
   else if (s.od) od1(s.od);
   else if (s.mt != null) mt(s.mt);
-  else if (s.id) { o = oid(s.id); o.st = (o.st + 1) % 3; lg(`طلب #${o.id}: ${ST[o.st]}`); tab(at, 1); toast('الحالة الآن: ' + ST[o.st]); }
-  else if (s.del != null) cf(b, () => { DB.orders = DB.orders.filter(x => x.id != s.del); saveDB(); tab(1, 1); toast('تم حذف الطلب'); });
+  else if (s.id) { o = oid(s.id); o.st = (o.st + 1) % 3; o.status = STN[o.st]; saveOrder(o); lg(`طلب #${o.id}: ${ST[o.st]}`); tab(at, 1); toast('الحالة الآن: ' + ST[o.st]); }
+  else if (s.del != null) cf(b, () => { delOrder(s.del); lg('حذف طلب #' + s.del); tab(1, 1); toast('تم حذف الطلب'); });
   else if (s.e != null) fo(+s.e);
   else if (s.x != null) cf(b, () => { lg('حذف منتج: ' + P[+s.x].name); P.splice(+s.x, 1); saveP(); tab(2, 1); toast('تم حذف المنتج'); });
   else if (b.id == 'np') fo(-1);
   else if (b.id == 'ss') ss();
-  else if (b.id == 'ex') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(P, null, 2)], { type:'application/json' })); a.download = 'rox-products.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
-  else if (b.id == 'cd0') { DB.orders = DB.orders.filter(x => !x.demo); lg('حذف الطلبات التجريبية'); tab(at, 1); toast('تم حذف الطلبات التجريبية'); }
-  else if (b.id == 'rs') cf(b, () => { try { ['rox_products', 'rox_config', 'rox_admin', 'rox_ui'].forEach(k => localStorage.removeItem(k)); } catch (x) {} location.reload(); }); });
+  else if (b.id == 'ex') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(P, null, 2)], { type:'application/json' })); a.download = 'rox-products.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); } });
 
 /* ============ نافذة الطلب ============ */
 let oe = null, wi = [];
@@ -483,9 +515,11 @@ const pri = n => (P.find(x => x.name == n) || {}).price || 0;
 function irs() { const nm = P.map(p => p.name); return wi.map((x, i) => { const op = nm.includes(x.n) ? nm : [x.n].concat(nm);
   return `<div class="ir"><select class="ip" aria-label="المنتج">${op.map(n => `<option${n == x.n ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select><input class="iq" type="number" min="1" value="${x.q}" aria-label="الكمية"><button data-ix="${i}" aria-label="حذف المنتج">${ic('trash', 's')}</button></div>`; }).join(''); }
 function rd() { wi = [...document.querySelectorAll('#il .ir')].map(r => { const n = r.querySelector('.ip').value, old = wi.find(x => x.n == n); return { n, p: pri(n) || (old ? old.p : 0), q: Math.max(1, +r.querySelector('.iq').value || 1) }; }); }
-function od1(id) { oe = id == 'new' ? null : oid(id); const o = oe || { items: [], st: 0, pay: 'tebex' };
+function od1(id) { oe = id == 'new' ? null : oid(id); const o = oe || { items: [], st: 0, pay: 'bank' };
   wi = o.items.map(x => ({ n: x.n, p: x.p, q: x.q })); if (!wi.length && P[0]) wi.push({ n: P[0].name, p: P[0].price, q: 1 });
-  $('ob').innerHTML = `<h2>${oe ? 'طلب #' + oe.id : 'طلب جديد'}</h2>${oe ? `<p class="hint">${new Date(oe.t).toLocaleString('ar-u-nu-latn', { dateStyle:'medium', timeStyle:'short' })}</p>` : ''}
+  $('ob').innerHTML = `<h2>${oe ? 'طلب #' + oe.id : 'طلب جديد'}</h2>${oe ? `<p class="hint">${esc(oe.ref)} · ${new Date(oe.t).toLocaleString('ar-u-nu-latn', { dateStyle:'medium', timeStyle:'short' })}${emailOf(oe.uid) ? ' · ' + esc(emailOf(oe.uid)) : ''}</p>` : ''}
+    ${oe && oe.rp ? `<div class="rc"><div class="hh" style="margin-top:6px">الإيصال</div><a id="rci" target="_blank" rel="noopener"><img alt="صورة الإيصال" id="rcimg"></a><div id="rcr">${chkHtml(oe.chk)}</div>
+      <button class="bt p" data-rck="1">${ic('search', 's')}فحص الإيصال</button><button class="bt" data-rok="1">قبول وتسليم</button><button class="bt" data-rno="1">رفض الإيصال</button><div class="hh">بيانات الطلب</div></div>` : ''}
     <div class="f2"><label>اسم العميل (ديسكورد)<input id="on" value="${esc(o.cu || '')}"></label><label>حساب Cfx.re أو الإيميل<input id="op" dir="ltr" value="${esc(o.cfx || '')}"></label></div>
     <div class="f2"><label>طريقة الدفع<select id="oy">${PAY.map(x => `<option value="${x[0]}"${o.pay == x[0] ? ' selected' : ''}>${x[1]}</option>`).join('')}</select></label><label>الحالة<select id="ost">${ST.map((s, i) => `<option value="${i}"${o.st == i ? ' selected' : ''}>${s}</option>`).join('')}</select></label></div>
     <label>ملاحظات<textarea id="ot" rows="2">${esc(o.nt || '')}</textarea></label>
@@ -493,29 +527,85 @@ function od1(id) { oe = id == 'new' ? null : oid(id); const o = oe || { items: [
     <label style="margin-top:14px">الإجمالي (${esc(CFG.currency)})<input id="otl" type="number" inputmode="decimal" step="0.01" dir="ltr" value="${o.total || ''}"></label>
     <button class="bt" data-oc="1">احسب الإجمالي من المنتجات</button><small class="er" id="oer" role="alert"></small>
     <button class="bt p" data-os="1">حفظ الطلب</button><button class="bt" data-ox="1">إغلاق</button>${oe ? `<button class="bt" data-odl="1">${ic('trash', 's')}حذف الطلب</button>` : ''}`;
-  $('os').classList.add('on'); }
-function osv() { rd(); const tl = +$('otl').value; if (!wi.length || !(tl > 0)) { $('oer').textContent = 'أضف منتجًا واحدًا على الأقل وإجمالي أكبر من صفر.'; return; }
-  const o = oe || { id: String(Math.max(1040, ...DB.orders.map(x => +x.id || 0)) + 1), t: Date.now() };
-  Object.assign(o, { cu: clean($('on').value), cfx: clean($('op').value), nt: clean($('ot').value), pay: $('oy').value, st: +$('ost').value, items: wi, total: +tl.toFixed(2) }); delete o.demo;
-  if (!oe) DB.orders.unshift(o); lg((oe ? 'تعديل طلب #' : 'طلب جديد #') + o.id); $('os').classList.remove('on'); tab(at, 1); toast(oe ? 'تم حفظ التعديلات' : 'تمت إضافة الطلب'); }
+  $('os').classList.add('on');
+  if (oe && oe.rp) sb.storage.from('receipts').createSignedUrl(oe.rp, 600).then(({ data }) => { if (data && $('rcimg')) { $('rcimg').src = data.signedUrl; $('rci').href = data.signedUrl; } }); }
+
+/* ============ فحص الإيصال ============ */
+function chkHtml(c) {
+  if (!c) return '<p class="hint">الإيصال ما انفحص بعد. اضغط «فحص الإيصال».</p>';
+  const m = { ok:'✓', warn:'!', fail:'✕', info:'·' };
+  return `<div class="vd ${c.verdict}"><span>نتيجة الفحص: ${esc(c.label)}</span><b class="lat">${+c.score}%</b></div>`
+    + c.checks.map(x => `<div class="ck ${x.st}"><i>${m[x.st]}</i><div><strong>${esc(x.label)}</strong><small>${esc(x.detail)}</small></div></div>`).join('')
+    + '<p class="hint" style="margin-top:8px">الفحص مساعد للمراجعة وليس إثباتًا. تأكد من وصول المبلغ في كشف حسابك قبل التسليم.</p>';
+}
+const loadOcr = () => window.Tesseract ? Promise.resolve() : new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
+async function runCheck(o) {
+  const out = $('rcr'); out.innerHTML = '<p class="hint">جاري قراءة الإيصال… أول مرة تأخذ وقت أطول لتحميل محرك القراءة.</p>';
+  try {
+    const blob = await run(sb.storage.from('receipts').download(o.rp), 'تعذّر تحميل الإيصال'), buf = await blob.arrayBuffer();
+    const hash = await RoxReceipt.sha256(buf), bmp = await createImageBitmap(blob).catch(() => null);
+    const dup = DB.orders.find(x => x !== o && (x.rh == hash || (x.chk && x.chk.hash == hash)));
+    await loadOcr(); const w = await Tesseract.createWorker(['ara', 'eng']); const { data } = await w.recognize(blob); await w.terminate();
+    const r = RoxReceipt.analyze(data.text, { expectedSar: o.total * (+CFG.sarRate || 3.75), expectedUsd: o.total, iban: CFG.bank.iban, account: CFG.bank.account, holder: CFG.bank.holder, orderAt: o.t,
+      dupHashOrder: dup ? dup.id : 0, usedRefs: DB.orders.filter(x => x !== o && x.chk && x.chk.ref).map(x => x.chk.ref), software: RoxReceipt.fileSoftware(buf), imgW: bmp && bmp.width, imgH: bmp && bmp.height });
+    o.chk = { verdict: r.verdict, label: r.label, score: r.score, checks: r.checks, ref: r.ref, hash, at: r.at };
+    await saveOrder(o); lg(`فحص إيصال الطلب #${o.id}: ${r.label}`); if ($('rcr')) $('rcr').innerHTML = chkHtml(o.chk);
+  } catch (e) { console.error(e); if ($('rcr')) $('rcr').innerHTML = '<p class="er">تعذّر فحص الإيصال. تأكد من الاتصال وحاول مرة ثانية.</p>'; }
+}
+async function osv() { rd(); const tl = +$('otl').value; if (!wi.length || !(tl > 0)) { $('oer').textContent = 'أضف منتجًا واحدًا على الأقل وإجمالي أكبر من صفر.'; return; }
+  const st = +$('ost').value, d = { cu: clean($('on').value), cfx: clean($('op').value), nt: clean($('ot').value), pay: $('oy').value, st, items: wi, total: +tl.toFixed(2) };
+  d.status = oe && stIdx(oe.status) == st ? oe.status : STN[st];
+  try {
+    if (oe) { Object.assign(oe, d); await saveOrder(oe); }
+    else { const row = await run(sb.from('orders').insert({ ref: 'ROX-' + Math.random().toString(36).slice(2, 8).toUpperCase(), cu: d.cu, cfx: d.cfx, note: d.nt, pay: d.pay, status: d.status, items: d.items, subtotal: d.total, total: d.total }).select().single());
+      DB.orders.unshift(fromOrder(row)); }
+  } catch (e) { return; }
+  lg((oe ? 'تعديل طلب #' : 'طلب جديد #') + (oe ? oe.id : DB.orders[0].id)); $('os').classList.remove('on'); tab(at, 1); toast(oe ? 'تم حفظ التعديلات' : 'تمت إضافة الطلب'); }
 $('ob').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const s = b.dataset;
   if (s.oa) { rd(); wi.push({ n: P[0] ? P[0].name : '', p: P[0] ? P[0].price : 0, q: 1 }); $('il').innerHTML = irs(); }
   else if (s.ix != null) { rd(); wi.splice(+s.ix, 1); $('il').innerHTML = irs(); }
   else if (s.oc) { rd(); $('otl').value = wi.reduce((t, x) => t + x.p * x.q, 0).toFixed(2); }
   else if (s.ox) $('os').classList.remove('on');
-  else if (s.odl) cf(b, () => { DB.orders = DB.orders.filter(x => x !== oe); saveDB(); $('os').classList.remove('on'); tab(at, 1); toast('تم حذف الطلب'); });
+  else if (s.rck) runCheck(oe);
+  else if (s.rok || s.rno) { oe.status = s.rok ? 'delivered' : 'rejected'; oe.st = stIdx(oe.status); saveOrder(oe); lg(`طلب #${oe.id}: ${s.rok ? 'قبول الإيصال والتسليم' : 'رفض الإيصال'}`); $('os').classList.remove('on'); tab(at, 1); toast(s.rok ? 'تم قبول الطلب' : 'تم رفض الإيصال'); }
+  else if (s.odl) cf(b, () => { delOrder(oe.id); $('os').classList.remove('on'); tab(at, 1); toast('تم حذف الطلب'); });
   else if (s.os) osv(); });
 document.querySelectorAll('.ov').forEach(o => o.onclick = e => { if (e.target === o) o.classList.remove('on'); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('sh').classList.remove('on'); $('os').classList.remove('on'); $('mp').hidden = true; } });
 
 /* ============ القفل ============ */
-$('vs').innerHTML = ic('ext', 's') + 'المتجر'; $('lo').innerHTML = ic('lock', 's') + 'قفل';
-function unl() { if ($('pin').value === DB.pin) { $('pin').value = ''; $('le').textContent = ''; $('lk').hidden = true; $('app').hidden = false; tab(0); } else $('le').textContent = 'الرمز غلط'; }
-$('go').onclick = unl; $('pin').onkeydown = e => { if (e.key === 'Enter') unl(); };
-$('lo').onclick = () => { $('app').hidden = true; $('lk').hidden = false; $('pin').focus(); };
+$('vs').innerHTML = ic('ext', 's') + 'المتجر'; $('lo').innerHTML = ic('lock', 's') + 'خروج';
+let mode = 'login', firstPw = '';
+const MSG = { login:'سجّل دخولك بالإيميل وكلمة المرور', pin:'أدخل كلمة المرور الثانية', setpin:'سجّل كلمة مرور ثانية للوحة (8 أحرف أو أكثر، ومختلفة عن الأولى). بتنطلب منك بعد كل تسجيل دخول.',
+  denied:'هذا الحساب ما له صلاحية على لوحة التحكم.', setup:'اللوحة تحتاج ربط Supabase: حط رابط المشروع والمفتاح العام في ملف rox-config.js' };
+function lockUI(m, msg) { mode = m; $('app').hidden = true; $('lk').hidden = false;
+  $('lem').hidden = $('lpw').hidden = m != 'login'; $('pin').hidden = !(m == 'pin' || m == 'setpin'); $('pin2').hidden = m != 'setpin';
+  $('go').hidden = m == 'denied' || m == 'setup'; $('lout').hidden = m == 'login' || m == 'setup';
+  $('lmsg').textContent = MSG[m]; $('go').textContent = m == 'login' ? 'دخول' : m == 'setpin' ? 'حفظ ودخول' : 'فتح القفل'; $('le').textContent = msg || '';
+  $('pin').value = $('pin2').value = $('lpw').value = ''; const f = $(m == 'login' ? 'lem' : 'pin'); if (!f.hidden) f.focus(); }
+const lockedMsg = t => t && Date.parse(t) > Date.now() ? `اللوحة مقفولة مؤقتًا. حاول بعد ${Math.ceil((Date.parse(t) - Date.now()) / 6e4)} دقيقة.` : '';
+async function route() {
+  const { data: { session } } = await sb.auth.getSession(); if (!session) return lockUI('login');
+  const { data: st, error } = await sb.rpc('admin_state'); if (error || !st) return lockUI('login', 'تعذّر الاتصال بقاعدة البيانات.');
+  if (!st.admin) return lockUI('denied'); if (!st.has_pin) return lockUI('setpin'); if (!st.unlocked) return lockUI('pin', lockedMsg(st.locked_until));
+  try { await loadAll(); } catch (e) { return lockUI('pin', 'تعذّر تحميل البيانات.'); }
+  firstPw = ''; $('lk').hidden = true; $('app').hidden = false; tab(0); }
+$('lf').onsubmit = async e => { e.preventDefault(); if (!sb) return; const b = $('go'), err = m => { $('le').textContent = m; }; b.disabled = true;
+  try {
+    if (mode == 'login') { const pw = $('lpw').value, { error } = await sb.auth.signInWithPassword({ email: $('lem').value.trim(), password: pw });
+      if (error) return lockUI('login', 'الإيميل أو كلمة المرور غلط.'); firstPw = pw; await route(); }
+    else if (mode == 'setpin') { const p = $('pin').value;
+      if (p.length < 8) return err('لازم 8 أحرف أو أكثر.'); if (p !== $('pin2').value) return err('الكلمتين مو متطابقتين.'); if (firstPw && p === firstPw) return err('لازم تكون مختلفة عن كلمة المرور الأولى.');
+      const { error } = await sb.rpc('admin_set_pin', { new_pin: p }); if (error) return err('تعذّر الحفظ. حاول مرة ثانية.'); await route(); }
+    else if (mode == 'pin') { const { data, error } = await sb.rpc('admin_unlock', { pin: $('pin').value }); if (error || !data) return err('تعذّر التحقق. حاول مرة ثانية.');
+      if (!data.ok) return lockUI('pin', lockedMsg(data.locked_until) || `كلمة المرور الثانية غلط. باقي ${data.left} محاولات.`); await route(); }
+  } finally { b.disabled = false; } };
+async function logout() { try { await sb.rpc('admin_lock'); } catch (e) {} try { await sb.auth.signOut(); } catch (e) {}
+  P = []; DB = { orders: [], log: [] }; CUS = []; $('v').innerHTML = ''; firstPw = ''; lockUI('login'); }
+$('lo').onclick = $('lout').onclick = logout;
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change', ap);
-ap(); $('pin').focus();
-})();
+ap(); if (sb) route(); else lockUI('setup');
+
 </script>
 </body>
 </html>
