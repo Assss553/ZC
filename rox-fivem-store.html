@@ -373,6 +373,38 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
 .bk-r.hi{border-color:rgb(var(--ac)/.6);background:rgb(var(--ac)/.1)}.bk-r.hi b{font-size:20px}
 .bk .btn{width:100%}
 
+/* نافذة التحويل البنكي */
+#bank{width:min(560px,calc(100% - 20px))}
+.stp{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;counter-reset:s}
+.stp li{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--dim);text-align:center}
+.stp li:before{content:"";position:absolute;top:15px;left:50%;width:100%;height:2px;background:var(--line2);z-index:0}
+.stp li:first-child:before{display:none}
+.stp b{position:relative;z-index:1;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;border:2px solid var(--line2);background:var(--s1);font:700 14px Geist,sans-serif}
+.stp li.on{color:var(--fg)}.stp li.on b{border-color:var(--rt);color:var(--rt);box-shadow:0 0 0 4px rgb(var(--ac)/.18)}
+.stp li.dn{color:var(--mute)}.stp li.dn b{background:var(--ok);border-color:var(--ok);color:#000}.stp li.dn:before,.stp li.on:before{background:var(--ok)}
+.amt{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 12px;padding:16px 18px;border-radius:var(--r2);border:1px solid rgb(var(--ac)/.55);background:radial-gradient(120% 160% at 0 0,rgb(var(--ac)/.22),transparent 60%),var(--s2)}
+.amt span{font-size:13px;color:var(--mute)}
+.amt strong{grid-row:2;font:800 clamp(30px,8vw,40px)/1.1 Geist,sans-serif;direction:ltr;text-align:right}.amt strong i{font:700 16px Tajawal,sans-serif;font-style:normal;color:var(--mute)}
+.amt small{grid-row:3;color:var(--mute);direction:ltr;text-align:right;font-size:13px}
+.amt button{grid-row:1/4;grid-column:2}
+.cpy{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--line2);border-radius:8px;background:rgb(255 255 255/.04);font-size:13px;font-weight:700;transition:.15s}
+.cpy:hover{border-color:var(--rt);color:var(--rt)}.cpy.ok{border-color:var(--ok);color:var(--ok)}
+.cpy svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bcard{position:relative;display:grid;gap:4px;padding:18px;border-radius:16px;border:1px solid rgb(255 255 255/.14);overflow:hidden;isolation:isolate;
+  background:linear-gradient(135deg,#1c1c20,#0c0c0e);box-shadow:0 20px 40px -20px #000,inset 0 1px 0 rgb(255 255 255/.1)}
+.bcard:before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(60% 120% at 100% 0,rgb(var(--ac)/.3),transparent 65%),repeating-linear-gradient(115deg,rgb(255 255 255/.03) 0 2px,transparent 2px 14px)}
+.bc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:700}
+.bc-top svg{width:40px;height:30px}
+.bcard small{color:var(--mute);font-size:12px;margin-top:8px}
+.bcard>strong{font-size:20px;font-weight:800}
+.bc-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bc-row b{direction:ltr;text-align:right;font:600 clamp(14px,3.9vw,17px)/1.5 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;word-break:normal;overflow-wrap:anywhere}
+.bk .cpyall{width:100%;min-height:44px;justify-content:center}
+.up.has{border-style:solid;border-color:var(--ok);justify-content:flex-start;text-align:start}
+.up img{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line2);background:#fff}
+.up.drag{border-color:var(--rt);background:rgb(var(--ac)/.1);color:#fff}
+.up svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
 /* الحساب ورفع الإيصال */
 .af{display:grid;gap:10px}
 .af input{height:46px;padding:0 12px;border:1px solid var(--line2);background:var(--s2);border-radius:var(--br)}
@@ -644,10 +676,11 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
 <dialog id="bank"><div class="bk">
   <button class="x" id="bankX" type="button" aria-label="إغلاق">✕</button>
   <span class="eyebrow" style="margin:0">BANK TRANSFER</span><h2>الدفع بتحويل بنكي</h2>
+  <ol class="stp" id="bankStp"><li><b>1</b>حوّل المبلغ</li><li><b>2</b>ارفع الإيصال</li><li><b>3</b>استلم منتجاتك</li></ol>
   <p class="mute" id="bankHow">حوّل المبلغ على الحساب التالي، ثم افتح تذكرة في الديسكورد وأرسل إيصال التحويل مع رقم الطلب عشان نسلّمك منتجاتك.</p>
   <div class="bk-g" id="bankRows"></div>
   <div id="rcUp" hidden>
-    <label class="up"><input id="rcFile" type="file" accept="image/png,image/jpeg,image/webp"><span id="rcName">اضغط هنا واختر صورة الإيصال (PNG أو JPG، حتى 5 ميجا)</span></label>
+    <label class="up" id="rcDrop"><input id="rcFile" type="file" accept="image/png,image/jpeg,image/webp"><svg viewBox="0 0 24 24" id="rcIco" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><img id="rcPrev" alt="" hidden><span id="rcName"></span></label>
     <button class="btn white" type="button" id="rcSend">إرسال الإيصال</button><small class="er" id="rcErr" role="alert"></small>
   </div>
   <p class="okmsg" id="rcDone" hidden>تم استلام إيصالك. طلبك الآن قيد المراجعة، وبنسلّمك منتجاتك بعد التأكد من التحويل. تقدر تتابع حالته من «حسابي».</p>
@@ -685,7 +718,7 @@ const CONFIG = {
   announce: '',     // شريط إعلان أعلى المتجر (اتركه فاضي لإخفائه)
   coupons: [],      // أكواد الخصم: { code:'ROX10', pct:10, on:true }
   sarRate: 3.75,    // سعر الدولار بالريال لعرض مبلغ التحويل
-  bank: { bankName:'', holder:'', iban:'SA7680000469608016053450', account:'469000010006086053450' }
+  bank: { bankName:'', holder:'عبدالله فهد الشمري', iban:'SA7680000469608016053450', account:'469000010006086053450' }
 };
 const CATS = [
   { id:'script', h:4,   en:'SCRIPTS',  ar:'سكربتات',   d:'أنظمة جاهزة لسيرفرك',       long:'أنظمة مبرمجة من الصفر، خفيفة على السيرفر وتشتغل مع بعض بدون تعارض.', ic:'<path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 4l-4 16"/>' },
@@ -712,7 +745,7 @@ let PRODUCTS = [
 /* ============ الربط مع Supabase ============
    لو rox-config.js فيه رابط المشروع والمفتاح: المنتجات والإعدادات تجي من قاعدة البيانات،
    وتتفعّل حسابات العملاء والطلبات ورفع الإيصالات. لو فاضي: المتجر يشتغل بالقيم اللي فوق. */
-const SBC = window.ROX_SB || {}; let sb = null, me = null;
+const SBC = window.ROX_SB || {}, BANK0 = { ...CONFIG.bank }; let sb = null, me = null;
 if (SBC.url && SBC.key) {
   try {
     await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
@@ -728,6 +761,8 @@ if (SBC.url && SBC.key) {
     if (sc) Object.assign(CONFIG, sc);
   } catch (e) {}
 }
+/* بيانات البنك: القيم الفاضية في الإعدادات ما تمسح القيم الأساسية */
+CONFIG.bank = { ...BANK0, ...Object.fromEntries(Object.entries(CONFIG.bank || {}).filter(([, v]) => v)) };
 /* التصميم: من الإعدادات، أو للمعاينة من الرابط ?design=neon */
 document.documentElement.dataset.design = (new URLSearchParams(location.search).get('design') || CONFIG.design || 'rox').replace(/[^a-z]/g, '');
 /* آراء العملاء — هذي نصوص مثال، استبدلها بآراء حقيقية من الديسكورد حقك قبل النشر */
@@ -813,15 +848,30 @@ $('#cpnForm').onsubmit = async e => { e.preventDefault();
 
 /* التحويل البنكي */
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
-let curOrder = null;
+let curOrder = null, prevUrl = '';
+function setStep(n) { [...$('#bankStp').children].forEach((li, i) => { li.className = i + 1 < n ? 'dn' : i + 1 === n ? 'on' : ''; }); }
+function setFile(f) {
+  if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = ''; }
+  const img = f && /^image\//.test(f.type); if (img) prevUrl = URL.createObjectURL(f);
+  $('#rcPrev').hidden = !img; if (img) $('#rcPrev').src = prevUrl; $('#rcIco').style.display = img ? 'none' : ''; $('#rcDrop').classList.toggle('has', !!f);
+  $('#rcName').textContent = f ? `${f.name} · ${(f.size / 1024 / 1024).toFixed(2)} ميجا — اضغط لتغييرها` : 'اسحب صورة الإيصال هنا أو اضغط لاختيارها (PNG أو JPG، حتى 5 ميجا)';
+  if (!f) $('#rcFile').value = ''; else if (curOrder) setStep(2);
+}
 const ERRS = { login_required:'سجّل دخولك أول', too_many_orders:'سويت طلبات كثيرة. حاول بعد ساعة.', maintenance:'المتجر تحت الصيانة حاليًا', empty_cart:'سلتك فاضية' };
 const errMsg = (e, d) => { const k = Object.keys(ERRS).find(k => String(e && e.message).includes(k)); return k ? ERRS[k] : d; };
 function showBank(o) {
   curOrder = o; const b = CONFIG.bank || {}, due = +o.total;
-  const row = (l, v, copy, hi) => v ? `<div class="bk-r${hi ? ' hi' : ''}"><span>${l}</span><b>${esc(v)}</b>${copy ? `<button type="button" data-copy="${esc(copy)}">نسخ</button>` : ''}</div>` : '';
-  $('#bankRows').innerHTML = row('المبلغ', `${money(due)}  ≈  ${(due * (+CONFIG.sarRate || 3.75)).toFixed(2)} SAR`, '', 1) + row('رقم الطلب', o.ref, o.ref)
-    + row('البنك', b.bankName) + row('اسم المستفيد', b.holder) + row('الآيبان', String(b.iban || '').replace(/(.{4})/g, '$1 ').trim(), b.iban) + row('رقم الحساب', b.account, b.account);
-  const up = !!(sb && o.id); $('#rcUp').hidden = !up || o.status === 'delivered'; $('#rcDone').hidden = true; $('#bankDc').hidden = up; $('#rcErr').textContent = ''; $('#rcFile').value = ''; $('#rcName').textContent = 'اضغط هنا واختر صورة الإيصال (PNG أو JPG، حتى 5 ميجا)';
+  const sar = (due * (+CONFIG.sarRate || 3.75)).toFixed(2), ibanG = String(b.iban || '').replace(/(.{4})/g, '$1 ').trim();
+  const cp = (v, label) => `<button type="button" class="cpy" data-copy="${esc(v)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg><span>${label || 'نسخ'}</span></button>`;
+  const all = [`المبلغ: ${sar} ريال`, b.bankName && `البنك: ${b.bankName}`, b.holder && `المستفيد: ${b.holder}`, b.iban && `الآيبان: ${b.iban}`, b.account && `رقم الحساب: ${b.account}`, `رقم الطلب: ${o.ref}`].filter(Boolean).join('\n');
+  $('#bankRows').innerHTML = `<div class="amt"><span>المبلغ المطلوب تحويله</span><strong>${sar} <i>ر.س</i></strong><small>${money(due)} · ${esc(o.ref)}</small>${cp(sar, 'نسخ المبلغ')}</div>
+    <div class="bcard"><div class="bc-top"><span>${esc(b.bankName || 'حساب التحويل')}</span><svg viewBox="0 0 40 30" aria-hidden="true"><rect x="1" y="1" width="38" height="28" rx="6" fill="#d9b45a"/><path d="M1 11h13v8H1M39 11H26v8h13M14 1v28M26 1v28" fill="none" stroke="#8a6a1c" stroke-width="1.5"/></svg></div>
+      ${b.holder ? `<small>اسم المستفيد</small><strong>${esc(b.holder)}</strong>` : ''}
+      ${b.iban ? `<small>الآيبان</small><div class="bc-row"><b>${esc(ibanG)}</b>${cp(b.iban)}</div>` : ''}
+      ${b.account ? `<small>رقم الحساب</small><div class="bc-row"><b>${esc(b.account)}</b>${cp(b.account)}</div>` : ''}</div>
+    ${cp(all, 'نسخ كل بيانات التحويل').replace('class="cpy"', 'class="cpy cpyall"')}`;
+  setStep(o.status === 'review' || o.status === 'delivered' ? 3 : 1); setFile(null);
+  const up = !!(sb && o.id); $('#rcUp').hidden = !up || o.status === 'delivered'; $('#rcDone').hidden = true; $('#bankDc').hidden = up; $('#rcErr').textContent = ''; $('#bankStp').children[1].lastChild.textContent = up ? 'ارفع الإيصال' : 'أرسل الإيصال';
   if (up) $('#bankHow').textContent = 'حوّل المبلغ على الحساب التالي، ثم ارفع صورة إيصال التحويل هنا. بنراجعه ونسلّمك منتجاتك.';
   openCart(false); if ($('#acct').open) $('#acct').close(); if (!$('#bank').open) $('#bank').showModal();
 }
@@ -833,21 +883,23 @@ $('#payBank').onclick = async () => {
   if (error) return toast(errMsg(error, 'تعذّر إنشاء الطلب. حاول مرة ثانية.'));
   cart = []; coupon = null; save(); renderCart(); syncButtons(); showBank(data);
 };
-$('#rcFile').onchange = e => { const f = e.target.files[0]; if (f) $('#rcName').textContent = f.name; };
+$('#rcFile').onchange = e => { $('#rcErr').textContent = ''; setFile(e.target.files[0] || null); };
+['dragover', 'dragleave', 'drop'].forEach(ev => $('#rcDrop').addEventListener(ev, e => { e.preventDefault(); $('#rcDrop').classList.toggle('drag', ev === 'dragover');
+  if (ev === 'drop' && e.dataTransfer.files[0]) { $('#rcFile').files = e.dataTransfer.files; setFile(e.dataTransfer.files[0]); } }));
 $('#rcSend').onclick = async () => {
   const f = $('#rcFile').files[0], err = m => { $('#rcErr').textContent = m; }, ext = f && { 'image/png':'png', 'image/jpeg':'jpg', 'image/webp':'webp' }[f.type];
   if (!f) return err('اختر صورة الإيصال أول.');
   if (!ext) return err('الصورة لازم تكون PNG أو JPG أو WEBP.');
   if (f.size > 5 * 1024 * 1024) return err('حجم الصورة أكبر من 5 ميجا.');
-  const btn = $('#rcSend'); btn.disabled = true; err('');
+  const btn = $('#rcSend'); btn.disabled = true; btn.textContent = 'جاري الرفع…'; err('');
   try {
     const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await f.arrayBuffer()))].map(x => x.toString(16).padStart(2, '0')).join('');
     const path = `${me.id}/${curOrder.id}-${Date.now()}.${ext}`;
     const up = await sb.storage.from('receipts').upload(path, f, { contentType: f.type }); if (up.error) throw up.error;
     const at = await sb.rpc('attach_receipt', { p_order: curOrder.id, p_path: path, p_hash: hash }); if (at.error) throw at.error;
-    $('#rcUp').hidden = true; $('#rcDone').hidden = false;
+    $('#rcUp').hidden = true; $('#rcDone').hidden = false; setStep(3);
   } catch (e) { console.error(e); err('تعذّر رفع الإيصال. حاول مرة ثانية.'); }
-  btn.disabled = false;
+  btn.disabled = false; btn.textContent = 'إرسال الإيصال';
 };
 
 /* حساب العميل */
@@ -886,8 +938,9 @@ if (sb) {
   sb.auth.onAuthStateChange((_e, s) => { me = s ? s.user : null; if ($('#acct').open) renderAcct(); });
 }
 $('#bankX').onclick = () => $('#bank').close();
-$('#bankRows').onclick = e => { const b = e.target.closest('[data-copy]'); if (!b) return;
-  (navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copy) : Promise.reject()).then(() => toast('تم النسخ'), () => toast('انسخه يدويًا: ' + b.dataset.copy)); };
+$('#bankRows').onclick = e => { const b = e.target.closest('[data-copy]'); if (!b) return; const lab = b.querySelector('span'), old = lab.textContent;
+  (navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copy) : Promise.reject()).then(() => { b.classList.add('ok'); lab.textContent = 'تم النسخ ✓'; setTimeout(() => { b.classList.remove('ok'); lab.textContent = old; }, 1500); },
+    () => toast('انسخه يدويًا: ' + b.dataset.copy)); };
 
 /* ============ الأقسام والمنتجات ============ */
 const fwHtml = p => `<div class="fw">${p.fw.map(f => `<span>${f}</span>`).join('')}</div>`;

@@ -211,8 +211,11 @@ create policy log_admin on public.activity_log for all using (public.is_admin())
 insert into public.settings (id, data) values (1, jsonb_build_object(
   'currency', '$', 'discord', '', 'checkout', '', 'liveServer', '', 'bundleEnds', '2026-12-31T23:59:59+03:00',
   'maint', 0, 'mmsg', '', 'mdate', '', 'design', 'rox', 'announce', '', 'sarRate', 3.75,
-  'bank', jsonb_build_object('bankName', '', 'holder', '', 'iban', 'SA7680000469608016053450', 'account', '469000010006086053450')
+  'bank', jsonb_build_object('bankName', '', 'holder', 'عبدالله فهد الشمري', 'iban', 'SA7680000469608016053450', 'account', '469000010006086053450')
 )) on conflict (id) do nothing;
+-- لو اسم المستفيد فاضي في إعدادات محفوظة من قبل، نعبّيه
+update public.settings set data = jsonb_set(data, '{bank,holder}', to_jsonb('عبدالله فهد الشمري'::text))
+  where id = 1 and coalesce(data -> 'bank' ->> 'holder', '') = '';
 
 insert into public.products (id, cat, art, name, descr, price, old_price, fw, h, tag, is_new, sort) values
   ('pd', 'mlo', 'ROX PD', 'مركز الشرطة — ROX PD', 'مركز كامل: استقبال، زنازين، غرفة تحقيق، مخزن سلاح وكراج.', 59.99, null, '["MLO","YMAP"]', 215, 'الأكثر مبيعًا', false, 1),

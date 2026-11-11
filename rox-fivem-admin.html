@@ -276,7 +276,7 @@ const ST = ['جديد', 'تم التسليم', 'مسترجع'], PAY = [['bank', 
 const TB = [['نظرة عامة', 'OVERVIEW', 'home'], ['الطلبات', 'ORDERS', 'orders'], ['المنتجات', 'PRODUCTS', 'box'], ['العملاء', 'CUSTOMERS', 'users'], ['التسويق', 'MARKETING', 'mega'], ['الإعدادات', 'SETTINGS', 'set'], ['المظهر', 'THEME', 'theme']];
 const DY = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
 const CFG0 = { currency:'$', discord:'', checkout:'', liveServer:'', bundleEnds:'2026-12-31T23:59:59+03:00', maint:0, mmsg:'', mdate:'', design:'rox', announce:'', coupons:[], sarRate:3.75,
-  bank:{ bankName:'', holder:'', iban:'SA7680000469608016053450', account:'469000010006086053450' } };
+  bank:{ bankName:'', holder:'عبدالله فهد الشمري', iban:'SA7680000469608016053450', account:'469000010006086053450' } };
 /* تصاميم المتجر: المعرّف، الاسم، الوصف، الخلفية، لون التمييز، لون ثانوي */
 const DZ = [['rox','ROX الأصلي','أحمر وأسود بأشعة ضوء','#000000','#ff4d3d','#ffffff'],['neon','نيون سايبر','شبكة نيون وأزرار مقصوصة','#02040a','#5ff3ff','#ff00c8'],['gold','ذهبي فاخر','خط كلاسيكي وحلقات ذهبية','#050403','#f0d78c','#ffffff'],
   ['toxic','توكسيك','أخضر حاد وشريط تحذير','#030501','#bef264','#ffffff'],['ice','جليدي','شفق قطبي وبطاقات زجاجية','#020617','#bae6fd','#ffffff'],['sunset','غروب','شمس ريترو وأزرار دائرية','#0a0312','#ffd166','#ffffff'],
@@ -302,7 +302,7 @@ async function loadAll() {
     run(sb.from('orders').select('*').order('created_at', { ascending: false }).limit(500)), run(sb.from('profiles').select('*').order('created_at', { ascending: false }).limit(1000)),
     run(sb.from('activity_log').select('*').order('at', { ascending: false }).limit(40))]);
   P = pr.map(fromRow); known.p = new Set(P.map(p => p.id));
-  CFG = Object.assign(JSON.parse(JSON.stringify(CFG0)), st ? st.data : {}); CFG.bank = Object.assign({}, CFG0.bank, CFG.bank);
+  CFG = Object.assign(JSON.parse(JSON.stringify(CFG0)), st ? st.data : {}); CFG.bank = Object.assign({}, CFG0.bank, Object.fromEntries(Object.entries(CFG.bank || {}).filter(([, v]) => v)));
   CFG.coupons = cp.map(c => ({ code: c.code, pct: c.pct, on: c.active })); known.c = new Set(cp.map(c => c.code));
   DB.orders = od.map(fromOrder); CUS = pf; DB.log = lx.map(l => ({ t: Date.parse(l.at), m: l.msg }));
 }
