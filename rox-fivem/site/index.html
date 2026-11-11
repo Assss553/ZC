@@ -59,6 +59,9 @@ body:after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opac
 .ib.dc:hover{background:rgba(88,101,242,.28)}
 .ib.dc svg{width:20px;height:20px;fill:currentColor}
 .ib.cart{color:var(--rt)}
+.ib.acct{display:flex;align-items:center;gap:8px;width:auto;padding:0 14px;font-weight:700;font-size:14px;background:#fff;color:#000;border-color:#fff}
+.ib.acct:hover{background:#e4e4e7;border-color:#e4e4e7}
+.ib.acct.in{background:rgba(0,0,0,.4);color:var(--fg);border-color:var(--line2)}
 #cc{position:absolute;top:-7px;inset-inline-end:-7px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--red);color:var(--on);font:700 11px/19px Geist,sans-serif;text-align:center}
 #cc[data-n="0"]{display:none}
 #menuBtn{display:none}
@@ -373,7 +376,7 @@ footer{margin-top:110px;border-top:1px solid var(--line);padding:34px 0 26px}
   .nav{position:absolute;top:100%;inset-inline:0;flex-direction:column;gap:0;padding:8px 16px 14px;background:rgba(0,0,0,.96);border-bottom:1px solid var(--line);display:none}
   .nav a{padding:12px 0;border-bottom:1px solid var(--line)}
   .nav.on{display:flex}
-  .hd-in{gap:12px}
+  .hd-in{gap:12px}.ib.acct{padding:0 11px}.ib.acct.in span{display:none}
   .stats{gap:28px}.stats b{font-size:32px}
   .sec{padding-top:80px}.flag{margin-top:80px;padding:70px 0}
   .scene{width:min(320px,74vw)}.code{display:none}.c2{right:-2%}.ms{right:0}
@@ -551,7 +554,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     </nav>
     <div class="icons">
       <a class="ib dc js-dc" href="#" target="_blank" rel="noopener" aria-label="ديسكورد"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 5.6A17 17 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a17 17 0 0 0-4.2 1.6C1.7 9.7.9 13.7 1.3 17.6a17 17 0 0 0 5.2 2.6l1.1-1.8-1.7-.8.4-.3a12 12 0 0 0 11.4 0l.4.3-1.7.8 1.1 1.8a17 17 0 0 0 5.2-2.6c.5-4.5-.8-8.5-3.1-12ZM8.7 15.2c-1 0-1.9-.9-1.9-2.1S7.6 11 8.7 11s1.9.9 1.9 2.1-.8 2.1-1.9 2.1Zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1Z"/></svg></a>
-      <button class="ib" id="acctBtn" type="button" aria-label="حسابي" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 20v-1a5 5 0 0 0-5-5h-4a5 5 0 0 0-5 5v1"/><circle cx="12" cy="8" r="4"/></svg></button>
+      <button class="ib acct" id="acctBtn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 20v-1a5 5 0 0 0-5-5h-4a5 5 0 0 0-5 5v1"/><circle cx="12" cy="8" r="4"/></svg><span id="acctLbl">تسجيل الدخول</span></button>
       <button class="ib cart" id="cartBtn" type="button" aria-label="السلة"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h11L21 7H6.2M9 20h.01M18 20h.01"/></svg><b id="cc" data-n="0">0</b></button>
       <button class="ib" id="menuBtn" type="button" aria-label="القائمة" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
@@ -988,7 +991,8 @@ async function renderAcct() {
   $('#myOrders').onclick = e => { const b = e.target.closest('[data-up]'), o = b && (data || []).find(x => x.id == b.dataset.up); if (o) showBank(o); };
 }
 function openAcct() { renderAcct(); if (!$('#acct').open) $('#acct').showModal(); }
-$('#acctBtn').onclick = openAcct; $('#acctX').onclick = () => $('#acct').close();
+$('#acctBtn').onclick = () => sb ? openAcct() : toast('تسجيل الدخول يتفعّل بعد ربط المتجر بقاعدة البيانات');
+const acctLabel = () => { $('#acctLbl').textContent = me ? 'حسابي' : 'تسجيل الدخول'; $('#acctBtn').classList.toggle('in', !!me); }; $('#acctX').onclick = () => $('#acct').close();
 $('#aSw').onclick = () => acctMode(!reg);
 $('#acctF').onsubmit = async e => { e.preventDefault();
   const email = $('#aEm').value.trim(), password = $('#aPw').value, err = m => { $('#aErr').textContent = m; };
@@ -1011,9 +1015,9 @@ $('#aFg').onclick = async () => { const email = $('#aEm').value.trim(), err = m 
   await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
   err('لو الإيميل مسجّل عندنا، بيوصلك رابط لتغيير كلمة المرور.'); };
 if (sb) {
-  $('#acctBtn').hidden = false;
   me = ((await sb.auth.getSession()).data.session || {}).user || null;
-  sb.auth.onAuthStateChange((ev, s) => { me = s ? s.user : null; if (ev === 'PASSWORD_RECOVERY') return pwMode(); if ($('#acct').open) renderAcct(); });
+  acctLabel();
+  sb.auth.onAuthStateChange((ev, s) => { me = s ? s.user : null; acctLabel(); if (ev === 'PASSWORD_RECOVERY') return pwMode(); if ($('#acct').open) renderAcct(); });
 }
 $('#bankX').onclick = () => $('#bank').close();
 $('#bankRows').onclick = e => { const b = e.target.closest('[data-copy]'); if (!b) return; const lab = b.querySelector('span'), old = lab.textContent;
