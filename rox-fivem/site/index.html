@@ -206,11 +206,42 @@ h2 em{font-style:normal;color:var(--rt)}
 .flag-cta a{color:var(--mute);font-size:15px}.flag-cta a:hover{color:#fff}
 .priceTag{display:flex;align-items:baseline;gap:12px;direction:ltr;justify-content:flex-end;margin-bottom:18px}
 .priceTag b{font:800 46px/1 Geist,sans-serif}.priceTag s{color:var(--dim);font-size:20px}
-.stack{position:relative;height:380px;perspective:1100px;direction:ltr}
-.stack i{position:absolute;inset:22% 18%;border-radius:12px;border:1px solid rgba(255,255,255,.16);display:grid;place-items:center;font:400 38px "Bebas Neue",Impact,sans-serif;letter-spacing:.06em;color:#fff;
+.stage3{position:relative}
+.stack{position:relative;display:block;width:100%;height:380px;perspective:1100px;direction:ltr;--gap:40px;cursor:pointer;animation:floaty 6s ease-in-out infinite;-webkit-tap-highlight-color:transparent;transition:scale 1.1s cubic-bezier(.2,.8,.2,1),opacity .4s}
+@keyframes floaty{50%{translate:0 -10px}}
+.stack i{position:absolute;inset:22% 18%;border-radius:12px;border:1px solid rgba(255,255,255,.16);display:grid;place-content:end center;justify-items:center;gap:4px;padding:0 4% 7%;text-align:center;color:#fff;font-style:normal;
   background:linear-gradient(160deg,hsl(var(--h) 60% 28%),hsl(var(--h) 50% 9%));box-shadow:0 30px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.12);
-  transform:rotateX(58deg) rotateZ(-36deg) translateZ(calc(var(--i)*44px));animation:lift 5s ease-in-out infinite;animation-delay:calc(var(--i)*-.5s)}
-@keyframes lift{50%{transform:rotateX(58deg) rotateZ(-36deg) translateZ(calc(var(--i)*62px))}}
+  transform:rotateX(58deg) rotateZ(-36deg) translateZ(calc((var(--i) - 1.5)*var(--gap) + 30px));
+  transition:transform .75s cubic-bezier(.2,.8,.2,1),filter .3s,box-shadow .5s;transition-delay:calc(var(--i)*45ms)}
+.stack i b{font:400 38px/1 "Bebas Neue",Impact,sans-serif;letter-spacing:.06em}
+.stack i small{font:700 10.5px/1.4 Geist,sans-serif;letter-spacing:.16em;color:hsl(var(--h) 95% 82%);opacity:0;transition:opacity .4s .15s;max-width:92%}
+.bcol.show .stack{--gap:116px}
+.bcol.show .stack i{box-shadow:0 30px 50px rgba(0,0,0,.6),0 0 44px hsl(var(--h) 90% 50%/.4),inset 0 1px 0 rgba(255,255,255,.2)}
+.bcol.show .stack i small{opacity:1}
+.stack i:hover{filter:brightness(1.45)}
+.flag .stk-chips{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:34px 0 10px;position:relative;z-index:1}
+.flag .stk-chips li:before{display:none}
+.flag .stk-chips li{display:block;padding:4px 13px;border-radius:99px;border:1px solid hsl(var(--h) 80% 58%/.65);background:hsl(var(--h) 70% 30%/.28);font-size:13px;font-weight:700;opacity:0;transform:translateY(12px) scale(.9);transition:.5s cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--k)*70ms)}
+.bcol.show .stk-chips li{opacity:1;transform:none}
+.stk-hint{text-align:center;color:var(--dim);font-size:13px;margin-bottom:20px;transition:opacity .3s}
+/* لقطة الإضافة السينمائية */
+.lb{position:absolute;inset-inline:0;height:0;background:#000;z-index:3;transition:height .5s cubic-bezier(.7,0,.2,1)}
+.lb.t{top:0}.lb.b{bottom:0}
+.flag-in>div{transition:opacity .45s,filter .45s}
+.flag.cine .lb{height:clamp(34px,7vw,66px)}
+.flag.cine .flag-in>div:first-child{opacity:.12;filter:blur(3px)}
+.flag.cine .stack{--gap:5px;animation:shake .5s .6s;scale:1.2}
+.flag.cine .stack i{transition-delay:0s;box-shadow:0 0 70px 12px rgb(var(--ac)/.75)}
+.flag.cine .stack i small,.flag.cine .stk-chips,.flag.cine .stk-hint,.flag.cine .priceTag,.flag.cine .clock{opacity:0;transition:opacity .25s}
+.stage3:after{content:"";position:absolute;inset:-12%;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#fff,rgb(var(--ac)/.65) 30%,transparent 65%);opacity:0;scale:.2}
+.flag.cine .stage3:after{animation:flash 1.1s .6s ease-out}
+@keyframes flash{0%{opacity:0;scale:.2}22%{opacity:.95}100%{opacity:0;scale:1.7}}
+@keyframes shake{20%{translate:-5px 2px}40%{translate:5px -3px}60%{translate:-3px 3px}80%{translate:3px -1px}}
+.cine-t{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:8px;text-align:center;pointer-events:none;opacity:0}
+.cine-t b{font:400 clamp(46px,8vw,88px)/1 "Bebas Neue",Impact,sans-serif;direction:ltr;text-shadow:0 0 40px rgb(var(--ac)/.9),0 4px 0 #000}
+.cine-t span{padding:5px 16px;border-radius:99px;background:var(--ok);color:#000;font-weight:800;font-size:15px}
+.flag.cine .cine-t{animation:cineT 1.7s .85s both}
+@keyframes cineT{0%{opacity:0;letter-spacing:.5em;scale:1.25}22%,82%{opacity:1;letter-spacing:.08em;scale:1}100%{opacity:0;scale:.96}}
 .clock{display:flex;gap:8px;direction:ltr;justify-content:flex-end}
 .clock div{min-width:60px;padding:8px 6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center;line-height:1.1}
 .clock b{font:700 24px Geist,sans-serif;display:block}.clock span{font-size:10px;letter-spacing:.14em;color:var(--dim)}
@@ -332,7 +363,7 @@ footer{margin-top:110px;border-top:1px solid var(--line);padding:34px 0 26px}
 @media (max-width:1000px){
   .dims{grid-template-columns:repeat(2,1fr)}.dims .dim:first-child{grid-column:1/-1}
   .flag-in,.studio{grid-template-columns:1fr}.studio{gap:34px}
-  .stack{height:300px}.flag:before{background:radial-gradient(70% 50% at 50% 70%,rgb(var(--ac)/.22),transparent 70%)}
+  .stack{height:300px}.bcol.show .stack{--gap:84px}.stage3{margin-top:34px}.stack i b{font-size:30px}.flag:before{background:radial-gradient(70% 50% at 50% 70%,rgb(var(--ac)/.22),transparent 70%)}
   .live{grid-template-columns:1fr;padding:44px 24px}.stage{height:380px}
   .revs{grid-template-columns:1fr}
   .grid.feature{grid-template-columns:1fr}.grid.feature .pc:first-child .top{min-height:0;aspect-ratio:16/9;flex:none}
@@ -553,6 +584,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
   <div id="shop"></div>
 
   <section id="bundle" class="flag">
+    <span class="lb t" aria-hidden="true"></span><span class="lb b" aria-hidden="true"></span>
     <div class="wrap flag-in">
       <div class="rv">
         <span class="eyebrow">05 — BUNDLES · THE FLAGSHIP</span>
@@ -569,8 +601,18 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
           <a href="#shop">أو اشترِ القطع بشكل منفصل</a>
         </div>
       </div>
-      <div class="rv">
-        <div class="stack" aria-hidden="true"><i style="--i:0;--h:260">MLO</i><i style="--i:1;--h:200">VEHICLES</i><i style="--i:2;--h:30">SCRIPTS</i><i style="--i:3;--h:4">ROX</i></div>
+      <div class="rv bcol">
+        <div class="stage3" id="bStage">
+          <button class="stack" id="stackBtn" type="button" aria-label="باقة تشغيل ROX — اضغط لإضافتها للسلة">
+            <i style="--i:0;--h:260"><b>MLO</b><small>POLICE DEPT · HOSPITAL</small></i>
+            <i style="--i:1;--h:200"><b>VEHICLES</b><small>8 PATROL CARS · ELS</small></i>
+            <i style="--i:2;--h:30"><b>SCRIPTS</b><small>HUD · INVENTORY · GARAGE · BANK · MULTICHAR</small></i>
+            <i style="--i:3;--h:4"><b>ROX</b><small>SERVER STARTER</small></i>
+          </button>
+          <div class="cine-t" aria-hidden="true"><b>ROX STARTER</b><span>انضافت الباقة للسلة ✓</span></div>
+        </div>
+        <ul class="stk-chips" aria-hidden="true"><li style="--h:4;--k:0">باقة التشغيل</li><li style="--h:30;--k:1">5 سكربتات</li><li style="--h:200;--k:2">8 سيارات دوريات</li><li style="--h:260;--k:3">مابين MLO</li></ul>
+        <p class="stk-hint" id="stkHint">أشّر على الباقة وشوف محتواها، واضغط عليها تنضاف للسلة</p>
         <div class="priceTag"><s id="bOld"></s><b id="bNow"></b></div>
         <div class="clock" id="clock" aria-label="ينتهي العرض بعد"></div>
       </div>
@@ -842,7 +884,27 @@ $('#pay').onclick = () => {
   if (!cart.length) return toast('سلتك فاضية');
   if (CONFIG.checkout) location.href = CONFIG.checkout; else toast('اربط صفحة الدفع من CONFIG.checkout');
 };
-document.addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) toggle(b.dataset.add); });
+document.addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (!b) return;
+  if (b.dataset.add === 'bundle-starter' && !b.classList.contains('add') && !cart.includes('bundle-starter')) return cine();
+  toggle(b.dataset.add); });
+
+/* الباقة: تنفتح طبقاتها لما تأشّر عليها، والضغط يضيفها للسلة بلقطة سينمائية */
+const flagEl = $('#bundle'), bcol = $('.bcol'); let cineBusy = false;
+function cine() {
+  if (cineBusy) return;
+  if (cart.includes('bundle-starter')) return openCart(true);
+  if (!motionOK) return toggle('bundle-starter');
+  cineBusy = true; flagEl.classList.add('cine'); flagEl.scrollIntoView({ block: 'center' });
+  setTimeout(() => toggle('bundle-starter'), 1500);
+  setTimeout(() => { flagEl.classList.remove('cine'); cineBusy = false; }, 2700);
+}
+$('#stackBtn').onclick = cine;
+$('#bStage').addEventListener('pointerenter', () => bcol.classList.add('show'));
+$('#bStage').addEventListener('pointerleave', () => { if (canHover) bcol.classList.remove('show'); });
+$('#stackBtn').addEventListener('focus', () => bcol.classList.add('show'));
+$('#stackBtn').addEventListener('blur', () => { if (canHover) bcol.classList.remove('show'); });
+if (!canHover) { $('#stkHint').textContent = 'اضغط على الباقة عشان تنضاف للسلة';
+  new IntersectionObserver(es => es.forEach(e => bcol.classList.toggle('show', e.isIntersecting)), { threshold: .55 }).observe($('#bStage')); }
 $('#cpnForm').onsubmit = async e => { e.preventDefault();
   const code = $('#cpn').value.trim().toUpperCase(); let pct = 0;
   if (!code) { coupon = null; renderCart(); return; }
