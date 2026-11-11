@@ -6,8 +6,12 @@
 <title>ROX Store | متجر FiveM</title>
 <meta name="description" content="ROX Store — سكربتات، مابات MLO، سيارات وباقات جاهزة لسيرفرات FiveM.">
 <meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ROX Store | متجر FiveM">
+<meta property="og:description" content="سكربتات، مابات MLO، سيارات وباقات جاهزة لسيرفرات FiveM.">
+<meta name="twitter:card" content="summary">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' data: blob: https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 96 50 50 96 4 50Z' fill='%23e1281c'/%3E%3Cpath d='M31 31 69 69M69 31 31 69' stroke='%23000' stroke-width='9'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -697,6 +701,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
       <small class="er" id="aErr" role="alert"></small>
       <button class="btn white" type="submit" id="aGo">دخول</button>
       <button class="lnk" type="button" id="aSw">ما عندك حساب؟ سجّل حساب جديد</button>
+      <button class="lnk" type="button" id="aFg">نسيت كلمة المرور؟</button>
     </form></div>
   <div id="acctIn" style="gap:14px" hidden>
     <span class="eyebrow" style="margin:0">MY ACCOUNT</span><h2>حسابي</h2><p class="mute" id="aMail" style="direction:ltr;text-align:right"></p>
@@ -748,7 +753,7 @@ let PRODUCTS = [
 const SBC = window.ROX_SB || {}, BANK0 = { ...CONFIG.bank }; let sb = null, me = null;
 if (SBC.url && SBC.key) {
   try {
-    await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
+    await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'vendor/supabase.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
     sb = window.supabase.createClient(SBC.url, SBC.key);
     const [pr, st] = await Promise.all([sb.from('products').select('*').eq('active', true).order('sort'), sb.from('settings').select('data').eq('id', 1).maybeSingle()]);
     if (pr.data && pr.data.some(p => p.id === 'bundle-starter')) PRODUCTS = pr.data.map(r => ({ id: r.id, cat: r.cat, art: r.art, name: r.name, desc: r.descr, price: +r.price, old: r.old_price ? +r.old_price : undefined, fw: r.fw || [], h: r.h, tag: r.tag || undefined, isNew: !!r.is_new }));
@@ -904,10 +909,14 @@ $('#rcSend').onclick = async () => {
 
 /* حساب العميل */
 const STT = { pending:'بانتظار الإيصال', review:'قيد المراجعة', delivered:'تم التسليم', rejected:'الإيصال مرفوض', refunded:'مسترجع' };
-let reg = false;
-function acctMode(r) { reg = r; $('#acctT').textContent = r ? 'حساب جديد' : 'تسجيل الدخول'; $('#aName').hidden = $('#aDc').hidden = !r; $('#aGo').textContent = r ? 'إنشاء الحساب' : 'دخول';
+let reg = false, newPw = false;
+function acctMode(r) { reg = r; newPw = false; $('#aEm').hidden = false; $('#aFg').hidden = !!r; $('#aSw').hidden = false; $('#acctT').textContent = r ? 'حساب جديد' : 'تسجيل الدخول'; $('#aName').hidden = $('#aDc').hidden = !r; $('#aGo').textContent = r ? 'إنشاء الحساب' : 'دخول';
   $('#aSw').textContent = r ? 'عندك حساب؟ سجّل دخولك' : 'ما عندك حساب؟ سجّل حساب جديد'; $('#aPw').autocomplete = r ? 'new-password' : 'current-password'; $('#aErr').textContent = ''; }
+function pwMode() { newPw = true; $('#acctT').textContent = 'كلمة مرور جديدة'; $('#aName').hidden = $('#aDc').hidden = $('#aEm').hidden = $('#aFg').hidden = $('#aSw').hidden = true;
+  $('#aGo').textContent = 'حفظ كلمة المرور'; $('#aPw').autocomplete = 'new-password'; $('#aErr').textContent = ''; $('#acctOut').hidden = false; $('#acctOut').style.display = 'grid'; $('#acctIn').hidden = true; $('#acctIn').style.display = '';
+  if (!$('#acct').open) $('#acct').showModal(); $('#aPw').focus(); }
 async function renderAcct() {
+  if (newPw) return;
   $('#acctOut').hidden = !!me; $('#acctIn').hidden = !me; $('#acctIn').style.display = me ? 'grid' : ''; $('#acctOut').style.display = me ? 'none' : 'grid';
   if (!me) return acctMode(reg);
   $('#aMail').textContent = me.email; $('#myOrders').innerHTML = '<p class="mute">جاري التحميل…</p>';
@@ -921,6 +930,9 @@ $('#acctBtn').onclick = openAcct; $('#acctX').onclick = () => $('#acct').close()
 $('#aSw').onclick = () => acctMode(!reg);
 $('#acctF').onsubmit = async e => { e.preventDefault();
   const email = $('#aEm').value.trim(), password = $('#aPw').value, err = m => { $('#aErr').textContent = m; };
+  if (newPw) { if (password.length < 8) return err('كلمة المرور لازم 8 أحرف أو أكثر.');
+    const { error } = await sb.auth.updateUser({ password }); if (error) return err('تعذّر تغيير كلمة المرور. اطلب رابط جديد.');
+    $('#aPw').value = ''; history.replaceState(null, '', location.pathname); newPw = false; toast('تم تغيير كلمة المرور'); return renderAcct(); }
   if (!/^\S+@\S+\.\S+$/.test(email)) return err('اكتب إيميل صحيح.');
   if (password.length < 8) return err('كلمة المرور لازم 8 أحرف أو أكثر.');
   const b = $('#aGo'); b.disabled = true; err('');
@@ -931,11 +943,15 @@ $('#acctF').onsubmit = async e => { e.preventDefault();
   } catch (x) { err('تعذّر الاتصال. حاول مرة ثانية.'); }
   b.disabled = false; $('#aPw').value = '';
 };
-$('#aOut').onclick = async () => { await sb.auth.signOut(); };
+$('#aOut').onclick = async () => { reg = false; await sb.auth.signOut(); };
+$('#aFg').onclick = async () => { const email = $('#aEm').value.trim(), err = m => { $('#aErr').textContent = m; };
+  if (!/^\S+@\S+\.\S+$/.test(email)) return err('اكتب إيميلك أول ثم اضغط «نسيت كلمة المرور».');
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  err('لو الإيميل مسجّل عندنا، بيوصلك رابط لتغيير كلمة المرور.'); };
 if (sb) {
   $('#acctBtn').hidden = false;
   me = ((await sb.auth.getSession()).data.session || {}).user || null;
-  sb.auth.onAuthStateChange((_e, s) => { me = s ? s.user : null; if ($('#acct').open) renderAcct(); });
+  sb.auth.onAuthStateChange((ev, s) => { me = s ? s.user : null; if (ev === 'PASSWORD_RECOVERY') return pwMode(); if ($('#acct').open) renderAcct(); });
 }
 $('#bankX').onclick = () => $('#bank').close();
 $('#bankRows').onclick = e => { const b = e.target.closest('[data-copy]'); if (!b) return; const lab = b.querySelector('span'), old = lab.textContent;

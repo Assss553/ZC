@@ -205,7 +205,7 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
   <aside class="sd"><div class="lat lg"><small>ADMIN</small><span>RO<b>X</b></span></div><nav id="nv" aria-label="الأقسام"></nav></aside>
   <main>
     <div class="bar"><div class="lat lg mb"><span>RO<b>X</b></span></div><span class="sp"></span>
-      <a class="tb" href="rox-fivem-store.html" target="_blank" rel="noopener" id="vs"></a><button class="tb" id="lo" type="button"></button></div>
+      <a class="tb" href="./" target="_blank" rel="noopener" id="vs"></a><button class="tb" id="lo" type="button"></button></div>
     <h1 id="ttl"></h1><div id="v"></div>
   </main>
   <nav class="tabs" id="tb" aria-label="الأقسام"></nav>
@@ -288,7 +288,7 @@ const REV0 = [
 ];
 const SBC = window.ROX_SB || {}; let sb = null;
 if (SBC.url && SBC.key) { try {
-  await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
+  await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'vendor/supabase.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
   sb = window.supabase.createClient(SBC.url, SBC.key); } catch (e) { console.error(e); } }
 let P = [], CFG = JSON.parse(JSON.stringify(CFG0)), DB = { orders: [], log: [] }, CUS = [], known = { p: new Set(), c: new Set() };
 const run = async (pr, msg) => { const { data, error } = await pr; if (error) { console.error(error); toast(msg || 'تعذّر الحفظ. تأكد من الاتصال.'); throw error; } return data; };
@@ -495,7 +495,7 @@ $('v').addEventListener('click', e => { const b = e.target.closest('button'); if
   if (at == 4 && mka(b, s)) return;
   if (s.cu != null) { qs = s.cu; flt = -1; tab(1, 1); scrollTo(0, 0); }
   else if (s.dz) { CFG.design = s.dz; saveC(); lg('تغيير تصميم المتجر: ' + DZ.find(d => d[0] == s.dz)[1]); tab(at, 1); toast('تم تفعيل التصميم على المتجر'); }
-  else if (s.dzp) window.open('rox-fivem-store.html?design=' + s.dzp, '_blank', 'noopener');
+  else if (s.dzp) window.open('./?design=' + s.dzp, '_blank', 'noopener');
   else if (s.r) { rg = +s.r; tab(at); }
   else if (s.f) { flt = +s.f; tab(1, 1); }
   else if (s.o) opt(s.o, s.v);
