@@ -33,8 +33,9 @@ main{width:100%;min-width:0;max-width:1100px;margin-inline:auto;padding:calc(16p
 .tb:hover{border-color:var(--fg)}
 .bar .sp{flex:1}
 h1{font-size:clamp(30px,6vw,44px);font-weight:900;line-height:1.15;margin-bottom:18px}
-.tabs{position:fixed;bottom:0;left:0;right:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);background:var(--sf);border-top:1px solid var(--ln);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabs{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;overflow-x:auto;scrollbar-width:none;background:var(--sf);border-top:1px solid var(--ln);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
 #nv{display:flex;flex-direction:column;gap:4px}
+.tabs .nb{flex:1 0 62px}
 .nb{position:relative;isolation:isolate;padding:8px 2px 6px;font-weight:700;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--mu);transition:color .25s}
 .nb small{display:none}
 .nb:before{content:"";position:absolute;inset:0;z-index:-1;background:var(--red);transform:skewX(-14deg);scale:0 1;transition:scale .35s cubic-bezier(.2,.8,.2,1);border-radius:var(--rad)}
@@ -134,6 +135,24 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
 .tc i{display:block;height:46px;margin-bottom:6px;position:relative;border:1px solid #8885}.tc s{position:absolute;inset:8px 8px auto;height:16px}.tc u{position:absolute;inset:auto 8px 8px;height:4px;width:40%}
 .sw{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.sw button{width:40px;height:40px;border-radius:50%;border:3px solid var(--bg);box-shadow:0 0 0 2px var(--ln)}.sw button.on{box-shadow:0 0 0 3px var(--fg)}.sw input{width:56px}
 .nt{border:1px solid var(--ln);background:var(--sf);padding:12px 14px;font-size:13.5px;color:var(--mu);margin-top:18px;border-radius:var(--rad)}
+/* العملاء، التسويق، تصاميم المتجر، السجل */
+.cr{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;text-align:start;padding:12px 14px;background:var(--sf);border:1px solid var(--ln);margin-bottom:8px;border-radius:var(--rad)}
+.cr:hover{border-color:var(--red)}
+.cr .av{display:grid;place-items:center;width:44px;height:44px;background:var(--red);color:#000;font-weight:900;font-size:18px;transform:skewX(-8deg)}
+.cr small{display:block;color:var(--mu);font-size:12.5px}.cr b.lat{font-size:26px;direction:ltr}
+.cp{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 14px;background:var(--sf);border:1px dashed var(--ln);margin-bottom:8px;border-radius:var(--rad)}
+.cp b.lat{font-size:26px;letter-spacing:.06em;direction:ltr}.cp .pc{background:var(--red);color:#000;font-weight:900;padding:1px 10px}
+.cp .sp{flex:1}.cp.off{opacity:.5}
+.rvw{padding:14px;background:var(--sf);border:1px solid var(--ln);margin-bottom:8px;border-radius:var(--rad)}
+.rvw q{display:block;margin-bottom:8px}.rvw small{color:var(--mu)}.rvw div{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.inl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 14px;align-items:end}
+.dz{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.dc{position:relative;border:2px solid var(--ln);background:var(--sf);padding:6px;font-weight:700;font-size:14px;text-align:start;border-radius:var(--rad)}
+.dc.on{border-color:var(--red)}.dc.on:after{content:"مفعّل";position:absolute;top:12px;inset-inline-start:12px;background:var(--red);color:#000;font-size:11px;font-weight:900;padding:1px 7px}
+.dc i{display:grid;place-items:center;height:84px;margin-bottom:6px;overflow:hidden;position:relative;font:400 26px/1 'Bebas Neue',Impact,sans-serif;font-style:normal;letter-spacing:.03em;direction:ltr}
+.dc i u{text-decoration:none}
+.dc small{display:block;font-weight:400;font-size:12px;color:var(--mu)}
+.lgr{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--ln);font-size:14px}.lgr small{color:var(--mu);white-space:nowrap}
 #eye,#dim{position:fixed;inset:0;z-index:60;pointer-events:none}#eye{background:#ff9d2e;mix-blend-mode:multiply;opacity:var(--eye)}#dim{background:#000;opacity:var(--dim)}
 
 :root[data-ds=soft]{--rad:18px}:root[data-ds=calm]{--rad:8px}
@@ -212,7 +231,11 @@ const I = {
   star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
   chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   warn:'<path d="M12 4 2.5 20h19zM12 10v5M12 17.5h.01"/>',
-  tag:'<path d="M3 12V4h8l10 10-8 8zM7.5 8.5h.01"/>'
+  tag:'<path d="M3 12V4h8l10 10-8 8zM7.5 8.5h.01"/>',
+  users:'<path d="M16 19v-1a4 4 0 0 0-8 0v1M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM21 19v-1a3 3 0 0 0-3-3M3 19v-1a3 3 0 0 1 3-3"/>',
+  mega:'<path d="M4 10v4h3l8 5V5l-8 5zM18 9a4 4 0 0 1 0 6M8 14v5h3v-3"/>',
+  bank:'<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>'
 };
 const ic = (n, c) => `<svg class="i${c ? ' ' + c : ''}" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
 function glyph(cat, h) {
@@ -230,9 +253,19 @@ function glyph(cat, h) {
 const CATS = [['script', 'سكربتات', 4], ['mlo', 'مابات MLO', 215], ['car', 'سيارات', 38], ['eup', 'ملابس EUP', 160], ['bundle', 'باقات', 275]];
 const catName = id => (CATS.find(c => c[0] === id) || CATS[0])[1];
 const ST = ['جديد', 'تم التسليم', 'مسترجع'], PAY = [['tebex', 'Tebex'], ['paypal', 'PayPal'], ['card', 'بطاقة']];
-const TB = [['نظرة عامة', 'OVERVIEW', 'home'], ['الطلبات', 'ORDERS', 'orders'], ['المنتجات', 'PRODUCTS', 'box'], ['الإعدادات', 'SETTINGS', 'set'], ['المظهر', 'THEME', 'theme']];
+const TB = [['نظرة عامة', 'OVERVIEW', 'home'], ['الطلبات', 'ORDERS', 'orders'], ['المنتجات', 'PRODUCTS', 'box'], ['العملاء', 'CUSTOMERS', 'users'], ['التسويق', 'MARKETING', 'mega'], ['الإعدادات', 'SETTINGS', 'set'], ['المظهر', 'THEME', 'theme']];
 const DY = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
-const CFG0 = { currency:'$', discord:'', checkout:'', liveServer:'', bundleEnds:'2026-12-31T23:59:59+03:00', maint:0, mmsg:'', mdate:'' };
+const CFG0 = { currency:'$', discord:'', checkout:'', liveServer:'', bundleEnds:'2026-12-31T23:59:59+03:00', maint:0, mmsg:'', mdate:'', design:'rox', announce:'', coupons:[], sarRate:3.75,
+  bank:{ bankName:'', holder:'', iban:'SA7680000469608016053450', account:'469000010006086053450' } };
+/* تصاميم المتجر: المعرّف، الاسم، الوصف، الخلفية، لون التمييز، لون ثانوي */
+const DZ = [['rox','ROX الأصلي','أحمر وأسود بأشعة ضوء','#000000','#ff4d3d','#ffffff'],['neon','نيون سايبر','شبكة نيون وأزرار مقصوصة','#02040a','#5ff3ff','#ff00c8'],['gold','ذهبي فاخر','خط كلاسيكي وحلقات ذهبية','#050403','#f0d78c','#ffffff'],
+  ['toxic','توكسيك','أخضر حاد وشريط تحذير','#030501','#bef264','#ffffff'],['ice','جليدي','شفق قطبي وبطاقات زجاجية','#020617','#bae6fd','#ffffff'],['sunset','غروب','شمس ريترو وأزرار دائرية','#0a0312','#ffd166','#ffffff'],
+  ['royal','ملكي بنفسجي','حلقات نبض بنفسجية','#05020c','#d8b4fe','#ffffff'],['police','دوريات','أضواء أزرق وأحمر','#01030a','#f87171','#93c5fd'],['desert','صحراء','كثبان ولون ذهبي دافئ','#0a0603','#fcd34d','#ffffff'],['mono','مونو','أبيض وأسود بخط مفرّغ','#000000','#9a9a9a','#ffffff']];
+const REV0 = [
+  { q:'مركز الشرطة غيّر شكل السيرفر كامل. التفاصيل من برا ومن جوا ما شفت مثلها، والدعم ردّ علي بنفس اليوم.', n:'اسم العميل', s:'على ROX PD' },
+  { q:'الـ HUD والحقيبة اشتغلوا من أول تركيب على QBCore، والـ resmon ما تحرّك. أنصح فيهم وبقوة.', n:'اسم العميل', s:'اسم السيرفر' },
+  { q:'أخذنا باقة التشغيل وفتحنا السيرفر خلال يومين. كل شي متوافق مع بعض وما احتجنا نعدّل شي.', n:'اسم العميل', s:'على باقة التشغيل' }
+];
 const P0 = [
   { id:'pd',        cat:'mlo',    art:'ROX PD',    name:'مركز الشرطة — ROX PD',    desc:'مركز كامل: استقبال، زنازين، غرفة تحقيق، مخزن سلاح وكراج.', price:59.99, fw:['MLO','YMAP'], h:215, tag:'الأكثر مبيعًا' },
   { id:'med',       cat:'mlo',    art:'MEDICAL',   name:'مستشفى Central Medical',  desc:'طوارئ، غرف عمليات، صيدلية ومهبط طيران على السطح.',       price:39.99, fw:['MLO','YMAP'], h:200 },
@@ -250,7 +283,9 @@ const P0 = [
 ];
 let P = get('rox_products', null) || JSON.parse(JSON.stringify(P0));
 let CFG = Object.assign({}, CFG0, get('rox_config', {}));
-let DB = Object.assign({ orders: null, pin: '1234' }, get('rox_admin', {}));
+let DB = Object.assign({ orders: null, pin: '1234', log: [] }, get('rox_admin', {}));
+CFG.bank = Object.assign({}, CFG0.bank, CFG.bank);
+function lg(m) { DB.log.unshift({ t: Date.now(), m }); DB.log.length = Math.min(DB.log.length, 40); saveDB(); }
 if (!DB.orders) DB.orders = [[0,3,0],[0,12,0],[1,0,1],[2,4,1],[3,9,1],[4,6,1],[6,1,1],[9,5,1],[12,0,1],[16,7,2],[21,2,1],[26,10,1]].map((r, i) => {
   const q = P0[r[1]]; return { id: String(1040 + 12 - i), t: Date.now() - r[0] * 864e5 - i * 36e5, total: q.price, st: r[2], demo: 1, cu: 'عميل_' + (1012 + i * 7), cfx: '', pay: PAY[i % 3][0], items: [{ n: q.name, p: q.price, q: 1 }] }; });
 const saveDB = () => put('rox_admin', DB), saveP = () => put('rox_products', P), saveC = () => put('rox_config', CFG);
@@ -313,7 +348,7 @@ $('fs').onclick = () => { const nm = clean($('fn').value), pr = +$('fp').value, 
   const d = { cat: $('ft').value, art, name: nm, desc: clean($('fd').value) || 'أضف وصف المنتج.', price: pr, fw: $('fw').value.split(',').map(s => clean(s).toUpperCase()).filter(Boolean).slice(0, 4), h: +$('fhu').value };
   if (od > pr) d.old = od; if (tag) { d.tag = tag; d.isNew = tag === 'جديد'; }
   if (ed) { ['old', 'tag', 'isNew'].forEach(k => delete ed[k]); Object.assign(ed, d); } else P.unshift(Object.assign({ id: 'p' + Date.now().toString(36) }, d));
-  saveP(); $('sh').classList.remove('on'); tab(2, 1); toast('تم حفظ المنتج'); };
+  saveP(); lg((ed ? 'تعديل منتج: ' : 'منتج جديد: ') + nm); $('sh').classList.remove('on'); tab(2, 1); toast('تم حفظ المنتج'); };
 $('fc').onclick = () => $('sh').classList.remove('on');
 
 /* ============ الإعدادات ============ */
@@ -327,17 +362,63 @@ function sev() { const c = CFG, d = new Date(c.bundleEnds), dv = isNaN(d) ? '' :
     <label>رابط سيرفر العرض<input id="slv" dir="ltr" placeholder="fivem://connect/cfx.re/join/xxxxxx" value="${esc(c.liveServer)}"></label>
     <label>رمز العملة<input id="scu" dir="ltr" maxlength="4" value="${esc(c.currency)}"></label>
     <label>نهاية عرض الباقة<input id="sbe" type="datetime-local" value="${dv}"></label></div>
+  <div class="hh">التحويل البنكي</div><div class="fg">
+    <label>اسم البنك<input id="bnm" value="${esc(c.bank.bankName)}"></label>
+    <label>اسم المستفيد<input id="bhd" value="${esc(c.bank.holder)}"></label>
+    <label>الآيبان<input id="bib" dir="ltr" value="${esc(c.bank.iban)}"></label>
+    <label>رقم الحساب<input id="bac" dir="ltr" inputmode="numeric" value="${esc(c.bank.account)}"></label>
+    <label>سعر الدولار بالريال<input id="bsr" type="number" step="0.01" min="0" dir="ltr" value="${esc(c.sarRate)}"></label></div>
   <div class="hh">الأمان</div><div class="fg"><label>رمز دخول جديد (4 أرقام أو أكثر)<input id="spn" type="password" inputmode="numeric" autocomplete="off"></label></div>
   <button class="bt p" id="ss">حفظ الإعدادات</button><button class="bt" id="ex">تصدير المنتجات JSON</button><button class="bt" id="cd0">حذف الطلبات التجريبية</button><button class="bt" id="rs">إعادة ضبط الكل</button>
-  <p class="nt">المنتجات والإعدادات تنحفظ في هذا المتصفح فقط، والمتجر يقرأها لما ينفتح من نفس الموقع ونفس المتصفح. رمز الدخول يقفل الشاشة فقط وليس حماية حقيقية — عشان تنشر اللوحة لازم تنربط بخادم وتسجيل دخول.</p>`; }
+  <p class="nt">المنتجات والإعدادات تنحفظ في هذا المتصفح فقط، والمتجر يقرأها لما ينفتح من نفس الموقع ونفس المتصفح. رمز الدخول يقفل الشاشة فقط وليس حماية حقيقية — عشان تنشر اللوحة لازم تنربط بخادم وتسجيل دخول.</p>
+  <div class="hh">سجل النشاط</div>${DB.log.slice(0, 15).map(l => `<div class="lgr"><span>${esc(l.m)}</span><small>${ago(l.t)}</small></div>`).join('') || '<p class="em">ما فيه نشاط مسجّل بعد.</p>'}`; }
 function ss() { const d = new Date($('sbe').value), p = $('spn').value.trim();
   if (p) { if (p.length < 4) { toast('الرمز لازم يكون 4 أرقام أو أكثر'); return; } DB.pin = p; saveDB(); }
-  Object.assign(CFG, { mmsg: clean($('mmg').value), mdate: $('mdt').value, discord: clean($('sdc').value), checkout: clean($('sck').value), liveServer: clean($('slv').value), currency: clean($('scu').value) || '$', bundleEnds: isNaN(d) ? CFG.bundleEnds : d.toISOString() });
-  saveC(); tab(3, 1); toast('تم حفظ الإعدادات'); }
+  Object.assign(CFG, { mmsg: clean($('mmg').value), mdate: $('mdt').value, discord: clean($('sdc').value), checkout: clean($('sck').value), liveServer: clean($('slv').value), currency: clean($('scu').value) || '$', bundleEnds: isNaN(d) ? CFG.bundleEnds : d.toISOString(), sarRate: +$('bsr').value > 0 ? +$('bsr').value : 3.75,
+    bank: { bankName: clean($('bnm').value), holder: clean($('bhd').value), iban: clean($('bib').value).replace(/\s/g, '').toUpperCase(), account: clean($('bac').value).replace(/\s/g, '') } });
+  saveC(); lg('حفظ الإعدادات'); tab(at, 1); toast('تم حفظ الإعدادات'); }
 function mt(v) { if ($('mmg')) { CFG.mmsg = clean($('mmg').value); CFG.mdate = $('mdt').value; }
   if (v == 'p') { $('mm').textContent = CFG.mmsg || 'نجهّز لكم شيئًا أفضل. نرجع قريبًا.'; $('md').textContent = CFG.mdate ? 'نرجع ' + new Date(CFG.mdate).toLocaleString('ar-u-nu-latn', { dateStyle:'long', timeStyle:'short' }) : ''; $('mp').hidden = false; return; }
-  CFG.maint = +v; saveC(); tab(3, 1); toast(+v ? 'المتجر الآن تحت الصيانة' : 'المتجر مفتوح للزوار'); }
+  CFG.maint = +v; saveC(); lg(+v ? 'تفعيل وضع الصيانة' : 'إيقاف وضع الصيانة'); tab(at, 1); toast(+v ? 'المتجر الآن تحت الصيانة' : 'المتجر مفتوح للزوار'); }
 $('mx').onclick = () => $('mp').hidden = true;
+
+/* ============ العملاء ============ */
+function cus() { const m = {}; DB.orders.forEach(o => { const k = o.cu || 'بدون اسم', c = m[k] ||= { n: k, c: 0, v: 0, last: 0 }; c.c++; if (paid(o)) c.v += o.total; c.last = Math.max(c.last, o.t); });
+  const L = Object.values(m).sort((a, b) => b.v - a.v), tot = L.reduce((s, c) => s + c.v, 0);
+  return `<div class="ks" style="margin-top:0">${ki('عدد العملاء', L.length, 'users')}${ki('عملاء متكررين', L.filter(c => c.c > 1).length, 'star')}${ki(`متوسط إنفاق العميل (${esc(CFG.currency)})`, L.length ? Math.round(tot / L.length) : 0, 'cash')}${ki('إجمالي الطلبات', DB.orders.length, 'orders')}</div>
+    <div class="hh">كل العملاء</div><p class="hint">اضغط على العميل لعرض طلباته.</p>`
+    + (L.map(c => `<button class="cr" data-cu="${esc(c.n)}"><span class="av">${esc(c.n.trim()[0] || '؟')}</span><span><strong>${esc(c.n)}</strong><small>${c.c} طلب · آخر طلب ${ago(c.last)}</small></span><b class="lat">${money(c.v)}</b></button>`).join('') || '<p class="em">ما فيه عملاء بعد.</p>'); }
+
+/* ============ التسويق ============ */
+const revs = () => Array.isArray(CFG.reviews) ? CFG.reviews : REV0;
+function mkt() { const cp = CFG.coupons || [], rv = revs();
+  return `<div class="hh">شريط الإعلان</div><p class="hint">يظهر أعلى المتجر لكل الزوار. اتركه فاضي لإخفائه.</p>
+    <label>نص الإعلان<input id="ann" maxlength="90" placeholder="خصم 20% على كل السكربتات لنهاية الأسبوع" value="${esc(CFG.announce)}"></label><button class="bt p" id="ans" style="margin-top:0">حفظ الإعلان</button>
+    <div class="hh">أكواد الخصم (${cp.length})</div>`
+    + (cp.map((c, i) => `<div class="cp${c.on === false ? ' off' : ''}"><b class="lat">${esc(c.code)}</b><span class="pc">${+c.pct}%</span><span class="sp"></span><div class="sg"><button data-cpt="${i}" class="${c.on === false ? '' : 'on'}">${c.on === false ? 'موقوف' : 'مفعّل'}</button></div><button class="dx" data-cpx="${i}">${ic('trash', 's')}حذف</button></div>`).join('') || '<p class="em">ما فيه أكواد خصم. أضف أول كود.</p>')
+    + `<div class="inl"><label>الكود<input id="cpc" dir="ltr" maxlength="16" placeholder="ROX10"></label><label>نسبة الخصم %<input id="cpp" type="number" min="1" max="90" dir="ltr" placeholder="10"></label><button class="bt" id="cpa" style="margin:0 0 14px">${ic('plus', 's')}إضافة كود</button></div>
+    <div class="hh">آراء العملاء (${rv.length})</div>${Array.isArray(CFG.reviews) ? '' : `<div class="mn">${ic('warn', 's')}الآراء الحالية نصوص مثال. احذفها وأضف آراء حقيقية من عملائك قبل النشر.</div>`}`
+    + (rv.map((r, i) => `<div class="rvw"><q>${esc(r.q)}</q><div><small>${esc(r.n)} · ${esc(r.s)}</small><button class="dx" data-rvx="${i}">${ic('trash', 's')}حذف</button></div></div>`).join('') || '<p class="em">ما فيه آراء، وقسم الآراء مخفي من المتجر.</p>')
+    + `<label>نص الرأي<textarea id="rvq" rows="2" maxlength="220"></textarea></label><div class="inl"><label>اسم العميل<input id="rvn" maxlength="30"></label><label>السيرفر أو المنتج<input id="rvs" maxlength="40"></label><button class="bt" id="rva" style="margin:0 0 14px">${ic('plus', 's')}إضافة رأي</button></div>`; }
+function mka(b, s) {
+  if (b.id == 'ans') { CFG.announce = clean($('ann').value); saveC(); lg(CFG.announce ? 'تحديث شريط الإعلان' : 'إخفاء شريط الإعلان'); toast('تم حفظ الإعلان'); }
+  else if (b.id == 'cpa') { const code = clean($('cpc').value).toUpperCase().replace(/[^A-Z0-9_-]/g, ''), pct = Math.round(+$('cpp').value);
+    if (!code || !(pct >= 1 && pct <= 90)) return toast('اكتب كود ونسبة بين 1 و 90');
+    if ((CFG.coupons || []).some(c => c.code == code)) return toast('الكود موجود من قبل');
+    CFG.coupons = (CFG.coupons || []).concat({ code, pct, on: true }); saveC(); lg(`كود خصم جديد: ${code} (${pct}%)`); toast('تمت إضافة الكود'); }
+  else if (s.cpt != null) { const c = CFG.coupons[+s.cpt]; c.on = c.on === false; saveC(); }
+  else if (s.cpx != null) { lg('حذف كود خصم: ' + CFG.coupons[+s.cpx].code); CFG.coupons.splice(+s.cpx, 1); saveC(); }
+  else if (b.id == 'rva') { const q = clean($('rvq').value), n = clean($('rvn').value);
+    if (!q || !n) return toast('اكتب نص الرأي واسم العميل');
+    CFG.reviews = revs().concat({ q, n, s: clean($('rvs').value) }); saveC(); lg('إضافة رأي عميل'); toast('تمت إضافة الرأي'); }
+  else if (s.rvx != null) { CFG.reviews = revs().filter((_, i) => i != +s.rvx); saveC(); lg('حذف رأي عميل'); }
+  else return false;
+  tab(at, 1); return true; }
+
+/* ============ تصميم المتجر ============ */
+function dzv() { return `<div class="hh">تصميم المتجر</div><p class="hint">اختر واحد من العشرة وينطبق على المتجر مباشرة. زر المعاينة يفتح المتجر بالتصميم بدون ما يغيّر المفعّل.</p><div class="dz">`
+  + DZ.map(d => `<div class="dc${CFG.design == d[0] ? ' on' : ''}"><i style="background:radial-gradient(90% 90% at 50% 120%,${d[4]}55,transparent 70%),${d[3]};color:${d[5]}"><span>ROX <u style="color:${d[4]}">STORE</u></span></i>${d[1]}<small>${d[2]}</small>
+      <div class="ac" style="margin:8px -6px -6px"><button data-dz="${d[0]}">${CFG.design == d[0] ? 'مفعّل' : 'اختيار'}</button><button data-dzp="${d[0]}">${ic('eye', 's')}معاينة</button></div></div>`).join('') + '</div><div class="hh">مظهر لوحة التحكم</div>'; }
 
 /* ============ المظهر ============ */
 const TH = [['auto','تلقائي'],['light','فاتح','#efeae2','#ffffff','#14110f','#6b655e','#d5cec2',0],['paper','ورقي','#f4f6f9','#ffffff','#0f172a','#5b6577','#dde2ea',0],['dark','داكن','#0b0a09','#141211','#efeae2','#938d85','#2a2725',1],['black','أسود','#000000','#0d0d0d','#f2f2f2','#9a9a9a','#262626',1],['navy','ليلي','#0a0f1c','#111a2e','#e6ecf8','#8d9bb8','#1f2b45',1]],
@@ -356,7 +437,7 @@ function ap() { const r = document.documentElement, s = r.style, t = TH.find(x =
 function opt(k, v) { if (k == 'rs0') OP = Object.assign({}, OP0); else OP[k] = v; ap(); put('rox_ui', OP); tab(at, 1); }
 const sg = (k, L) => `<div class="sg">${L.map(x => `<button data-o="${k}" data-v="${x[0]}" class="${OP[k] == x[0] ? 'on' : ''}">${x[1]}</button>`).join('')}</div>`;
 const rw = (t, s, c) => `<div class="or"><div>${t}<small>${s}</small></div>${c}</div>`;
-function apv() { return hero() + (DB.orders[0] ? row(DB.orders[0], 1) : '')
+function apv() { return dzv() + hero() + (DB.orders[0] ? row(DB.orders[0], 1) : '')
   + `<div class="hh">الثيم</div><div class="oc">${TH.map(t => { const x = t.length > 2; return `<button class="tc${OP.th == t[0] ? ' on' : ''}" data-o="th" data-v="${t[0]}"><i style="background:${x ? t[2] : 'linear-gradient(90deg,#efeae2 50%,#0b0a09 50%)'}">${x ? `<s style="background:${t[3]}"></s><u style="background:${t[4]}"></u>` : ''}</i>${t[1]}</button>`; }).join('')}</div>`
   + `<div class="hh">لون التمييز</div><div class="sw">${AC.map(a => `<button data-o="ac" data-v="${a[0]}" aria-label="${a[1]}" style="background:${a[0]}" class="${OP.ac == a[0] ? 'on' : ''}"></button>`).join('')}<input type="color" id="cc" value="${OP.ac}" aria-label="لون مخصص"></div>`
   + '<div class="hh">التصميم</div>' + rw('نمط التصميم', 'ROX حاد ومائل، ناعم مدوّر بظلال، هادئ بإطار خفيف', sg('ds', [['rox', 'ROX'], ['soft', 'ناعم'], ['calm', 'هادئ']]))
@@ -368,7 +449,7 @@ function apv() { return hero() + (DB.orders[0] ? row(DB.orders[0], 1) : '')
   + '<button class="bt" data-o="rs0">إعادة ضبط المظهر</button>'; }
 
 /* ============ التنقل ============ */
-const VW = [ovv, ord, prd, sev, apv];
+const VW = [ovv, ord, prd, cus, mkt, sev, apv];
 function nav() { const h = TB.map((t, i) => { const n = i == 1 ? cnt() : 0; return `<button class="nb${i == at ? ' on' : ''}" data-t="${i}">${ic(t[2])}<span>${t[0]}</span>${n ? `<em>${n}</em>` : ''}<small class="lat">${t[1]}</small></button>`; }).join(''); $('nv').innerHTML = h; $('tb').innerHTML = h; }
 function tab(i, na) { at = i; $('ttl').textContent = TB[i][0]; const v = $('v'); v.className = (i == 2 ? 'pg ' : '') + (na ? 'na' : '');
   v.innerHTML = (CFG.maint ? `<div class="mn" role="status">${ic('warn', 's')}وضع الصيانة مفعّل. المتجر مغلق للزوار.</div>` : '') + VW[i](); nav();
@@ -377,19 +458,23 @@ $('nv').onclick = $('tb').onclick = e => { const b = e.target.closest('.nb'); if
 $('v').addEventListener('input', e => { const t = e.target; if (t.id == 'q') { qs = t.value; $('ol').innerHTML = ol(); } else if (t.id == 'cc') { OP.ac = t.value; ap(); put('rox_ui', OP); } else if (t.id == 'dm') { OP.dm = t.value; ap(); put('rox_ui', OP); } });
 $('v').addEventListener('change', e => { if (e.target.id == 'cc') tab(at, 1); });
 $('v').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const s = b.dataset; let o;
-  if (s.r) { rg = +s.r; tab(at); }
+  if (at == 4 && mka(b, s)) return;
+  if (s.cu != null) { qs = s.cu; flt = -1; tab(1, 1); scrollTo(0, 0); }
+  else if (s.dz) { CFG.design = s.dz; saveC(); lg('تغيير تصميم المتجر: ' + DZ.find(d => d[0] == s.dz)[1]); tab(at, 1); toast('تم تفعيل التصميم على المتجر'); }
+  else if (s.dzp) window.open('rox-fivem-store.html?design=' + s.dzp, '_blank', 'noopener');
+  else if (s.r) { rg = +s.r; tab(at); }
   else if (s.f) { flt = +s.f; tab(1, 1); }
   else if (s.o) opt(s.o, s.v);
   else if (s.od) od1(s.od);
   else if (s.mt != null) mt(s.mt);
-  else if (s.id) { o = oid(s.id); o.st = (o.st + 1) % 3; saveDB(); tab(at, 1); toast('الحالة الآن: ' + ST[o.st]); }
+  else if (s.id) { o = oid(s.id); o.st = (o.st + 1) % 3; lg(`طلب #${o.id}: ${ST[o.st]}`); tab(at, 1); toast('الحالة الآن: ' + ST[o.st]); }
   else if (s.del != null) cf(b, () => { DB.orders = DB.orders.filter(x => x.id != s.del); saveDB(); tab(1, 1); toast('تم حذف الطلب'); });
   else if (s.e != null) fo(+s.e);
-  else if (s.x != null) cf(b, () => { P.splice(+s.x, 1); saveP(); tab(2, 1); toast('تم حذف المنتج'); });
+  else if (s.x != null) cf(b, () => { lg('حذف منتج: ' + P[+s.x].name); P.splice(+s.x, 1); saveP(); tab(2, 1); toast('تم حذف المنتج'); });
   else if (b.id == 'np') fo(-1);
   else if (b.id == 'ss') ss();
   else if (b.id == 'ex') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(P, null, 2)], { type:'application/json' })); a.download = 'rox-products.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
-  else if (b.id == 'cd0') { DB.orders = DB.orders.filter(x => !x.demo); saveDB(); tab(3, 1); toast('تم حذف الطلبات التجريبية'); }
+  else if (b.id == 'cd0') { DB.orders = DB.orders.filter(x => !x.demo); lg('حذف الطلبات التجريبية'); tab(at, 1); toast('تم حذف الطلبات التجريبية'); }
   else if (b.id == 'rs') cf(b, () => { try { ['rox_products', 'rox_config', 'rox_admin', 'rox_ui'].forEach(k => localStorage.removeItem(k)); } catch (x) {} location.reload(); }); });
 
 /* ============ نافذة الطلب ============ */
@@ -412,7 +497,7 @@ function od1(id) { oe = id == 'new' ? null : oid(id); const o = oe || { items: [
 function osv() { rd(); const tl = +$('otl').value; if (!wi.length || !(tl > 0)) { $('oer').textContent = 'أضف منتجًا واحدًا على الأقل وإجمالي أكبر من صفر.'; return; }
   const o = oe || { id: String(Math.max(1040, ...DB.orders.map(x => +x.id || 0)) + 1), t: Date.now() };
   Object.assign(o, { cu: clean($('on').value), cfx: clean($('op').value), nt: clean($('ot').value), pay: $('oy').value, st: +$('ost').value, items: wi, total: +tl.toFixed(2) }); delete o.demo;
-  if (!oe) DB.orders.unshift(o); saveDB(); $('os').classList.remove('on'); tab(at, 1); toast(oe ? 'تم حفظ التعديلات' : 'تمت إضافة الطلب'); }
+  if (!oe) DB.orders.unshift(o); lg((oe ? 'تعديل طلب #' : 'طلب جديد #') + o.id); $('os').classList.remove('on'); tab(at, 1); toast(oe ? 'تم حفظ التعديلات' : 'تمت إضافة الطلب'); }
 $('ob').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const s = b.dataset;
   if (s.oa) { rd(); wi.push({ n: P[0] ? P[0].name : '', p: P[0] ? P[0].price : 0, q: 1 }); $('il').innerHTML = irs(); }
   else if (s.ix != null) { rd(); wi.splice(+s.ix, 1); $('il').innerHTML = irs(); }
