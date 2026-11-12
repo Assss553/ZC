@@ -76,6 +76,11 @@ function ParseZone(z)
     if not (out.minZ and out.maxZ) or out.maxZ <= out.minZ or out.maxZ - out.minZ > 80 then return nil end
     out.entry = ParsePoint(z.entry)
     if not out.entry then return nil end
+    if type(z.shell) == 'table' and OpenShellByModel[z.shell.model] then
+        local sh = ParsePoint(z.shell)
+        if not sh or #(vector3(sh.x, sh.y, sh.z) - vector3(out.entry.x, out.entry.y, out.entry.z)) > 60.0 then return nil end
+        out.shell = { model = z.shell.model, x = sh.x, y = sh.y, z = sh.z, h = sh.h % 360.0 }
+    end
     for key, withMain in pairs({ doors = true, removed = false }) do
         if type(z[key]) == 'table' then
             for i, d in ipairs(z[key]) do
@@ -159,7 +164,8 @@ local function propForClient(prop, src, identifier, realtor)
         salePrice = prop.sale_price, isOwner = access == 'owner', hasKey = access ~= nil,
         keys = access == 'owner' and prop.keyholders or nil,
         rentDue = private and prop.rent_due or nil, overdue = private and prop.overdue or nil,
-        rooms = Interiors[prop.interior] and Interiors[prop.interior].rooms or 1,
+        rooms = (prop.options and prop.options.zone and prop.options.zone.shell and OpenShellByModel[prop.options.zone.shell.model] and OpenShellByModel[prop.options.zone.shell.model].rooms)
+            or (Interiors[prop.interior] and Interiors[prop.interior].rooms) or 1,
         inside = realtor and prop.inside or nil,
         hasDecor = DecorCategory(prop.interior) or false,
         decor = DecorStyleFor(prop.interior, prop.options and prop.options.decor),

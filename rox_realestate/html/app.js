@@ -543,10 +543,11 @@ Views.create = () => {
         const z = c.zone;
         if (ci && ci.open) body = `<div class="locbox">
             <div class="aim" data-act="aimzone"><div class="aim-ic">${icon('crosshair')}</div><b>${z ? t('aim_repick') : t('zone_title')}</b><p>${t('zone_desc')}</p>
-                <div class="keys-help"><kbd>CLICK</kbd>${t('zk_corner')} <kbd>E</kbd>${t('zk_entry')} <kbd>G</kbd>${t('zk_main')} <kbd>H</kbd>${t('zk_inner')} <kbd>X</kbd>${t('zk_remove')} <kbd>ENTER</kbd>${t('k_confirm')}</div></div>
+                <div class="keys-help"><kbd>CLICK</kbd>${t('zk_corner')} <kbd>E</kbd>${t('zk_entry')} <kbd>G</kbd>${t('zk_main')} <kbd>H</kbd>${t('zk_inner')} <kbd>X</kbd>${t('zk_remove')} <kbd>T</kbd>${t('zk_interior')} <kbd>ENTER</kbd>${t('k_confirm')}</div></div>
             <div class="card locinfo"><div class="section-title">${t('zone_info')}</div>
                 ${z ? `<b style="font-size:16px">${esc(c.street || '')}</b>
                     <div class="coords">${t('zone_stats', z.points.length, (z.maxZ - z.minZ).toFixed(1), (z.doors || []).filter((d) => d.main).length, (z.doors || []).filter((d) => !d.main).length, (z.removed || []).length)}</div>
+                    <div class="coords">${t('zone_interior_lbl')}: ${z.shell ? esc(z.shell.model.replace('rox_open_', 'ROX ').toUpperCase()) : t('zone_interior_none')}</div>
                     <span class="chip green" style="align-self:flex-start">${icon('check')} OK</span>`
                 : `<div class="empty" style="padding:10px">${icon('door')}${t('zone_none')}</div>`}</div></div>`;
         else body = `<div class="locbox">

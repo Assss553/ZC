@@ -58,3 +58,20 @@ ensure rox_realestate
 - الصور في `images/` والأسماء ونقاط الدخول في `houses.json` (تنقرأ تلقائياً).
 - صور من داخل البيوت في `previews/`.
 - المصدر اللي يولّد البيوت في `tools/shellgen/` (تقدر تضيف بيوت جديدة منه).
+
+## ROX Open Houses (stream/rox_open)
+
+8 two-storey walk-in interiors (stairs, open front door, see-through windows) made to sit inside real map houses.
+In the iPad: Create Property > **Open House** > draw the zone > press **T** – the system measures the house and
+places the design that fits best (T again = next design, arrows / PGUP / PGDN / Q / R to fine-tune).
+
+| Model | Size (m) |
+|---|---|
+| rox_open_cottage | 8.0 x 8.0 |
+| rox_open_craftsman | 8.8 x 8.6 |
+| rox_open_townhouse | 7.6 x 10.6 |
+| rox_open_beach | 9.6 x 10.0 |
+| rox_open_family | 11.0 x 9.0 |
+| rox_open_ranch | 12.8 x 8.6 |
+| rox_open_villa | 14.6 x 10.6 |
+| rox_open_mansion | 16.8 x 12.0 |

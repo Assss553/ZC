@@ -23,6 +23,7 @@ shared_scripts {
     'shared/interiors.lua',
     'shared/furniture.lua',
     'shared/decor.lua',
+    'shared/openshells.lua',
 }
 
 server_scripts {

@@ -5,6 +5,7 @@
 const I18N = {
     ar: {
         open_hint: 'بيت حقيقي في الخريطة · بدون انتقال', zone_title: 'ارسم حدود البيت', zone_desc: 'بيقفل الايباد. اضغط على زوايا البيت، قف عند المدخل واضغط E، وصوّب على الباب واضغط G',
+        zk_interior: 'تصميم داخلي تلقائي', zone_interior_lbl: 'التصميم الداخلي', zone_interior_none: 'بدون (اضغط T داخل الأداة)',
         zk_corner: 'زاوية', zk_entry: 'المدخل', zk_main: 'باب رئيسي', zk_inner: 'باب داخلي', zk_remove: 'حذف باب', zone_info: 'منطقة العقار', zone_none: 'ما تم رسم المنطقة',
         zone_stats: '{0} زوايا · ارتفاع {1}م · {2} باب رئيسي · {3} باب داخلي · {4} محذوف', err_zone: 'ارسم منطقة البيت أولاً', a_zone: 'تعديل المنطقة والأبواب',
         decor_title_hideout: 'تصميم الوكر (لون العصابة)', gang_only_chip: 'للعصابات فقط',
@@ -67,6 +68,7 @@ const I18N = {
     },
     en: {
         open_hint: 'Real map house · walk in, no teleport', zone_title: 'Draw the property zone', zone_desc: 'The iPad will close. Click the corners of the house, stand at the entrance and press E, aim at the door and press G',
+        zk_interior: 'auto interior', zone_interior_lbl: 'Interior', zone_interior_none: 'none (press T in the tool)',
         zk_corner: 'corner', zk_entry: 'entry', zk_main: 'main door', zk_inner: 'inner door', zk_remove: 'remove door', zone_info: 'Property zone', zone_none: 'No zone drawn yet',
         zone_stats: '{0} corners · height {1}m · {2} main · {3} inner doors · {4} removed', err_zone: 'Draw the property zone first', a_zone: 'Edit zone & doors',
         decor_title_hideout: 'Hideout design (gang colour)', gang_only_chip: 'GANG ONLY',

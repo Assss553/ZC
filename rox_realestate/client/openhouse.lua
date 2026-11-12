@@ -12,6 +12,7 @@ local C = Config.OpenHouse
 local active            -- { id, prop, zone, access, canLock, inside }
 local doorState = {}    -- [doorHash] = locked (what we last applied)
 local hidden = {}       -- model hides we created { x, y, z, model }
+local shellObj          -- interior model standing inside the house
 
 ---------------------------------------------------------------------
 -- Helpers
@@ -40,6 +41,74 @@ end
 local function unhideAll()
     for _, r in ipairs(hidden) do RemoveModelHide(r.x + 0.0, r.y + 0.0, r.z + 0.0, 0.8, r.model, false) end
     hidden = {}
+end
+
+local function deleteInterior()
+    if shellObj and DoesEntityExist(shellObj) then DeleteEntity(shellObj) end
+    shellObj = nil
+end
+
+-- put one of the ROX two-storey interiors inside the house (local object, everybody nearby spawns it)
+function OpenHouse.SpawnInterior(sh)
+    if type(sh) ~= 'table' or not OpenShellByModel[sh.model] then return nil end
+    local hash = LoadModel(sh.model)
+    if not hash then return nil end
+    local obj = CreateObjectNoOffset(hash, sh.x + 0.0, sh.y + 0.0, sh.z + 0.0, false, false, false)
+    SetEntityHeading(obj, (sh.h or 0.0) + 0.0)
+    SetEntityCoordsNoOffset(obj, sh.x + 0.0, sh.y + 0.0, sh.z + 0.0, false, false, false)
+    FreezeEntityPosition(obj, true)
+    SetEntityLodDist(obj, 300)
+    SetModelAsNoLongerNeeded(hash)
+    return obj
+end
+
+-- best interior for the drawn zone: compares the footprint of the house with every design.
+-- rank 1 = best fit, 2 = second best ... (T cycles through them)
+function OpenHouse.Fit(corners, target, rank)
+    if #corners < 3 then return nil end
+    local best, th = 0.0, 0.0
+    for i = 1, #corners do
+        local a, b = corners[i], corners[i % #corners + 1]
+        local l = math.sqrt((b.x - a.x) ^ 2 + (b.y - a.y) ^ 2)
+        if l > best then best, th = l, math.atan(b.y - a.y, b.x - a.x) end
+    end
+    local ux, uy = math.cos(th), math.sin(th)
+    local minU, maxU, minV, maxV, minZ = 1e9, -1e9, 1e9, -1e9, 1e9
+    for _, c in ipairs(corners) do
+        local u, v = c.x * ux + c.y * uy, -c.x * uy + c.y * ux
+        minU, maxU, minV, maxV = math.min(minU, u), math.max(maxU, u), math.min(minV, v), math.max(maxV, v)
+        if c.z and c.z < minZ then minZ = c.z end
+    end
+    local L, Wd = maxU - minU, maxV - minV
+    local cu, cv = (minU + maxU) / 2, (minV + maxV) / 2
+    local cx, cy = cu * ux - cv * uy, cu * uy + cv * ux
+    local list = {}
+    for _, s in ipairs(OpenShells) do
+        if IsModelInCdimage(joaat(s.model)) then
+            for o = 0, 1 do
+                local sw, sd = o == 0 and s.w or s.d, o == 0 and s.d or s.w
+                local over = math.max(0, sw - L) + math.max(0, sd - Wd)
+                local under = math.max(0, L - sw) + math.max(0, Wd - sd)
+                list[#list + 1] = { s = s, o = o, score = over * 4 + under }
+            end
+        end
+    end
+    if #list == 0 then return nil end
+    table.sort(list, function(a, b) return a.score < b.score end)
+    -- one entry per design (its better orientation)
+    local seen, uniq = {}, {}
+    for _, e in ipairs(list) do if not seen[e.s.model] then seen[e.s.model] = true; uniq[#uniq + 1] = e end end
+    local pick = uniq[(rank - 1) % #uniq + 1]
+    local base = math.deg(th) + pick.o * 90.0
+    local h, bd = base, nil
+    for _, add in ipairs({ 0.0, 180.0 }) do
+        local r = math.rad(base + add)
+        local lx, ly = pick.s.doorX, -pick.s.d / 2
+        local dx, dy = cx + lx * math.cos(r) - ly * math.sin(r), cy + lx * math.sin(r) + ly * math.cos(r)
+        local d = target and ((dx - target.x) ^ 2 + (dy - target.y) ^ 2) or 0
+        if not bd or d < bd then bd, h = d, base + add end
+    end
+    return { model = pick.s.model, x = cx, y = cy, z = minZ, h = h % 360.0 }, pick.s, #uniq
 end
 
 local function applyDoors(force)
@@ -78,6 +147,7 @@ function OpenHouse.Leave()
     local id = active.id
     releaseDoors()
     unhideAll()
+    deleteInterior()
     active = nil
     if CurrentHouse and CurrentHouse.open then
         CloseFurnitureMode()
@@ -98,6 +168,8 @@ local function activate(prop)
         spawn = vec4(e.x + 0.0, e.y + 0.0, e.z + 0.0, (e.h or 0.0) + 0.0), door = prop.door,
     }
     for _, r in ipairs(prop.zone.removed or {}) do hide(r) end
+    deleteInterior()
+    shellObj = OpenHouse.SpawnInterior(prop.zone.shell)
     applyDoors(true)
     SpawnAllFurniture(data.furniture or {})
 end
@@ -125,7 +197,7 @@ CreateThread(function()
         Wait(500)
         local shell = CurrentHouse and not CurrentHouse.open
         if shell then
-            if active then releaseDoors(); unhideAll(); active = nil; ServerCall('openLeave') end
+            if active then releaseDoors(); unhideAll(); deleteInterior(); active = nil; ServerCall('openLeave') end
         else
             local pc = GetEntityCoords(PlayerPedId())
             local best, bd
@@ -245,6 +317,23 @@ function PickZone(existing)
     local corners, doors, removed = {}, {}, {}
     local height, entry = C.DefaultHeight, nil
     local previewHides = {}
+    local interior, interiorObj, interiorInfo, rank, designs = nil, nil, nil, 0, 0
+    local function showInterior()
+        if interiorObj and DoesEntityExist(interiorObj) then DeleteEntity(interiorObj) end
+        interiorObj = interior and OpenHouse.SpawnInterior(interior) or nil
+    end
+    local function moveInterior()
+        if interiorObj and DoesEntityExist(interiorObj) then
+            SetEntityCoordsNoOffset(interiorObj, interior.x, interior.y, interior.z, false, false, false)
+            SetEntityHeading(interiorObj, interior.h)
+        end
+    end
+    if type(existing) == 'table' and type(existing.shell) == 'table' and OpenShellByModel[existing.shell.model] then
+        local e = existing.shell
+        interior = { model = e.model, x = e.x + 0.0, y = e.y + 0.0, z = e.z + 0.0, h = (e.h or 0.0) + 0.0 }
+        interiorInfo = OpenShellByModel[e.model]
+        showInterior()
+    end
     if type(existing) == 'table' then
         local baseZ = (existing.minZ or 0.0) + 1.0
         for _, p in ipairs(existing.points or {}) do corners[#corners + 1] = { x = p.x + 0.0, y = p.y + 0.0, z = baseZ } end
@@ -279,7 +368,7 @@ function PickZone(existing)
     Wait(200)
     while true do
         Wait(0)
-        for _, k in ipairs({ 24, 25, 37, 14, 15, 16, 17, 140, 141, 142, 257, 263, 264, 200, 199, 44, 47, 74, 73 }) do DisableControlAction(0, k, true) end
+        for _, k in ipairs({ 24, 25, 37, 14, 15, 16, 17, 140, 141, 142, 257, 263, 264, 200, 199, 44, 45, 47, 74, 73, 245, 249, 172, 173, 174, 175, 10, 11, 27 }) do DisableControlAction(0, k, true) end
         local hit, coords, _, entity = CameraRaycast(40.0, ped)
         local snap = not IsControlPressed(0, 21)
         local pt
@@ -296,6 +385,8 @@ function PickZone(existing)
         if baseZ > 1e8 then baseZ = (pt and pt.z) or GetEntityCoords(ped).z end
         baseZ = baseZ - 1.0
         local topZ = baseZ + height
+        if interior and topZ < interior.z + 6.2 then topZ = interior.z + 6.2 end
+        if interior and baseZ > interior.z - 0.5 then baseZ = interior.z - 0.5 end
 
         -- draw
         drawZone(corners, baseZ, topZ, 255, 90, 31)
@@ -322,6 +413,49 @@ function PickZone(existing)
         hudLine(0.04, ('~o~PROPERTY ZONE~w~  %d corners · height %.1fm · %d main / %d inner doors%s'):format(#corners, height, m, n, entry and ' · entry set' or ''))
         hudLine(0.068, '~g~CLICK~w~ corner · ~g~SHIFT~w~ no snap · ~g~SCROLL~w~ height · ~b~E~w~ entry · ~b~G~w~ main door · ~b~H~w~ inner door')
         hudLine(0.096, '~r~X~w~ remove door · ~r~DEL~w~ restore door · ~y~BACKSPACE~w~ undo corner · ~g~ENTER~w~ save · ~r~ESC~w~ cancel')
+        hudLine(0.124, ('~o~INTERIOR~w~  %s  ·  ~g~T~w~ auto / next design · ~g~ARROWS~w~ move · ~g~PGUP/PGDN~w~ height · ~g~Q/R~w~ rotate · ~r~N~w~ no interior'):format(
+            interiorInfo and ('~g~' .. interiorInfo.label .. ('~w~ (%d/%d)'):format(rank > 0 and ((rank - 1) % math.max(designs, 1) + 1) or 1, math.max(designs, 1))) or '~c~none'))
+
+        -- interior: T = pick the design that fits the drawn zone best (press again for the next best)
+        if IsDisabledControlJustPressed(0, 245) then
+            if #corners < 3 then
+                Notify(L('zone_need_corners'), 'error')
+            else
+                local target
+                for _, d in ipairs(doors) do if d.main then target = d break end end
+                rank = rank + 1
+                local sh, info, count = OpenHouse.Fit(corners, target or entry, rank)
+                if sh then
+                    interior, interiorInfo, designs = sh, info, count
+                    showInterior()
+                    PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+                    Notify(L('zone_interior', CurrentLang() == 'ar' and info.labelAr or info.label), 'success')
+                else
+                    Notify(L('zone_no_interiors'), 'error')
+                end
+            end
+        end
+        if interior then
+            local fine = IsControlPressed(0, 21)
+            local step = (fine and 0.02 or 0.1)
+            local r = math.rad(GetGameplayCamRot(2).z)
+            local fx, fy = -math.sin(r), math.cos(r)
+            local changed = false
+            if IsDisabledControlJustPressed(0, 172) or (fine and IsDisabledControlPressed(0, 172)) then interior.x, interior.y = interior.x + fx * step, interior.y + fy * step; changed = true end
+            if IsDisabledControlJustPressed(0, 173) or (fine and IsDisabledControlPressed(0, 173)) then interior.x, interior.y = interior.x - fx * step, interior.y - fy * step; changed = true end
+            if IsDisabledControlJustPressed(0, 175) or (fine and IsDisabledControlPressed(0, 175)) then interior.x, interior.y = interior.x + fy * step, interior.y - fx * step; changed = true end
+            if IsDisabledControlJustPressed(0, 174) or (fine and IsDisabledControlPressed(0, 174)) then interior.x, interior.y = interior.x - fy * step, interior.y + fx * step; changed = true end
+            if IsDisabledControlJustPressed(0, 10) then interior.z = interior.z + (fine and 0.01 or 0.05); changed = true end
+            if IsDisabledControlJustPressed(0, 11) then interior.z = interior.z - (fine and 0.01 or 0.05); changed = true end
+            if IsDisabledControlJustPressed(0, 44) then interior.h = (interior.h + (fine and 1.0 or 5.0)) % 360.0; changed = true end
+            if IsDisabledControlJustPressed(0, 45) then interior.h = (interior.h - (fine and 1.0 or 5.0)) % 360.0; changed = true end
+            if changed then moveInterior() end
+            if IsDisabledControlJustPressed(0, 249) then
+                interior, interiorInfo = nil, nil
+                showInterior()
+                Notify(L('zone_interior_off'), 'info')
+            end
+        end
 
         -- input
         if pt and IsDisabledControlJustPressed(0, 24) then
@@ -374,7 +508,7 @@ function PickZone(existing)
             else
                 local pts = {}
                 for _, c in ipairs(corners) do pts[#pts + 1] = { x = c.x, y = c.y } end
-                result = { points = pts, minZ = baseZ, maxZ = topZ, entry = entry, doors = doors, removed = removed }
+                result = { points = pts, minZ = baseZ, maxZ = topZ, entry = entry, doors = doors, removed = removed, shell = interior }
                 break
             end
         end
@@ -384,6 +518,7 @@ function PickZone(existing)
         end
     end
     for _, r in ipairs(previewHides) do RemoveModelHide(r.x, r.y, r.z, 0.8, r.model, false) end
+    if interiorObj and DoesEntityExist(interiorObj) then DeleteEntity(interiorObj) end
     ZoneToolOpen = false
     if result then
         local e = result.entry
@@ -395,4 +530,5 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     releaseDoors()
     unhideAll()
+    deleteInterior()
 end)

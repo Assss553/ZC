@@ -36,6 +36,16 @@ MATS = {
     'door_grey':     dict(tex='rox_door_grey', sh='ns', tile=1.0, spec=0.5, fall=60, col=56),
     'door_maroon':   dict(tex='rox_door_maroon', sh='ns', tile=1.0, spec=0.5, fall=60, col=70),
     'door_wood':     dict(tex='rox_door_wood', sh='ns', tile=1.0, spec=0.4, fall=60, col=70),
+    'door_blue':     dict(tex='rox_door_blue', sh='ns', tile=1.0, spec=0.5, fall=60, col=70),
+    'door_green':    dict(tex='rox_door_green', sh='ns', tile=1.0, spec=0.5, fall=60, col=70),
+    'door_black':    dict(tex='rox_door_black', sh='ns', tile=1.0, spec=0.6, fall=80, col=70),
+    'door_white':    dict(tex='rox_door_white', sh='ns', tile=1.0, spec=0.5, fall=60, col=70),
+    'door_red':      dict(tex='rox_door_red', sh='ns', tile=1.0, spec=0.5, fall=60, col=70),
+    'door_yellow':   dict(tex='rox_door_yellow', sh='ns', tile=1.0, spec=0.5, fall=60, col=70),
+    'paint_sage':    dict(tex='rox_paint_sage', sh='n', tile=2.0, spec=0.06, col=101),
+    'paint_sand':    dict(tex='rox_paint_sand', sh='n', tile=2.0, spec=0.06, col=101),
+    'paint_blush':   dict(tex='rox_paint_blush', sh='n', tile=2.0, spec=0.06, col=101),
+    'paint_sky':     dict(tex='rox_paint_sky', sh='n', tile=2.0, spec=0.06, col=101),
     'window_day':    dict(tex='rox_window_day', sh='e', tile=1.0, emis=2.2, col=114),
     'window_dark':   dict(tex='rox_window_dark', sh='s', tile=2.0, spec=1.0, fall=200, col=114),
     'light':         dict(tex='rox_light_panel', sh='e', tile=1.0, emis=6.0, col=114),
@@ -109,6 +119,7 @@ class Shell:
         s.script_lights = []
         s.txd = 'rox_shells_txd'
         s.lod = 300
+        s.hull = True       # outer box that casts sun shadows (teleport shells only)
         s.ctris = []        # extra collision triangles (p0, p1, p2, colmat) for slopes
 
     # ------------------------------------------------------------ low level
@@ -407,10 +418,12 @@ class Shell:
         s.bb = (min(xs) - t, min(ys) - t, -0.25, max(xs) + t, max(ys) + t, Hm + 0.25)
         for name, r in s.rooms.items():
             x0, y0, x1, y1, H = r['x0'], r['y0'], r['x1'], r['y1'], r['H']
-            s.surf(r['floor'], (x0, y0, 0), X, Y, x1 - x0, y1 - y0, rot=r['rot'], step=0.6)
-            s.surf(r['ceil'], (x0, y1, H), X, -Y, x1 - x0, y1 - y0, step=0.6, tag='ceil')
-            s.cbox(x0 - t, y0 - t, H, x1 + t, y1 + t, H + 0.2, 101)
-            s.cbox(x0 - t, y0 - t, -0.2, x1 + t, y1 + t, 0, FLOOR_COL.get(r['floor'], 1))
+            if r['floor']:
+                s.surf(r['floor'], (x0, y0, 0), X, Y, x1 - x0, y1 - y0, rot=r['rot'], step=0.6)
+                s.cbox(x0 - t, y0 - t, -0.2, x1 + t, y1 + t, 0, FLOOR_COL.get(r['floor'], 1))
+            if r['ceil']:
+                s.surf(r['ceil'], (x0, y1, H), X, -Y, x1 - x0, y1 - y0, step=0.6, tag='ceil')
+                s.cbox(x0 - t, y0 - t, H, x1 + t, y1 + t, H + 0.2, 101)
             for sd in 'NSEW':
                 O, U, Nn, L = s.frame(name, sd)
                 holes = [(h[0], h[1], h[2], h[3]) for h in s.holes[(name, sd)]]
@@ -443,7 +456,8 @@ class Shell:
                         s.cbox(p[0], p[1], vs[j], q[0], q[1], vs[j + 1], MATS[r['wall']]['col'])
         # outer hull (casts sun shadows, never seen from inside)
         x0, y0, z0, x1, y1, z1 = s.bb
-        s.box('concrete_wall', x0, y0, 0, x1, y1, z1 - 0.05, faces='xXyYZ', tag='hull')
+        if s.hull:
+            s.box('concrete_wall', x0, y0, 0, x1, y1, z1 - 0.05, faces='xXyYZ', tag='hull')
 
     # ------------------------------------------------------------ fixtures
     def led_panel(s, x, y, z, size=0.6, intensity=4.0, falloff=None, light=True):
@@ -561,6 +575,22 @@ class Shell:
             s.wbox('steel', room, side, x + 0.03, x + 0.045, 0.95, 1.2, depth, depth + 0.03)
         p, q = O + U * a0, O + U * a1 + Nn * depth
         s.cbox(p[0], p[1], 0, q[0], q[1], h, 70)
+
+    def merge(s, o, dz=0.0):
+        """Add another shell (e.g. the upper storey) lifted by dz."""
+        d = np.array([0.0, 0.0, dz])
+        for k, b in o.b.items():
+            if not b['n']: continue
+            m, tag = k.split('|')
+            s._add(m, tag, np.concatenate(b['P']) + d, np.concatenate(b['N']), np.concatenate(b['UV']), np.concatenate(b['T']), np.concatenate(b['I']))
+        s.cboxes += [(c[0], c[1], c[2] + dz, c[3], c[4], c[5] + dz, c[6]) for c in o.cboxes]
+        s.occ += [(c[0], c[1], c[2] + dz, c[3], c[4], c[5] + dz) for c in o.occ]
+        s.ctris += [(np.asarray(a) + d, np.asarray(b_) + d, np.asarray(c) + d, m) for (a, b_, c, m) in o.ctris]
+        for l in o.lights:
+            l = dict(l); l['p'] = (l['p'][0], l['p'][1], l['p'][2] + dz); s.lights.append(l)
+        for n, r in o.rooms.items(): s.rooms['u_' + n] = r
+        a, b_ = s.bb, o.bb
+        s.bb = (min(a[0], b_[0]), min(a[1], b_[1]), a[2], max(a[3], b_[3]), max(a[4], b_[4]), max(a[5], b_[5] + dz))
 
     # ------------------------------------------------------------ finalize
     def finalize(s):

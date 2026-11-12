@@ -6,8 +6,8 @@ from kit import MATS
 
 # usage: build.py <workdir> [street] [only...]
 SET = 'shells'
-if len(sys.argv) > 2 and sys.argv[2] == 'street':
-    SET = 'street'; del sys.argv[2]
+if len(sys.argv) > 2 and sys.argv[2] in ('street', 'open'):
+    SET = sys.argv[2]; del sys.argv[2]
 
 W = sys.argv[1]
 TEX = os.path.join(W, 'tex')
@@ -15,15 +15,15 @@ XML = os.path.join(W, 'xml'); OUT = os.path.join(W, 'out'); PRE = os.path.join(W
 for d in (XML, OUT, PRE):
     os.makedirs(d, exist_ok=True)
 CW = ['dotnet', os.path.join(W, 'cwconv/bin/Release/net8.0/cwconv.dll')]
-TXD = 'rox_shells_txd' if SET == 'shells' else 'rox_street_txd'
-TYP = 'rox_shells' if SET == 'shells' else 'rox_street'
+TXD = {'shells': 'rox_shells_txd', 'street': 'rox_street_txd', 'open': 'rox_open_txd'}[SET]
+TYP = {'shells': 'rox_shells', 'street': 'rox_street', 'open': 'rox_open'}[SET]
 only = sys.argv[2:] or None
 
 index = json.load(open(os.path.join(TEX, 'textures.json')))
 shells, used = [], set()
-if SET == 'street':
-    import street
-    makers = [(lambda p=p: p) for p in street.all_pieces()]
+if SET in ('street', 'open'):
+    mod = __import__('street' if SET == 'street' else 'openhouses')
+    makers = [(lambda p=p: p) for p in mod.all_pieces()]
     for m in makers: m.__name__ = m().name
 else:
     makers = houses.ALL
@@ -75,5 +75,5 @@ for s in shells:
 if not only:
     conv(TXD + '.ytd.xml', TXD + '.ytd')
     conv(TYP + '.ytyp.xml', TYP + '.ytyp')
-    json.dump([dict(name=s.name, label=s.label, labelAr=s.label_ar, entry=s.entry, rooms=len(s.rooms), stats=s.stats) for s in shells],
+    json.dump([dict(name=s.name, label=s.label, labelAr=s.label_ar, entry=s.entry, rooms=len(s.rooms), stats=s.stats, meta=getattr(s, 'meta', None)) for s in shells],
               open(os.path.join(W, SET + '.json'), 'w'), indent=1, ensure_ascii=False)

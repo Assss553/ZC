@@ -60,6 +60,8 @@ const BG = Q.get('bg') || 'ffffff';
     const c = new THREE.Vector3(cx, 0, -cy).addScaledVector(right, (mnx + mxx) / 2).addScaledVector(up, (mny + mxy) / 2);
     cam.position.copy(c).addScaledVector(dir, d); cam.lookAt(c);
   }
+  if (Q.get('clip')) renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, -1, 0), +Q.get('clip'))];
+  if (Q.get('ez')) { cam.position.y = +Q.get('ez'); const yw = (+(Q.get('yaw') || 0)) * Math.PI / 180; cam.lookAt(cam.position.x - Math.sin(yw) * 5, cam.position.y + (+(Q.get('pitch') || -0.4)), cam.position.z - Math.cos(yw) * 5); }
   renderer.render(scene, cam); window.__done = true;
 })();
 </script></body></html>
