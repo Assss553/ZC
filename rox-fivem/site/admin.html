@@ -103,6 +103,7 @@ h1{font-size:clamp(30px,6vw,44px);font-weight:900;line-height:1.15;margin-bottom
 .ac{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--ln);margin-top:auto}
 .ac button{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;font-weight:700;font-size:13px}.ac button:hover{background:var(--fg);color:var(--bg)}.ac button:disabled{opacity:.35;pointer-events:none}
 .pt.nw{border:2px dashed var(--ln);background:none;min-height:230px;display:grid;place-items:center;align-content:center;gap:8px;color:var(--mu);font-weight:700}.pt.nw:hover{color:var(--rt);border-color:var(--red)}
+.pt.nw small{font-weight:400;font-size:12px;padding:0 10px;text-align:center}.pt.gen{border-color:var(--red);color:var(--rt)}
 .pt.nw .i{width:30px;height:30px}
 
 /* النماذج */
@@ -165,6 +166,14 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
 .ck small{display:block;color:var(--mu)}
 .vt{font-style:normal;font-size:11px;font-weight:900;padding:1px 7px;vertical-align:middle;border:1px solid currentColor}
 .vt.ok{color:var(--ok)}.vt.review{color:#d99a1c}.vt.sus{color:var(--rt)}
+/* مولّد المنتجات وتعديل الصفحة */
+.gp{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:center;padding:10px;border:1px solid var(--ln);background:var(--bg);margin-bottom:8px;border-radius:var(--rad)}
+.gp .th{aspect-ratio:1}.gp b{display:block}.gp small{display:block;color:var(--mu);font-size:13px}.gp .lat{font-size:22px;color:var(--rt);direction:ltr}
+.gp .bt{margin:6px 0 0;padding:7px 14px;font-size:13px}
+.sx{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--ln)}
+.fq{padding:12px;border:1px solid var(--ln);background:var(--sf);margin-bottom:8px;border-radius:var(--rad)}.fq label{margin-bottom:8px}
+.sticky{position:sticky;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:3;background:var(--bg);padding:10px 0;border-top:1px solid var(--ln);margin-top:16px}
+@media(min-width:860px){.sticky{bottom:0}}
 #eye,#dim{position:fixed;inset:0;z-index:60;pointer-events:none}#eye{background:#ff9d2e;mix-blend-mode:multiply;opacity:var(--eye)}#dim{background:#000;opacity:var(--dim)}
 
 :root[data-ds=soft]{--rad:18px}:root[data-ds=calm]{--rad:8px}
@@ -220,6 +229,11 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
   <label>لون البطاقة<span class="hu"><input id="fhu" type="range" min="0" max="359"><i id="fsw"></i></span></label>
   <small class="er" id="fe" role="alert"></small>
   <button class="bt p" id="fs" type="button">حفظ المنتج</button><button class="bt" id="fc" type="button">إلغاء</button></div></div>
+<div class="ov" id="gs"><div class="fb"><h2>مولّد المنتجات</h2>
+  <p class="hint">اكتب فكرة المنتج بكلماتك، مثل: «ماب مركز شرطة أزرق» أو «سكربت بنك». المولّد يقترح الاسم والوصف والسعر واللون، وتعدّل عليه قبل الحفظ. يشتغل داخل متصفحك بدون أي خدمة خارجية.</p>
+  <label>فكرة المنتج<input id="gi" maxlength="80" placeholder="ماب مستشفى كبير"></label>
+  <button class="bt p" id="gg" type="button" style="margin:0 0 14px">ولّد اقتراحات</button><button class="bt" id="gx" type="button" style="margin:0 8px 14px">إغلاق</button>
+  <div id="gr"></div></div></div>
 <div class="ov" id="os"><div class="fb" id="ob"></div></div>
 <div id="mp" hidden><div class="lw"><div class="lat lg">RO<b>X</b></div><h2>تحت الصيانة</h2><p id="mm"></p><p id="md"></p><button class="bt p" id="mx" type="button" style="margin:0;justify-content:center">إغلاق المعاينة</button></div></div>
 <div id="eye"></div><div id="dim"></div><div id="ts" role="status"></div>
@@ -252,6 +266,8 @@ const I = {
   chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   warn:'<path d="M12 4 2.5 20h19zM12 10v5M12 17.5h.01"/>',
   tag:'<path d="M3 12V4h8l10 10-8 8zM7.5 8.5h.01"/>',
+  page:'<path d="M4 5h16v14H4zM4 9h16M8 13h8M8 16h5"/>',
+  spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
   users:'<path d="M16 19v-1a4 4 0 0 0-8 0v1M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM21 19v-1a3 3 0 0 0-3-3M3 19v-1a3 3 0 0 1 3-3"/>',
   mega:'<path d="M4 10v4h3l8 5V5l-8 5zM18 9a4 4 0 0 1 0 6M8 14v5h3v-3"/>',
   bank:'<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
@@ -272,10 +288,10 @@ function glyph(cat, h) {
 /* ============ البيانات ============ */
 const CATS = [['script', 'سكربتات', 4], ['mlo', 'مابات MLO', 215], ['car', 'سيارات', 38], ['eup', 'ملابس EUP', 160], ['bundle', 'باقات', 275]];
 const catName = id => (CATS.find(c => c[0] === id) || CATS[0])[1];
-const ST = ['جديد', 'تم التسليم', 'مسترجع'], PAY = [['bank', 'تحويل بنكي'], ['tebex', 'Tebex'], ['paypal', 'PayPal'], ['card', 'بطاقة']];
-const TB = [['نظرة عامة', 'OVERVIEW', 'home'], ['الطلبات', 'ORDERS', 'orders'], ['المنتجات', 'PRODUCTS', 'box'], ['العملاء', 'CUSTOMERS', 'users'], ['التسويق', 'MARKETING', 'mega'], ['الإعدادات', 'SETTINGS', 'set'], ['المظهر', 'THEME', 'theme']];
+const ST = ['جديد', 'تم التسليم', 'مسترجع'], PAY = [['bank', 'تحويل بنكي'], ['other', 'طريقة ثانية']];
+const TB = [['نظرة عامة', 'OVERVIEW', 'home'], ['الطلبات', 'ORDERS', 'orders'], ['المنتجات', 'PRODUCTS', 'box'], ['العملاء', 'CUSTOMERS', 'users'], ['التسويق', 'MARKETING', 'mega'], ['الصفحة', 'PAGE', 'page'], ['الإعدادات', 'SETTINGS', 'set'], ['المظهر', 'THEME', 'theme']];
 const DY = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
-const CFG0 = { currency:'$', discord:'', checkout:'', liveServer:'', bundleEnds:'2026-12-31T23:59:59+03:00', maint:0, mmsg:'', mdate:'', design:'rox', announce:'', coupons:[], sarRate:3.75,
+const CFG0 = { currency:'$', discord:'', liveServer:'', bundleEnds:'2026-12-31T23:59:59+03:00', maint:0, mmsg:'', mdate:'', design:'rox', announce:'', coupons:[], sarRate:3.75, hide:[], texts:{},
   bank:{ bankName:'', holder:'عبدالله فهد الشمري', iban:'SA7680000469608016053450', account:'469000010006086053450' } };
 /* تصاميم المتجر: المعرّف، الاسم، الوصف، الخلفية، لون التمييز، لون ثانوي */
 const DZ = [['rox','ROX الأصلي','أحمر وأسود بأشعة ضوء','#000000','#ff4d3d','#ffffff'],['neon','نيون سايبر','شبكة نيون وأزرار مقصوصة','#02040a','#5ff3ff','#ff00c8'],['gold','ذهبي فاخر','خط كلاسيكي وحلقات ذهبية','#050403','#f0d78c','#ffffff'],
@@ -367,13 +383,13 @@ function ord() { const c = [DB.orders.length, 0, 0, 0, DB.orders.filter(o => o.s
 
 /* ============ المنتجات ============ */
 function prd() { return P.map((p, i) => `<div class="pt"><div class="th" style="--h:${+p.h || 0}">${glyph(p.cat, +p.h || 0)}${p.tag ? `<u>${esc(p.tag)}</u>` : ''}</div><b>${esc(p.name)}</b><small>${catName(p.cat)}</small>
-    <span class="lat pp">${p.old ? `<s>${money(p.old)}</s>` : ''}${money(p.price)}</span><div class="ac"><button data-e="${i}">${ic('edit', 's')}تعديل</button><button data-x="${i}"${p.id === 'bundle-starter' ? ' disabled title="قسم الباقات في المتجر يعتمد عليها"' : ''}>${ic('trash', 's')}حذف</button></div></div>`).join('')
-    + `<button class="pt nw" id="np" type="button">${ic('plus')}منتج جديد</button>`; }
+    <span class="lat pp">${p.old ? `<s>${money(p.old)}</s>` : ''}${money(p.price)}</span><div class="ac"><button data-e="${i}">${ic('edit', 's')}تعديل</button><button data-x="${i}">${ic('trash', 's')}حذف</button></div></div>`).join('')
+    + `<button class="pt nw" id="np" type="button">${ic('plus')}منتج جديد</button><button class="pt nw gen" id="gn" type="button">${ic('spark')}مولّد المنتجات<small>اكتب فكرة ويقترح لك منتج كامل</small></button>`; }
 $('ft').innerHTML = CATS.map(c => `<option value="${c[0]}">${c[1]}</option>`).join('');
 const hueSync = () => $('fsw').style.setProperty('--h', $('fhu').value);
 $('fhu').oninput = hueSync; $('ft').onchange = () => { if (!ed) { $('fhu').value = CATS.find(c => c[0] == $('ft').value)[2]; hueSync(); } };
-function fo(i) { ed = i >= 0 ? P[i] : null; const q = ed || { name:'', cat:'script', art:'', price:'', desc:'', fw:['ESX','QB','QBOX'], h:4 };
-  $('fh').textContent = ed ? 'تعديل المنتج' : 'منتج جديد'; $('fn').value = q.name; $('ft').value = q.cat; $('ft').disabled = q.id === 'bundle-starter'; $('fa').value = q.art; $('fp').value = q.price; $('fo').value = q.old || '';
+function fo(i, pre) { ed = i >= 0 ? P[i] : null; const q = ed || pre || { name:'', cat:'script', art:'', price:'', desc:'', fw:['ESX','QB','QBOX'], h:4 };
+  $('fh').textContent = ed ? 'تعديل المنتج' : 'منتج جديد'; $('fn').value = q.name; $('ft').value = q.cat; $('fa').value = q.art; $('fp').value = q.price; $('fo').value = q.old || '';
   $('fd').value = q.desc; $('fw').value = (q.fw || []).join(', '); $('fg').value = q.tag || ''; $('fhu').value = q.h; hueSync(); $('fe').textContent = ''; $('sh').classList.add('on'); $('fn').focus(); }
 $('fs').onclick = () => { const nm = clean($('fn').value), pr = +$('fp').value, od = +$('fo').value, art = clean($('fa').value).toUpperCase(), tag = clean($('fg').value);
   if (!nm || !art || !(pr > 0)) { $('fe').textContent = 'أدخل الاسم والكلمة على الصورة وسعرًا أكبر من صفر.'; return; }
@@ -383,6 +399,86 @@ $('fs').onclick = () => { const nm = clean($('fn').value), pr = +$('fp').value, 
   saveP(); lg((ed ? 'تعديل منتج: ' : 'منتج جديد: ') + nm); $('sh').classList.remove('on'); tab(2, 1); toast('تم حفظ المنتج'); };
 $('fc').onclick = () => $('sh').classList.remove('on');
 
+/* ============ مولّد المنتجات (قواعد محلية، بدون خدمة خارجية) ============ */
+const KW = [[/شرط|دوري|police/i,'Police','الشرطة','mlo',215],[/مستشف|اسعاف|إسعاف|طبي|ems|hospital|medic/i,'Medical','المستشفى','mlo',170],[/اطفا|إطفا|حريق|fire/i,'Fire Station','الإطفاء','mlo',14],
+  [/ورش|ميكانيك|mechanic|tuner/i,'Mechanic','الورشة','mlo',35],[/بنك|مصرف|bank/i,'Banking','البنك','script',150],[/مطعم|برجر|burger|restaurant|كافي|قهو|cafe/i,'Restaurant','المطعم','mlo',28],
+  [/كراج|قراج|garage|مواقف/i,'Garage','الكراج','script',200],[/سجن|prison|jail/i,'Prison','السجن','mlo',240],[/معرض|وكال|dealership/i,'Dealership','معرض السيارات','mlo',195],
+  [/بيت|منزل|فيلا|شقق|house|villa/i,'Housing','المنازل','mlo',265],[/جوال|هاتف|phone/i,'Phone','الجوال','script',205],[/حقيب|انفنتوري|inventory|شنط/i,'Inventory','الحقيبة','script',25],
+  [/وظيف|وظائف|job/i,'Jobs','الوظائف','script',45],[/تاكسي|taxi|اجرة|أجرة/i,'Taxi','التاكسي','script',50],[/سباق|race|racing/i,'Racing','السباقات','car',350],[/دريفت|تفحيط|drift/i,'Drift','الدريفت','car',320],
+  [/سلاح|اسلح|أسلح|weapon|gun/i,'Weapons','الأسلحة','script',0],[/متجر|محل|بقال|shop|store/i,'Shops','المتاجر','script',160],[/صيد|fishing|hunt/i,'Hunting','الصيد','script',120],
+  [/تعدين|منجم|mining/i,'Mining','التعدين','script',30],[/ملابس|لبس|زي |eup|cloth/i,'Outfit','الملابس','eup',160],[/هود|hud|واجه/i,'HUD','واجهة اللاعب','script',4],
+  [/شخصي|multichar/i,'Multichar','الشخصيات','script',280],[/بلاغ|طوارئ|dispatch/i,'Dispatch','البلاغات','script',215],[/مخدر|drug/i,'Drugs','المخدرات','script',130],[/عصاب|مافيا|gang/i,'Gangs','العصابات','script',0],
+  [/مزرع|farm/i,'Farming','المزرعة','script',95],[/وقود|بنزين|محط|fuel/i,'Fuel','محطات الوقود','script',40],[/مطار|طيار|airport/i,'Airport','المطار','mlo',205],[/نادي|ملهى|club/i,'Club','النادي','mlo',300],
+  [/ادمن|أدمن|admin/i,'Admin Panel','لوحة الأدمن','script',0],[/سيار|مركب|car|vehicle/i,'Vehicles','السيارات','car',38],[/باق|حزم|bundle/i,'Bundle','الباقة','bundle',275]];
+const HUE = [[/احمر|أحمر|red/i,0],[/ازرق|أزرق|blue/i,215],[/اخضر|أخضر|green/i,140],[/ذهب|اصفر|أصفر|gold|yellow/i,45],[/بنفسج|purple/i,275],[/برتقال|orange/i,25],[/ورد|pink/i,330],[/سماوي|تركواز|cyan/i,185]];
+const GEN = {
+  script:{ fw:['ESX','QB','QBOX'], pr:[19.99,29.99,44.99], nm:k => [`ROX ${k}`, `ROX ${k} Pro`, `ROX ${k} V2`],
+    d:a => [`نظام ${a} متكامل بواجهة نظيفة وإعدادات مفتوحة، وخفيف على السيرفر.`, `${a} بتجربة سلسة للاعبين، مع صلاحيات وإعدادات قابلة للتخصيص.`, `سكربت ${a} جاهز للتشغيل، يدعم أكثر من فريم وورك.`] },
+  mlo:{ fw:['MLO','YMAP'], pr:[29.99,39.99,59.99], nm:k => [`ROX ${k}`, `ROX ${k} MLO`, `Grand ${k}`],
+    d:a => [`ماب ${a} بتفاصيل داخلية وخارجية عالية وعدد بولي مضبوط.`, `${a} بتصميم واقعي: غرف متعددة وإضاءة مدروسة، بدون تأثير على الفريمات.`, `مبنى ${a} كامل وجاهز للرول بلاي، بمداخل ومخارج عملية.`] },
+  car:{ fw:['ADDON'], pr:[24.99,29.99,39.99], nm:k => [`ROX ${k} Pack`, `ROX ${k} Elite`, `${k} Collection`],
+    d:a => [`باقة ${a} بهاندلنق مضبوط وأصوات محركات.`, `مجموعة ${a} Add-on بتعديلات كاملة وألوان متعددة.`, `${a} بتفاصيل عالية وجاهزة للإضافة على السيرفر.`] },
+  eup:{ fw:['EUP'], pr:[14.99,19.99,24.99], nm:k => [`ROX ${k} EUP`, `ROX ${k} Pack`, `${k} Uniforms`],
+    d:a => [`باقة ${a} بخامات نظيفة، رجالي ونسائي.`, `${a} رسمية ومدنية بتفاصيل دقيقة.`, `مجموعة ${a} جاهزة للتركيب على السيرفر.`] },
+  bundle:{ fw:['ESX','QB','QBOX'], pr:[79.99,119.99,149.99], nm:k => [`ROX ${k}`, `ROX ${k} Plus`, `ROX ${k} Ultimate`],
+    d:a => [`${a}: مجموعة منتجات متوافقة مع بعض بسعر أوفر.`, `${a} الموسّعة: سكربتات ومابات في حزمة وحدة.`, `${a} الكاملة: كل اللي يحتاجه سيرفرك.`] }
+};
+function generate(idea) {
+  const t = ' ' + clean(idea) + ' ', hit = KW.find(k => k[0].test(t)), lat = (t.match(/[A-Za-z][A-Za-z0-9]+/g) || []).filter(w => !/^(rox|mlo|eup|esx|qb|script|map)$/i.test(w));
+  let cat = hit ? hit[3] : 'script'; if (/ماب|mlo|مبنى/i.test(t)) cat = 'mlo'; else if (/سكربت|script|نظام/i.test(t)) cat = 'script'; else if (/باق|bundle/i.test(t) && hit && hit[1] != 'Bundle') cat = 'bundle';
+  const key = hit ? hit[1] : lat.length ? lat.slice(0, 2).map(w => w[0].toUpperCase() + w.slice(1)).join(' ') : 'Custom', ar = hit ? hit[2] : t.trim().split(/\s+/).slice(0, 3).join(' ');
+  const hc = HUE.find(h => h[0].test(t)), base = hc ? hc[1] : hit ? hit[4] : CATS.find(c => c[0] == cat)[2], g = GEN[cat];
+  return g.nm(key).map((name, i) => { const p = { cat, name, art: key.replace(/\s+(Station|Panel)$/i, '').toUpperCase().slice(0, 12), desc: g.d(ar)[i], price: g.pr[i], fw: g.fw, h: (base + [0, 14, 346][i]) % 360, tag: 'جديد', isNew: true };
+    if (i == 1) p.old = +(g.pr[i] * 1.3).toFixed(0) - .01; return p; });
+}
+let gens = [];
+$('gg').onclick = () => { const v = $('gi').value.trim(); if (v.length < 2) return toast('اكتب فكرة المنتج أول');
+  gens = generate(v); $('gr').innerHTML = gens.map((p, i) => `<div class="gp"><div class="th" style="--h:${p.h}">${glyph(p.cat, p.h)}</div><div><b>${esc(p.name)}</b><small>${catName(p.cat)} · ${esc(p.desc)}</small>
+    <span class="lat">${money(p.price)}</span> <button class="bt p" data-gu="${i}">استخدم هذا الاقتراح</button></div></div>`).join(''); };
+$('gi').onkeydown = e => { if (e.key == 'Enter') $('gg').click(); };
+$('gx').onclick = () => $('gs').classList.remove('on');
+$('gr').onclick = e => { const b = e.target.closest('[data-gu]'); if (!b) return; $('gs').classList.remove('on'); fo(-1, gens[+b.dataset.gu]); };
+
+/* ============ الصفحة: إظهار الأقسام وتعديل النصوص ============ */
+const SECS = [['dims','الأقسام الخمسة'],['bundle','الباقة الرئيسية'],['live','سيرفر العرض'],['studio','عن الاستوديو'],['reviews','آراء العملاء'],['faq','الأسئلة الشائعة'],['community','قسم الديسكورد']];
+const FIELDS = [['الواجهة الرئيسية', [['hero.eyebrow','السطر الصغير فوق العنوان'],['hero.t1','العنوان — الكلمة الأولى'],['hero.t2','العنوان — الكلمة الملوّنة'],['hero.lead','الوصف',1],['hero.b1','الميزة الأولى'],['hero.b2','الميزة الثانية'],['hero.b3','الميزة الثالثة']]],
+  ['الباقة الرئيسية', [['bundle.title','العنوان',1],['bundle.text','الوصف',1],['bundle.items','محتويات الباقة — كل سطر بند',1]]],
+  ['سيرفر العرض', [['live.t1','العنوان — السطر الأول'],['live.t2','العنوان — السطر الملوّن'],['live.text','الوصف',1],['live.btn','نص الزر']]],
+  ['عن الاستوديو', [['studio.title','العنوان',1],['studio.p1','الفقرة الأولى',1],['studio.p2','الفقرة الثانية',1]]],
+  ['قسم الديسكورد', [['community.title','العنوان'],['community.text','الوصف',1]]],
+  ['أسفل الصفحة', [['footer.legal','النص القانوني',1]]]];
+let DEF = null, faqW = null;   // النصوص الأصلية تُقرأ من صفحة المتجر نفسها
+async function loadDef() { if (DEF) return; DEF = { t: {}, faq: [] };
+  try { const d = new DOMParser().parseFromString(await (await fetch('./index.html', { cache: 'no-store' })).text(), 'text/html'), tx = el => { el.querySelectorAll('br').forEach(b => b.replaceWith('\n')); return el.textContent.trim(); };
+    d.querySelectorAll('[data-t]').forEach(el => DEF.t[el.dataset.t] = tx(el));
+    d.querySelectorAll('[data-list]').forEach(ul => DEF.t[ul.dataset.list] = [...ul.querySelectorAll('li')].map(li => li.textContent.trim()).join('\n'));
+    DEF.faq = [...d.querySelectorAll('#faqList details')].map(x => ({ q: x.querySelector('summary').textContent.trim(), a: x.querySelector('p').textContent.trim() }));
+  } catch (e) { console.error(e); }
+  if (at == 5) tab(5, 1); }
+function pgv() { if (!DEF) { loadDef(); return '<p class="em">جاري تحميل نصوص الصفحة…</p>'; }
+  const hide = CFG.hide || [], tx = CFG.texts || {}; if (!faqW) faqW = JSON.parse(JSON.stringify(Array.isArray(CFG.faq) ? CFG.faq : DEF.faq));
+  return `<div class="hh">أقسام الصفحة</div><p class="hint">القسم المخفي ينشال من المتجر مع روابطه في القائمة. تقدر ترجّعه بأي وقت.</p>`
+    + SECS.map(x => `<div class="sx"><span>${x[1]}</span><div class="sg"><button data-hs="${x[0]}" data-v="0" class="${hide.includes(x[0]) ? '' : 'on'}">ظاهر</button><button data-hs="${x[0]}" data-v="1" class="${hide.includes(x[0]) ? 'on' : ''}">مخفي</button></div></div>`).join('')
+    + FIELDS.map(g => `<div class="hh">${g[0]}</div><div class="fg">` + g[1].map(f => { const v = esc(tx[f[0]] ?? DEF.t[f[0]] ?? '');
+        return `<label>${f[1]}${f[2] ? `<textarea data-tx="${f[0]}" rows="${f[0] == 'bundle.items' ? 5 : 3}">${v}</textarea>` : `<input data-tx="${f[0]}" value="${v}">`}</label>`; }).join('') + '</div>').join('')
+    + `<div class="hh">الأسئلة الشائعة (${faqW.length})</div>` + faqW.map((f, i) => `<div class="fq"><label>السؤال<input data-fq="${i}" value="${esc(f.q)}"></label><label>الجواب<textarea data-fa="${i}" rows="2">${esc(f.a)}</textarea></label><button class="dx" data-fx="${i}">${ic('trash', 's')}حذف السؤال</button></div>`).join('')
+    + `<button class="bt" id="fqa" style="margin:0">${ic('plus', 's')}سؤال جديد</button>
+    <div class="sticky"><button class="bt p" id="pgs" style="margin:0">حفظ تعديلات الصفحة</button><button class="bt" id="pgr">رجّع النصوص الأصلية</button></div>`; }
+function pgRead() { if (!faqW) return; document.querySelectorAll('[data-fq]').forEach(el => { const f = faqW[+el.dataset.fq]; if (f) f.q = clean(el.value); }); document.querySelectorAll('[data-fa]').forEach(el => { const f = faqW[+el.dataset.fa]; if (f) f.a = clean(el.value); }); }
+/* إعادة رسم التبويب بدون ما تضيع النصوص اللي انكتبت وما انحفظت */
+function pgRe() { const keep = {}, y = scrollY; document.querySelectorAll('[data-tx]').forEach(el => keep[el.dataset.tx] = el.value); tab(5, 1);
+  document.querySelectorAll('[data-tx]').forEach(el => { if (el.dataset.tx in keep) el.value = keep[el.dataset.tx]; }); scrollTo(0, y); }
+function pga(b, s) {
+  if (s.hs) { const h = new Set(CFG.hide || []); +s.v ? h.add(s.hs) : h.delete(s.hs); CFG.hide = [...h]; saveC(); lg((+s.v ? 'إخفاء قسم: ' : 'إظهار قسم: ') + SECS.find(x => x[0] == s.hs)[1]); toast(+s.v ? 'انخفى القسم من المتجر' : 'رجع القسم للمتجر');
+    pgRead(); pgRe(); }
+  else if (b.id == 'fqa') { pgRead(); faqW.push({ q: '', a: '' }); pgRe(); }
+  else if (s.fx != null) { pgRead(); faqW.splice(+s.fx, 1); pgRe(); }
+  else if (b.id == 'pgs') { pgRead(); const t = {}; document.querySelectorAll('[data-tx]').forEach(el => { const v = el.value.replace(/[<>]/g, '').trim(); if (v && v !== (DEF.t[el.dataset.tx] || '')) t[el.dataset.tx] = v; });
+    CFG.texts = t; const fq = faqW.filter(f => f.q && f.a); CFG.faq = JSON.stringify(fq) === JSON.stringify(DEF.faq) ? null : fq; faqW = null; saveC(); lg('تعديل نصوص الصفحة'); tab(5, 1); toast('تم حفظ تعديلات الصفحة'); }
+  else if (b.id == 'pgr') cf(b, () => { CFG.texts = {}; CFG.faq = null; faqW = null; saveC(); lg('استرجاع نصوص الصفحة الأصلية'); tab(5, 1); toast('رجعت النصوص الأصلية'); });
+  else return false;
+  return true; }
+
 /* ============ الإعدادات ============ */
 function sev() { const c = CFG, d = new Date(c.bundleEnds), dv = isNaN(d) ? '' : new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
   return `<div class="hh">وضع الصيانة</div><div class="or"><div>حالة المتجر<small>لما تفعّله تظهر شاشة الصيانة بدل المتجر</small></div><div class="sg"><button data-mt="0" class="${c.maint ? '' : 'on'}">مفتوح</button><button data-mt="1" class="${c.maint ? 'on' : ''}">تحت الصيانة</button></div></div>
@@ -390,7 +486,6 @@ function sev() { const c = CFG, d = new Date(c.bundleEnds), dv = isNaN(d) ? '' :
   <button class="bt" data-mt="p">معاينة شاشة الصيانة</button>
   <div class="hh">روابط المتجر</div><div class="fg">
     <label>رابط الديسكورد<input id="sdc" dir="ltr" inputmode="url" placeholder="https://discord.gg/…" value="${esc(c.discord)}"></label>
-    <label>رابط صفحة الدفع (Tebex)<input id="sck" dir="ltr" inputmode="url" placeholder="https://…tebex.io" value="${esc(c.checkout)}"></label>
     <label>رابط سيرفر العرض<input id="slv" dir="ltr" placeholder="fivem://connect/cfx.re/join/xxxxxx" value="${esc(c.liveServer)}"></label>
     <label>رمز العملة<input id="scu" dir="ltr" maxlength="4" value="${esc(c.currency)}"></label>
     <label>نهاية عرض الباقة<input id="sbe" type="datetime-local" value="${dv}"></label></div>
@@ -407,7 +502,7 @@ function sev() { const c = CFG, d = new Date(c.bundleEnds), dv = isNaN(d) ? '' :
 function ss() { const d = new Date($('sbe').value), p = $('spn').value.trim();
   if (p) { if (p.length < 8) { toast('كلمة المرور الثانية لازم 8 أحرف أو أكثر'); return; }
     sb.rpc('admin_set_pin', { new_pin: p }).then(({ error }) => toast(error ? 'تعذّر تغيير كلمة المرور الثانية' : 'تم تغيير كلمة المرور الثانية')); }
-  Object.assign(CFG, { mmsg: clean($('mmg').value), mdate: $('mdt').value, discord: clean($('sdc').value), checkout: clean($('sck').value), liveServer: clean($('slv').value), currency: clean($('scu').value) || '$', bundleEnds: isNaN(d) ? CFG.bundleEnds : d.toISOString(), sarRate: +$('bsr').value > 0 ? +$('bsr').value : 3.75,
+  Object.assign(CFG, { mmsg: clean($('mmg').value), mdate: $('mdt').value, discord: clean($('sdc').value), liveServer: clean($('slv').value), currency: clean($('scu').value) || '$', bundleEnds: isNaN(d) ? CFG.bundleEnds : d.toISOString(), sarRate: +$('bsr').value > 0 ? +$('bsr').value : 3.75,
     bank: { bankName: clean($('bnm').value), holder: clean($('bhd').value), iban: clean($('bib').value).replace(/\s/g, '').toUpperCase(), account: clean($('bac').value).replace(/\s/g, '') } });
   saveC(); lg('حفظ الإعدادات'); tab(at, 1); toast('تم حفظ الإعدادات'); }
 function mt(v) { if ($('mmg')) { CFG.mmsg = clean($('mmg').value); CFG.mdate = $('mdt').value; }
@@ -483,7 +578,7 @@ function apv() { return dzv() + hero() + (DB.orders[0] ? row(DB.orders[0], 1) : 
   + '<button class="bt" data-o="rs0">إعادة ضبط المظهر</button>'; }
 
 /* ============ التنقل ============ */
-const VW = [ovv, ord, prd, cus, mkt, sev, apv];
+const VW = [ovv, ord, prd, cus, mkt, pgv, sev, apv];
 function nav() { const h = TB.map((t, i) => { const n = i == 1 ? cnt() : 0; return `<button class="nb${i == at ? ' on' : ''}" data-t="${i}">${ic(t[2])}<span>${t[0]}</span>${n ? `<em>${n}</em>` : ''}<small class="lat">${t[1]}</small></button>`; }).join(''); $('nv').innerHTML = h; $('tb').innerHTML = h; }
 function tab(i, na) { at = i; $('ttl').textContent = TB[i][0]; const v = $('v'); v.className = (i == 2 ? 'pg ' : '') + (na ? 'na' : '');
   v.innerHTML = (CFG.maint ? `<div class="mn" role="status">${ic('warn', 's')}وضع الصيانة مفعّل. المتجر مغلق للزوار.</div>` : '') + VW[i](); nav();
@@ -493,6 +588,7 @@ $('v').addEventListener('input', e => { const t = e.target; if (t.id == 'q') { q
 $('v').addEventListener('change', e => { if (e.target.id == 'cc') tab(at, 1); });
 $('v').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const s = b.dataset; let o;
   if (at == 4 && mka(b, s)) return;
+  if (at == 5 && pga(b, s)) return;
   if (s.cu != null) { qs = s.cu; flt = -1; tab(1, 1); scrollTo(0, 0); }
   else if (s.dz) { CFG.design = s.dz; saveC(); lg('تغيير تصميم المتجر: ' + DZ.find(d => d[0] == s.dz)[1]); tab(at, 1); toast('تم تفعيل التصميم على المتجر'); }
   else if (s.dzp) window.open('./?design=' + s.dzp, '_blank', 'noopener');
@@ -506,6 +602,7 @@ $('v').addEventListener('click', e => { const b = e.target.closest('button'); if
   else if (s.e != null) fo(+s.e);
   else if (s.x != null) cf(b, () => { lg('حذف منتج: ' + P[+s.x].name); P.splice(+s.x, 1); saveP(); tab(2, 1); toast('تم حذف المنتج'); });
   else if (b.id == 'np') fo(-1);
+  else if (b.id == 'gn') { $('gi').value = ''; $('gr').innerHTML = ''; $('gs').classList.add('on'); $('gi').focus(); }
   else if (b.id == 'ss') ss();
   else if (b.id == 'ex') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(P, null, 2)], { type:'application/json' })); a.download = 'rox-products.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); } });
 
@@ -571,7 +668,7 @@ $('ob').addEventListener('click', e => { const b = e.target.closest('button'); i
   else if (s.odl) cf(b, () => { delOrder(oe.id); $('os').classList.remove('on'); tab(at, 1); toast('تم حذف الطلب'); });
   else if (s.os) osv(); });
 document.querySelectorAll('.ov').forEach(o => o.onclick = e => { if (e.target === o) o.classList.remove('on'); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('sh').classList.remove('on'); $('os').classList.remove('on'); $('mp').hidden = true; } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('gs').classList.remove('on'); $('sh').classList.remove('on'); $('os').classList.remove('on'); $('mp').hidden = true; } });
 
 /* ============ القفل ============ */
 $('vs').innerHTML = ic('ext', 's') + 'المتجر'; $('lo').innerHTML = ic('lock', 's') + 'خروج';
@@ -600,7 +697,7 @@ $('lf').onsubmit = async e => { e.preventDefault(); if (!sb) return; const b = $
     else if (mode == 'pin') { const { data, error } = await sb.rpc('admin_unlock', { pin: $('pin').value }); if (error || !data) return err('تعذّر التحقق. حاول مرة ثانية.');
       if (!data.ok) return lockUI('pin', lockedMsg(data.locked_until) || `كلمة المرور الثانية غلط. باقي ${data.left} محاولات.`); await route(); }
   } finally { b.disabled = false; } };
-async function logout() { try { await sb.rpc('admin_lock'); } catch (e) {} try { await sb.auth.signOut(); } catch (e) {}
+async function logout() { faqW = null; try { await sb.rpc('admin_lock'); } catch (e) {} try { await sb.auth.signOut(); } catch (e) {}
   P = []; DB = { orders: [], log: [] }; CUS = []; $('v').innerHTML = ''; firstPw = ''; lockUI('login'); }
 $('lo').onclick = $('lout').onclick = logout;
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change', ap);

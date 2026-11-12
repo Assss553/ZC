@@ -568,14 +568,14 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     <svg class="skyline" id="skyline" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true"></svg>
     <div class="scan" aria-hidden="true"></div>
     <div class="hero-c">
-      <span class="eyebrow">FIVEM STORE · EST. 2022</span>
-      <div class="t3d"><h1 id="t3d">ROX <b>STORE</b></h1></div>
-      <p class="lead">سكربتات، مابات MLO وسيارات مصنوعة بإتقان لسيرفرات FiveM.<br>كل قطعة مختبرة وخفيفة قبل ما توصلك.</p>
+      <span class="eyebrow" data-t="hero.eyebrow">FIVEM STORE · EST. 2022</span>
+      <div class="t3d"><h1 id="t3d"><span data-t="hero.t1">ROX</span> <b data-t="hero.t2">STORE</b></h1></div>
+      <p class="lead" data-t="hero.lead">سكربتات، مابات MLO وسيارات مصنوعة بإتقان لسيرفرات FiveM.<br>كل قطعة مختبرة وخفيفة قبل ما توصلك.</p>
       <div class="cta">
         <a class="btn white" href="#shop">تصفّح المتجر <svg class="i arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></a>
         <a class="btn line" href="#live">جرّبها في السيرفر</a>
       </div>
-      <ul class="dots"><li>تسليم فوري عبر Tebex</li><li>جرّب داخل اللعبة قبل الشراء</li><li>دعم على الديسكورد</li></ul>
+      <ul class="dots"><li data-t="hero.b1">تسليم سريع بعد تأكيد الدفع</li><li data-t="hero.b2">جرّب داخل اللعبة قبل الشراء</li><li data-t="hero.b3">دعم على الديسكورد</li></ul>
     </div>
     <span class="mouse" aria-hidden="true"></span>
   </section>
@@ -592,16 +592,16 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     <div class="wrap flag-in">
       <div class="rv">
         <span class="eyebrow">05 — BUNDLES · THE FLAGSHIP</span>
-        <h2>سيرفر كامل،<br>في باقة وحدة.</h2>
-        <p>باقة تشغيل ROX: كل اللي تحتاجه عشان تفتح سيرفرك من اليوم الأول — سكربتات، مابات وسيارات متوافقة مع بعض.</p>
-        <ul>
+        <h2 data-t="bundle.title">سيرفر كامل،<br>في باقة وحدة.</h2>
+        <p data-t="bundle.text">باقة تشغيل ROX: كل اللي تحتاجه عشان تفتح سيرفرك من اليوم الأول — سكربتات، مابات وسيارات متوافقة مع بعض.</p>
+        <ul data-list="bundle.items">
           <li>سكربتات ROX الأساسية: HUD، حقيبة، كراج، بنك، شخصيات</li>
           <li>مابين MLO: مركز الشرطة + المستشفى</li>
           <li>باقة سيارات الدوريات بإضاءات ELS</li>
           <li>تحديثات مجانية وأولوية في الدعم</li>
         </ul>
         <div class="flag-cta">
-          <button class="btn white" type="button" data-add="bundle-starter">أضف الباقة للسلة</button>
+          <button class="btn white" type="button" id="bunBtn" data-add="bundle-starter">أضف الباقة للسلة</button>
           <a href="#shop">أو اشترِ القطع بشكل منفصل</a>
         </div>
       </div>
@@ -627,10 +627,10 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     <div class="live rv">
       <div>
         <span class="pill"><i></i>LIVE SERVER</span>
-        <h2>جرّب قبل<em>ما تشتري</em></h2>
-        <p>ادخل سيرفر العرض حقنا وجرّب كل السكربتات والمابات في بيئة حيّة. بدون وايت لست.</p>
+        <h2><span data-t="live.t1">جرّب قبل</span><em data-t="live.t2">ما تشتري</em></h2>
+        <p data-t="live.text">ادخل سيرفر العرض حقنا وجرّب كل السكربتات والمابات في بيئة حيّة. بدون وايت لست.</p>
         <div class="cta">
-          <a class="btn red" id="joinLive" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01M17 6H7a5 5 0 0 0-5 5v1a4 4 0 0 0 7 2.6h6A4 4 0 0 0 22 12v-1a5 5 0 0 0-5-5Z"/></svg>ادخل سيرفر العرض</a>
+          <a class="btn red" id="joinLive" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01M17 6H7a5 5 0 0 0-5 5v1a4 4 0 0 0 7 2.6h6A4 4 0 0 0 22 12v-1a5 5 0 0 0-5-5Z"/></svg><span data-t="live.btn">ادخل سيرفر العرض</span></a>
           <a class="btn line" href="#shop">تصفّح المتجر <svg class="i arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></a>
         </div>
       </div>
@@ -653,13 +653,13 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     </div>
   </section>
 
-  <section class="sec wrap">
+  <section class="sec wrap" id="studio">
     <div class="studio">
       <div class="rv">
         <span class="eyebrow">THE STUDIO</span>
-        <h2>نبني سيرفرك،<br>قطعة قطعة.</h2>
-        <p>ROX فريق يصمّم ويبرمج لسيرفرات FiveM من 2022. نكتب كل سكربت ونبني كل ماب بنفسنا، ونختبره على resmon قبل ما ينزل المتجر.</p>
-        <p>هدفنا إن سيرفرك يطلع مختلف عن الباقي: أنظمة متكاملة تمشي مع بعض، وتفاصيل تحس فيها إن المدينة عايشة.</p>
+        <h2 data-t="studio.title">نبني سيرفرك،<br>قطعة قطعة.</h2>
+        <p data-t="studio.p1">ROX فريق يصمّم ويبرمج لسيرفرات FiveM من 2022. نكتب كل سكربت ونبني كل ماب بنفسنا، ونختبره على resmon قبل ما ينزل المتجر.</p>
+        <p data-t="studio.p2">هدفنا إن سيرفرك يطلع مختلف عن الباقي: أنظمة متكاملة تمشي مع بعض، وتفاصيل تحس فيها إن المدينة عايشة.</p>
         <div class="stats">
           <div><b id="stCount">13+</b><span>منتج جاهز</span></div>
           <div><b>2022</b><span>نبني من</span></div>
@@ -667,7 +667,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
         </div>
       </div>
       <div class="feats rv">
-        <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></span><div><h3>تسليم فوري عبر Tebex</h3><p>تدفع ويوصل المنتج لحسابك في Keymaster خلال ثواني — نظام FiveM الرسمي، بدون انتظار.</p></div></div>
+        <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></span><div><h3>تسليم سريع</h3><p>نراجع إيصال التحويل ونسلّمك ملفات المنتج مباشرة، بدون انتظار طويل.</p></div></div>
         <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01M17 6H7a5 5 0 0 0-5 5v1a4 4 0 0 0 7 2.6h6A4 4 0 0 0 22 12v-1a5 5 0 0 0-5-5Z"/></svg></span><div><h3>جرّب كل شي داخل اللعبة</h3><p>سيرفر العرض فيه كل منتجاتنا شغّالة. جرّبها قبل ما تدفع ريال.</p></div></div>
         <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M4 18v-6a8 8 0 0 1 16 0v6M4 14h3v6H4zM17 14h3v6h-3z"/></svg></span><div><h3>دعم يرد عليك فعلًا</h3><p>التركيب، التعارضات، والحالات الغريبة — الفريق اللي برمج المنتج هو اللي يرد على تذكرتك.</p></div></div>
         <div class="feat"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><div><h3>أداء خفيف</h3><p>0.00ms وقت الخمول، وإعدادات مفتوحة تعدّل منها اللغة والأسعار والصلاحيات.</p></div></div>
@@ -682,20 +682,20 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
 
   <section id="faq" class="sec wrap">
     <div class="sh rv"><div><span class="eyebrow">QUESTIONS</span><h2>قبل ما تسأل</h2></div></div>
-    <div class="faq rv">
-      <details><summary>كيف أستلم الملفات؟</summary><p>بعد الدفع ينضاف المنتج تلقائيًا لحساب Cfx.re اللي سجّلت فيه، وتحمّله من keymaster.fivem.net تحت Granted Assets.</p></details>
+    <div class="faq rv" id="faqList">
+      <details><summary>كيف أستلم الملفات؟</summary><p>بعد ما نراجع إيصال التحويل ونتأكد من وصول المبلغ، نسلّمك ملفات المنتج. تتابع حالة طلبك من «حسابي».</p></details>
       <details><summary>هل المنتجات خفيفة على السيرفر؟</summary><p>إيه. كل سكربت مختبر على resmon، والمابات مبنية بعدد بولي وتكستشر مضبوط عشان ما تأثر على الفريمات.</p></details>
       <details><summary>تشتغل على ESX و QBCore و QBox؟</summary><p>كل منتج مكتوب عليه الفريم ووركات المدعومة. أغلب السكربتات تدعم الثلاثة، والمابات والسيارات تشتغل على أي سيرفر.</p></details>
       <details><summary>تقدمون دعم فني؟</summary><p>أكيد. افتح تذكرة في الديسكورد ونساعدك في التركيب والإعداد وحل أي تعارض.</p></details>
-      <details><summary>أقدر أعدّل على الكود؟</summary><p>ملفات الإعدادات والواجهات مفتوحة للتعديل، والجزء الأساسي محمي بنظام Asset Escrow من Cfx.re.</p></details>
+      <details><summary>أقدر أعدّل على الكود؟</summary><p>إيه، ملفات الإعدادات والواجهات مفتوحة للتعديل عشان تضبطها على سيرفرك.</p></details>
     </div>
   </section>
 
-  <section class="sec wrap">
+  <section class="sec wrap" id="community">
     <div class="dcbox rv">
       <span class="eyebrow">COMMUNITY</span>
-      <h2>انضم لديسكورد ROX</h2>
-      <p>الدعم الفني، إعلانات التحديثات، والعروض الحصرية كلها هناك.</p>
+      <h2 data-t="community.title">انضم لديسكورد ROX</h2>
+      <p data-t="community.text">الدعم الفني، إعلانات التحديثات، والعروض الحصرية كلها هناك.</p>
       <a class="btn dcb js-dc" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 5.6A17 17 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a17 17 0 0 0-4.2 1.6C1.7 9.7.9 13.7 1.3 17.6a17 17 0 0 0 5.2 2.6l1.1-1.8-1.7-.8.4-.3a12 12 0 0 0 11.4 0l.4.3-1.7.8 1.1 1.8a17 17 0 0 0 5.2-2.6c.5-4.5-.8-8.5-3.1-12ZM8.7 15.2c-1 0-1.9-.9-1.9-2.1S7.6 11 8.7 11s1.9.9 1.9 2.1-.8 2.1-1.9 2.1Zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1Z"/></svg>ادخل الديسكورد</a>
     </div>
   </section>
@@ -707,7 +707,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
       <a class="logo" href="#top"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 96 50 50 96 4 50Z" style="fill:var(--red)"/><path d="M31 31 69 69M69 31 31 69" stroke="#000" stroke-width="9"/></svg><span>RO<b>X</b><br>STORE</span></a>
       <nav aria-label="روابط"><a href="#cat-script">سكربتات</a><a href="#cat-mlo">مابات MLO</a><a href="#cat-car">سيارات</a><a href="#cat-eup">ملابس</a><a href="#bundle">الباقات</a><a href="#live">سيرفر العرض</a></nav>
     </div>
-    <p class="legal">© <span id="yr"></span> ROX Store. المتجر غير تابع لـ Rockstar Games أو Take-Two Interactive أو Cfx.re وغير معتمد منها.</p>
+    <p class="legal">© <span id="yr"></span> <span data-t="footer.legal">ROX Store. المتجر غير تابع لـ Rockstar Games أو Take-Two Interactive أو Cfx.re وغير معتمد منها.</span></p>
   </div>
 </footer>
 
@@ -719,9 +719,8 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
     <form class="cpn" id="cpnForm"><input id="cpn" placeholder="كود الخصم" dir="ltr" autocomplete="off" aria-label="كود الخصم"><button class="btn line" type="submit">تطبيق</button></form>
     <div class="tot sub" id="discRow" hidden><span id="discLbl"></span><b id="disc"></b></div>
     <div class="tot"><span>الإجمالي</span><b id="total"></b></div>
-    <button class="btn white" id="pay" type="button">إتمام الشراء عبر Tebex</button>
-    <button class="btn line" id="payBank" type="button">الدفع بتحويل بنكي</button>
-    <small>التسليم إلى حسابك في Keymaster</small></div>
+    <button class="btn white" id="payBank" type="button">إتمام الشراء بتحويل بنكي</button>
+    <small>نسلّمك منتجاتك بعد مراجعة إيصال التحويل</small></div>
 </aside>
 <dialog id="bank"><div class="bk">
   <button class="x" id="bankX" type="button" aria-label="إغلاق">✕</button>
@@ -764,7 +763,6 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
 const CONFIG = {
   currency: '$',
   discord: '',      // رابط دعوة الديسكورد
-  checkout: '',     // رابط صفحة الدفع (Tebex مثلًا)
   liveServer: '',   // رابط سيرفر العرض، مثل: fivem://connect/cfx.re/join/xxxxxx
   bundleEnds: '2026-12-31T23:59:59+03:00', // نهاية عرض الباقة — بعدها يختفي العدّاد
   design: 'rox',    // تصميم المتجر: rox, neon, gold, toxic, ice, sunset, royal, police, desert, mono
@@ -798,19 +796,21 @@ let PRODUCTS = [
 /* ============ الربط مع Supabase ============
    لو rox-config.js فيه رابط المشروع والمفتاح: المنتجات والإعدادات تجي من قاعدة البيانات،
    وتتفعّل حسابات العملاء والطلبات ورفع الإيصالات. لو فاضي: المتجر يشتغل بالقيم اللي فوق. */
-const SBC = window.ROX_SB || {}, BANK0 = { ...CONFIG.bank }; let sb = null, me = null;
+const SBC = window.ROX_SB || {}, BANK0 = { ...CONFIG.bank }; let sb = null, me = null, dbFail = false;
 if (SBC.url && SBC.key) {
   try {
     await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'vendor/supabase.js'; t.onload = ok; t.onerror = no; document.head.append(t); });
     sb = window.supabase.createClient(SBC.url, SBC.key);
     const [pr, st] = await Promise.all([sb.from('products').select('*').eq('active', true).order('sort'), sb.from('settings').select('data').eq('id', 1).maybeSingle()]);
-    if (pr.data && pr.data.some(p => p.id === 'bundle-starter')) PRODUCTS = pr.data.map(r => ({ id: r.id, cat: r.cat, art: r.art, name: r.name, desc: r.descr, price: +r.price, old: r.old_price ? +r.old_price : undefined, fw: r.fw || [], h: r.h, tag: r.tag || undefined, isNew: !!r.is_new }));
+    if (pr.error) throw pr.error;
+    // المنتجات من قاعدة البيانات فقط: اللي ينحذف من اللوحة ما يرجع
+    PRODUCTS = pr.data.map(r => ({ id: r.id, cat: r.cat, art: r.art, name: r.name, desc: r.descr, price: +r.price, old: r.old_price ? +r.old_price : undefined, fw: r.fw || [], h: r.h, tag: r.tag || undefined, isNew: !!r.is_new }));
     if (st.data && st.data.data) Object.assign(CONFIG, st.data.data);
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error(e); dbFail = true; PRODUCTS = []; }
 } else {
   try {
     const sp = JSON.parse(localStorage.getItem('rox_products')), sc = JSON.parse(localStorage.getItem('rox_config'));
-    if (Array.isArray(sp) && sp.some(p => p.id === 'bundle-starter')) PRODUCTS = sp;
+    if (Array.isArray(sp)) PRODUCTS = sp;
     if (sc) Object.assign(CONFIG, sc);
   } catch (e) {}
 }
@@ -861,7 +861,7 @@ function syncButtons() {
   $$('[data-add]').forEach(b => {
     const inC = cart.includes(b.dataset.add);
     if (b.classList.contains('add')) { b.classList.toggle('in', inC); b.innerHTML = inC ? '✓ في السلة' : PLUS + 'أضف للسلة'; }
-    else b.textContent = inC ? '✓ الباقة في السلة' : 'أضف الباقة للسلة';
+    else if (b.id === 'bunBtn') b.textContent = inC ? '✓ الباقة في السلة' : 'أضف الباقة للسلة';
   });
 }
 let coupon = null;
@@ -886,22 +886,19 @@ $('#cartBtn').onclick = () => openCart(true);
 $('#cartX').onclick = $('#shade').onclick = () => openCart(false);
 addEventListener('keydown', e => e.key === 'Escape' && openCart(false));
 $('#items').onclick = e => { const b = e.target.closest('[data-rm]'); if (b) toggle(b.dataset.rm); };
-$('#pay').onclick = () => {
-  if (!cart.length) return toast('سلتك فاضية');
-  if (CONFIG.checkout) location.href = CONFIG.checkout; else toast('اربط صفحة الدفع من CONFIG.checkout');
-};
 document.addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (!b) return;
-  if (b.dataset.add === 'bundle-starter' && !b.classList.contains('add') && !cart.includes('bundle-starter')) return cine();
+  if (BUN && b.dataset.add === BUN.id && !b.classList.contains('add') && !cart.includes(BUN.id)) return cine();
   toggle(b.dataset.add); });
 
 /* الباقة: تنفتح طبقاتها لما تأشّر عليها، والضغط يضيفها للسلة بلقطة سينمائية */
-const flagEl = $('#bundle'), bcol = $('.bcol'); let cineBusy = false;
+const flagEl = $('#bundle'), bcol = $('.bcol'), BUN = PRODUCTS.find(p => p.cat === 'bundle'); let cineBusy = false;
 function cine() {
   if (cineBusy) return;
-  if (cart.includes('bundle-starter')) return openCart(true);
-  if (!motionOK) return toggle('bundle-starter');
+  if (!BUN) return;
+  if (cart.includes(BUN.id)) return openCart(true);
+  if (!motionOK) return toggle(BUN.id);
   cineBusy = true; flagEl.classList.add('cine'); flagEl.scrollIntoView({ block: 'center' });
-  setTimeout(() => toggle('bundle-starter'), 1500);
+  setTimeout(() => toggle(BUN.id), 1500);
   setTimeout(() => { flagEl.classList.remove('cine'); cineBusy = false; }, 2700);
 }
 $('#stackBtn').onclick = cine;
@@ -1110,12 +1107,23 @@ if (motionOK && canHover) addEventListener('pointermove', e => {
 /* ============ تفاصيل ============ */
 $('#yr').textContent = new Date().getFullYear();
 $('#stCount').textContent = PRODUCTS.length + '+';
-const bun = byId('bundle-starter'); $('#bNow').textContent = money(bun.price); $('#bOld').textContent = money(bun.old);
+if (BUN) { $('#bunBtn').dataset.add = BUN.id; $('#bNow').textContent = money(BUN.price); $('#bOld').textContent = BUN.old ? money(BUN.old) : ''; syncButtons(); }
+if (!PRODUCTS.length) $('#shop').innerHTML = `<section class="sec wrap"><p class="empty">${dbFail ? 'تعذّر تحميل المنتجات. حدّث الصفحة وحاول مرة ثانية.' : 'ما فيه منتجات معروضة حاليًا.'}</p></section>`;
+
+/* ============ الأقسام والنصوص اللي تتعدّل من لوحة التحكم ============ */
+const SECS = { dims:'dims', bundle:'bundle', live:'live', studio:'studio', reviews:'revSec', faq:'faq', community:'community' };
+const hideSec = id => { const el = $('#' + id); if (el) el.hidden = true; $$(`a[href="#${id}"]`).forEach(a => a.hidden = true); };
+(CONFIG.hide || []).forEach(k => SECS[k] && hideSec(SECS[k]));
+if (!BUN) hideSec('bundle');
+const TX = CONFIG.texts || {}, lines = (el, v) => { el.textContent = ''; String(v).split('\n').forEach((ln, i) => { if (i) el.append(document.createElement('br')); el.append(ln); }); };
+$$('[data-t]').forEach(el => { const v = TX[el.dataset.t]; if (typeof v === 'string' && v.trim()) lines(el, v.trim()); });
+$$('[data-list]').forEach(ul => { const v = TX[ul.dataset.list]; if (typeof v === 'string' && v.trim()) ul.innerHTML = v.split('\n').map(x => x.trim()).filter(Boolean).map(x => `<li>${esc(x)}</li>`).join(''); });
+if (Array.isArray(CONFIG.faq)) { $('#faqList').innerHTML = CONFIG.faq.map(f => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join(''); if (!CONFIG.faq.length) hideSec('faq'); }
 $('#revSec').hidden = !REVIEWS.length;
 if (CONFIG.announce) { $('#ann').textContent = CONFIG.announce; $('#ann').hidden = false; }
 $('#revs').innerHTML = REVIEWS.map(r => `<figure class="rev"><q>${esc(r.q)}</q><figcaption class="who"><i>${esc(String(r.n || '؟').trim()[0])}</i><div><b>${esc(r.n)}</b><small>${esc(r.s)}</small></div></figcaption></figure>`).join('');
-$$('.js-dc').forEach(a => { if (CONFIG.discord) a.href = CONFIG.discord; else a.onclick = e => { e.preventDefault(); toast('حط رابط الديسكورد في CONFIG.discord'); }; });
-const jl = $('#joinLive'); if (CONFIG.liveServer) jl.href = CONFIG.liveServer; else jl.onclick = e => { e.preventDefault(); toast('حط رابط سيرفر العرض في CONFIG.liveServer'); };
+$$('.js-dc').forEach(a => { if (CONFIG.discord) a.href = CONFIG.discord; else a.onclick = e => { e.preventDefault(); toast('رابط الديسكورد ما انضاف بعد'); }; });
+const jl = $('#joinLive'); if (CONFIG.liveServer) jl.href = CONFIG.liveServer; else jl.onclick = e => { e.preventDefault(); toast('رابط سيرفر العرض ما انضاف بعد'); };
 $('#menuBtn').onclick = e => { const on = $('#nav').classList.toggle('on'); e.currentTarget.setAttribute('aria-expanded', on); };
 $('#nav').onclick = () => { $('#nav').classList.remove('on'); $('#menuBtn').setAttribute('aria-expanded', false); };
 const hd = $('#hd'), onScroll = () => hd.classList.toggle('solid', scrollY > 30);

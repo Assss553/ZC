@@ -208,8 +208,30 @@ drop policy if exists log_admin on public.activity_log;
 create policy log_admin on public.activity_log for all using (public.is_admin()) with check (public.is_admin());
 
 -- ============ البيانات الافتراضية ============
+-- المنتجات الافتراضية تنضاف أول مرة فقط (قبل ما ينشأ صف الإعدادات)، عشان اللي تحذفه ما يرجع لو شغّلت الملف مرة ثانية
+do $seed$
+begin
+  if not exists (select 1 from public.settings where id = 1) then
+    insert into public.products (id, cat, art, name, descr, price, old_price, fw, h, tag, is_new, sort) values
+      ('pd', 'mlo', 'ROX PD', 'مركز الشرطة — ROX PD', 'مركز كامل: استقبال، زنازين، غرفة تحقيق، مخزن سلاح وكراج.', 59.99, null, '["MLO","YMAP"]', 215, 'الأكثر مبيعًا', false, 1),
+      ('med', 'mlo', 'MEDICAL', 'مستشفى Central Medical', 'طوارئ، غرف عمليات، صيدلية ومهبط طيران على السطح.', 39.99, null, '["MLO","YMAP"]', 200, null, false, 2),
+      ('tuner', 'mlo', 'TUNER', 'ورشة Tuner Garage', 'ورشة تعديل برافعات، غرفة صبغ، ومعرض للسيارات.', 34.99, null, '["MLO"]', 232, 'جديد', true, 3),
+      ('hud', 'script', 'HUD', 'ROX HUD', 'واجهة لاعب نظيفة: صحة، درع، جوع، عدّاد سرعة وخريطة.', 24.99, null, '["ESX","QB","QBOX"]', 4, null, false, 4),
+      ('inv', 'script', 'INVENTORY', 'ROX Inventory', 'حقيبة بالسحب والإفلات، أوزان، متاجر، وصناديق سيارات.', 44.99, 59.99, '["ESX","QB","QBOX"]', 18, null, false, 5),
+      ('garage', 'script', 'GARAGE', 'ROX Garage', 'كراجات عامة وخاصة، حجز، ومفاتيح مشتركة بين اللاعبين.', 29.99, null, '["ESX","QB","QBOX"]', 350, null, false, 6),
+      ('bank', 'script', 'BANKING', 'ROX Banking', 'حسابات شخصية ومشتركة، فواتير، وسجل عمليات كامل.', 27.99, null, '["ESX","QB"]', 28, null, false, 7),
+      ('multichar', 'script', 'MULTICHAR', 'ROX Multichar', 'اختيار شخصيات سينمائي مع نقاط سباون وخانات قابلة للفتح.', 21.99, null, '["QB","QBOX"]', 338, 'جديد', true, 8),
+      ('dispatch', 'script', 'DISPATCH', 'ROX Dispatch', 'بلاغات للشرطة والإسعاف مع أكواد وتتبّع على الخريطة.', 34.99, null, '["ESX","QB","QBOX"]', 10, null, false, 9),
+      ('patrol', 'car', 'PATROL', 'باقة سيارات الدوريات', '8 سيارات شرطة بإضاءات ELS وهاندلنق مضبوط.', 34.99, null, '["ADDON","ELS"]', 38, null, false, 10),
+      ('drift', 'car', 'DRIFT', 'ROX Drift Pack', '6 سيارات دريفت بأصوات محركات وتعديلات كاملة.', 26.99, 33.99, '["ADDON"]', 50, null, false, 11),
+      ('eup', 'eup', 'EUP', 'باقة ملابس Police + EMS', 'زي رسمي كامل للشرطة والإسعاف، رجالي ونسائي.', 19.99, null, '["EUP"]', 160, null, false, 12),
+      ('bundle-starter', 'bundle', 'STARTER', 'باقة تشغيل ROX', 'سكربتات + مابات + سيارات في باقة وحدة متوافقة.', 149.99, 239.99, '["ESX","QB","QBOX"]', 4, 'وفّر 37%', false, 13)
+    on conflict (id) do nothing;
+  end if;
+end $seed$;
+
 insert into public.settings (id, data) values (1, jsonb_build_object(
-  'currency', '$', 'discord', '', 'checkout', '', 'liveServer', '', 'bundleEnds', '2026-12-31T23:59:59+03:00',
+  'currency', '$', 'discord', '', 'liveServer', '', 'bundleEnds', '2026-12-31T23:59:59+03:00',
   'maint', 0, 'mmsg', '', 'mdate', '', 'design', 'rox', 'announce', '', 'sarRate', 3.75,
   'bank', jsonb_build_object('bankName', '', 'holder', 'عبدالله فهد الشمري', 'iban', 'SA7680000469608016053450', 'account', '469000010006086053450')
 )) on conflict (id) do nothing;
@@ -217,21 +239,7 @@ insert into public.settings (id, data) values (1, jsonb_build_object(
 update public.settings set data = jsonb_set(data, '{bank,holder}', to_jsonb('عبدالله فهد الشمري'::text))
   where id = 1 and coalesce(data -> 'bank' ->> 'holder', '') = '';
 
-insert into public.products (id, cat, art, name, descr, price, old_price, fw, h, tag, is_new, sort) values
-  ('pd', 'mlo', 'ROX PD', 'مركز الشرطة — ROX PD', 'مركز كامل: استقبال، زنازين، غرفة تحقيق، مخزن سلاح وكراج.', 59.99, null, '["MLO","YMAP"]', 215, 'الأكثر مبيعًا', false, 1),
-  ('med', 'mlo', 'MEDICAL', 'مستشفى Central Medical', 'طوارئ، غرف عمليات، صيدلية ومهبط طيران على السطح.', 39.99, null, '["MLO","YMAP"]', 200, null, false, 2),
-  ('tuner', 'mlo', 'TUNER', 'ورشة Tuner Garage', 'ورشة تعديل برافعات، غرفة صبغ، ومعرض للسيارات.', 34.99, null, '["MLO"]', 232, 'جديد', true, 3),
-  ('hud', 'script', 'HUD', 'ROX HUD', 'واجهة لاعب نظيفة: صحة، درع، جوع، عدّاد سرعة وخريطة.', 24.99, null, '["ESX","QB","QBOX"]', 4, null, false, 4),
-  ('inv', 'script', 'INVENTORY', 'ROX Inventory', 'حقيبة بالسحب والإفلات، أوزان، متاجر، وصناديق سيارات.', 44.99, 59.99, '["ESX","QB","QBOX"]', 18, null, false, 5),
-  ('garage', 'script', 'GARAGE', 'ROX Garage', 'كراجات عامة وخاصة، حجز، ومفاتيح مشتركة بين اللاعبين.', 29.99, null, '["ESX","QB","QBOX"]', 350, null, false, 6),
-  ('bank', 'script', 'BANKING', 'ROX Banking', 'حسابات شخصية ومشتركة، فواتير، وسجل عمليات كامل.', 27.99, null, '["ESX","QB"]', 28, null, false, 7),
-  ('multichar', 'script', 'MULTICHAR', 'ROX Multichar', 'اختيار شخصيات سينمائي مع نقاط سباون وخانات قابلة للفتح.', 21.99, null, '["QB","QBOX"]', 338, 'جديد', true, 8),
-  ('dispatch', 'script', 'DISPATCH', 'ROX Dispatch', 'بلاغات للشرطة والإسعاف مع أكواد وتتبّع على الخريطة.', 34.99, null, '["ESX","QB","QBOX"]', 10, null, false, 9),
-  ('patrol', 'car', 'PATROL', 'باقة سيارات الدوريات', '8 سيارات شرطة بإضاءات ELS وهاندلنق مضبوط.', 34.99, null, '["ADDON","ELS"]', 38, null, false, 10),
-  ('drift', 'car', 'DRIFT', 'ROX Drift Pack', '6 سيارات دريفت بأصوات محركات وتعديلات كاملة.', 26.99, 33.99, '["ADDON"]', 50, null, false, 11),
-  ('eup', 'eup', 'EUP', 'باقة ملابس Police + EMS', 'زي رسمي كامل للشرطة والإسعاف، رجالي ونسائي.', 19.99, null, '["EUP"]', 160, null, false, 12),
-  ('bundle-starter', 'bundle', 'STARTER', 'باقة تشغيل ROX', 'سكربتات + مابات + سيارات في باقة وحدة متوافقة.', 149.99, 239.99, '["ESX","QB","QBOX"]', 4, 'وفّر 37%', false, 13)
-on conflict (id) do nothing;
+
 
 -- ============ الأدمن ============
 -- أقدم حساب في المشروع يصير أدمن (لو ما فيه أدمن من قبل). أنشئ حسابك أول واحد.
