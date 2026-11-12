@@ -174,6 +174,17 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
 .fq{padding:12px;border:1px solid var(--ln);background:var(--sf);margin-bottom:8px;border-radius:var(--rad)}.fq label{margin-bottom:8px}
 .sticky{position:sticky;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:3;background:var(--bg);padding:10px 0;border-top:1px solid var(--ln);margin-top:16px}
 @media(min-width:860px){.sticky{bottom:0}}
+/* صور المنتج */
+.img-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px;margin:10px 0 4px}
+.im{position:relative;aspect-ratio:1;border:1px solid var(--ln);background:#000;overflow:hidden;border-radius:var(--rad)}
+.im img{width:100%;height:100%;object-fit:cover;display:block}
+.im.cv{outline:2px solid var(--red)}.im.cv:before{content:"الغلاف";position:absolute;top:0;inset-inline-start:0;background:var(--red);color:#000;font-size:10px;font-weight:900;padding:0 6px;z-index:1}
+.im div{position:absolute;inset:auto 0 0;display:grid;grid-template-columns:1fr 1fr;background:#000c}
+.im button{padding:3px 0;font-size:11px;font-weight:700;color:#fff}.im button:hover{background:var(--red);color:#000}
+.imup{display:flex;align-items:center;justify-content:center;gap:8px;min-height:64px;padding:12px;border:2px dashed var(--ln);color:var(--mu);cursor:pointer;text-align:center;font-size:14px;margin:0;border-radius:var(--rad)}
+.imup:hover,.imup.drag{border-color:var(--red);color:var(--rt)}.imup input{position:absolute;opacity:0;width:1px;height:1px}
+.th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:none}.pt:hover .th img{transform:scale(1.06);transition:transform .5s}
+.th em{position:absolute;bottom:6px;inset-inline-end:6px;background:#000c;color:#fff;font:700 11px Tajawal;font-style:normal;padding:1px 7px;z-index:1}
 #eye,#dim{position:fixed;inset:0;z-index:60;pointer-events:none}#eye{background:#ff9d2e;mix-blend-mode:multiply;opacity:var(--eye)}#dim{background:#000;opacity:var(--dim)}
 
 :root[data-ds=soft]{--rad:18px}:root[data-ds=calm]{--rad:8px}
@@ -227,6 +238,13 @@ input[type=color]{height:44px;padding:2px;border:1px solid var(--ln)}
   <label>الوصف<textarea id="fd" rows="2" maxlength="140"></textarea></label>
   <div class="f2"><label>التوافق (افصل بفاصلة)<input id="fw" dir="ltr" placeholder="ESX, QB, QBOX"></label><label>الشارة (اختياري)<input id="fg" maxlength="16" placeholder="جديد"></label></div>
   <label>لون البطاقة<span class="hu"><input id="fhu" type="range" min="0" max="359"><i id="fsw"></i></span></label>
+  <div class="hh" style="margin-top:10px">صور المنتج <span id="imc"></span></div>
+  <div id="imBox">
+    <label class="imup" id="imDrop"><input id="imFile" type="file" accept="image/*" multiple><span>اسحب الصور هنا أو اضغط لاختيارها — حتى 80 صورة للمنتج</span></label>
+    <div class="img-g" id="imGrid"></div><p class="hint" style="margin:0">أول صورة هي الغلاف اللي يظهر على بطاقة المنتج. الصور تتصغّر تلقائيًا قبل الرفع عشان الموقع يبقى سريع.</p>
+  </div>
+  <p class="mn" id="imNo" hidden>رفع الصور يحتاج تحديث قاعدة البيانات: شغّل ملف rox-update-images.sql في SQL Editor مرة وحدة.</p>
+  <small class="er" id="imErr" role="alert"></small>
   <small class="er" id="fe" role="alert"></small>
   <button class="bt p" id="fs" type="button">حفظ المنتج</button><button class="bt" id="fc" type="button">إلغاء</button></div></div>
 <div class="ov" id="gs"><div class="fb"><h2>مولّد المنتجات</h2>
@@ -308,8 +326,10 @@ if (SBC.url && SBC.key) { try {
   sb = window.supabase.createClient(SBC.url, SBC.key); } catch (e) { console.error(e); } }
 let P = [], CFG = JSON.parse(JSON.stringify(CFG0)), DB = { orders: [], log: [] }, CUS = [], known = { p: new Set(), c: new Set() };
 const run = async (pr, msg) => { const { data, error } = await pr; if (error) { console.error(error); toast(msg || 'تعذّر الحفظ. تأكد من الاتصال.'); throw error; } return data; };
-const fromRow = r => { const p = { id: r.id, cat: r.cat, art: r.art, name: r.name, desc: r.descr, price: +r.price, fw: r.fw || [], h: r.h }; if (r.old_price) p.old = +r.old_price; if (r.tag) { p.tag = r.tag; p.isNew = !!r.is_new; } return p; };
-const toRow = (p, i) => ({ id: p.id, cat: p.cat, art: p.art, name: p.name, descr: p.desc, price: p.price, old_price: p.old || null, fw: p.fw || [], h: p.h, tag: p.tag || null, is_new: !!p.isNew, sort: i + 1, active: true });
+let hasImg = true;
+const imgUrl = x => sb.storage.from('products').getPublicUrl(x).data.publicUrl;
+const fromRow = r => { const p = { id: r.id, cat: r.cat, art: r.art, name: r.name, desc: r.descr, price: +r.price, fw: r.fw || [], h: r.h, images: Array.isArray(r.images) ? r.images : [] }; if (r.old_price) p.old = +r.old_price; if (r.tag) { p.tag = r.tag; p.isNew = !!r.is_new; } return p; };
+const toRow = (p, i) => { const r = { id: p.id, cat: p.cat, art: p.art, name: p.name, descr: p.desc, price: p.price, old_price: p.old || null, fw: p.fw || [], h: p.h, tag: p.tag || null, is_new: !!p.isNew, sort: i + 1, active: true }; if (hasImg) r.images = (p.images || []).slice(0, 80); return r; };
 const STN = ['pending', 'delivered', 'refunded'], stIdx = x => x == 'delivered' ? 1 : x == 'refunded' || x == 'rejected' ? 2 : 0;
 const fromOrder = o => ({ id: o.id, ref: o.ref, t: Date.parse(o.created_at), total: +o.total, st: stIdx(o.status), status: o.status, cu: o.cu || '', cfx: o.cfx || '', pay: o.pay, items: o.items || [], nt: o.note || '', uid: o.user_id, rp: o.receipt_path, rh: o.receipt_hash, chk: o.chk });
 async function loadAll() {
@@ -317,6 +337,7 @@ async function loadAll() {
     run(sb.from('products').select('*').order('sort')), run(sb.from('settings').select('data').eq('id', 1).maybeSingle()), run(sb.from('coupons').select('*').order('code')),
     run(sb.from('orders').select('*').order('created_at', { ascending: false }).limit(500)), run(sb.from('profiles').select('*').order('created_at', { ascending: false }).limit(1000)),
     run(sb.from('activity_log').select('*').order('at', { ascending: false }).limit(40))]);
+  hasImg = pr.length ? 'images' in pr[0] : !(await sb.from('products').select('images').limit(1)).error;
   P = pr.map(fromRow); known.p = new Set(P.map(p => p.id));
   CFG = Object.assign(JSON.parse(JSON.stringify(CFG0)), st ? st.data : {}); CFG.bank = Object.assign({}, CFG0.bank, Object.fromEntries(Object.entries(CFG.bank || {}).filter(([, v]) => v)));
   CFG.coupons = cp.map(c => ({ code: c.code, pct: c.pct, on: c.active })); known.c = new Set(cp.map(c => c.code));
@@ -382,22 +403,48 @@ function ord() { const c = [DB.orders.length, 0, 0, 0, DB.orders.filter(o => o.s
     <div class="qw">${ic('search', 's')}<input class="q" id="q" type="search" placeholder="ابحث بالاسم أو رقم الطلب أو المنتج" value="${esc(qs)}"></div><p class="hint">اضغط على ختم الحالة لنقل الطلب للمرحلة التالية، أو على الطلب نفسه لتعديله.</p><div id="ol">${ol()}</div>`; }
 
 /* ============ المنتجات ============ */
-function prd() { return P.map((p, i) => `<div class="pt"><div class="th" style="--h:${+p.h || 0}">${glyph(p.cat, +p.h || 0)}${p.tag ? `<u>${esc(p.tag)}</u>` : ''}</div><b>${esc(p.name)}</b><small>${catName(p.cat)}</small>
+function prd() { return P.map((p, i) => `<div class="pt"><div class="th" style="--h:${+p.h || 0}">${p.images && p.images[0] ? `<img src="${esc(imgUrl(p.images[0]))}" alt="" loading="lazy"><em>${p.images.length} صورة</em>` : glyph(p.cat, +p.h || 0)}${p.tag ? `<u>${esc(p.tag)}</u>` : ''}</div><b>${esc(p.name)}</b><small>${catName(p.cat)}</small>
     <span class="lat pp">${p.old ? `<s>${money(p.old)}</s>` : ''}${money(p.price)}</span><div class="ac"><button data-e="${i}">${ic('edit', 's')}تعديل</button><button data-x="${i}">${ic('trash', 's')}حذف</button></div></div>`).join('')
     + `<button class="pt nw" id="np" type="button">${ic('plus')}منتج جديد</button><button class="pt nw gen" id="gn" type="button">${ic('spark')}مولّد المنتجات<small>اكتب فكرة ويقترح لك منتج كامل</small></button>`; }
 $('ft').innerHTML = CATS.map(c => `<option value="${c[0]}">${c[1]}</option>`).join('');
 const hueSync = () => $('fsw').style.setProperty('--h', $('fhu').value);
 $('fhu').oninput = hueSync; $('ft').onchange = () => { if (!ed) { $('fhu').value = CATS.find(c => c[0] == $('ft').value)[2]; hueSync(); } };
-function fo(i, pre) { ed = i >= 0 ? P[i] : null; const q = ed || pre || { name:'', cat:'script', art:'', price:'', desc:'', fw:['ESX','QB','QBOX'], h:4 };
+let fid = '', fim = [], fnew = [], fdel = [], upBusy = false;
+function renderImgs() { $('imc').textContent = fim.length ? `(${fim.length} من 80)` : '';
+  $('imGrid').innerHTML = fim.map((x, i) => `<div class="im${i ? '' : ' cv'}"><img src="${esc(imgUrl(x))}" alt="" loading="lazy"><div><button type="button" data-ic="${i}"${i ? '' : ' disabled'}>غلاف</button><button type="button" data-ix="${i}">حذف</button></div></div>`).join(''); }
+/* تصغير الصورة قبل الرفع: أقصى ضلع 1600 بكسل بصيغة WebP */
+async function shrink(file) {
+  try { const bmp = await createImageBitmap(file), k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k)); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const w = await new Promise(r => c.toBlob(r, 'image/webp', .85)); if (w && w.type == 'image/webp') return [w, 'webp'];
+    const j = await new Promise(r => c.toBlob(r, 'image/jpeg', .88)); if (j) return [j, 'jpg'];
+  } catch (e) {}
+  const ext = { 'image/png':'png', 'image/jpeg':'jpg', 'image/webp':'webp' }[file.type]; return ext && file.size <= 5242880 ? [file, ext] : null;
+}
+async function addImgs(files) { if (upBusy) return; const room = 80 - fim.length, list = [...files].filter(f => /^image\//.test(f.type)).slice(0, Math.max(0, room)), err = $('imErr');
+  err.textContent = files.length > list.length ? (room <= 0 ? 'وصلت الحد: 80 صورة للمنتج.' : `انرفع ${list.length} فقط: الحد 80 صورة للمنتج، والملفات لازم تكون صور.`) : ''; if (!list.length) return;
+  upBusy = true; $('fs').disabled = true; let n = 0, bad = 0;
+  for (const f of list) { $('imc').textContent = `— جاري رفع ${++n} من ${list.length}…`; const r = await shrink(f); if (!r) { bad++; continue; }
+    const path = `${fid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.${r[1]}`;
+    const { error } = await sb.storage.from('products').upload(path, r[0], { contentType: r[0].type, cacheControl: '31536000' });
+    if (error) { console.error(error); bad++; continue; } fim.push(path); fnew.push(path); renderImgs(); }
+  upBusy = false; $('fs').disabled = false; $('imFile').value = ''; renderImgs(); if (bad) err.textContent = `تعذّر رفع ${bad} صورة. تأكد إنها صور سليمة وحاول مرة ثانية.`; }
+$('imFile').onchange = e => addImgs(e.target.files);
+['dragover', 'dragleave', 'drop'].forEach(ev => $('imDrop').addEventListener(ev, e => { e.preventDefault(); $('imDrop').classList.toggle('drag', ev == 'dragover'); if (ev == 'drop') addImgs(e.dataTransfer.files); }));
+$('imGrid').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.ic != null) fim.unshift(fim.splice(+b.dataset.ic, 1)[0]); else if (b.dataset.ix != null) fdel.push(fim.splice(+b.dataset.ix, 1)[0]); renderImgs(); };
+function shClose() { if (upBusy) return; if (fnew.length) { sb.storage.from('products').remove(fnew).then(() => {}); fnew = []; } $('sh').classList.remove('on'); }
+function fo(i, pre) { ed = i >= 0 ? P[i] : null; fid = ed ? ed.id : 'p' + Date.now().toString(36); fim = ed ? [...(ed.images || [])] : []; fnew = []; fdel = []; $('imBox').hidden = !hasImg; $('imNo').hidden = hasImg; $('imErr').textContent = ''; renderImgs(); const q = ed || pre || { name:'', cat:'script', art:'', price:'', desc:'', fw:['ESX','QB','QBOX'], h:4 };
   $('fh').textContent = ed ? 'تعديل المنتج' : 'منتج جديد'; $('fn').value = q.name; $('ft').value = q.cat; $('fa').value = q.art; $('fp').value = q.price; $('fo').value = q.old || '';
   $('fd').value = q.desc; $('fw').value = (q.fw || []).join(', '); $('fg').value = q.tag || ''; $('fhu').value = q.h; hueSync(); $('fe').textContent = ''; $('sh').classList.add('on'); $('fn').focus(); }
-$('fs').onclick = () => { const nm = clean($('fn').value), pr = +$('fp').value, od = +$('fo').value, art = clean($('fa').value).toUpperCase(), tag = clean($('fg').value);
+$('fs').onclick = () => { if (upBusy) return; const nm = clean($('fn').value), pr = +$('fp').value, od = +$('fo').value, art = clean($('fa').value).toUpperCase(), tag = clean($('fg').value);
   if (!nm || !art || !(pr > 0)) { $('fe').textContent = 'أدخل الاسم والكلمة على الصورة وسعرًا أكبر من صفر.'; return; }
-  const d = { cat: $('ft').value, art, name: nm, desc: clean($('fd').value) || 'أضف وصف المنتج.', price: pr, fw: $('fw').value.split(',').map(s => clean(s).toUpperCase()).filter(Boolean).slice(0, 4), h: +$('fhu').value };
+  const d = { cat: $('ft').value, art, name: nm, desc: clean($('fd').value) || 'أضف وصف المنتج.', price: pr, fw: $('fw').value.split(',').map(s => clean(s).toUpperCase()).filter(Boolean).slice(0, 4), h: +$('fhu').value, images: fim.slice(0, 80) };
   if (od > pr) d.old = od; if (tag) { d.tag = tag; d.isNew = tag === 'جديد'; }
-  if (ed) { ['old', 'tag', 'isNew'].forEach(k => delete ed[k]); Object.assign(ed, d); } else P.unshift(Object.assign({ id: 'p' + Date.now().toString(36) }, d));
-  saveP(); lg((ed ? 'تعديل منتج: ' : 'منتج جديد: ') + nm); $('sh').classList.remove('on'); tab(2, 1); toast('تم حفظ المنتج'); };
-$('fc').onclick = () => $('sh').classList.remove('on');
+  if (ed) { ['old', 'tag', 'isNew'].forEach(k => delete ed[k]); Object.assign(ed, d); } else P.unshift(Object.assign({ id: fid }, d));
+  const gone = fdel.filter(x => !fim.includes(x)); fnew = []; fdel = [];
+  saveP().then(() => { if (gone.length) sb.storage.from('products').remove(gone).then(() => {}); }); lg((ed ? 'تعديل منتج: ' : 'منتج جديد: ') + nm); $('sh').classList.remove('on'); tab(2, 1); toast('تم حفظ المنتج'); };
+$('fc').onclick = shClose;
 
 /* ============ مولّد المنتجات (قواعد محلية، بدون خدمة خارجية) ============ */
 const KW = [[/شرط|دوري|police/i,'Police','الشرطة','mlo',215],[/مستشف|اسعاف|إسعاف|طبي|ems|hospital|medic/i,'Medical','المستشفى','mlo',170],[/اطفا|إطفا|حريق|fire/i,'Fire Station','الإطفاء','mlo',14],
@@ -600,7 +647,7 @@ $('v').addEventListener('click', e => { const b = e.target.closest('button'); if
   else if (s.id) { o = oid(s.id); o.st = (o.st + 1) % 3; o.status = STN[o.st]; saveOrder(o); lg(`طلب #${o.id}: ${ST[o.st]}`); tab(at, 1); toast('الحالة الآن: ' + ST[o.st]); }
   else if (s.del != null) cf(b, () => { delOrder(s.del); lg('حذف طلب #' + s.del); tab(1, 1); toast('تم حذف الطلب'); });
   else if (s.e != null) fo(+s.e);
-  else if (s.x != null) cf(b, () => { lg('حذف منتج: ' + P[+s.x].name); P.splice(+s.x, 1); saveP(); tab(2, 1); toast('تم حذف المنتج'); });
+  else if (s.x != null) cf(b, () => { lg('حذف منتج: ' + P[+s.x].name); const im = P[+s.x].images || []; P.splice(+s.x, 1); saveP().then(() => { if (im.length) sb.storage.from('products').remove(im).then(() => {}); }); tab(2, 1); toast('تم حذف المنتج'); });
   else if (b.id == 'np') fo(-1);
   else if (b.id == 'gn') { $('gi').value = ''; $('gr').innerHTML = ''; $('gs').classList.add('on'); $('gi').focus(); }
   else if (b.id == 'ss') ss();
@@ -667,8 +714,8 @@ $('ob').addEventListener('click', e => { const b = e.target.closest('button'); i
   else if (s.rok || s.rno) { oe.status = s.rok ? 'delivered' : 'rejected'; oe.st = stIdx(oe.status); saveOrder(oe); lg(`طلب #${oe.id}: ${s.rok ? 'قبول الإيصال والتسليم' : 'رفض الإيصال'}`); $('os').classList.remove('on'); tab(at, 1); toast(s.rok ? 'تم قبول الطلب' : 'تم رفض الإيصال'); }
   else if (s.odl) cf(b, () => { delOrder(oe.id); $('os').classList.remove('on'); tab(at, 1); toast('تم حذف الطلب'); });
   else if (s.os) osv(); });
-document.querySelectorAll('.ov').forEach(o => o.onclick = e => { if (e.target === o) o.classList.remove('on'); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('gs').classList.remove('on'); $('sh').classList.remove('on'); $('os').classList.remove('on'); $('mp').hidden = true; } });
+document.querySelectorAll('.ov').forEach(o => o.onclick = e => { if (e.target === o) o.id == 'sh' ? shClose() : o.classList.remove('on'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('gs').classList.remove('on'); if ($('sh').classList.contains('on')) shClose(); $('os').classList.remove('on'); $('mp').hidden = true; } });
 
 /* ============ القفل ============ */
 $('vs').innerHTML = ic('ext', 's') + 'المتجر'; $('lo').innerHTML = ic('lock', 's') + 'خروج';

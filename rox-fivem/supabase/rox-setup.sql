@@ -22,6 +22,13 @@ create table if not exists public.products (
   price numeric(10,2) not null check (price >= 0), old_price numeric(10,2), fw jsonb not null default '[]',
   h int not null default 0, tag text, is_new boolean not null default false, sort int not null default 0, active boolean not null default true
 );
+-- صور المنتج: مسارات الملفات في مخزن products (حتى 80 صورة)
+alter table public.products add column if not exists images jsonb not null default '[]';
+do $c$ begin
+  if not exists (select 1 from pg_constraint where conname = 'products_images_max') then
+    alter table public.products add constraint products_images_max check (jsonb_typeof(images) = 'array' and jsonb_array_length(images) <= 80);
+  end if;
+end $c$;
 create table if not exists public.settings (
   id int primary key default 1 check (id = 1), data jsonb not null default '{}'
 );
@@ -259,6 +266,19 @@ create policy receipts_upload on storage.objects for insert to authenticated
 drop policy if exists receipts_read on storage.objects;
 create policy receipts_read on storage.objects for select to authenticated
   using (bucket_id = 'receipts' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+-- ============ صور المنتجات (عامة للقراءة، والرفع والحذف للأدمن فقط) ============
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('products', 'products', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update set public = true, file_size_limit = 5242880, allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp'];
+
+drop policy if exists product_images_read on storage.objects;
+create policy product_images_read on storage.objects for select using (bucket_id = 'products');
+drop policy if exists product_images_add on storage.objects;
+create policy product_images_add on storage.objects for insert to authenticated with check (bucket_id = 'products' and public.is_admin());
+drop policy if exists product_images_edit on storage.objects;
+create policy product_images_edit on storage.objects for update to authenticated using (bucket_id = 'products' and public.is_admin());
+drop policy if exists product_images_del on storage.objects;
+create policy product_images_del on storage.objects for delete to authenticated using (bucket_id = 'products' and public.is_admin());
 --#end
 
 select 'تم الإعداد. الأدمن: ' || coalesce((select string_agg(u.email, ', ') from public.admins a join auth.users u on u.id = a.user_id), 'ما فيه حساب بعد — أنشئ حسابك ثم شغّل الملف مرة ثانية') as result;
