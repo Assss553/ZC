@@ -149,3 +149,15 @@ Config.Gangs = {
     Jobs = { 'ballas', 'vagos', 'families', 'lostmc', 'marabunta', 'triads', 'cartel', 'gang' },
     RealtorCanSell = true, -- realtors can still create hideouts and send contracts (only gang members can sign)
 }
+
+-- OPEN HOUSE: real houses of the map that players walk into (no teleport).
+-- The realtor picks "Open House" in Create Property, draws the zone around the house and marks its doors.
+Config.OpenHouse = {
+    Enabled        = true,
+    StreamDistance = 70.0,  -- doors / removed doors / furniture are handled inside this distance
+    DoorDistance   = 1.7,   -- distance to lock / unlock a door with E
+    DefaultHeight  = 12.0,  -- zone height (metres), SCROLL changes it while drawing
+    Snap           = 0.25,  -- corner snapping grid (hold SHIFT for no snap)
+    MaxCorners     = 24,
+    MaxDoors       = 12,
+}

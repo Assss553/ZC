@@ -4,18 +4,30 @@ import sys, os, json, subprocess, shutil
 import houses
 from kit import MATS
 
+# usage: build.py <workdir> [street] [only...]
+SET = 'shells'
+if len(sys.argv) > 2 and sys.argv[2] == 'street':
+    SET = 'street'; del sys.argv[2]
+
 W = sys.argv[1]
 TEX = os.path.join(W, 'tex')
 XML = os.path.join(W, 'xml'); OUT = os.path.join(W, 'out'); PRE = os.path.join(W, 'preview')
 for d in (XML, OUT, PRE):
     os.makedirs(d, exist_ok=True)
 CW = ['dotnet', os.path.join(W, 'cwconv/bin/Release/net8.0/cwconv.dll')]
-TXD = 'rox_shells_txd'
+TXD = 'rox_shells_txd' if SET == 'shells' else 'rox_street_txd'
+TYP = 'rox_shells' if SET == 'shells' else 'rox_street'
 only = sys.argv[2:] or None
 
 index = json.load(open(os.path.join(TEX, 'textures.json')))
 shells, used = [], set()
-for fn in houses.ALL:
+if SET == 'street':
+    import street
+    makers = [(lambda p=p: p) for p in street.all_pieces()]
+    for m in makers: m.__name__ = m().name
+else:
+    makers = houses.ALL
+for fn in makers:
     if only and fn.__name__ not in only:
         continue
     s = fn()
@@ -46,13 +58,13 @@ if not only:
     L = ['<?xml version="1.0" encoding="UTF-8"?>', '<CMapTypes>', ' <extensions />', ' <archetypes>']
     for s in shells:
         st = s.stats
-        L += ['  <Item type="CBaseArchetypeDef">', '   <lodDist value="300" />', '   <flags value="32" />', '   <specialAttribute value="0" />',
+        L += ['  <Item type="CBaseArchetypeDef">', f'   <lodDist value="{s.lod}" />', '   <flags value="32" />', '   <specialAttribute value="0" />',
               f'   <bbMin x="{f(st["bbmin"][0])}" y="{f(st["bbmin"][1])}" z="{f(st["bbmin"][2])}" />', f'   <bbMax x="{f(st["bbmax"][0])}" y="{f(st["bbmax"][1])}" z="{f(st["bbmax"][2])}" />',
               f'   <bsCentre x="{f(st["center"][0])}" y="{f(st["center"][1])}" z="{f(st["center"][2])}" />', f'   <bsRadius value="{f(st["radius"])}" />',
-              '   <hdTextureDist value="100" />', f'   <name>{s.name}</name>', f'   <textureDictionary>{TXD}</textureDictionary>', '   <clipDictionary />',
+              f'   <hdTextureDist value="{min(s.lod, 150)}" />', f'   <name>{s.name}</name>', f'   <textureDictionary>{TXD}</textureDictionary>', '   <clipDictionary />',
               '   <drawableDictionary />', '   <physicsDictionary />', '   <assetType>ASSET_TYPE_DRAWABLE</assetType>', f'   <assetName>{s.name}</assetName>', '   <extensions />', '  </Item>']
-    L += [' </archetypes>', ' <name>rox_shells</name>', ' <dependencies />', ' <compositeEntityTypes />', '</CMapTypes>']
-    open(os.path.join(XML, 'rox_shells.ytyp.xml'), 'w').write('\n'.join(L) + '\n')
+    L += [' </archetypes>', f' <name>{TYP}</name>', ' <dependencies />', ' <compositeEntityTypes />', '</CMapTypes>']
+    open(os.path.join(XML, TYP + '.ytyp.xml'), 'w').write('\n'.join(L) + '\n')
 
 def conv(xml, out):
     r = subprocess.run(CW + ['import', os.path.join(XML, xml), os.path.join(OUT, out)], capture_output=True, text=True)
@@ -62,6 +74,6 @@ for s in shells:
     conv(s.name + '.ydr.xml', s.name + '.ydr')
 if not only:
     conv(TXD + '.ytd.xml', TXD + '.ytd')
-    conv('rox_shells.ytyp.xml', 'rox_shells.ytyp')
+    conv(TYP + '.ytyp.xml', TYP + '.ytyp')
     json.dump([dict(name=s.name, label=s.label, labelAr=s.label_ar, entry=s.entry, rooms=len(s.rooms), stats=s.stats) for s in shells],
-              open(os.path.join(W, 'shells.json'), 'w'), indent=1, ensure_ascii=False)
+              open(os.path.join(W, SET + '.json'), 'w'), indent=1, ensure_ascii=False)

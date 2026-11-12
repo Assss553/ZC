@@ -159,6 +159,27 @@ RegisterNUICallback('pickLocation', function(data, cb)
     end)
 end)
 
+-- Open House: draw the property zone + doors
+RegisterNUICallback('pickZone', function(data, cb)
+    cb(1)
+    CreateThread(function()
+        SendNUIMessage({ action = 'hide' })
+        SetNuiFocus(false, false)
+        stopTabletAnim()
+        local existing
+        if data and data.id then
+            local p = FindProperty(tonumber(data.id))
+            existing = p and p.zone
+        elseif data and data.zone then
+            existing = data.zone
+        end
+        local zone, loc, street = PickZone(existing)
+        startTabletAnim()
+        SendNUIMessage({ action = 'zonePicked', zone = zone, location = loc, street = street })
+        updateFocus()
+    end)
+end)
+
 RegisterNUICallback('waypoint', function(data, cb)
     cb(1)
     if data.x and data.y then

@@ -61,6 +61,35 @@ function ParsePoint(t)
     return d
 end
 
+-- Open House zone sent by the realtor's client: validate every number
+function ParseZone(z)
+    if type(z) ~= 'table' or type(z.points) ~= 'table' then return nil end
+    local C = Config.OpenHouse
+    if #z.points < 3 or #z.points > C.MaxCorners then return nil end
+    local out = { points = {}, doors = {}, removed = {} }
+    for _, p in ipairs(z.points) do
+        local x, y = tonumber(p.x), tonumber(p.y)
+        if not (x and y) then return nil end
+        out.points[#out.points + 1] = { x = x, y = y }
+    end
+    out.minZ, out.maxZ = tonumber(z.minZ), tonumber(z.maxZ)
+    if not (out.minZ and out.maxZ) or out.maxZ <= out.minZ or out.maxZ - out.minZ > 80 then return nil end
+    out.entry = ParsePoint(z.entry)
+    if not out.entry then return nil end
+    for key, withMain in pairs({ doors = true, removed = false }) do
+        if type(z[key]) == 'table' then
+            for i, d in ipairs(z[key]) do
+                if i > C.MaxDoors then break end
+                local model, x, y, zz = tonumber(d.model), tonumber(d.x), tonumber(d.y), tonumber(d.z)
+                if not (model and x and y and zz) then return nil end
+                if #(vector3(x, y, zz) - vector3(out.entry.x, out.entry.y, out.entry.z)) > 80.0 then return nil end
+                out[key][#out[key] + 1] = { model = math.floor(model), x = x, y = y, z = zz, main = withMain and d.main == true or nil }
+            end
+        end
+    end
+    return out
+end
+
 function IsRealtor(src)
     if IsPlayerAceAllowed(src, Config.Realtor.AcePermission) then return true, 99 end
     local job, grade = Bridge.GetJob(src)
@@ -135,6 +164,8 @@ local function propForClient(prop, src, identifier, realtor)
         hasDecor = DecorCategory(prop.interior) or false,
         decor = DecorStyleFor(prop.interior, prop.options and prop.options.decor),
         gangOnly = Interiors[prop.interior] and Interiors[prop.interior].gangOnly or false,
+        open = Interiors[prop.interior] and Interiors[prop.interior].open or false,
+        zone = Interiors[prop.interior] and Interiors[prop.interior].open and prop.options and prop.options.zone or nil,
     }
 end
 
@@ -287,6 +318,14 @@ RegisterCallback('createProperty', function(src, data)
         if not inside then return false, L('invalid_data') end
     end
 
+    local zone = nil
+    if Interiors[interior].open then
+        if not Config.OpenHouse.Enabled then return false, L('invalid_data') end
+        zone = ParseZone(data.zone)
+        if not zone then return false, L('invalid_data') end
+        door = { x = zone.entry.x, y = zone.entry.y, z = zone.entry.z, h = zone.entry.h }
+    end
+
     local buyerSrc = tonumber(data.buyerId)
     if buyerSrc and buyerSrc > 0 then
         if not GetPlayerName(buyerSrc) or not Bridge.GetIdentifier(buyerSrc) then return false, L('target_offline') end
@@ -299,10 +338,11 @@ RegisterCallback('createProperty', function(src, data)
         price = price, rent_price = rentPrice, rent_days = rentDays, status = 'available',
         realtor = Bridge.GetIdentifier(src), realtor_name = Bridge.GetName(src), door = door,
         street = sanitizeText(data.street, 120), locked = true, keyholders = {}, overdue = 0, created_at = now(),
-        inside = inside,
+        inside = inside, options = zone and { zone = zone } or {},
     }
     prop.id = DB.InsertProperty(prop)
     Properties[prop.id] = prop
+    if zone then DB.SaveProperty(prop) end
     Bridge.Notify(src, LP(src, 'property_created', prop.id), 'success')
 
     if buyerSrc then
@@ -466,7 +506,12 @@ end
 
 RegisterCallback('toggleLock', function(src, id)
     local prop = GetProp(id)
-    if not prop or not GetAccess(src, prop) then return false, L('no_access') end
+    if not prop then return false, L('no_access') end
+    local isOpen = Interiors[prop.interior] and Interiors[prop.interior].open
+    -- open houses without an owner: the realtor opens / closes them for viewings
+    local realtorKey = isOpen and not prop.owner and HasApp(src, 'create')
+    if not GetAccess(src, prop) and not realtorKey then return false, L('no_access') end
+    if isOpen and #(playerCoords(src) - doorVec(prop)) > Config.OpenHouse.StreamDistance + 20.0 then return false, L('too_far_door') end
     prop.locked = not prop.locked
     DB.SaveProperty(prop)
     Bridge.Notify(src, prop.locked and L('door_locked') or L('door_unlocked'), 'info')
@@ -576,7 +621,8 @@ RegisterCallback('updateProperty', function(src, id, data)
     if data.rentPrice then prop.rent_price = clampInt(data.rentPrice, 0, Config.MaxPrice) or prop.rent_price end
     if data.rentDays then prop.rent_days = clampInt(data.rentDays, 1, 60) or prop.rent_days end
     if not prop.owner and (data.ptype == 'sale' or data.ptype == 'rent') then prop.ptype = data.ptype end
-    if data.interior and Interiors[data.interior] and not prop.owner then prop.interior = data.interior end
+    local wasOpen = Interiors[prop.interior] and Interiors[prop.interior].open
+    if data.interior and Interiors[data.interior] and not prop.owner and not wasOpen and not Interiors[data.interior].open then prop.interior = data.interior end
     if data.image ~= nil then prop.image = sanitizeImage(data.image) end
     DB.SaveProperty(prop)
     Bridge.Notify(src, LP(src, 'property_updated'), 'success')
@@ -607,6 +653,24 @@ RegisterCallback('setInside', function(src, id, inside)
     if not prop or not d then return false, L('invalid_data') end
     if #(playerCoords(src) - vector3(d.x, d.y, d.z)) > Config.Realtor.MaxDoorDistance then return false, L('too_far_door') end
     prop.inside = d
+    DB.SaveProperty(prop)
+    Bridge.Notify(src, LP(src, 'property_updated'), 'success')
+    SyncAll()
+    return true
+end)
+
+-- Open House: redraw the zone / doors of an existing property
+RegisterCallback('setZone', function(src, id, zone, street)
+    if not HasApp(src, 'manage') then return false, L('not_realtor') end
+    local prop = GetProp(id)
+    if not prop or not (Interiors[prop.interior] and Interiors[prop.interior].open) then return false, L('open_only') end
+    local z = ParseZone(zone)
+    if not z then return false, L('invalid_data') end
+    if #(playerCoords(src) - vector3(z.entry.x, z.entry.y, z.entry.z)) > Config.OpenHouse.StreamDistance + 20.0 then return false, L('too_far_door') end
+    prop.options = prop.options or {}
+    prop.options.zone = z
+    prop.door = { x = z.entry.x, y = z.entry.y, z = z.entry.z, h = z.entry.h }
+    prop.street = sanitizeText(street, 120) or prop.street
     DB.SaveProperty(prop)
     Bridge.Notify(src, LP(src, 'property_updated'), 'success')
     SyncAll()
@@ -658,9 +722,45 @@ end)
 ---------------------------------------------------------------------
 -- Enter / exit (each property = its own routing bucket)
 ---------------------------------------------------------------------
+-- Open House: the client is close to the house (no bucket, no teleport)
+RegisterCallback('openNear', function(src, id)
+    local prop = GetProp(id)
+    if not prop or not (Interiors[prop.interior] and Interiors[prop.interior].open) then return false end
+    if #(playerCoords(src) - doorVec(prop)) > Config.OpenHouse.StreamDistance + 30.0 then return false, L('too_far_door') end
+    if Inside[src] and Inside[src] ~= prop.id then
+        local other = GetProp(Inside[src])
+        if other and not (Interiors[other.interior] and Interiors[other.interior].open) then return false end
+    end
+    Inside[src] = prop.id
+    return true, {
+        id = prop.id, access = GetAccess(src, prop) ~= nil, canLock = HasApp(src, 'create'),
+        furniture = GetPlacedFurniture(prop.id),
+    }
+end)
+
+RegisterCallback('openLeave', function(src, id)
+    local cur = GetProp(Inside[src])
+    if cur and Interiors[cur.interior] and Interiors[cur.interior].open and (not id or cur.id == tonumber(id)) then Inside[src] = nil end
+    return true
+end)
+
+local lastKnock = {}
+RegisterCallback('openKnock', function(src, id)
+    local prop = GetProp(id)
+    if not prop or Inside[src] ~= prop.id then return false end
+    if lastKnock[src] and os.time() - lastKnock[src] < 5 then return false end
+    lastKnock[src] = os.time()
+    for s, pid in pairs(Inside) do
+        if pid == prop.id and s ~= src and GetAccess(s, prop) then Bridge.Notify(s, LP(s, 'knock', prop.label), 'info') end
+    end
+    Bridge.Notify(src, LP(src, 'knocked'), 'info')
+    return true
+end)
+
 RegisterCallback('enter', function(src, id)
     local prop = GetProp(id)
     if not prop then return false end
+    if Interiors[prop.interior] and Interiors[prop.interior].open then return false end
     if #(playerCoords(src) - doorVec(prop)) > 6.0 then return false, L('too_far_door') end
 
     local access = GetAccess(src, prop)
@@ -700,7 +800,7 @@ RegisterCallback('exit', function(src)
     Inside[src] = nil
     SetPlayerRoutingBucket(src, 0)
     local prop = GetProp(id)
-    if not prop then return true, nil end
+    if not prop or (Interiors[prop.interior] and Interiors[prop.interior].open) then return true, nil end
     return true, prop.door
 end)
 
@@ -711,7 +811,8 @@ AddEventHandler('playerDropped', function()
         local prop = GetProp(id)
         local ped = GetPlayerPed(src)
         -- put the ped back at the door so the framework saves a valid position
-        if prop and ped and ped ~= 0 then SetEntityCoords(ped, prop.door.x, prop.door.y, prop.door.z, false, false, false, false) end
+        local isOpen = prop and Interiors[prop.interior] and Interiors[prop.interior].open
+        if prop and not isOpen and ped and ped ~= 0 then SetEntityCoords(ped, prop.door.x, prop.door.y, prop.door.z, false, false, false, false) end
         Inside[src] = nil
     end
 end)
@@ -719,5 +820,8 @@ end)
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     -- clients teleport themselves back to the door in their own onResourceStop
-    for s in pairs(Inside) do SetPlayerRoutingBucket(s, 0) end
+    for s, pid in pairs(Inside) do
+        local prop = GetProp(pid)
+        if not (prop and Interiors[prop.interior] and Interiors[prop.interior].open) then SetPlayerRoutingBucket(s, 0) end
+    end
 end)

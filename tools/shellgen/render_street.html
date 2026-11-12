@@ -1,0 +1,51 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#9cc4ea;overflow:hidden}</style></head><body>
+<script src="three.min.js"></script>
+<script>
+// Preview renderer for the ROX street district: all pieces in one scene, sun + sky  (c) ROX Store
+const Q = new URLSearchParams(location.search);
+const NAMES = Q.get('names').split(','), WPX = +(Q.get('w') || 1600), HPX = +(Q.get('h') || 900);
+const CAM = (Q.get('cam') || '0,-60,40,0,0,0').split(',').map(Number), FOV = +(Q.get('fov') || 55);
+(async () => {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(WPX, HPX); renderer.setPixelRatio(1); document.body.appendChild(renderer.domElement);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  const cv = document.createElement('canvas'); cv.width = 4; cv.height = 256; const g2 = cv.getContext('2d');
+  const gr = g2.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#4f8fd6'); gr.addColorStop(0.55, '#a9cdee'); gr.addColorStop(1, '#e6eef2'); g2.fillStyle = gr; g2.fillRect(0, 0, 4, 256);
+  scene.background = new THREE.CanvasTexture(cv); scene.background.colorSpace = THREE.SRGBColorSpace;
+  scene.fog = new THREE.Fog(0xcfdde8, 120, 420);
+  const loader = new THREE.TextureLoader(); const cache = {};
+  const tex = (n, srgb) => new Promise((res) => { if (cache[n]) return res(cache[n]); loader.load(`tex/png/${n}.png`, (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.flipY = false; t.anisotropy = 16; if (srgb) t.colorSpace = THREE.SRGBColorSpace; cache[n] = t; res(t); }, undefined, () => res(null)); });
+  for (const NAME of NAMES) {
+    const data = await (await fetch(`preview/${NAME}.json`)).json();
+    for (const m of data.meshes) {
+      const g = new THREE.BufferGeometry();
+      const P = new Float32Array(m.P.length), N = new Float32Array(m.N.length);
+      for (let i = 0; i < m.P.length; i += 3) { P[i] = m.P[i]; P[i + 1] = m.P[i + 2]; P[i + 2] = -m.P[i + 1]; N[i] = m.N[i]; N[i + 1] = m.N[i + 2]; N[i + 2] = -m.N[i + 1]; }
+      const C = new Float32Array(m.C.length * 3); m.C.forEach((c, i) => { const v = Math.pow(c, 1.4); C[i * 3] = C[i * 3 + 1] = C[i * 3 + 2] = v; });
+      g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+      g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(m.UV), 2)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
+      g.setIndex(m.I);
+      const map = await tex(m.tex, true);
+      let mat;
+      if (m.sh === 'e') mat = new THREE.MeshBasicMaterial({ map });
+      else {
+        const nm = (m.sh === 'ns' || m.sh === 'n') ? await tex(m.tex + '_n', false) : null;
+        const glass = m.mat === 'window_dark' || m.mat === 'black_glass';
+        mat = new THREE.MeshStandardMaterial({ map, normalMap: nm, vertexColors: true, roughness: glass ? 0.12 : Math.max(0.3, 0.95 - m.spec * 0.65), metalness: (m.mat === 'steel' || glass) ? 0.7 : 0.0 });
+        if (glass) { mat.envMap = scene.background; mat.envMapIntensity = 1.2; }
+        if (nm) mat.normalScale = new THREE.Vector2(1, -1);
+      }
+      const mesh = new THREE.Mesh(g, mat); mesh.castShadow = m.sh !== 'e'; mesh.receiveShadow = true; scene.add(mesh);
+    }
+  }
+  scene.background.mapping = THREE.EquirectangularReflectionMapping;
+  scene.add(new THREE.HemisphereLight(0xcfe2ff, 0x8a8478, 0.9));
+  const sun = new THREE.DirectionalLight(0xfff0d8, 2.2); sun.position.set(-70, 120, 90); sun.target.position.set(0, 0, 0); scene.add(sun.target);
+  sun.castShadow = true; sun.shadow.mapSize.set(8192, 8192); const sc = sun.shadow.camera; sc.left = -130; sc.right = 130; sc.top = 110; sc.bottom = -110; sc.near = 1; sc.far = 400; sun.shadow.bias = -0.0008; sun.shadow.normalBias = 0.08; scene.add(sun);
+  const cam = new THREE.PerspectiveCamera(FOV, WPX / HPX, 0.1, 900);
+  cam.position.set(CAM[0], CAM[2], -CAM[1]); cam.lookAt(CAM[3], CAM[5], -CAM[4]);
+  renderer.render(scene, cam); window.__done = true;
+})();
+</script></body></html>

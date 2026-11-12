@@ -43,6 +43,34 @@ MATS = {
     'cardboard':     dict(tex='rox_cardboard', sh='n', tile=1.4, spec=0.02, col=86),
     'countertop':    dict(tex='rox_countertop', sh='s', tile=0.8, spec=0.9, fall=140, col=14),
     'appliance':     dict(tex='rox_appliance_white', sh='s', tile=1.0, spec=0.7, fall=100, col=56),
+    'brick_red':     dict(tex='rox_brick_red', sh='n', tile=1.5, spec=0.05, col=13),
+    'brick_dark':    dict(tex='rox_brick_dark', sh='n', tile=1.5, spec=0.05, col=13),
+    'brick_white':   dict(tex='rox_brick_white', sh='n', tile=1.5, spec=0.05, col=13),
+    'asphalt':       dict(tex='rox_asphalt', sh='ns', tile=6.0, spec=0.25, fall=40, col=4),
+    'pavement':      dict(tex='rox_pavement', sh='n', tile=2.4, spec=0.05, col=1),
+    'grass':         dict(tex='rox_grass', sh='n', tile=4.0, spec=0.01, col=46),
+    'stone':         dict(tex='rox_stone', sh='n', tile=2.4, spec=0.08, col=11),
+    'roof':          dict(tex='rox_roof', sh='n', tile=3.0, spec=0.02, col=1),
+    'paint_yellow':  dict(tex='rox_paint_yellow', sh='n', tile=3.0, spec=0.1, col=4),
+    'paint_line':    dict(tex='rox_paint_line', sh='n', tile=3.0, spec=0.1, col=4),
+    'awning_green':  dict(tex='rox_awning_green', sh='n', tile=1.2, spec=0.02, col=97),
+    'awning_red':    dict(tex='rox_awning_red', sh='n', tile=1.2, spec=0.02, col=97),
+    'sign_garage':   dict(tex='rox_sign_garage', sh='e', tile=1.0, emis=3.0, col=56),
+    'sign_store':    dict(tex='rox_sign_store', sh='e', tile=1.0, emis=2.5, col=56),
+    'sign_market':   dict(tex='rox_sign_market', sh='e', tile=1.0, emis=2.5, col=56),
+    'sign_cafe':     dict(tex='rox_sign_cafe', sh='e', tile=1.0, emis=2.5, col=56),
+    'sign_hotel':    dict(tex='rox_sign_hotel', sh='e', tile=1.0, emis=3.5, col=56),
+    'sign_parking':  dict(tex='rox_sign_parking', sh='e', tile=1.0, emis=2.0, col=56),
+    'shop_market':   dict(tex='rox_shop_market', sh='s', tile=1.0, spec=1.0, fall=200, col=114),
+    'shop_fashion':  dict(tex='rox_shop_fashion', sh='s', tile=1.0, spec=1.0, fall=200, col=114),
+    'shop_cafe':     dict(tex='rox_shop_cafe', sh='s', tile=1.0, spec=1.0, fall=200, col=114),
+    'hedge':         dict(tex='rox_hedge', sh='n', tile=1.2, spec=0.02, col=46),
+    'billboard':     dict(tex='rox_billboard', sh='d', tile=1.0, spec=0.05, col=56),
+    'manhole':       dict(tex='rox_manhole', sh='n', tile=1.0, spec=0.3, col=56),
+    'paint_green':   dict(tex='rox_paint_green', sh='n', tile=2.0, spec=0.2, col=56),
+    'paint_red':     dict(tex='rox_paint_red', sh='n', tile=2.0, spec=0.2, col=56),
+    'paint_ochre':   dict(tex='rox_paint_ochre', sh='n', tile=2.0, spec=0.06, col=13),
+    'rooftile':      dict(tex='rox_rooftile', sh='n', tile=2.0, spec=0.05, col=13),
     'black_glass':   dict(tex='rox_black_glass', sh='s', tile=1.0, spec=1.0, fall=220, col=114),
 }
 
@@ -79,6 +107,9 @@ class Shell:
         s.holes = {}        # (room, side) -> list of (a0,z0,a1,z1,kind)
         s.entry = (0, 0, 1.0, 0.0)
         s.script_lights = []
+        s.txd = 'rox_shells_txd'
+        s.lod = 300
+        s.ctris = []        # extra collision triangles (p0, p1, p2, colmat) for slopes
 
     # ------------------------------------------------------------ low level
     def _bucket(s, mat, tag=''):
@@ -138,6 +169,15 @@ class Shell:
             s.cboxes.append((x0, y0, z0, x1, y1, z1, MATS[mat]['col'] if col is True else col))
         if occ:
             s.occ.append((x0, y0, z0, x1, y1, z1))
+
+    def quad(s, mat, O, U, V, w, h, col=None, step=0, fit=False, tag=''):
+        """Free rectangle (any orientation) with optional two-sided collision."""
+        O, U, V = np.asarray(O, float), np.asarray(U, float), np.asarray(V, float)
+        U = U / np.linalg.norm(U); V = V / np.linalg.norm(V)
+        s.surf(mat, O, U, V, w, h, step=step, fit=fit, tag=tag)
+        if col is not None:
+            a, b_, c, d = O, O + U * w, O + U * w + V * h, O + V * h
+            s.ctris += [(a, b_, c, col), (a, c, d, col)]
 
     def obox(s, mat, cx, cy, z0, lx, ly, h, yaw, tag='', fit=False):
         """Box rotated around Z (yaw in degrees), centred at cx,cy."""
@@ -677,7 +717,7 @@ class Shell:
 
     def _bounds_xml(s, f):
         boxes = s.cboxes
-        cols = sorted({b[6] for b in boxes})
+        cols = sorted({b[6] for b in boxes} | {t[3] for t in s.ctris})
         V, T = [], []
         for b in boxes:
             x0, y0, z0, x1, y1, z1, cm = b
@@ -686,6 +726,8 @@ class Shell:
             m = cols.index(cm)
             for (a, b_, c) in ((0, 2, 1), (0, 3, 2), (4, 5, 6), (4, 6, 7), (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7)):
                 T.append((m, o + a, o + b_, o + c))
+        for (p0, p1, p2, cm) in s.ctris:
+            o = len(V); V += [tuple(p0), tuple(p1), tuple(p2)]; T.append((cols.index(cm), o, o + 1, o + 2))
         Va = np.array(V); mn, mx = Va.min(0), Va.max(0); ctr = (mn + mx) / 2; rad = float(np.linalg.norm(mx - ctr))
         v3 = lambda n, p: f'<{n} x="{f(p[0])}" y="{f(p[1])}" z="{f(p[2])}" />'
         def common(ind, margin, utype):

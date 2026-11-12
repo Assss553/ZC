@@ -236,12 +236,19 @@ Interiors.custom = {
     tier = 'mid', rooms = 1, image = 'img/houses/custom.jpg', custom = true, order = -1,
 }
 
+-- Open House: a real house of the map. No teleport: the realtor draws the zone and marks the doors.
+Interiors.open = {
+    label = 'Open House', labelAr = 'المنزل المفتوح',
+    tier = 'mid', rooms = 1, image = 'img/houses/open_house.png', open = true, order = -5,
+}
+
 -- Where the player appears inside a property.
 -- Returns spawn (vec4, ped position), shellPos (vector3, shells only) and autoEntry (true when the
 -- shell has no saved entry offset yet: the client then finds the floor in the middle of the shell).
 function GetInteriorSpawn(interiorKey, door, inside)
     local i = Interiors[interiorKey]
     if not i or not door then return nil end
+    if i.open then return vec4(door.x + 0.0, door.y + 0.0, door.z + 0.0, (door.h or 0.0) + 0.0), nil, false end
     if i.custom then
         if not inside then return nil end
         return vec4(inside.x + 0.0, inside.y + 0.0, inside.z + 0.0, (inside.h or 0.0) + 0.0), nil, false
@@ -261,7 +268,7 @@ function InteriorsForUI()
     for key, v in pairs(Interiors) do
         list[#list + 1] = {
             key = key, label = v.label, labelAr = v.labelAr, tier = v.tier,
-            rooms = v.rooms, image = v.image, shell = v.shell, custom = v.custom or false,
+            rooms = v.rooms, image = v.image, shell = v.shell, custom = v.custom or false, open = v.open or false,
             auto = v.auto or false, decor = (v.decor == true and 'warehouse') or v.decor or false, gangOnly = v.gangOnly or false, uploaded = v.uploaded or false, needsEntry = v.shell ~= nil and v.offset == nil, order = v.order or (v.auto and 1 or 0),
         }
     end

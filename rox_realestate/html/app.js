@@ -97,7 +97,7 @@ loadSettings();
 if (S.settings.lang && IS_GAME) post('setLang', { lang: S.settings.lang });
 
 const resetCreate = () => {
-    S.create = { step: 1, interior: null, label: '', ptype: 'sale', price: '', rentPrice: '', rentDays: (S.st && S.st.rentDays) || 7, buyerId: '', image: '', door: null, street: '', inside: null };
+    S.create = { step: 1, interior: null, label: '', ptype: 'sale', price: '', rentPrice: '', rentDays: (S.st && S.st.rentDays) || 7, buyerId: '', image: '', door: null, street: '', inside: null, zone: null };
 };
 
 /* ------------------------------------------------------------------ helpers */
@@ -518,10 +518,10 @@ Views.create = () => {
             <div class="grow" style="flex:1"></div><button class="btn ghost" data-act="rescan" style="height:34px">${icon('search')}${t('rescan')}</button></div>
             <div class="igrid">${list.map((i) => {
             const off = i.available === false;
-            const tags = [i.gangOnly ? `<span class="chip gang-chip">GANG</span>` : i.decor ? `<span class="chip rox-chip">ROX</span>` : '', i.custom ? `<span class="chip blue">MLO</span>` : '', i.uploaded ? `<span class="chip upload-chip">UPLOAD</span>` : i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
+            const tags = [i.gangOnly ? `<span class="chip gang-chip">GANG</span>` : i.decor ? `<span class="chip rox-chip">ROX</span>` : '', i.custom ? `<span class="chip blue">MLO</span>` : '', i.open ? `<span class="chip green">OPEN</span>` : '', i.uploaded ? `<span class="chip upload-chip">UPLOAD</span>` : i.shell ? `<span class="chip shell-chip">${i.auto ? t('detected') : 'SHELL'}</span>` : ''].join('');
             return `<div class="card icard ${c.interior === i.key ? 'on' : ''} ${off ? 'off' : ''}" ${off ? '' : `data-act="pickinterior" data-key="${i.key}"`}>
             <div ${bgImage(i.image, i.tier)}><span class="chip orange">${t('tier_' + i.tier)}</span>${tags}</div>
-            <div class="ib"><b>${esc(interiorName(i))}</b><small>${off ? `<span style="color:var(--red)">${t('not_installed')}</span>` : i.needsEntry ? t('auto_entry_short') : i.custom ? t('custom_hint') : t('rooms', i.rooms)}</small></div></div>`;
+            <div class="ib"><b>${esc(interiorName(i))}</b><small>${off ? `<span style="color:var(--red)">${t('not_installed')}</span>` : i.needsEntry ? t('auto_entry_short') : i.custom ? t('custom_hint') : i.open ? t('open_hint') : t('rooms', i.rooms)}</small></div></div>`;
         }).join('') || `<div class="empty">${icon('building')}${t('empty_list')}</div>`}</div>`;
     } else if (c.step === 2) {
         body = `<div class="form">
@@ -540,7 +540,16 @@ Views.create = () => {
             <div class="card locinfo"><div class="section-title">${t('inside_point')}</div>
                 ${c.inside ? `<div class="coords">x ${c.inside.x.toFixed(2)} · y ${c.inside.y.toFixed(2)} · z ${c.inside.z.toFixed(2)} · h ${c.inside.h.toFixed(0)}°</div><span class="chip green" style="align-self:flex-start">${icon('check')} OK</span>`
                 : `<div class="empty" style="padding:10px">${icon('door_open')}${t('aim_none')}</div>`}</div></div>` : '';
-        body = `<div class="locbox">
+        const z = c.zone;
+        if (ci && ci.open) body = `<div class="locbox">
+            <div class="aim" data-act="aimzone"><div class="aim-ic">${icon('crosshair')}</div><b>${z ? t('aim_repick') : t('zone_title')}</b><p>${t('zone_desc')}</p>
+                <div class="keys-help"><kbd>CLICK</kbd>${t('zk_corner')} <kbd>E</kbd>${t('zk_entry')} <kbd>G</kbd>${t('zk_main')} <kbd>H</kbd>${t('zk_inner')} <kbd>X</kbd>${t('zk_remove')} <kbd>ENTER</kbd>${t('k_confirm')}</div></div>
+            <div class="card locinfo"><div class="section-title">${t('zone_info')}</div>
+                ${z ? `<b style="font-size:16px">${esc(c.street || '')}</b>
+                    <div class="coords">${t('zone_stats', z.points.length, (z.maxZ - z.minZ).toFixed(1), (z.doors || []).filter((d) => d.main).length, (z.doors || []).filter((d) => !d.main).length, (z.removed || []).length)}</div>
+                    <span class="chip green" style="align-self:flex-start">${icon('check')} OK</span>`
+                : `<div class="empty" style="padding:10px">${icon('door')}${t('zone_none')}</div>`}</div></div>`;
+        else body = `<div class="locbox">
             <div class="aim" data-act="aim"><div class="aim-ic">${icon('crosshair')}</div><b>${c.door ? t('aim_repick') : t('aim_title')}</b><p>${t('aim_desc')}</p>
                 <div class="keys-help"><kbd>E</kbd>${t('k_confirm')} <kbd>⌫</kbd>${t('k_cancel')}</div></div>
             <div class="card locinfo"><div class="section-title">${t('location')}</div>
@@ -567,6 +576,7 @@ function validateStep() {
         if (c.ptype === 'sale' && !(Number(c.price) > 0)) return t('err_price');
         if (c.ptype === 'rent' && !(Number(c.rentPrice) > 0)) return t('err_price');
     }
+    if (c.step === 3 && interiorOf(c.interior) && interiorOf(c.interior).open) return c.zone ? null : t('err_zone');
     if (c.step === 3 && !c.door) return t('err_location');
     if (c.step === 3 && interiorOf(c.interior) && interiorOf(c.interior).custom && !c.inside) return t('err_inside');
     return null;
@@ -618,7 +628,7 @@ Views.mdetail = () => {
                     ${p.status === 'rented' ? `<div class="stat"><small>${t('rent_due')}</small><b>${fmtDate(p.rentDue)}</b></div><div class="stat"><small>${t('overdue')}</small><b>${p.overdue || 0}</b></div>` : ''}</div>
                 <div class="actions">
                     <button class="btn ghost" data-act="waypoint" data-id="${p.id}">${icon('pin')}${t('a_waypoint')}</button>
-                    <button class="btn ghost" data-act="mdoor" data-id="${p.id}">${icon('crosshair')}${t('a_door')}</button>
+                    ${p.open ? `<button class="btn ghost" data-act="mzone" data-id="${p.id}">${icon('crosshair')}${t('a_zone')}</button>` : `<button class="btn ghost" data-act="mdoor" data-id="${p.id}">${icon('crosshair')}${t('a_door')}</button>`}
                     ${interiorOf(p.interior) && interiorOf(p.interior).custom ? `<button class="btn ghost wide" data-act="minside" data-id="${p.id}">${icon('door_open')}${t('a_inside')}</button>` : ''}
                     ${free ? `<button class="btn primary wide" data-act="msend" data-id="${p.id}">${icon('send')}${t('a_send')}</button>` : ''}
                     ${S.data.canManage && !free ? `<button class="btn danger" data-act="mevict" data-id="${p.id}">${icon('door_open')}${t('a_evict')}</button>` : ''}
@@ -818,7 +828,9 @@ const A = {
         if (r.ok) { S.cart = []; if (r.data && r.data.money !== undefined) S.data.money = r.data.money; await loadShopCount(); render(); }
     },
     // create
-    pickinterior: (el) => { S.create.interior = el.dataset.key; render(); },
+    pickinterior: (el) => { S.create.interior = el.dataset.key; S.create.zone = null; S.create.door = null; render(); },
+    aimzone: () => { S.pickTarget = { type: 'createZone' }; post('pickZone', { zone: S.create.zone }); },
+    mzone: (el) => { S.pickTarget = { type: 'zone', id: Number(el.dataset.id) }; post('pickZone', { id: Number(el.dataset.id) }); },
     ptype: (el) => { S.create.ptype = el.dataset.v; render(); },
     cprev: () => { if (S.create.step > 1) { S.create.step--; render(); } },
     cnext: () => { const err = validateStep(); if (err) return toast(err, 'error'); S.create.step++; render(); },
@@ -833,7 +845,7 @@ const A = {
         el.disabled = true;
         const r = await call('createProperty', {
             label: c.label.trim(), interior: c.interior, ptype: c.ptype, price: Number(c.price) || 0, rentPrice: Number(c.rentPrice) || 0,
-            rentDays: Number(c.rentDays) || 7, buyerId: c.buyerId ? Number(c.buyerId) : null, image: c.image.trim() || null, door: c.door, street: c.street, inside: c.inside || null,
+            rentDays: Number(c.rentDays) || 7, buyerId: c.buyerId ? Number(c.buyerId) : null, image: c.image.trim() || null, door: c.door, street: c.street, inside: c.inside || null, zone: c.zone || null,
         });
         el.disabled = false;
         if (r.ok) { resetCreate(); await refresh(); S.history = [{ view: 'home', params: {} }]; S.view = 'mdetail'; S.params = { id: r.data }; render(); }
@@ -941,6 +953,14 @@ window.addEventListener('message', (ev) => {
             else S.st = m.static;
             if (S.open && (S.view === 'create' || S.view === 'shop')) render();
             break;
+        case 'zonePicked':
+            if (S.open) $('#tablet').classList.remove('hidden');
+            if (m.zone && S.pickTarget) {
+                if (S.pickTarget.type === 'createZone') { S.create.zone = m.zone; S.create.door = m.location; S.create.street = m.street || ''; render(); }
+                else if (S.pickTarget.type === 'zone') call('setZone', S.pickTarget.id, m.zone, m.street || '');
+            }
+            S.pickTarget = null;
+            break;
         case 'locationPicked':
             if (S.open) $('#tablet').classList.remove('hidden');
             if (m.location && S.pickTarget) {
@@ -1001,6 +1021,7 @@ const Mock = {
             return Promise.resolve({ ok: true, data: 1 });
         }
         if (name === 'close') { $('#tablet').classList.add('hidden'); S.open = false; }
+        if (name === 'pickZone') setTimeout(() => window.postMessage({ action: 'zonePicked', zone: { points: [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 8 }, { x: 0, y: 8 }], minZ: 30, maxZ: 42, entry: { x: 1, y: -1, z: 31, h: 0 }, doors: [{ model: 1, x: 1, y: 0, z: 31, main: true }], removed: [] }, location: { x: 1, y: -1, z: 31, h: 0 }, street: 'Forum Dr, Strawberry' }, '*'), 400);
         if (name === 'pickLocation') setTimeout(() => window.postMessage({ action: 'locationPicked', location: { x: -47.3, y: -585.9, z: 37.95, h: 70 }, street: 'Alta St, Pillbox Hill' }, '*'), 400);
         return Promise.resolve({ ok: true });
     },
@@ -1013,6 +1034,7 @@ if (!IS_GAME) {
             { key: 'rox_hideout_house', label: 'ROX Hideout · Abandoned House', labelAr: 'وكر ROX · البيت المهجور', tier: 'low', rooms: 3, image: 'img/houses/rox_hideout_house.png', decor: 'hideout', gangOnly: true, shell: 'shell_frankaunt' },
             { key: 'rox_wh_large', label: 'ROX Warehouse · Large', labelAr: 'مخزن ROX · كبير', tier: 'luxury', rooms: 1, image: 'img/houses/rox_wh_large.png', decor: true },
             { key: 'rox_wh_vehicle', label: 'ROX Vehicle Warehouse', labelAr: 'مخزن سيارات ROX', tier: 'luxury', rooms: 1, image: 'img/houses/rox_wh_vehicle.png', decor: true },
+            { key: 'open', label: 'Open House', labelAr: 'المنزل المفتوح', tier: 'mid', rooms: 1, open: true, image: 'img/houses/open_house.png' },
             { key: 'custom', label: 'Custom location / MLO', labelAr: 'موقع مخصص / MLO', tier: 'mid', rooms: 1, custom: true },
             { key: 'shell_ranch', label: 'Ranch House', labelAr: 'بيت مزرعة', tier: 'mid', rooms: 3, shell: 'shell_ranch', available: true },
             { key: 'shell_highend', label: 'Highend', labelAr: 'Highend', tier: 'mid', rooms: 1, shell: 'shell_highend', auto: true, needsEntry: true, available: true },

@@ -51,6 +51,7 @@ end
 RegisterNetEvent('rox_re:sync', function(list)
     PropertyList = list or {}
     refreshBlips()
+    if OpenHouse then OpenHouse.OnSync() end
     SendNUIMessage({ action = 'sync', properties = PropertyList })
 end)
 
@@ -129,6 +130,9 @@ function FindShellFloor(obj, hash, p)
 end
 
 function EnterProperty(id)
+    local target = FindProperty(id)
+    if target and target.open then return end -- open houses are walked into
+    if OpenHouse then OpenHouse.Leave() end
     local ok, data = ServerCall('enter', id)
     if not ok then
         if data then Notify(data, 'error') end
@@ -186,6 +190,7 @@ end
 
 function ExitProperty()
     if not CurrentHouse then return end
+    if CurrentHouse.open then return OpenHouse.Leave() end
     local house = CurrentHouse
     CloseFurnitureMode()
     local _, door = ServerCall('exit')
@@ -222,7 +227,7 @@ CreateThread(function()
         local ped = PlayerPedId()
         local pc = GetEntityCoords(ped)
 
-        if CurrentHouse then
+        if CurrentHouse and not CurrentHouse.open then
             local s = CurrentHouse.spawn
             local dist = #(pc - vector3(s.x, s.y, s.z))
             if dist < 15.0 then
@@ -238,7 +243,7 @@ CreateThread(function()
         else
             local nearest, nd
             for _, p in ipairs(PropertyList) do
-                local d = #(pc - vector3(p.door.x, p.door.y, p.door.z))
+                local d = p.open and 999.0 or #(pc - vector3(p.door.x, p.door.y, p.door.z))
                 if d < 20.0 and (not nd or d < nd) then nearest, nd = p, d end
             end
             if nearest then
@@ -292,7 +297,7 @@ AddEventHandler('onResourceStop', function(res)
     ROXDecor.Clear()
     deleteShell()
     SetNuiFocus(false, false)
-    if CurrentHouse and CurrentHouse.door then
+    if CurrentHouse and CurrentHouse.door and not CurrentHouse.open then
         local d = CurrentHouse.door
         SetEntityCoords(PlayerPedId(), d.x, d.y, d.z, false, false, false, false)
     end

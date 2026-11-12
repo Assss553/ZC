@@ -26,6 +26,18 @@ local function broadcastInside(propertyId, action, payload)
     end
 end
 
+function PointInZone(zone, x, y, z)
+    if z < zone.minZ or z > zone.maxZ then return false end
+    local pts, inside = zone.points, false
+    local j = #pts
+    for i = 1, #pts do
+        local a, b = pts[i], pts[j]
+        if ((a.y > y) ~= (b.y > y)) and (x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) then inside = not inside end
+        j = i
+    end
+    return inside
+end
+
 local function findPiece(propertyId, fid)
     for _, row in ipairs(DB.FurnitureFor(propertyId)) do
         if row.id == fid then return row end
@@ -85,6 +97,8 @@ RegisterCallback('placeFurniture', function(src, propertyId, fid, pos, rot)
 
     local x, y, z = tonumber(pos.x), tonumber(pos.y), tonumber(pos.z)
     if not (x and y and z) then return false, L('invalid_data') end
+    local zone = Interiors[prop.interior] and Interiors[prop.interior].open and prop.options and prop.options.zone
+    if zone and not PointInZone(zone, x, y, z) then return false, L('too_far_place') end
     local spawn, shellPos = GetInteriorSpawn(prop.interior, prop.door, prop.inside)
     local center = shellPos or (spawn and vector3(spawn.x, spawn.y, spawn.z))
     if not center or #(vector3(x, y, z) - center) > Config.Furniture.PlaceRadius then

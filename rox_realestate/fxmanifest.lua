@@ -11,7 +11,7 @@ name 'rox_realestate'
 -- © ROX Store – All rights reserved
 author 'ROX Store'
 description 'Real estate system: realtor iPad, aim-based property creation, contracts, rent, marketplace and furniture'
-version '1.2.0'
+version '1.3.0'
 
 -- shells / maps dropped in stream/houses are streamed automatically
 this_is_a_map 'yes'
@@ -44,6 +44,7 @@ client_scripts {
     'client/tablet.lua',
     'client/furniture.lua',
     'client/decor.lua',
+    'client/openhouse.lua',
 }
 
 ui_page 'html/index.html'

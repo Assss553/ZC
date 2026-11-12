@@ -4,6 +4,9 @@
  */
 const I18N = {
     ar: {
+        open_hint: 'بيت حقيقي في الخريطة · بدون انتقال', zone_title: 'ارسم حدود البيت', zone_desc: 'بيقفل الايباد. اضغط على زوايا البيت، قف عند المدخل واضغط E، وصوّب على الباب واضغط G',
+        zk_corner: 'زاوية', zk_entry: 'المدخل', zk_main: 'باب رئيسي', zk_inner: 'باب داخلي', zk_remove: 'حذف باب', zone_info: 'منطقة العقار', zone_none: 'ما تم رسم المنطقة',
+        zone_stats: '{0} زوايا · ارتفاع {1}م · {2} باب رئيسي · {3} باب داخلي · {4} محذوف', err_zone: 'ارسم منطقة البيت أولاً', a_zone: 'تعديل المنطقة والأبواب',
         decor_title_hideout: 'تصميم الوكر (لون العصابة)', gang_only_chip: 'للعصابات فقط',
         decor_title: 'تصميم المخزن', decor_hint: 'التصميم ينبني تلقائياً داخل العقار ويشوفه كل اللي داخل. أثاثك يبقى فوقه.',
         no_access_title: 'ما عندك صلاحية', no_access_sub: 'هذا التطبيق يحتاج رتبة أعلى في العقار', f_ipl: 'تصاميم اللعبة', f_shells: 'شل', f_detected: 'مكتشف تلقائي', rescan: 'إعادة الفحص',
@@ -63,6 +66,9 @@ const I18N = {
         card_view: 'عقار', unknown: '—', tier_low: 'اقتصادي', tier_mid: 'متوسط', tier_high: 'فاخر', tier_luxury: 'لوكس',
     },
     en: {
+        open_hint: 'Real map house · walk in, no teleport', zone_title: 'Draw the property zone', zone_desc: 'The iPad will close. Click the corners of the house, stand at the entrance and press E, aim at the door and press G',
+        zk_corner: 'corner', zk_entry: 'entry', zk_main: 'main door', zk_inner: 'inner door', zk_remove: 'remove door', zone_info: 'Property zone', zone_none: 'No zone drawn yet',
+        zone_stats: '{0} corners · height {1}m · {2} main · {3} inner doors · {4} removed', err_zone: 'Draw the property zone first', a_zone: 'Edit zone & doors',
         decor_title_hideout: 'Hideout design (gang colour)', gang_only_chip: 'GANG ONLY',
         decor_title: 'Warehouse design', decor_hint: 'The design is generated inside the property and everyone inside sees it. Your own furniture stays on top.',
         no_access_title: 'No access', no_access_sub: 'This app needs a higher real estate grade', f_ipl: 'GTA interiors', f_shells: 'Shells', f_detected: 'Detected', rescan: 'Rescan',

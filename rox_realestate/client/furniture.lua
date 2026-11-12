@@ -148,6 +148,7 @@ local function startPlacement(piece)
     DeleteEntity(ghost)
     CurrentPlacement = nil
 
+    if not CurrentHouse then return end
     if result == 'place' then
         local ok, err = ServerCall('placeFurniture', CurrentHouse.id, piece.id,
             { x = coords.x, y = coords.y, z = coords.z }, { x = rot.x, y = rot.y, z = rot.z })

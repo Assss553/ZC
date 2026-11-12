@@ -274,6 +274,179 @@ def door_panel(color, seed, panels=True, gloss=0.3):
             m = m * (1 - 0.22 * rim)
     return dict(d=shade(color, m), n=normal_map(blur(h, 1.0) + 0.02 * fbm(2, seed + 2, ax=8), 0.6), s=spec_map(np.full((N, N), gloss)))
 
+
+def bricks(c_brick, c_mortar, seed, rows=16, cols=6, var=0.12):
+    y, x = np.mgrid[0:N, 0:N] / N
+    r = np.floor(y * rows).astype(int)
+    xo = x + (r % 2) * (0.5 / cols)
+    c = np.floor(xo * cols).astype(int) % cols
+    fx, fy = (xo * cols) % 1.0, (y * rows) % 1.0
+    e = np.minimum(np.minimum(fx, 1 - fx) / cols, np.minimum(fy, 1 - fy) / rows)
+    mort = np.clip(1 - e / 0.0035, 0, 1)
+    rng = np.random.default_rng(seed)
+    tone = (1 + var * (rng.random((rows, cols)) - 0.5) * 2)[r % rows, c]
+    burnt = (rng.random((rows, cols)) > 0.86)[r % rows, c]                      # darker over-fired bricks
+    hue = (rng.random((rows, cols)) - 0.5)[r % rows, c]
+    grit = 0.92 + 0.16 * blur(white(seed + 7), 0.7)
+    m = tone * grit * (0.9 + 0.2 * fbm(2.0, seed + 1)) * (1 - 0.25 * burnt)
+    soot = np.clip(fbm(2.6, seed + 2, ax=3.0) * 2.1 - 1.0, 0, 1)               # rain streaks running down
+    d = col(c_brick) * m[:, :, None]
+    d[:, :, 0] *= 1 + 0.08 * hue; d[:, :, 2] *= 1 - 0.1 * hue
+    d = d * (1 - 0.28 * soot)[:, :, None]
+    d = mix(d, col(c_mortar) * (0.86 + 0.25 * white(seed + 3))[:, :, None], mort * 0.92)
+    edge = np.clip(1 - e / 0.012, 0, 1)
+    h = (1 - edge ** 2) * (0.8 + 0.2 * fbm(1.5, seed + 4)) + 0.06 * white(seed + 8)
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(h, 0.22))
+
+def asphalt(seed):
+    g = 0.5 * white(seed) + 0.5 * blur(white(seed + 1), 0.8)
+    stones = np.clip(blur((white(seed + 11) > 0.93).astype(float), 0.8) * 4, 0, 1)   # light aggregate
+    m = 0.82 + 0.26 * g + 0.2 * (fbm(2.4, seed + 2) - 0.5) + 0.3 * stones
+    st = np.clip(fbm(2.8, seed + 3, ax=0.2) * 2 - 1.0, 0, 1)                    # tyre / oil streaks along x
+    m = m * (1 - 0.22 * st)
+    patch = (fbm(3.4, seed + 4) > 0.63).astype(float); patch = blur(patch, 1.2)   # repaired patches
+    m = m * (1 - 0.13 * patch)
+    rng = np.random.default_rng(seed + 9); ck = np.zeros((N, N))
+    for _ in range(7):
+        p = rng.random(2) * N; a = rng.random() * 6.28
+        for _ in range(int(N * 0.35)):
+            ck[int(p[1]) % N, int(p[0]) % N] = 1; a += (rng.random() - 0.5) * 0.9; p += np.array([np.cos(a), np.sin(a)])
+    ck = np.clip(blur(ck, 0.55) * 1.6, 0, 1)
+    m = m * (1 - 0.4 * ck)
+    return dict(d=shade((58, 58, 60), m), n=normal_map(g + 0.5 * stones - ck, 0.22), s=spec_map(np.clip(0.16 * (0.6 + g) + 0.1 * patch, 0, 1)))
+
+def pavement(seed, slabs=2):
+    y, x = np.mgrid[0:N, 0:N] / N
+    fx, fy = (x * slabs) % 1.0, (y * slabs) % 1.0
+    e = np.minimum(np.minimum(fx, 1 - fx), np.minimum(fy, 1 - fy)) / slabs
+    j = np.clip(1 - e / 0.005, 0, 1)
+    rng = np.random.default_rng(seed)
+    tone = (1 + 0.07 * (rng.random((slabs, slabs)) - 0.5))[np.floor(y * slabs).astype(int) % slabs, np.floor(x * slabs).astype(int) % slabs]
+    m = tone * (0.88 + 0.22 * fbm(2.3, seed) + 0.1 * (blur(white(seed + 1), 0.6) - 0.5)) * (1 - 0.45 * j)
+    gum = (white(seed + 5) > 0.99985).astype(float); gum = np.clip(blur(gum, 1.8) * 34, 0, 1)
+    stain = np.clip(fbm(3.0, seed + 6) * 2.2 - 1.1, 0, 1)
+    m = m * (1 - 0.3 * gum) * (1 - 0.2 * stain) * (1 - 0.1 * np.clip(1 - e / 0.03, 0, 1))
+    return dict(d=shade((164, 160, 152), m), n=normal_map(1 - j + 0.12 * blur(white(seed + 2), 0.7), 0.3))
+
+def grass(seed):
+    a = fbm(1.0, seed, ay=4.0); b = fbm(2.8, seed + 1); c = blur(white(seed + 3), 0.6)
+    t = np.clip(0.45 * a + 0.45 * b + 0.35 * (c - 0.5), 0, 1)
+    d = mix(col((38, 70, 30)) * np.ones((N, N, 1)), col((96, 124, 52)) * np.ones((N, N, 1)), t)
+    dry = np.clip(fbm(3.0, seed + 4) * 2.4 - 1.4, 0, 1)
+    d = mix(d, col((132, 126, 70)) * np.ones((N, N, 1)), dry * 0.55)
+    return dict(d=np.clip(d * (0.82 + 0.36 * white(seed + 2))[:, :, None], 0, 255).astype(np.uint8), n=normal_map(a + 0.5 * c, 0.35))
+
+def hedge(seed):
+    lf = blur((white(seed) > 0.72).astype(float), 1.3); lf2 = blur((white(seed + 1) > 0.8).astype(float), 2.2)
+    t = np.clip(lf * 1.6 + lf2 * 1.4 - 0.25, 0, 1) * (0.75 + 0.5 * fbm(2.4, seed + 2))
+    d = mix(col((14, 36, 14)) * np.ones((N, N, 1)), col((74, 118, 44)) * np.ones((N, N, 1)), np.clip(t, 0, 1))
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(t, 0.5))
+
+def stone_blocks(color, seed):
+    t = tiles(color, (120, 116, 108), seed, 2, 4, gap=0.006, var=0.05, gloss=0.1, bevel=0.01)
+    soot = np.clip(fbm(2.6, seed + 20, ax=3.0) * 2.0 - 1.0, 0, 1)
+    d = t['d'].astype(np.float64) * (1 - 0.22 * soot)[:, :, None] * (0.95 + 0.1 * blur(white(seed + 21), 0.7))[:, :, None]
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=t['n'])
+
+def gravel(seed):
+    g = blur(white(seed), 0.7); p = fbm(2.6, seed + 1)
+    seams = (np.abs(((np.mgrid[0:N, 0:N][1] / N * 2) % 1.0) - 0.5) < 0.006).astype(float)       # roofing felt seams
+    m = (0.75 + 0.5 * g) * (0.85 + 0.3 * p) * (1 - 0.35 * blur(seams, 1.0) * 3)
+    pud = np.clip(fbm(3.2, seed + 2) * 2.6 - 1.6, 0, 1)
+    return dict(d=shade((74, 72, 70), m * (1 - 0.3 * pud)), n=normal_map(g, 0.3))
+
+_FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+def _font(px):
+    from PIL import ImageFont
+    try: return ImageFont.truetype(_FONT, px)
+    except Exception: return ImageFont.load_default()
+
+def _fit_text(dr, text, box_w, box_h):
+    px = int(box_h)
+    while px > 8:
+        f = _font(px); l, t, r, b = dr.textbbox((0, 0), text, font=f)
+        if r - l <= box_w and b - t <= box_h: return f, (l, t, r, b)
+        px -= 4
+    return _font(8), dr.textbbox((0, 0), text, font=_font(8))
+
+def sign_text(text, fg, bg, seed, glow=True, aspect=4, border=None):
+    """Sign board drawn at aspect:1 then squeezed into a square texture (use with fit UVs)."""
+    from PIL import ImageDraw, ImageFilter
+    Wd, Hd = 1024, 1024 // aspect
+    im = Image.new('RGB', (Wd, Hd), bg); dr = ImageDraw.Draw(im)
+    if border: dr.rectangle((8, 8, Wd - 9, Hd - 9), outline=border, width=6)
+    f, (l, t, r, b) = _fit_text(dr, text, Wd * 0.86, Hd * 0.62)
+    pos = ((Wd - (r - l)) / 2 - l, (Hd - (b - t)) / 2 - t)
+    if glow:
+        gl = Image.new('RGB', (Wd, Hd), (0, 0, 0)); ImageDraw.Draw(gl).text(pos, text, font=f, fill=fg)
+        gl = gl.filter(ImageFilter.GaussianBlur(10))
+        im = Image.fromarray(np.clip(np.asarray(im).astype(np.float64) + 0.55 * np.asarray(gl), 0, 255).astype(np.uint8)); dr = ImageDraw.Draw(im)
+    dr.text(pos, text, font=f, fill=fg)
+    a = np.asarray(im.resize((N, N), Image.LANCZOS)).astype(np.float64)
+    return dict(d=np.clip(a, 0, 255).astype(np.uint8))
+
+def shopfront(seed, kind=0):
+    """Lit shop interior seen through glass: shelves / posters / counter, with a sky reflection on top."""
+    from PIL import ImageDraw, ImageFilter
+    rng = np.random.default_rng(seed)
+    im = Image.new('RGB', (N, N), (26, 22, 18)); dr = ImageDraw.Draw(im)
+    for yy in range(N):                                                          # warm ceiling light falling off
+        v = max(0.0, 1 - yy / (N * 0.9)); dr.line((0, yy, N, yy), fill=(int(60 + 120 * v), int(48 + 96 * v), int(30 + 60 * v)))
+    for k in range(4):                                                           # ceiling strip lights
+        x0 = int(N * (0.08 + 0.24 * k)); dr.rectangle((x0, 26, x0 + 70, 34), fill=(255, 244, 214))
+    pal = [(196, 58, 44), (232, 190, 60), (60, 120, 190), (70, 160, 96), (230, 230, 224), (240, 130, 40), (120, 70, 150)]
+    if kind == 0:                                                                # market shelves
+        for row in range(4):
+            y0 = 150 + row * 78; dr.rectangle((0, y0 + 58, N, y0 + 66), fill=(70, 62, 54))
+            x = 6
+            while x < N - 10:
+                w = int(rng.integers(12, 28)); h = int(rng.integers(30, 56)); c = pal[int(rng.integers(len(pal)))]
+                dr.rectangle((x, y0 + 58 - h, x + w, y0 + 58), fill=tuple(int(v * rng.uniform(0.6, 1.0)) for v in c)); x += w + int(rng.integers(2, 6))
+    elif kind == 1:                                                              # clothes / posters
+        for k in range(3):
+            x0 = 30 + k * 160; c = pal[int(rng.integers(len(pal)))]
+            dr.rectangle((x0, 110, x0 + 120, 300), fill=tuple(int(v * 0.8) for v in c)); dr.rectangle((x0 + 12, 124, x0 + 108, 200), fill=(236, 228, 210))
+            dr.ellipse((x0 + 44, 330, x0 + 76, 362), fill=(210, 190, 170)); dr.rectangle((x0 + 30, 362, x0 + 90, 500), fill=pal[int(rng.integers(len(pal)))])
+    else:                                                                        # cafe: counter + menu boards
+        dr.rectangle((0, 330, N, 470), fill=(88, 56, 34)); dr.rectangle((0, 322, N, 334), fill=(190, 180, 166))
+        for k in range(4):
+            x0 = 20 + k * 124; dr.rectangle((x0, 90, x0 + 104, 200), fill=(20, 22, 22)); 
+            for r_ in range(5): dr.line((x0 + 10, 108 + r_ * 18, x0 + int(rng.integers(50, 94)), 108 + r_ * 18), fill=(230, 226, 200), width=3)
+        for k in range(6):
+            x0 = 30 + k * 82; dr.rectangle((x0, 286, x0 + 30, 322), fill=pal[int(rng.integers(len(pal)))])
+    im = im.filter(ImageFilter.GaussianBlur(1.6))
+    a = np.asarray(im).astype(np.float64)
+    y, x = np.mgrid[0:N, 0:N] / N
+    refl = np.clip(1.15 - y * 2.2 + 0.5 * (fbm(2.6, seed + 1) - 0.5), 0, 1) * 0.55 + 0.1 * np.clip(1 - np.abs(x - y * 0.6 - 0.3) * 6, 0, 1)
+    a = a * (1 - 0.6 * refl)[:, :, None] + col((150, 178, 204)) * refl[:, :, None]
+    return dict(d=np.clip(a, 0, 255).astype(np.uint8), s=spec_map(np.full((N, N), 0.9), np.full((N, N), 0.95)))
+
+def billboard(seed):
+    from PIL import ImageDraw
+    im = Image.new('RGB', (1024, 512), (16, 16, 20)); dr = ImageDraw.Draw(im)
+    for yy in range(512):
+        t = yy / 511; dr.line((0, yy, 1024, yy), fill=(int(20 + 200 * t), int(16 + 70 * t), int(60 + 20 * (1 - t))))
+    dr.ellipse((690, 150, 990, 450), fill=(255, 208, 90))
+    for k in range(9):                                                          # skyline silhouette
+        x0 = k * 118; h = 120 + (k * 97 % 170); dr.rectangle((x0, 512 - h, x0 + 96, 512), fill=(14, 12, 20))
+        for wy in range(512 - h + 14, 500, 26):
+            for wx in range(x0 + 10, x0 + 86, 22):
+                if (wx * 7 + wy * 3 + k) % 5 < 2: dr.rectangle((wx, wy, wx + 10, wy + 14), fill=(255, 220, 130))
+    f, (l, t, r, b) = _fit_text(dr, 'ROX CITY', 620, 150); dr.text((50 - l, 60 - t), 'ROX CITY', font=f, fill=(255, 255, 255))
+    f, (l, t, r, b) = _fit_text(dr, 'LIVE THE DREAM', 520, 60); dr.text((54 - l, 232 - t), 'LIVE THE DREAM', font=f, fill=(255, 226, 150))
+    a = np.asarray(im.resize((N, N), Image.LANCZOS)).astype(np.float64) * (0.94 + 0.1 * fbm(2.4, seed))[:, :, None]
+    return dict(d=np.clip(a, 0, 255).astype(np.uint8))
+
+def manhole(seed):
+    y, x = np.mgrid[0:N, 0:N] / N
+    r = np.sqrt((x - 0.5) ** 2 + (y - 0.5) ** 2) * 2
+    ring = (np.abs(r - 0.9) < 0.05) | (np.abs(r - 0.45) < 0.03)
+    grid = ((np.sin(x * 2 * np.pi * 14) > 0.3) ^ (np.sin(y * 2 * np.pi * 14) > 0.3)) & (r < 0.86) & (r > 0.48)
+    h = 0.5 + 0.4 * ring + 0.3 * grid
+    m = (0.7 + 0.5 * h) * (0.85 + 0.3 * fbm(2.2, seed)) * (r < 1.0) + 0.0
+    d = mix(shade((70, 66, 62), m), col((58, 58, 60)) * np.ones((N, N, 1)), (r >= 1.0).astype(float))
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(h * (r < 1.0), 0.4))
+
 def build_all():
     T = {}
     T['rox_paint_white'] = paint((232, 230, 224), 1)
@@ -311,6 +484,34 @@ def build_all():
     T['rox_countertop'] = granite((176, 150, 112), 33)
     T['rox_appliance_white'] = metal((228, 228, 226), 34, gloss=0.6)
     T['rox_black_glass'] = metal((14, 14, 16), 35, gloss=0.95)
+    T['rox_brick_red'] = bricks((150, 70, 50), (176, 168, 152), 40)
+    T['rox_brick_dark'] = bricks((88, 60, 48), (120, 114, 104), 41)
+    T['rox_brick_white'] = bricks((206, 200, 186), (150, 146, 138), 42, var=0.06)
+    T['rox_asphalt'] = asphalt(43)
+    T['rox_pavement'] = pavement(44)
+    T['rox_grass'] = grass(45)
+    T['rox_stone'] = stone_blocks((204, 196, 178), 46)
+    T['rox_roof'] = gravel(47)
+    T['rox_paint_yellow'] = paint((214, 170, 30), 48, mottle=0.2, dirt=0.3)
+    T['rox_paint_line'] = paint((214, 214, 206), 49, mottle=0.2, dirt=0.3)
+    T['rox_awning_green'] = fabric((38, 104, 78), 50, folds=6)
+    T['rox_awning_red'] = fabric((150, 40, 36), 51, folds=6)
+    T['rox_sign_garage'] = sign_text('ROX GARAGE', (255, 236, 200), (30, 22, 18), 52, aspect=8, border=(200, 150, 60))
+    T['rox_sign_store'] = sign_text('ROX STORE', (255, 255, 255), (190, 50, 24), 53, aspect=8)
+    T['rox_sign_market'] = sign_text('24/7 MARKET', (255, 240, 120), (18, 66, 46), 54, aspect=8, border=(255, 240, 120))
+    T['rox_sign_cafe'] = sign_text('BEAN MACHINE CAFE'.replace('BEAN MACHINE', 'ROX'), (255, 232, 190), (58, 34, 22), 55, aspect=8)
+    T['rox_sign_hotel'] = sign_text('HOTEL', (255, 90, 70), (16, 14, 16), 56, aspect=4)
+    T['rox_sign_parking'] = sign_text('PARKING', (255, 255, 255), (24, 70, 160), 57, aspect=4, border=(255, 255, 255))
+    T['rox_shop_market'] = shopfront(60, 0)
+    T['rox_shop_fashion'] = shopfront(61, 1)
+    T['rox_shop_cafe'] = shopfront(62, 2)
+    T['rox_hedge'] = hedge(63)
+    T['rox_billboard'] = billboard(64)
+    T['rox_manhole'] = manhole(65)
+    T['rox_paint_green'] = paint((40, 78, 56), 66, mottle=0.1, dirt=0.2)
+    T['rox_paint_red'] = paint((168, 40, 34), 67, mottle=0.1, dirt=0.2)
+    T['rox_paint_ochre'] = paint((206, 160, 96), 68, mottle=0.1, dirt=0.3)
+    T['rox_rooftile'] = bricks((150, 78, 52), (96, 50, 36), 69, rows=8, cols=8, var=0.2)
     return T
 
 # ---------------------------------------------------------------- DDS (BC1) writer
