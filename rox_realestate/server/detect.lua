@@ -154,7 +154,7 @@ local function scanShellFiles()
         end
     end
     -- ROX open-house interiors are walk-in models, not teleport shells
-    for name in pairs(found) do if name:find('^rox_open_') then found[name] = nil end end
+    for name in pairs(found) do if name:find('^rox_open') or name:find('^rox_b_') then found[name] = nil end end
     return found
 end
 

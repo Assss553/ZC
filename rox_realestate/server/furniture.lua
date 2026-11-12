@@ -6,7 +6,7 @@
 local function pieceForClient(row)
     local item = FurnitureByModel[row.model]
     return {
-        id = row.id, model = row.model, label = item and item.label or row.model, cat = item and item.cat,
+        id = row.id, model = row.model, label = item and item.label or row.model, labelAr = item and item.labelAr, cat = item and item.cat,
         price = row.price, placed = row.placed == 1 or row.placed == true,
         x = row.x, y = row.y, z = row.z, rx = row.rx or 0, ry = row.ry or 0, rz = row.rz or 0,
     }

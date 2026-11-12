@@ -6,7 +6,7 @@ from kit import MATS
 
 # usage: build.py <workdir> [street] [only...]
 SET = 'shells'
-if len(sys.argv) > 2 and sys.argv[2] in ('street', 'open'):
+if len(sys.argv) > 2 and sys.argv[2] in ('street', 'open', 'build'):
     SET = sys.argv[2]; del sys.argv[2]
 
 W = sys.argv[1]
@@ -15,14 +15,14 @@ XML = os.path.join(W, 'xml'); OUT = os.path.join(W, 'out'); PRE = os.path.join(W
 for d in (XML, OUT, PRE):
     os.makedirs(d, exist_ok=True)
 CW = ['dotnet', os.path.join(W, 'cwconv/bin/Release/net8.0/cwconv.dll')]
-TXD = {'shells': 'rox_shells_txd', 'street': 'rox_street_txd', 'open': 'rox_open_txd'}[SET]
-TYP = {'shells': 'rox_shells', 'street': 'rox_street', 'open': 'rox_open'}[SET]
+TXD = {'shells': 'rox_shells_txd', 'street': 'rox_street_txd', 'open': 'rox_open_txd', 'build': 'rox_build_txd'}[SET]
+TYP = {'shells': 'rox_shells', 'street': 'rox_street', 'open': 'rox_open', 'build': 'rox_build'}[SET]
 only = sys.argv[2:] or None
 
 index = json.load(open(os.path.join(TEX, 'textures.json')))
 shells, used = [], set()
-if SET in ('street', 'open'):
-    mod = __import__('street' if SET == 'street' else 'openhouses')
+if SET in ('street', 'open', 'build'):
+    mod = __import__({'street': 'street', 'open': 'openhouses', 'build': 'buildkit'}[SET])
     makers = [(lambda p=p: p) for p in mod.all_pieces()]
     for m in makers: m.__name__ = m().name
 else:
@@ -40,7 +40,7 @@ for fn in makers:
         if M['sh'] in ('ns', 'n'): used.add(M['tex'] + '_n')
         if M['sh'] in ('ns', 's'): used.add(M['tex'] + '_s')
     shells.append(s)
-    print(s.name, st['verts'], 'verts', st['tris'], 'tris', st['mats'], 'materials', st['lights'], 'lights', st['cboxes'], 'col boxes')
+    if SET != 'build': print(s.name, st['verts'], 'verts', st['tris'], 'tris', st['mats'], 'materials', st['lights'], 'lights', st['cboxes'], 'col boxes')
 
 if not only:
     # shared texture dictionary
@@ -68,10 +68,11 @@ if not only:
 
 def conv(xml, out):
     r = subprocess.run(CW + ['import', os.path.join(XML, xml), os.path.join(OUT, out)], capture_output=True, text=True)
-    print(' ', (r.stdout + r.stderr).strip()[:400])
+    if SET != 'build' or r.returncode: print(' ', (r.stdout + r.stderr).strip()[:400])
     assert r.returncode == 0, 'conversion failed: ' + xml
-for s in shells:
-    conv(s.name + '.ydr.xml', s.name + '.ydr')
+from concurrent.futures import ThreadPoolExecutor
+with ThreadPoolExecutor(8) as ex:
+    list(ex.map(lambda s: conv(s.name + '.ydr.xml', s.name + '.ydr'), shells))
 if not only:
     conv(TXD + '.ytd.xml', TXD + '.ytd')
     conv(TYP + '.ytyp.xml', TYP + '.ytyp')

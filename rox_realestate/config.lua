@@ -90,7 +90,7 @@ Config.Marketplace = {
 -- Furniture
 ---------------------------------------------------------------------
 Config.Furniture = {
-    MaxPieces   = 25,
+    MaxPieces   = 400,   -- per property (walls, floors and stairs count as pieces too)
     SellBack    = 0.5,   -- 50% refund when selling a piece back
     PlaceRadius = 45.0,  -- max distance from the interior spawn where furniture can be placed
     OpenKey     = 'O',   -- press anywhere inside your house to open the furniture panel

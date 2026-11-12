@@ -107,6 +107,9 @@ local function startPlacement(piece)
     CurrentPlacement = piece
     local heading = piece.placed and piece.rz or GetEntityHeading(ped)
     local zOff, snap, lastPos = 0.0, true, nil
+    local build = tostring(piece.model):find('^rox_b_') ~= nil   -- ROX build piece: grid snap, 15° steps, no drop to the ground
+    if build then heading = math.floor(heading / 15.0 + 0.5) * 15.0 end
+    local lastRot = 0
     local result -- 'place' | 'cancel' | 'store'
 
     SendNUIMessage({ action = 'placeHint', show = true, edit = piece.placed and true or false, label = piece.label })
@@ -120,8 +123,17 @@ local function startPlacement(piece)
         local rotStep = fast and 2.5 or 0.5
         local zStep = fast and 0.01 or 0.0025
 
-        if IsDisabledControlPressed(0, 14) or IsDisabledControlPressed(0, 175) then heading = heading - rotStep * (IsDisabledControlPressed(0, 14) and 4 or 1) end
-        if IsDisabledControlPressed(0, 15) or IsDisabledControlPressed(0, 174) then heading = heading + rotStep * (IsDisabledControlPressed(0, 15) and 4 or 1) end
+        if build and fast then
+            -- walls / floors: turn in clean 15° steps so pieces line up
+            if GetGameTimer() - lastRot > 140 then
+                if IsDisabledControlPressed(0, 14) or IsDisabledControlPressed(0, 175) then heading = heading - 15.0; lastRot = GetGameTimer() end
+                if IsDisabledControlPressed(0, 15) or IsDisabledControlPressed(0, 174) then heading = heading + 15.0; lastRot = GetGameTimer() end
+            end
+            zStep = 0.02
+        else
+            if IsDisabledControlPressed(0, 14) or IsDisabledControlPressed(0, 175) then heading = heading - rotStep * (IsDisabledControlPressed(0, 14) and 4 or 1) end
+            if IsDisabledControlPressed(0, 15) or IsDisabledControlPressed(0, 174) then heading = heading + rotStep * (IsDisabledControlPressed(0, 15) and 4 or 1) end
+        end
         if IsDisabledControlPressed(0, 172) then zOff = zOff + zStep end
         if IsDisabledControlPressed(0, 173) then zOff = zOff - zStep end
         if IsControlJustPressed(0, 47) then snap = not snap; zOff = 0.0 end -- G
@@ -129,9 +141,11 @@ local function startPlacement(piece)
         local hit, coords = CameraRaycast(12.0, ped, 1 + 16)
         if hit then lastPos = coords end
         if lastPos then
-            SetEntityCoordsNoOffset(ghost, lastPos.x, lastPos.y, lastPos.z + zOff, false, false, false)
+            local px, py = lastPos.x, lastPos.y
+            if build and snap then px, py = math.floor(px / 0.25 + 0.5) * 0.25, math.floor(py / 0.25 + 0.5) * 0.25 end
+            SetEntityCoordsNoOffset(ghost, px, py, lastPos.z + zOff, false, false, false)
             SetEntityRotation(ghost, 0.0, 0.0, heading, 2, true)
-            if snap and zOff == 0.0 then PlaceObjectOnGroundProperly(ghost) end
+            if snap and zOff == 0.0 and not build then PlaceObjectOnGroundProperly(ghost) end
             local c = GetEntityCoords(ghost)
             DrawMarker(25, c.x, c.y, c.z + 0.02, 0, 0, 0, 0, 0, 0, 0.7, 0.7, 0.7, 255, 90, 31, 120, false, false, 2, false)
         end

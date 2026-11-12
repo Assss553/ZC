@@ -5,6 +5,11 @@
 
 -- Furniture shop catalog. model = GTA prop name, price = cost per piece.
 FurnitureCategories = {
+    -- ROX build pieces (rox_houses/stream/rox_build): build the inside of the empty open houses
+    { key = 'walls',       label = 'Walls',            labelAr = 'جدران',          icon = 'building' },
+    { key = 'floors',      label = 'Floors & Tiles',   labelAr = 'أرضيات وبلاط',   icon = 'box' },
+    { key = 'levels',      label = 'Stairs & Levels',  labelAr = 'درج وأدوار',     icon = 'building' },
+    { key = 'doors',       label = 'Doors & Windows',  labelAr = 'أبواب وشبابيك',  icon = 'door' },
     { key = 'bathroom',    label = 'Bathroom',    labelAr = 'الحمام',      icon = 'bath' },
     { key = 'bed',         label = 'Bed',         labelAr = 'غرف النوم',   icon = 'bed' },
     { key = 'chair',       label = 'Chair & Sofa',labelAr = 'كراسي وكنب',  icon = 'chair' },

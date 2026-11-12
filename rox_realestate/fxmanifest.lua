@@ -22,6 +22,7 @@ shared_scripts {
     'shared/locale.lua',
     'shared/interiors.lua',
     'shared/furniture.lua',
+    'shared/furniture_rox.lua',
     'shared/decor.lua',
     'shared/openshells.lua',
 }

@@ -61,17 +61,15 @@ ensure rox_realestate
 
 ## ROX Open Houses (stream/rox_open)
 
-8 two-storey walk-in interiors (stairs, open front door, see-through windows) made to sit inside real map houses.
-In the iPad: Create Property > **Open House** > draw the zone > press **T** – the system measures the house and
-places the design that fits best (T again = next design, arrows / PGUP / PGDN / Q / R to fine-tune).
+13 EMPTY walk-in hulls made to sit inside real map houses: one clear volume, open front door,
+see-through windows. No inner walls, no stairs, no slab between the storeys.
+8 are two storeys high (rox_open_*), 5 are one storey (rox_open1_*).
+In the iPad: Create Property > **Open House** > draw the zone > press **T** - the system measures the house and
+places the hull that fits best (T again = next one, arrows / PGUP / PGDN / Q / R to fine-tune).
 
-| Model | Size (m) |
-|---|---|
-| rox_open_cottage | 8.0 x 8.0 |
-| rox_open_craftsman | 8.8 x 8.6 |
-| rox_open_townhouse | 7.6 x 10.6 |
-| rox_open_beach | 9.6 x 10.0 |
-| rox_open_family | 11.0 x 9.0 |
-| rox_open_ranch | 12.8 x 8.6 |
-| rox_open_villa | 14.6 x 10.6 |
-| rox_open_mansion | 16.8 x 12.0 |
+## ROX Build Pieces (stream/rox_build)
+
+820 placeable models sold in the furniture shop (iPad > Furniture) and placed with **O** inside the house:
+walls (plain / door / window / wide opening / half / two-storey, 33 finishes), floors and tiles, upper-floor slabs,
+stairs, landings, railings, doors, windows, bathroom, kitchen, storage, tables, sofas, rugs, lights.
+Upper-floor slabs sit 3.0 m above the floor you place them on and match the 3 m stairs.

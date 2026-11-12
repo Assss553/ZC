@@ -134,13 +134,15 @@ function bgImage(src, tier, cls = '', style = '') {
 function propImg(p, cls, style) { const i = interiorOf(p.interior); return bgImage(p.image || (i && i.image), i && i.tier, cls, style); }
 
 // picture chain: html/img/furniture/<model>.* (detected) -> Config.Furniture.ImageUrl -> category icon
+const furnName = (f) => (LANG === 'ar' && f.labelAr ? f.labelAr : f.label);
 function furnImg(model) {
-    const local = S.st && S.st.furnitureImages && S.st.furnitureImages[model];
+    // ROX build pieces always ship with their picture
+    const local = (S.st && S.st.furnitureImages && S.st.furnitureImages[model]) || (/^rox_b_/.test(model) ? `img/furniture/${model}.jpg` : '');
     const tpl = S.st && S.st.furnitureImage;
     const remote = tpl ? tpl.replace('%s', model) : '';
     const first = local || remote;
     if (!first) return '';
-    return `<img src="${esc(first)}" data-fb="${local && remote ? esc(remote) : ''}" onerror="imgFallback(this)" onload="this.parentNode.classList.add('has-img')">`;
+    return `<img loading="lazy" src="${esc(first)}" data-fb="${local && remote ? esc(remote) : ''}" onerror="imgFallback(this)" onload="this.parentNode.classList.add('has-img')">`;
 }
 window.imgFallback = (img) => {
     const fb = img.dataset.fb;
@@ -444,7 +446,7 @@ Views.shop = () => {
     let items = st.furniture;
     if (S.shopCat !== 'all') items = items.filter((f) => f.cat === S.shopCat);
     const q = S.shopSearch.toLowerCase();
-    if (q) items = items.filter((f) => f.label.toLowerCase().includes(q) || f.model.includes(q));
+    if (q) items = items.filter((f) => f.label.toLowerCase().includes(q) || (f.labelAr || '').includes(q) || f.model.includes(q));
     const cartCount = S.cart.reduce((a, c) => a + c.qty, 0);
     const total = S.cart.reduce((a, c) => a + c.qty * c.price, 0);
     const catBtn = (key, label, count, ic) => `<button class="cat ${S.shopCat === key ? 'on' : ''}" data-act="shopcat" data-cat="${key}">${catIconTile(key, ic)}<span><b>${label}</b><small>${t('pieces', count)}</small></span></button>`;
@@ -460,7 +462,7 @@ Views.shop = () => {
         </div>
         <div class="shop-main">
             <div class="head"><h3>${curCat ? catName(curCat) : t('all_furniture')}</h3><span class="muted" style="font-size:11px">${t('pieces', items.length)}</span></div>
-            <div class="fgrid">${items.map((f) => `<div class="card fitem"><div class="thumb">${furnIcon(f.cat)}${furnImg(f.model)}</div><b>${esc(f.label)}</b>
+            <div class="fgrid">${items.map((f) => `<div class="card fitem"><div class="thumb">${furnIcon(f.cat)}${furnImg(f.model)}</div><b>${esc(furnName(f))}</b>
                 <div class="row"><span class="price">${money(f.price)}</span><button class="add" data-act="addcart" data-model="${f.model}">${icon('plus')}</button></div></div>`).join('')}</div>
         </div>
         <div class="card cart">
@@ -737,7 +739,7 @@ function renderFP() {
         <div class="seg"><button class="${fp.tab === 'storage' ? 'on' : ''}" data-act="fptab" data-tab="storage">${icon('box')} ${t('fp_storage')} (${fp.pieces.filter((p) => !p.placed).length})</button>
             <button class="${fp.tab === 'placed' ? 'on' : ''}" data-act="fptab" data-tab="placed">${icon('edit')} ${t('fp_placed')} (${fp.pieces.filter((p) => p.placed).length})</button></div>
         <div class="toolbar"><div class="search" style="max-width:none">${icon('search')}<input class="input" id="fpSearch" placeholder="${t('search')}" value="${esc(fp.search || '')}"></div></div>
-        <div class="fp-list">${list.length ? list.map((p) => `<div class="ftile" data-act="fpplace" data-id="${p.id}"><div class="thumb">${furnIcon(p.cat)}${furnImg(p.model)}</div><b>${esc(p.label)}</b>
+        <div class="fp-list">${list.length ? list.map((p) => `<div class="ftile" data-act="fpplace" data-id="${p.id}"><div class="thumb">${furnIcon(p.cat)}${furnImg(p.model)}</div><b>${esc(furnName(p))}</b>
             <div class="tools">${p.placed ? `<button data-act="fpstore" data-id="${p.id}" title="${t('h_store')}">${icon('box')}</button>` : ''}<button class="sell" data-act="fpsell" data-id="${p.id}" title="sell">${icon('trash')}</button></div></div>`).join('')
             : `<div class="fp-empty">${t('fp_empty')}</div>`}</div>
         <div class="fp-foot"><span>${t(fp.tab === 'placed' ? 'fp_click_edit' : 'fp_click')}</span><span><b>●</b> ${t('fp_count', fp.pieces.length, fp.max)}</span></div>`;
