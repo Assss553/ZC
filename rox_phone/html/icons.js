@@ -35,6 +35,8 @@ const RoxIcons = (() => {
       <rect x="13" y="13" width="38" height="38" rx="11" fill="none" stroke="#25f4ee" stroke-width="3.5" transform="translate(-1.6 -1.2)" opacity=".9"/>
       <rect x="13" y="13" width="38" height="38" rx="11" fill="url(#${i}c)"/><path d="M27.5 23.5v17l14-8.5z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
       <circle cx="47" cy="17" r="5" fill="#ff2d55" stroke="#0b0b0d" stroke-width="2"/><circle cx="47" cy="17" r="1.6" fill="#fff"/>`],
+    lspd: ['#3b82f6', '#1e3a8a', () => `<path d="M32 10l18 6v14c0 12-8 20-18 24-10-4-18-12-18-24V16z" fill="#ffd36b"/><path d="M32 15l13 4.5V30c0 9-6 15-13 18.5C25 45 19 39 19 30V19.5z" fill="#1e3a8a"/><path d="M32 22l2.6 5.4 5.9.8-4.3 4.1 1 5.8L32 35.3l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="#ffd36b"/>`],
+    ems: ['#ffffff', '#e5e7eb', () => `<rect x="12" y="12" width="40" height="40" rx="12" fill="#ef4444"/><path d="M28 20h8v8h8v8h-8v8h-8v-8h-8v-8h8z" fill="#fff"/><path d="M14 46 q18 -8 36 0" stroke="#fff" stroke-width="2" fill="none" opacity=".5"/>`],
     store: ['#ff7a3d', '#b8300a', () => `<path d="M18 24h28l-2.5 24a3 3 0 0 1-3 2.7H23.5a3 3 0 0 1-3-2.7z" fill="#fff"/><path d="M25 25v-4a7 7 0 0 1 14 0v4" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><text x="32" y="44" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="12" fill="#d8400f">R</text>`],
     houses: ['#a88bff', '#5b21d6', () => `<path d="M12 31l20-17 20 17h-6v19H18V31z" fill="#fff"/><rect x="28" y="38" width="8" height="12" rx="1.5" fill="#6d3fe6"/><rect x="40" y="16" width="5" height="10" fill="#fff"/>`],
   };
