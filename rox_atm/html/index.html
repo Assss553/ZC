@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!-- ROX Store | rox_atm | All rights reserved. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="fa/css/fontawesome.min.css"><link rel="stylesheet" href="fa/css/solid.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+<style>
+:root { --a: #ff5a1f; --ln: rgba(255,255,255,.07); }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; color: #fff; user-select: none; }
+body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) center/cover; height: 100vh; }
+.h { font-family: 'Barlow Condensed'; font-style: italic; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+#atm { position: fixed; inset: 0; display: none; background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.25) 50%, rgba(20,8,2,.75)); }
+#atm.on { display: block; animation: fade .3s ease; }
+@keyframes fade { from { opacity: 0; } }
+.panel { position: absolute; right: 4.5vw; top: 50%; transform: translateY(-50%); width: 440px; display: flex; flex-direction: column; gap: 8px; animation: slide .4s cubic-bezier(.2,1,.3,1); }
+@keyframes slide { from { transform: translate(40px, -50%); opacity: 0; } }
+.top { text-align: center; margin-bottom: 70px; } .top h1 { font-size: 32px; } .top p { font-size: 11px; color: rgba(255,255,255,.7); }
+.x { position: absolute; right: 0; top: 6px; width: 26px; height: 26px; border: 1px solid var(--ln); border-radius: 4px; background: rgba(20,20,24,.85); color: #fff; cursor: pointer; }
+.x:hover { background: var(--a); }
+.card { background: rgba(16,16,20,.88); border: 1px solid var(--ln); border-radius: 4px; padding: 12px 14px; }
+.bal { display: grid; grid-template-columns: 1fr 1fr; padding: 0; } .bal > div { padding: 12px 14px; min-width: 0; }
+.bal > div + div { text-align: right; } .bal small { font-size: 8.5px; font-weight: 800; letter-spacing: 1.4px; color: rgba(255,255,255,.6); } .bal small i { color: var(--a); margin-right: 5px; font-size: 8px; }
+.bal b { display: block; font-size: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .3s; } .bal b.flash { color: var(--a); }
+.term { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; } .term .ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,90,31,.18); color: var(--a); font-size: 13px; }
+.term b { font-size: 17px; display: block; } .term span { font-size: 9.5px; color: rgba(255,255,255,.5); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .seg button { height: 34px; border: 1px solid transparent; border-radius: 3px; background: none; color: rgba(255,255,255,.8); cursor: pointer; font-size: 13px; }
+.seg button.on { background: rgba(255,90,31,.28); border-color: rgba(255,90,31,.5); color: #fff; } .seg i { font-size: 10px; margin-right: 6px; }
+.sec { font-size: 15px; margin-bottom: 10px; } .sec i { color: var(--a); font-size: 10px; margin-right: 6px; }
+.quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; } .quick button { height: 40px; border: 1px solid var(--ln); border-radius: 3px; background: rgba(255,255,255,.035); color: #fff; cursor: pointer; font-size: 15px; transition: .15s; }
+.quick button:hover { border-color: var(--a); background: rgba(255,90,31,.15); }
+.amt { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 10px; border: 1px solid var(--ln); border-radius: 3px; background: rgba(0,0,0,.3); }
+.amt:focus-within { border-color: var(--a); } .amt span { color: rgba(255,255,255,.5); font-weight: 700; }
+.amt input { flex: 1; background: none; border: 0; outline: 0; color: #fff; font: 700 15px 'Inter'; min-width: 0; }
+.amt button { border: 0; border-radius: 3px; background: rgba(255,90,31,.25); color: var(--a); font-size: 10px; padding: 3px 9px; cursor: pointer; }
+.hint { font-size: 9.5px; color: rgba(255,255,255,.5); margin: 7px 0 9px; } .hint.err { color: #ff5a6a; }
+.go { width: 100%; height: 40px; border: 0; border-radius: 3px; background: var(--a); color: #fff; cursor: pointer; font-size: 15px; transition: .15s; } .go:hover { filter: brightness(1.12); }
+.go:disabled { opacity: .5; cursor: wait; } .go i { font-size: 11px; margin-right: 7px; }
+</style></head><body>
+<div id="atm"><div class="panel">
+  <div class="top"><h1 class="h" id="title">CASH MACHINE</h1><p id="street"></p><button class="x" id="x"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="card bal"><div><small><i class="fa-solid fa-square"></i>BANK</small><b class="h" id="bank">$0</b></div><div><small><i class="fa-solid fa-dollar-sign"></i>CASH</small><b class="h" id="cash">$0</b></div></div>
+  <div class="card"><div class="term"><div class="ic"><i class="fa-solid fa-credit-card"></i></div><div><b class="h">Self-Service Terminal</b><span id="who">Withdraw or deposit cash</span></div></div>
+    <div class="seg"><button class="h on" data-k="withdraw"><i class="fa-solid fa-arrow-up"></i>Withdraw</button><button class="h" data-k="deposit"><i class="fa-solid fa-arrow-down"></i>Deposit</button></div></div>
+  <div class="card"><div class="sec h"><i class="fa-solid fa-bolt"></i>Quick amounts</div><div class="quick" id="quick"></div></div>
+  <div class="card"><div class="sec h"><i class="fa-solid fa-money-bill-wave"></i><span id="lbl">Withdraw</span> - amount</div>
+    <div class="amt"><span>$</span><input id="amount" inputmode="numeric" placeholder="0"><button class="h" id="max">MAX</button></div>
+    <div class="hint" id="hint">Enter the amount you want to deposit or withdraw.</div>
+    <button class="go h" id="go"><i class="fa-solid fa-arrow-up"></i><span>Withdraw</span></button></div>
+</div></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const PREVIEW = !window.invokeNative;
+const RES = window.GetParentResourceName ? GetParentResourceName() : 'rox_atm';
+const post = (n, d = {}) => PREVIEW ? Promise.resolve(n === 'tx' ? mock(d) : 1) : fetch(`https://${RES}/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json());
+const fmt = (n) => '$' + Math.floor(n || 0).toLocaleString('en-US');
+let S = { cash: 0, bank: 0 }, kind = 'withdraw', busy = false;
+function setBal(b) { for (const k of ['bank', 'cash']) { const e = $(k); if (S[k] !== b[k]) { e.classList.add('flash'); setTimeout(() => e.classList.remove('flash'), 500); } e.textContent = fmt(b[k]); e.title = fmt(b[k]); S[k] = b[k]; } }
+function setKind(k) { kind = k; document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  const L = k === 'withdraw' ? 'Withdraw' : 'Deposit'; $('lbl').textContent = L; $('go').innerHTML = `<i class="fa-solid fa-arrow-${k === 'withdraw' ? 'up' : 'down'}"></i><span>${L}</span>`; hint(); }
+const hint = (m, err) => { $('hint').textContent = m || 'Enter the amount you want to deposit or withdraw.'; $('hint').className = 'hint' + (err ? ' err' : ''); };
+document.querySelector('.seg').onclick = (e) => { const b = e.target.closest('button'); if (b) setKind(b.dataset.k); };
+$('amount').oninput = (e) => { const v = e.target.value.replace(/[^\d]/g, ''); e.target.value = v ? (+v).toLocaleString('en-US') : ''; };
+const amount = () => +($('amount').value.replace(/[^\d]/g, '') || 0);
+$('max').onclick = () => { $('amount').value = Math.floor(kind === 'withdraw' ? S.bank : S.cash).toLocaleString('en-US'); };
+$('quick').onclick = (e) => { const b = e.target.closest('button'); if (b) { $('amount').value = (+b.dataset.v).toLocaleString('en-US'); send(); } };
+async function send() {
+  const a = amount(); if (busy) return; if (a <= 0) return hint('Enter an amount first.', 1);
+  if (a > (kind === 'withdraw' ? S.bank : S.cash)) return hint(`Not enough ${kind === 'withdraw' ? 'money in the bank' : 'cash'}.`, 1);
+  busy = true; $('go').disabled = true;
+  const r = await post('tx', { kind, amount: a }); busy = false; $('go').disabled = false;
+  if (!r || !r.ok) return hint((r && r.msg) || 'Transaction failed.', 1);
+  setBal(r); $('amount').value = ''; hint(`${kind === 'withdraw' ? 'Withdrew' : 'Deposited'} ${fmt(a)} successfully.`);
+}
+$('go').onclick = send; $('amount').onkeydown = (e) => e.key === 'Enter' && send();
+function close() { $('atm').classList.remove('on'); post('close'); }
+$('x').onclick = close; document.addEventListener('keydown', (e) => e.key === 'Escape' && $('atm').classList.contains('on') && close());
+window.addEventListener('message', (e) => { const d = e.data; if (d?.action !== 'open') return; const x = d.data;
+  $('title').textContent = x.title || 'CASH MACHINE'; $('street').textContent = x.street || ''; $('who').textContent = x.name ? x.name + ' · Withdraw or deposit cash' : 'Withdraw or deposit cash';
+  $('quick').innerHTML = (x.quick || []).map(v => `<button class="h" data-v="${v}">${fmt(v)}</button>`).join('');
+  S = { cash: x.cash, bank: x.bank }; setBal(x); setKind('withdraw'); $('amount').value = ''; $('atm').classList.add('on'); setTimeout(() => $('amount').focus(), 50); });
+function mock(d) { const s = { ...S }; if (d.kind === 'withdraw') { s.bank -= d.amount; s.cash += d.amount; } else { s.cash -= d.amount; s.bank += d.amount; } s.ok = true; return s; }
+if (PREVIEW) { document.body.classList.add('preview'); window.postMessage({ action: 'open', data: { street: 'Meteor St', name: 'Preview Character', cash: 4250, bank: 62881, quick: [100, 500, 1000, 2000, 5000, 10000] } }, '*'); }
+</script></body></html>
