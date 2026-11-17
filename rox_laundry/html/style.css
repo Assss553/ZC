@@ -1,0 +1,68 @@
+/* ROX Laundry · © ROX Store */
+*{box-sizing:border-box;margin:0;padding:0;user-select:none}
+body{font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;overflow:hidden;background:transparent;color:#fff}
+.hidden{display:none!important}
+#app{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at center,#0008,#000c);animation:fade .3s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.panel{position:relative;width:1080px;height:660px;border-radius:28px;background:linear-gradient(160deg,#1a1c22,#0e0f13);border:1px solid #ffffff1a;box-shadow:0 40px 120px #000c,0 0 0 1px #ff5a1f22 inset;display:flex;flex-direction:column;overflow:hidden;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+header{display:flex;align-items:center;gap:18px;padding:18px 24px;border-bottom:1px solid #ffffff12;background:#ffffff05}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:4px;font-size:15px}
+.brand i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff8a4c,#ff3d10);display:grid;place-items:center;font-style:normal;letter-spacing:0;box-shadow:0 6px 20px #ff5a1f66}
+#title{font-size:22px;font-weight:800;flex:1}
+.steps{display:flex;gap:8px}.steps b{width:30px;height:6px;border-radius:9px;background:#ffffff22;transition:.3s}.steps b.on{background:#ff5a1f;width:46px}.steps b.done{background:#ff5a1f88}
+.x{background:#ffffff12;border:0;color:#fff;width:36px;height:36px;border-radius:10px;font-size:16px;cursor:pointer}.x:hover{background:#ff3d10}
+main{flex:1;position:relative;display:flex;align-items:center;justify-content:center;gap:60px;padding:20px}
+footer{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-top:1px solid #ffffff12;background:#ffffff05;font-size:16px;color:#c9ced8}
+.score{font-weight:800;color:#ffb08a}
+.btn{background:linear-gradient(135deg,#ff7a3c,#ff3d10);border:0;color:#fff;font-weight:800;font-size:18px;padding:14px 30px;border-radius:14px;cursor:pointer;box-shadow:0 10px 30px #ff5a1f55;transition:.15s}
+.btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(1px)}.btn.ghost{background:#ffffff14;box-shadow:none}
+.btn.sel{outline:3px solid #fff}
+.col{display:flex;flex-direction:column;align-items:center;gap:16px}
+h3{font-size:26px;font-weight:900}.muted{color:#9aa1b1;font-size:16px;text-align:center;max-width:360px;line-height:1.5}
+/* machine */
+.machine{width:340px;height:420px;border-radius:26px;position:relative;background:linear-gradient(180deg,#f4f5f7,#d9dce1);box-shadow:0 30px 60px #0008,inset 0 -8px 0 #b9bcc2;flex:none}
+.machine.dry{background:linear-gradient(180deg,#4a4f59,#2b2e35);box-shadow:0 30px 60px #0008,inset 0 -8px 0 #1f2126}
+.machine .top{position:absolute;left:0;right:0;top:0;height:78px;border-radius:26px 26px 0 0;background:#00000010;display:flex;align-items:center;gap:16px;padding:0 22px}
+.machine .drawer{width:96px;height:38px;border-radius:8px;background:#30343b;box-shadow:inset 0 0 0 3px #9aa}
+.machine .disp{flex:1;height:38px;border-radius:8px;background:#0c1014;color:#52f29a;font:800 20px/38px monospace;text-align:center;letter-spacing:2px}
+.machine .knob{width:44px;height:44px;border-radius:50%;background:#c9ccd1;box-shadow:0 3px 0 #888;position:relative}.machine .knob:after{content:"";position:absolute;left:20px;top:5px;width:4px;height:14px;background:#333;border-radius:2px}
+.door{position:absolute;left:50%;top:235px;width:250px;height:250px;margin:-125px;border-radius:50%;background:#9aa0a8;box-shadow:0 8px 20px #0006;display:grid;place-items:center}
+.drum{width:206px;height:206px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#3d4651 0 40%,#252a31 70%);overflow:hidden;position:relative;box-shadow:inset 0 0 30px #000}
+.drum .holes{position:absolute;inset:0;background-image:radial-gradient(#11151a 2px,transparent 2.5px);background-size:16px 16px;opacity:.6}
+.drum .water{position:absolute;left:-20%;right:-20%;bottom:-100%;height:100%;background:linear-gradient(#7bb8ec,#3f7fbf);border-radius:45%;transition:bottom 1.2s;animation:wave 3s linear infinite}
+.drum.wet .water{bottom:-48%}
+@keyframes wave{to{transform:rotate(360deg)}}
+.drum .load{position:absolute;inset:0;display:grid;place-items:center;transition:transform .2s}
+.drum.spin .load{animation:spin .55s linear infinite}.drum.tumble .load{animation:tumble 1.6s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes tumble{0%{transform:rotate(0) translateY(30px)}50%{transform:rotate(180deg) translateY(-30px)}100%{transform:rotate(360deg) translateY(30px)}}
+.drum .glass{position:absolute;inset:0;border-radius:50%;background:linear-gradient(130deg,#ffffff40,transparent 40%)}
+.bub{position:absolute;border:2px solid #ffffffaa;border-radius:50%;animation:bub 2.4s ease-in infinite}
+@keyframes bub{from{transform:translateY(60px);opacity:0}30%{opacity:1}to{transform:translateY(-140px);opacity:0}}
+.machine.shake{animation:shake .12s linear infinite}@keyframes shake{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(-6px,2px) rotate(-1.2deg)}75%{transform:translate(6px,-2px) rotate(1.2deg)}}
+.drop{outline:4px dashed #ff5a1f;outline-offset:10px;animation:pulse 1s infinite}@keyframes pulse{50%{outline-color:#ffb08a}}
+/* items */
+.basket{width:300px;height:280px;border-radius:26px;background:#ffffff08;border:2px dashed #ffffff22;display:grid;place-items:center;position:relative}
+.shirt{width:180px;cursor:grab;filter:drop-shadow(0 14px 20px #0008);transition:transform .2s}.shirt:hover{transform:scale(1.05) rotate(-3deg)}
+.drag{position:fixed;pointer-events:none;z-index:99;width:150px;transform:translate(-50%,-50%) rotate(-8deg)}
+.tag{display:inline-flex;gap:8px;align-items:center;background:#fff;color:#111;border-radius:10px;padding:6px 12px;font-weight:800;font-size:15px}
+.meter{width:60px;height:300px;border-radius:30px;background:#ffffff10;position:relative;overflow:hidden;border:2px solid #ffffff22}
+.meter .zone{position:absolute;left:0;right:0;background:#3ddc8455;border-top:2px solid #3ddc84;border-bottom:2px solid #3ddc84}
+.meter .fill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#5ec8ff,#2a7fd6);height:0}
+.bottle{width:110px;height:170px;border-radius:24px 24px 18px 18px;background:linear-gradient(135deg,#ff8a4c,#ff3d10);position:relative;box-shadow:0 20px 40px #0008;transition:transform .2s;transform-origin:50% 80%}
+.bottle:before{content:"";position:absolute;left:35px;top:-26px;width:40px;height:30px;border-radius:8px 8px 0 0;background:#fff}
+.bottle span{position:absolute;left:0;right:0;top:60px;text-align:center;font-weight:900;font-size:18px}
+.bottle.pour{transform:rotate(-70deg) translate(-40px,-10px)}
+.opts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.coins{display:flex;gap:10px}.coin{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe7a0,#d6a12a 60%,#9a6c10);box-shadow:0 6px 0 #6b4a08;cursor:pointer;display:grid;place-items:center;font-weight:900;color:#5a3c00;transition:.25s}
+.coin.used{transform:translateY(-140px) scale(.4);opacity:0}
+.ring{width:110px;height:110px}.ring circle{fill:none;stroke-width:10}.ring .bg{stroke:#ffffff18}.ring .fg{stroke:#ff5a1f;stroke-linecap:round;transition:stroke-dashoffset .2s}
+.alert{position:absolute;top:30px;left:50%;transform:translateX(-50%);background:#ff3d10;padding:14px 26px;border-radius:14px;font-weight:900;font-size:20px;display:flex;gap:16px;align-items:center;box-shadow:0 20px 50px #ff3d1088;animation:pop .3s}
+.lint{width:44px;height:44px;border-radius:50%;background:#c9c3b8;position:absolute;cursor:pointer;box-shadow:0 4px 10px #0006;animation:pop .3s}
+.result{display:flex;flex-direction:column;align-items:center;gap:18px}
+.stars{font-size:54px;letter-spacing:8px;color:#ffb08a}
+.fold{width:420px;height:380px;position:relative}
+.fold svg{width:100%;height:100%}
+.hot{cursor:pointer}.hot path,.hot rect{fill:#ff5a1f33;stroke:#ff5a1f;stroke-width:3;stroke-dasharray:8 6;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.confetti{position:absolute;width:10px;height:16px;top:-20px;animation:fall 1.8s ease-in forwards}@keyframes fall{to{transform:translateY(720px) rotate(720deg)}}

@@ -447,6 +447,70 @@ def manhole(seed):
     d = mix(shade((70, 66, 62), m), col((58, 58, 60)) * np.ones((N, N, 1)), (r >= 1.0).astype(float))
     return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(h * (r < 1.0), 0.4))
 
+def checker(c1, c2, seed, n=8):
+    y, x = np.mgrid[0:N, 0:N] / N
+    ix, iy = np.floor(x * n).astype(int), np.floor(y * n).astype(int)
+    a = ((ix + iy) % 2).astype(float)
+    fx, fy = (x * n) % 1.0, (y * n) % 1.0
+    e = np.minimum(np.minimum(fx, 1 - fx), np.minimum(fy, 1 - fy)) / n
+    g = np.clip(1 - e / 0.0035, 0, 1)
+    m = (0.94 + 0.1 * fbm(2.4, seed)) * (1 + 0.03 * (white(seed + 1) - 0.5))
+    d = mix(col(c1) * np.ones((N, N, 1)), col(c2) * np.ones((N, N, 1)), a) * m[:, :, None]
+    d = mix(d, col((120, 120, 118)) * np.ones((N, N, 1)), g * 0.8)
+    h = 1 - g
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(h, 0.2), s=spec_map(np.clip(0.7 * (1 - g) * (0.8 + 0.3 * fbm(2.5, seed + 2)), 0, 1)))
+
+def machine_front(kind, seed):
+    """Front panel of a front-loading washer / dryer: control strip, dial, display, round glass door."""
+    from PIL import ImageDraw, ImageFilter
+    S = 1024
+    body = (236, 238, 240) if kind == 'washer' else (58, 62, 70)
+    im = Image.new('RGB', (S, S), body); dr = ImageDraw.Draw(im)
+    for y in range(S):  # soft vertical sheen
+        v = 1.0 + 0.06 * np.cos(y / S * 3.1)
+        dr.line((0, y, S, y), fill=tuple(int(min(255, c * v)) for c in body))
+    dr.rectangle((0, 0, S, 190), fill=(210, 214, 220) if kind == 'washer' else (36, 38, 44))
+    dr.rectangle((40, 40, 300, 150), fill=(40, 44, 50), outline=(150, 150, 150), width=4)          # detergent drawer / coin slot
+    dr.rectangle((70, 80, 270, 110), fill=(20, 20, 24))
+    dr.rounded_rectangle((380, 55, 640, 135), 12, fill=(16, 20, 24))                               # display
+    for k, c in enumerate(((60, 230, 140), (60, 230, 140), (255, 120, 40))):
+        dr.text((400 + k * 70, 68), '8', fill=c, font=_font(56))
+    dr.ellipse((720, 30, 860, 170), fill=(200, 202, 206), outline=(90, 90, 90), width=6); dr.line((790, 50, 790, 100), fill=(60, 60, 60), width=10)
+    for k in range(4): dr.ellipse((900, 45 + k * 32, 922, 67 + k * 32), fill=(255, 90, 31) if k == 0 else (120, 120, 120))
+    cx, cy, r = S // 2, 600, 330
+    dr.ellipse((cx - r - 26, cy - r - 26, cx + r + 26, cy + r + 26), fill=(180, 184, 190) if kind == 'washer' else (110, 114, 120))
+    dr.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(30, 34, 40))
+    glass = Image.new('RGB', (2 * r, 2 * r), (0, 0, 0)); g = ImageDraw.Draw(glass)
+    for k in range(2 * r):  # drum interior: dark steel with holes and a bit of laundry
+        t = k / (2 * r); g.line((0, k, 2 * r, k), fill=(int(70 - 30 * t), int(80 - 30 * t), int(92 - 30 * t)))
+    rng = np.random.default_rng(seed)
+    for _ in range(140):
+        x, y = rng.integers(0, 2 * r, 2); g.ellipse((x - 4, y - 4, x + 4, y + 4), fill=(30, 34, 40))
+    if kind == 'washer':
+        g.pieslice((-40, r * 0.9, 2 * r + 40, 2 * r + 220), 180, 360, fill=(120, 170, 220))
+        for _ in range(25):
+            x, y = rng.integers(40, 2 * r - 40), rng.integers(int(r * 1.1), 2 * r - 20); rr = int(rng.integers(6, 22)); g.ellipse((x - rr, y - rr, x + rr, y + rr), outline=(230, 240, 255), width=3)
+    glass = glass.filter(ImageFilter.GaussianBlur(3))
+    m = Image.new('L', (2 * r, 2 * r), 0); ImageDraw.Draw(m).ellipse((0, 0, 2 * r - 1, 2 * r - 1), fill=255)
+    im.paste(glass, (cx - r, cy - r), m); dr = ImageDraw.Draw(im)
+    dr.arc((cx - r + 40, cy - r + 40, cx + r - 40, cy + r - 40), 205, 250, fill=(225, 232, 242), width=14)   # glass highlight
+    dr.arc((cx - r + 70, cy - r + 70, cx + r - 70, cy + r - 70), 210, 235, fill=(200, 210, 224), width=6)
+    dr.rectangle((cx + r + 40, cy - 60, cx + r + 70, cy + 60), fill=(150, 152, 156))                  # handle
+    dr.text((60, S - 90), 'ROX' if kind == 'washer' else 'ROX DRY', fill=(255, 90, 31), font=_font(48))
+    a = np.asarray(im.resize((N, N), Image.LANCZOS))
+    return dict(d=a, s=spec_map(np.full((N, N), 0.6), np.full((N, N), 0.8)))
+
+def poster_laundry(seed):
+    from PIL import ImageDraw
+    im = Image.new('RGB', (768, 1024), (255, 90, 31)); dr = ImageDraw.Draw(im)
+    dr.rectangle((30, 30, 738, 994), outline=(255, 255, 255), width=8)
+    f, (l, t, r, b) = _fit_text(dr, 'WASH', 640, 220); dr.text((384 - (r - l) / 2 - l, 80 - t), 'WASH', font=f, fill=(255, 255, 255))
+    f, (l, t, r, b) = _fit_text(dr, 'DRY  FOLD', 640, 120); dr.text((384 - (r - l) / 2 - l, 330 - t), 'DRY  FOLD', font=f, fill=(20, 20, 24))
+    for k, (a, c) in enumerate((('WASH', '$4'), ('DRY', '$3'), ('FOLD', '$2'))):
+        y = 520 + k * 140; dr.rounded_rectangle((90, y, 678, y + 110), 20, fill=(255, 255, 255))
+        dr.text((130, y + 22), a, font=_font(64), fill=(20, 20, 24)); dr.text((540, y + 22), c, font=_font(64), fill=(255, 90, 31))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
 def build_all():
     T = {}
     T['rox_paint_white'] = paint((232, 230, 224), 1)
@@ -503,6 +567,13 @@ def build_all():
     T['rox_rug_cream'] = carpet((214, 204, 182), 122)
     T['rox_rug_green'] = carpet((60, 96, 70), 123)
     T['rox_rug_black'] = carpet((40, 40, 42), 124)
+    T['rox_tile_check'] = checker((236, 236, 232), (28, 28, 30), 140)
+    T['rox_tile_mint'] = tiles((168, 214, 196), (220, 224, 222), 141, 8, 16, gap=0.01, var=0.04, gloss=0.8)
+    T['rox_washer_front'] = machine_front('washer', 142)
+    T['rox_dryer_front'] = machine_front('dryer', 143)
+    T['rox_sign_laundry'] = sign_text('ROX LAUNDRY', (255, 255, 255), (255, 90, 31), 144, aspect=8, border=(255, 255, 255))
+    T['rox_sign_open'] = sign_text('OPEN 24/7', (255, 60, 60), (12, 10, 14), 145, aspect=4)
+    T['rox_poster_laundry'] = poster_laundry(146)
     T['rox_window_day'] = window_day(28)
     T['rox_window_dark'] = window_dark(29)
     T['rox_light_panel'] = light_panel(30)

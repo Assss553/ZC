@@ -6,7 +6,7 @@ from kit import MATS
 
 # usage: build.py <workdir> [street] [only...]
 SET = 'shells'
-if len(sys.argv) > 2 and sys.argv[2] in ('street', 'open', 'build'):
+if len(sys.argv) > 2 and sys.argv[2] in ('street', 'open', 'build', 'laundry'):
     SET = sys.argv[2]; del sys.argv[2]
 
 W = sys.argv[1]
@@ -15,14 +15,14 @@ XML = os.path.join(W, 'xml'); OUT = os.path.join(W, 'out'); PRE = os.path.join(W
 for d in (XML, OUT, PRE):
     os.makedirs(d, exist_ok=True)
 CW = ['dotnet', os.path.join(W, 'cwconv/bin/Release/net8.0/cwconv.dll')]
-TXD = {'shells': 'rox_shells_txd', 'street': 'rox_street_txd', 'open': 'rox_open_txd', 'build': 'rox_build_txd'}[SET]
-TYP = {'shells': 'rox_shells', 'street': 'rox_street', 'open': 'rox_open', 'build': 'rox_build'}[SET]
+TXD = {'shells': 'rox_shells_txd', 'street': 'rox_street_txd', 'open': 'rox_open_txd', 'build': 'rox_build_txd', 'laundry': 'rox_laundry_txd'}[SET]
+TYP = {'shells': 'rox_shells', 'street': 'rox_street', 'open': 'rox_open', 'build': 'rox_build', 'laundry': 'rox_laundry'}[SET]
 only = sys.argv[2:] or None
 
 index = json.load(open(os.path.join(TEX, 'textures.json')))
 shells, used = [], set()
-if SET in ('street', 'open', 'build'):
-    mod = __import__({'street': 'street', 'open': 'openhouses', 'build': 'buildkit'}[SET])
+if SET in ('street', 'open', 'build', 'laundry'):
+    mod = __import__({'street': 'street', 'open': 'openhouses', 'build': 'buildkit', 'laundry': 'laundry'}[SET])
     makers = [(lambda p=p: p) for p in mod.all_pieces()]
     for m in makers: m.__name__ = m().name
 else:
