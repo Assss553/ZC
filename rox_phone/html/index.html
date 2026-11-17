@@ -41,7 +41,7 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .tip .bars { display: flex; gap: 3px; } .tip .bars i { width: 5px; height: 12px; border-radius: 1px; background: rgba(255,255,255,.25); } .tip .bars i.on { background: #fff; }
 
 /* ---------- status bar ---------- */
-.sb { position: absolute; top: 0; left: 0; right: 0; height: 34px; padding: 12px 18px 0; display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 800; z-index: 20; }
+.sb { position: absolute; top: 0; left: 0; right: 0; height: 34px; padding: 12px 18px 0; display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 800; z-index: 30; }
 .sb .brand b { color: var(--a); } .sb .r { display: flex; gap: 5px; align-items: center; font-size: 9px; opacity: .9; }
 .bat { width: 18px; height: 9px; border: 1.3px solid #fff; border-radius: 2.5px; padding: 1px; } .bat i { display: block; height: 100%; width: 74%; background: #fff; border-radius: 1px; }
 
@@ -86,6 +86,60 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .dock { display: flex; justify-content: center; gap: 12px; padding: 9px; margin: 0 auto 12px; border-radius: 20px; background: rgba(255,255,255,.12); backdrop-filter: blur(18px); }
 .dock .app .ic { width: 48px; height: 48px; }
 
+
+/* svg icons */
+.app .ic { background: none !important; box-shadow: 0 5px 12px rgba(0,0,0,.45); border-radius: 13px; } .app .ic::after { display: none; } .app .ic svg { display: block; }
+.dock .app .ic { width: 48px; height: 48px; }
+/* home bar */
+.hb { position: absolute; bottom: 6px; left: 50%; width: 110px; height: 4px; margin-left: -55px; border-radius: 3px; background: rgba(255,255,255,.75); z-index: 30; cursor: pointer; opacity: 0; transition: .2s; }
+.inapp .hb { opacity: 1; }
+/* app view */
+.av { position: absolute; inset: 0; z-index: 25; background: #0e0e11; display: none; flex-direction: column; padding: 38px 0 18px; transform-origin: var(--ox, 50%) var(--oy, 50%); }
+.av.on { display: flex; animation: appIn .38s cubic-bezier(.2,.9,.3,1); } .av.out { animation: appOut .28s ease forwards; }
+@keyframes appIn { from { transform: scale(.15); opacity: 0; border-radius: 40px; } } @keyframes appOut { to { transform: scale(.15); opacity: 0; } }
+.ah { display: flex; align-items: center; gap: 10px; padding: 6px 16px 12px; } .ah h1 { font-size: 24px; font-weight: 800; flex: 1; letter-spacing: -.3px; }
+.ah button, .ib { width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(255,255,255,.08); color: #fff; cursor: pointer; font-size: 12px; } .ah button:hover, .ib:hover { background: var(--a); }
+.ab { flex: 1; overflow-y: auto; padding: 0 16px; } .ab::-webkit-scrollbar { width: 0; }
+.open .ab.split { display: grid; grid-template-columns: 300px 1fr; gap: 14px; }
+.srch { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 10px; background: rgba(255,255,255,.07); color: rgba(255,255,255,.45); font-size: 12px; margin-bottom: 10px; }
+.li { display: flex; align-items: center; gap: 11px; padding: 10px 6px; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; border-radius: 10px; }
+.li:hover, .li.sel { background: rgba(255,255,255,.05); }
+.av-img { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: none; color: #fff; }
+.li .tx { flex: 1; min-width: 0; } .li b { display: block; font-size: 13px; } .li span { display: block; font-size: 11px; color: rgba(255,255,255,.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li small { font-size: 10px; color: rgba(255,255,255,.4); align-self: flex-start; margin-top: 3px; } .li .un { width: 18px; height: 18px; border-radius: 9px; background: var(--a); font-size: 9.5px; font-weight: 800; display: grid; place-items: center; }
+.chat { display: flex; flex-direction: column; height: 100%; min-height: 380px; background: rgba(255,255,255,.025); border-radius: 14px; }
+.chat .ch { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.06); } .chat .ch b { flex: 1; font-size: 13px; }
+.msgs { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.bub { max-width: 75%; padding: 8px 12px; border-radius: 16px; font-size: 12.5px; line-height: 1.35; background: #26262c; align-self: flex-start; border-bottom-left-radius: 4px; animation: pop .25s; }
+.bub.me { align-self: flex-end; background: linear-gradient(160deg, #ff7a3d, #e8450f); border-radius: 16px 16px 4px 16px; }
+.comp { display: flex; gap: 8px; padding: 10px; } .comp input { flex: 1; height: 36px; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.06); color: #fff; padding: 0 14px; font: 500 12.5px Inter; outline: none; }
+.comp button { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--a); color: #fff; cursor: pointer; }
+/* phone */
+.tabs2 { display: flex; gap: 4px; padding: 3px; background: rgba(255,255,255,.06); border-radius: 10px; margin-bottom: 12px; } .tabs2 button { flex: 1; height: 28px; border: 0; border-radius: 8px; background: none; color: rgba(255,255,255,.6); font: 700 11px Inter; cursor: pointer; } .tabs2 button.on { background: rgba(255,255,255,.12); color: #fff; }
+.dial { text-align: center; } .dial .num { font-size: 30px; font-weight: 500; height: 44px; margin: 10px 0 12px; letter-spacing: 1px; }
+.dial .kp { display: grid; grid-template-columns: repeat(3, 62px); gap: 12px 22px; justify-content: center; }
+.dial .kp button { width: 62px; height: 62px; border-radius: 50%; border: 0; background: rgba(255,255,255,.1); color: #fff; font: 500 24px Inter; cursor: pointer; line-height: 1; } .dial .kp button small { display: block; font-size: 8px; font-weight: 700; letter-spacing: 1.5px; opacity: .6; }
+.dial .kp button:active { background: rgba(255,255,255,.25); } .call { width: 62px; height: 62px; border-radius: 50%; border: 0; background: #34c759; color: #fff; font-size: 22px; margin-top: 16px; cursor: pointer; box-shadow: 0 6px 20px rgba(52,199,89,.4); }
+/* bank */
+.card { position: relative; border-radius: 18px; padding: 18px; height: 168px; overflow: hidden; background: linear-gradient(135deg, #ff7a3d, #c2340a 55%, #2a0f05); box-shadow: 0 14px 30px rgba(255,90,31,.25); }
+.card::before { content: ''; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,.1); } .card::after { content: ''; position: absolute; right: 40px; bottom: -70px; width: 160px; height: 160px; border-radius: 50%; background: rgba(0,0,0,.15); }
+.card small { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; opacity: .8; } .card .bal { font-size: 32px; font-weight: 800; margin: 4px 0 26px; letter-spacing: -.5px; }
+.card .row { display: flex; justify-content: space-between; align-items: flex-end; font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; position: relative; z-index: 1; } .card .chip { width: 30px; height: 22px; border-radius: 5px; background: linear-gradient(135deg, #ffe69a, #c9a33a); }
+.acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; } .acts div { text-align: center; font-size: 10px; font-weight: 600; color: rgba(255,255,255,.75); cursor: pointer; }
+.acts i { display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 5px; border-radius: 14px; background: rgba(255,255,255,.08); font-size: 15px; color: var(--a); } .acts div:hover i { background: var(--a); color: #fff; }
+.sec { font-size: 13px; font-weight: 800; margin: 6px 0 4px; display: flex; justify-content: space-between; } .sec span { color: var(--a); font-size: 11px; }
+.amt { font-weight: 800; font-size: 13px; } .amt.p { color: #3ddc84; }
+.ti { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.07); font-size: 14px; flex: none; }
+/* settings */
+.prof { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: rgba(255,255,255,.05); margin-bottom: 14px; }
+.grp { border-radius: 14px; background: rgba(255,255,255,.05); margin-bottom: 14px; overflow: hidden; }
+.sr { display: flex; align-items: center; gap: 11px; padding: 10px 12px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; } .sr:last-child { border: 0; } .sr span { flex: 1; } .sr small { color: rgba(255,255,255,.45); }
+.sr .si { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; } .sr > .fa-chevron-right { font-size: 10px; opacity: .35; }
+.tg { width: 40px; height: 24px; border-radius: 12px; background: rgba(255,255,255,.15); position: relative; transition: .2s; } .tg::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
+.tg.on { background: #34c759; } .tg.on::after { left: 18px; }
+.walls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; } .walls i { height: 70px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; } .walls i.on { border-color: var(--a); }
+/* placeholder */
+.soon { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: rgba(255,255,255,.55); font-size: 12px; } .soon b { color: #fff; font-size: 18px; }
 /* ---------- preview controls ---------- */
 .ctrl { position: fixed; left: 30px; top: 30px; display: flex; flex-direction: column; gap: 8px; }
 .ctrl h1 { font-family: 'Barlow Condensed'; font-style: italic; font-size: 38px; } .ctrl h1 b { color: var(--a); }
@@ -116,19 +170,16 @@ body:not(.preview) .ctrl { display: none; }
     <div class="apps" id="apps"></div>
     <div class="under"><span class="dots"><i class="on"></i><i></i></span><span class="search"><i class="fa-solid fa-magnifying-glass"></i> Search</span></div>
     <div class="dock" id="dockApps"></div></div>
+  <div class="av" id="av"></div><div class="hb" id="hb"></div>
   </div></div><div class="flap"></div></div></div>
 
+<script src="icons.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
-// [name, icon, background, glyph colour, badge]
-const APPS = [['Twitter','feather','linear-gradient(160deg,#2b2b30,#0d0d10)','#e9e9ee'],['Photos','images','linear-gradient(160deg,#cfe8ff,#5aa9ff)','#fff'],['Calculator','calculator','linear-gradient(160deg,#ffffff,#d9d9de)','#3a3a40'],
-  ['Clock','clock','linear-gradient(160deg,#3a3a40,#121214)','#ffb347'],['Notes','note-sticky','linear-gradient(160deg,#fff6d6,#ffd66b)','#b07b00'],['Banking','vault','linear-gradient(160deg,#6b6f78,#2a2c31)','#e8e8ea',1],
-  ['Drop','box-archive','linear-gradient(160deg,#c9e86a,#6c9b16)','#fff'],['Pic-it','camera-retro','linear-gradient(160deg,#ffffff,#dedee3)','#2b2b30'],['Maps','map-location-dot','linear-gradient(160deg,#9ff0b8,#3aa6ff)','#fff'],
-  ['Pigeon','dove','linear-gradient(160deg,#fff,#e8dccd)','#b08a5a'],['Vibe','wave-square','linear-gradient(160deg,#3b2a5a,#120c1d)','#c084fc'],['Crew','people-group','linear-gradient(160deg,#1b3a2a,#08130d)','#4ade80'],
-  ['Services','briefcase','linear-gradient(160deg,#3b8bff,#1240c4)','#fff'],['RoxMusic','music','linear-gradient(160deg,#4c1d6b,#16081f)','#ff7ad9'],['Garage','warehouse','linear-gradient(160deg,#4a3a32,#1a1310)','#ff8a4c'],
-  ['Crypto','bitcoin-sign','linear-gradient(160deg,#2a1b5c,#0b0720)','#a78bfa',1],['DOJ','scale-balanced','linear-gradient(160deg,#16305e,#08142b)','#ffd36b'],['Racing','flag-checkered','linear-gradient(160deg,#ff5a4a,#a3001b)','#fff']];
-const DOCK = [['Phone','phone','linear-gradient(160deg,#4aa3ff,#1667e0)','#fff'],['Messages','comment','linear-gradient(160deg,#ffe066,#f5b400)','#fff'],['Camera','camera','linear-gradient(160deg,#ffffff,#cfcfd6)','#2b2b30'],['Settings','gear','linear-gradient(160deg,#9ca3af,#4b5563)','#fff']];
-const tile = ([n, i, bg, fg, b], k, label = true) => `<div class="app" style="animation-delay:${k * 22}ms">${b ? `<em>${b}</em>` : ''}<div class="ic" style="background:${bg};color:${fg}"><i class="fa-solid fa-${i}"></i></div>${label ? n : ''}</div>`;
+const APPS = [['Twitter','twitter'],['Photos','photos'],['Calculator','calculator'],['Clock','clock'],['Notes','notes'],['Banking','banking',1],['Drop','drop'],['Pic-it','picit'],['Maps','maps'],
+  ['Pigeon','pigeon'],['Vibe','vibe'],['Crew','crew'],['Services','services'],['RoxMusic','music'],['Garage','garage'],['Crypto','crypto',1],['DOJ','doj'],['Racing','racing']];
+const DOCK = [['Phone','phone'],['Messages','messages',2],['Camera','camera'],['Settings','settings']];
+const tile = ([n, k, b], i, label = true) => `<div class="app" data-app="${k}" data-name="${n}" style="animation-delay:${i * 22}ms">${b ? `<em>${b}</em>` : ''}<div class="ic">${RoxIcons.svg(k, label ? 46 : 48)}</div>${label ? n : ''}</div>`;
 const isOpen = () => document.body.classList.contains('open');
 function drawApps() { $('apps').innerHTML = APPS.slice(0, isOpen() ? 18 : 12).map((a, k) => tile(a, k)).join(''); $('dockApps').innerHTML = DOCK.map((a, k) => tile(a, k, false)).join(''); }
 
@@ -150,7 +201,7 @@ function setFold(open) {
   document.body.classList.toggle('open', open);
   $('bFold').querySelector('span').textContent = open ? 'Fold' : 'Unfold';
   if (window.invokeNative) fetch(`https://${GetParentResourceName()}/fold`, { method: 'POST', body: JSON.stringify({ open }) });
-  setTimeout(() => { drawApps(); sc.classList.remove('busy'); d.classList.remove('anim-open', 'anim-close'); busy = false; }, 720);
+  setTimeout(() => { drawApps(); const av = $('av'); if (av.classList.contains('on')) { const k = av.dataset.app, el = document.querySelector(`.app[data-app="${k}"]`); if (el) openApp(k, el.dataset.name, el); } sc.classList.remove('busy'); d.classList.remove('anim-open', 'anim-close'); busy = false; }, 720);
 }
 $('bFold').onclick = () => setFold(!isOpen());
 $('bLock').onclick = lock; $('bHide').onclick = () => $('pos').classList.toggle('hide');
@@ -166,8 +217,54 @@ document.addEventListener('mousemove', (e) => { if (!drag) return;
   drag.p = p; });
 document.addEventListener('mouseup', () => { if (!drag) return; const done = drag.p >= 1; drag = null; $('tip').classList.remove('on'); $('dev').style.transform = ''; if (done) setFold(!isOpen()); });
 
-document.addEventListener('keydown', (e) => { if (/^\d$/.test(e.key) && $('scr').classList.contains('locked')) key(e.key); if (e.key === 'Backspace') key('del');
+document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; if (/^\d$/.test(e.key) && $('scr').classList.contains('locked')) key(e.key); if (e.key === 'Backspace') key('del');
   if (e.key.toLowerCase() === 'f') setFold(!isOpen()); if (e.key.toLowerCase() === 'l') lock(); });
+
+/* ---------- apps ---------- */
+const COL = ['#ff5a1f','#2f7cf6','#a855f7','#22c55e','#eab308','#ec4899'];
+const ini = (n) => n.split(' ').map(w => w[0]).join('').slice(0, 2);
+const avatar = (n, k) => `<div class="av-img" style="background:${COL[k % COL.length]}">${ini(n)}</div>`;
+const CHATS = [{ n: 'Jaber', t: '2m', u: 2, m: [['Where are you?'], ['On my way', 1], ['Meet me at Legion Square']] }, { n: 'Mechanic Shop', t: '1h', m: [['Your car is ready for pickup']] },
+  { n: 'Sara', t: '3h', m: [['Thanks for yesterday!'], ['Anytime', 1]] }, { n: 'LSPD Dispatch', t: '1d', m: [['Reminder: shift starts at 18:00']] }];
+const TX = [['Paycheck - LSPD', '+2,500', 'p', 'briefcase', 'Today'], ['24/7 Supermarket', '-42', '', 'cart-shopping', 'Today'], ['Transfer from Jaber', '+300', 'p', 'arrow-down', 'Yesterday'],
+  ['Mechanic Shop', '-850', '', 'wrench', 'Yesterday'], ['Fuel - LTD Gasoline', '-96', '', 'gas-pump', 'Mon']];
+const APPVIEW = {
+  messages: () => { let cur = 0;
+    const list = () => `<div class="srch"><i class="fa-solid fa-magnifying-glass"></i>Search</div>` + CHATS.map((c, k) => `<div class="li ${k === cur && isOpen() ? 'sel' : ''}" data-c="${k}">${avatar(c.n, k)}<div class="tx"><b>${c.n}</b><span>${c.m[c.m.length - 1][0]}</span></div><small>${c.t}</small>${c.u ? `<i class="un">${c.u}</i>` : ''}</div>`).join('');
+    const chat = (k) => { const c = CHATS[k]; return `<div class="chat"><div class="ch">${isOpen() ? '' : '<button class="ib" data-back><i class="fa-solid fa-chevron-left"></i></button>'}${avatar(c.n, k)}<b>${c.n}</b><button class="ib"><i class="fa-solid fa-phone"></i></button></div>
+      <div class="msgs" id="msgs">${c.m.map(([t, me]) => `<div class="bub ${me ? 'me' : ''}">${t}</div>`).join('')}</div><div class="comp"><input id="mi" placeholder="Message"><button id="ms"><i class="fa-solid fa-paper-plane"></i></button></div></div>`; };
+    const draw = (inChat) => { const b = $('ab'); if (isOpen()) { b.className = 'ab split'; b.innerHTML = `<div>${list()}</div>${chat(cur)}`; } else b.innerHTML = inChat ? chat(cur) : list(); bind(); };
+    const bind = () => { $('ab').querySelectorAll('[data-c]').forEach(e => e.onclick = () => { cur = +e.dataset.c; CHATS[cur].u = 0; draw(true); });
+      const back = $('ab').querySelector('[data-back]'); if (back) back.onclick = () => draw(false);
+      const send = () => { const v = $('mi').value.trim(); if (!v) return; CHATS[cur].m.push([v, 1]); CHATS[cur].t = 'now'; $('msgs').insertAdjacentHTML('beforeend', `<div class="bub me">${v.replace(/</g, '&lt;')}</div>`); $('mi').value = ''; $('msgs').scrollTop = 1e6; };
+      if ($('ms')) { $('ms').onclick = send; $('mi').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; } };
+    return { title: 'Messages', btn: 'pen-to-square', html: '', after: () => draw(false) }; },
+  phone: () => ({ title: 'Phone', html: `<div class="tabs2"><button>Recents</button><button>Contacts</button><button class="on">Keypad</button></div>
+    <div class="dial"><div class="num" id="num"></div><div class="kp">${[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].map(([d, l]) => `<button data-d="${d}">${d}<small>${l || '&nbsp;'}</small></button>`).join('')}</div>
+    <button class="call"><i class="fa-solid fa-phone"></i></button></div>`, after: () => $('ab').querySelectorAll('[data-d]').forEach(b => b.onclick = () => { const n = $('num'); n.textContent = (n.textContent + b.dataset.d).slice(0, 14); }) }),
+  banking: () => ({ title: 'Banking', btn: 'bell', html: `<div class="card"><small>TOTAL BALANCE</small><div class="bal">$62,881.00</div><div class="row"><span>•••• 4821</span><span class="chip"></span></div></div>
+    <div class="acts"><div><i class="fa-solid fa-paper-plane"></i>Send</div><div><i class="fa-solid fa-arrow-down"></i>Request</div><div><i class="fa-solid fa-file-invoice-dollar"></i>Bills</div><div><i class="fa-solid fa-chart-line"></i>Stats</div></div>
+    <div class="sec">Transactions <span>See all</span></div>${TX.map(([n, a, c, i, d]) => `<div class="li"><div class="ti"><i class="fa-solid fa-${i}"></i></div><div class="tx"><b>${n}</b><span>${d}</span></div><div class="amt ${c}">${a.startsWith('+') ? '+$' + a.slice(1) : '-$' + a.slice(1)}</div></div>`).join('')}` }),
+  settings: () => ({ title: 'Settings', html: `<div class="prof">${avatar('Rox Player', 0)}<div class="tx"><b>Rox Player</b><span style="font-size:11px;color:rgba(255,255,255,.5)">(555) 348-8943 · ROX ID</span></div></div>
+    <div class="grp">${[['plane', '#ff9500', 'Airplane mode', 'tg'], ['wifi', '#2f7cf6', 'Wi-Fi', 'ROX-Net'], ['moon', '#7c5cff', 'Do not disturb', 'tg'], ['bell', '#ff3b30', 'Notifications', '']].map(([i, c, n, v]) => `<div class="sr"><i class="si fa-solid fa-${i}" style="background:${c}"></i><span>${n}</span>${v === 'tg' ? '<i class="tg"></i>' : `<small>${v}</small><i class="fa-solid fa-chevron-right"></i>`}</div>`).join('')}</div>
+    <div class="grp"><div class="sr"><i class="si fa-solid fa-image" style="background:#22c55e"></i><span>Wallpaper</span></div><div class="walls" id="walls"></div></div>
+    <div class="grp">${[['lock', '#64748b', 'Passcode', 'On'], ['mobile-screen', '#0ea5e9', 'Display & brightness', ''], ['circle-info', '#6b7280', 'About', 'ROX OS 1.0']].map(([i, c, n, v]) => `<div class="sr"><i class="si fa-solid fa-${i}" style="background:${c}"></i><span>${n}</span><small>${v}</small><i class="fa-solid fa-chevron-right"></i></div>`).join('')}</div>`,
+    after: () => { $('ab').querySelectorAll('.tg').forEach(t => t.parentElement.onclick = () => t.classList.toggle('on'));
+      const W = ['linear-gradient(165deg,#1d1d22,#0c0c0e 55%,#150b07)', 'linear-gradient(160deg,#0f2027,#203a43,#2c5364)', 'linear-gradient(160deg,#41295a,#2f0743)', 'linear-gradient(160deg,#ff5a1f,#3a0d00)'];
+      $('walls').innerHTML = W.map((w, k) => `<i style="background:${w}" data-w="${k}"></i>`).join('');
+      $('walls').onclick = (e) => { const i = e.target.closest('[data-w]'); if (!i) return; document.querySelector('.wall').style.background = W[i.dataset.w]; [...$('walls').children].forEach(x => x.classList.toggle('on', x === i)); }; } }),
+};
+function openApp(key, name, from) {
+  const av = $('av'), r = from.getBoundingClientRect(), sr = $('scr').getBoundingClientRect();
+  av.style.setProperty('--ox', (r.left + r.width / 2 - sr.left) + 'px'); av.style.setProperty('--oy', (r.top + r.height / 2 - sr.top) + 'px');
+  const v = APPVIEW[key] ? APPVIEW[key]() : { title: name, html: `<div class="soon">${RoxIcons.svg(key, 84)}<b>${name}</b>Coming soon</div>` };
+  av.innerHTML = `<div class="ah"><h1>${v.title}</h1>${v.btn ? `<button><i class="fa-solid fa-${v.btn}"></i></button>` : ''}</div><div class="ab" id="ab" style="${APPVIEW[key] ? '' : 'display:flex'}">${v.html}</div>`;
+  av.className = 'av on'; $('scr').classList.add('inapp'); av.dataset.app = key; if (v.after) v.after();
+}
+function closeApp() { const av = $('av'); if (!av.classList.contains('on')) return; av.classList.add('out'); $('scr').classList.remove('inapp'); setTimeout(() => av.className = 'av', 260); }
+document.querySelector('.home').addEventListener('click', (e) => { const a = e.target.closest('.app'); if (a) openApp(a.dataset.app, a.dataset.name, a); });
+$('hb').onclick = closeApp;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeApp(); });
 const clock = () => { const d = new Date(); $('time').textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); $('date').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); };
 clock(); setInterval(clock, 1000);
 if (!window.invokeNative) document.body.classList.add('preview');
