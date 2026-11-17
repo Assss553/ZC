@@ -4,23 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interaction Menu</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --orange: #eb6a10;
-    --orange-line: #e4772c;
+    --orange: #ee7a1e;
+    --orange-line: #e4823c;
     --scale: 1.5;            /* overall size of the menu */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: transparent;   /* transparent in game (NUI) */
-    font-family: 'Oswald', 'Arial Narrow', sans-serif;
-    font-weight: 500;
+    /* Bahnschrift Condensed = the in-game font (Windows/FiveM); Barlow Condensed = web fallback */
+    font-family: 'Bahnschrift Condensed', 'Bahnschrift', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-stretch: condensed;
+    font-weight: 600;
     user-select: none;
     overflow: hidden;
     min-height: 100vh;
   }
-  body.preview { background: radial-gradient(circle at 50% 45%, #8a6a48, #2a2018 75%); }
+  body.preview { background: radial-gradient(circle at 50% 45%, #9a7650, #3a2c1e 80%); }
 
   .menu {
     position: absolute;
@@ -32,29 +34,40 @@
   }
   .menu.hidden { display: none; }
 
-  /* ---- E key ---- */
+  /* ---- E key: slanted box + offset corner lines ---- */
   .key {
     position: relative;
-    width: 34px;
-    height: 31px;
-    margin-top: -4px;
-    margin-right: 10px;
-    background: rgba(125, 50, 8, 0.88);
-    border: 1.5px solid #e08a52;
+    width: 33px;
+    height: 29px;
+    margin-top: -2px;
+    margin-right: 13px;
     color: #fff;
-    font-size: 19px;
-    line-height: 28px;
+    font-size: 22px;
+    line-height: 29px;
     text-align: center;
   }
-  .key::before, .key::after {
+  .key::before {                 /* the box */
     content: "";
     position: absolute;
-    width: 8px;
-    height: 8px;
-    border: 0 solid #e08a52;
+    inset: 0;
+    transform: skewX(-4deg);
+    background: rgba(128, 50, 4, 0.8);
+    border: 1.5px solid #e8955c;
+    z-index: -1;
   }
-  .key::before { top: -4px; left: -4px; border-top-width: 1.5px; border-left-width: 1.5px; }
-  .key::after  { bottom: -4px; right: -4px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+  .key::after {                  /* offset corner lines (top-left & bottom-right) */
+    content: "";
+    position: absolute;
+    inset: -4px;
+    transform: skewX(-4deg);
+    --c: rgba(232, 149, 92, .9);
+    background:
+      linear-gradient(var(--c), var(--c)) left top    / 10px 1.5px no-repeat,
+      linear-gradient(var(--c), var(--c)) left top    / 1.5px 9px  no-repeat,
+      linear-gradient(var(--c), var(--c)) right bottom / 10px 1.5px no-repeat,
+      linear-gradient(var(--c), var(--c)) right bottom / 1.5px 9px  no-repeat;
+    z-index: -2;
+  }
 
   /* ---- options ---- */
   .options { display: flex; flex-direction: column; gap: 7px; }
@@ -66,29 +79,28 @@
   }
 
   .radio {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     margin-right: 22px;
     border-radius: 50%;
-    border: 1.5px solid rgba(200, 200, 200, .85);
-    background: rgba(30, 25, 20, .45);
+    border: 1.5px solid rgba(190, 186, 178, .9);
+    background: rgba(25, 20, 15, .45);
     flex-shrink: 0;
   }
   .option.active .radio {
-    border: 1.5px solid var(--orange);
-    background: radial-gradient(circle, var(--orange) 0 3.2px, rgba(60, 25, 5, .85) 3.7px);
+    border: 1.2px solid #e8843a;
+    background: radial-gradient(circle, var(--orange) 0 3.6px, rgba(70, 28, 4, .9) 4.1px);
   }
 
   .label {
     position: relative;
-    width: 196px;
+    width: 200px;
     height: 25px;
-    color: #fff;
-    font-size: 15px;
+    color: #f4eee6;
+    font-size: 18.5px;
     line-height: 25px;
     text-align: center;
-    letter-spacing: -.1px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .35);
   }
   /* skewed parallelogram behind the text */
   .label::before {
@@ -97,16 +109,14 @@
     inset: 0;
     transform: skewX(-22deg);
     z-index: -1;
-    background: linear-gradient(180deg, rgba(55, 50, 45, .42), rgba(70, 62, 52, .32));
-    border: 1px solid rgba(225, 222, 212, .85);
-    border-top-width: 1.5px;
+    background: rgba(35, 32, 30, .5);
+    border: 1.5px solid rgba(215, 210, 200, .9);
   }
   .label span { position: relative; z-index: 1; }
 
   .option.active .label::before {
-    background: linear-gradient(180deg, rgba(110, 45, 5, .72), rgba(125, 55, 12, .62));
-    border: 1px solid var(--orange-line);
-    border-top-width: 1.5px;
+    background: rgba(140, 60, 8, .6);
+    border-color: var(--orange-line);
   }
 </style>
 </head>
