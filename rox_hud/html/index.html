@@ -13,7 +13,7 @@
 
     <!-- player info -->
     <div id="info" class="info">
-        <div class="i-top"><span class="logo">ROX</span><span class="pill"><i class="fa-solid fa-id-badge"></i>ID <b id="pid">0</b></span><span class="pill"><i class="fa-solid fa-clock"></i><b id="ptime">00:00</b></span></div>
+        <div class="i-top" id="iTop"><span class="logo">ROX</span><span class="pill"><i class="fa-solid fa-id-badge"></i>ID <b id="pid">0</b></span><span class="pill"><i class="fa-solid fa-clock"></i><b id="ptime">00:00</b></span></div>
         <div class="i-job" id="pjob"><i class="fa-solid fa-briefcase"></i><span id="pjobTxt">Unemployed</span><i class="dot" id="pduty"></i></div>
         <div class="i-money"><span class="cash"><i class="fa-solid fa-money-bill-wave"></i><b id="pcash">$0</b></span><span class="bank"><i class="fa-solid fa-building-columns"></i><b id="pbank">$0</b></span></div>
     </div>
@@ -49,7 +49,36 @@
     <div class="s-head"><span class="logo">ROX</span><div><b>HUD Settings</b><small>Saved on your PC</small></div><button class="s-x" data-a="close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="s-list" id="sList"></div>
     <div class="s-sec">Accent colour</div><div class="swatches" id="swatches"></div>
+    <div class="s-sec">HUD size <b id="scaleV">100%</b></div><input type="range" id="scale" min="60" max="140" step="5" class="s-range">
     <div class="s-sec">Speed unit</div><div class="seg" id="unitSeg"><button data-u="kmh">KM/H</button><button data-u="mph">MPH</button></div>
     <button class="s-done" data-a="close">Done</button>
 </div></div>
+<!-- ESC pause menu -->
+<div id="pause" class="pause">
+    <div class="p-me"><b id="pmName">PLAYER</b><span><i class="fa-solid fa-briefcase"></i><em id="pmJob">—</em></span>
+        <span><i class="fa-solid fa-id-card"></i><em id="pmCid">—</em><i class="fa-solid fa-hashtag"></i><em id="pmId">0</em></span>
+        <span class="pm-money"><i class="fa-solid fa-money-bill-wave"></i><em id="pmCash">$0</em><i class="fa-solid fa-building-columns"></i><em id="pmBank">$0</em></span></div>
+    <div class="p-wrap">
+        <div class="p-loc"><i class="fa-solid fa-location-dot"></i><span id="pmLoc">—</span></div>
+        <div class="p-title" id="pmTitle">PAUSE MENU</div>
+        <div class="p-grid">
+            <div class="p-col">
+                <div class="p-card server"><h3>SERVER<small>LIVE STATUS</small></h3>
+                    <div class="p-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="pr-bg"/><circle cx="50" cy="50" r="42" class="pr-fg" id="pmRing"/></svg><div><b id="pmOn">0</b><span>/<em id="pmMax">48</em></span><small>ONLINE</small></div></div>
+                    <div class="p-kv"><span><i class="fa-solid fa-shield-halved"></i>POLICE</span><b id="pmPol">0</b></div><div class="p-kv"><span><i class="fa-solid fa-kit-medical"></i>EMS</span><b id="pmEms">0</b></div></div>
+                <button class="p-btn" data-p="hud"><i class="fa-solid fa-sliders"></i>HUD</button>
+                <button class="p-btn" data-p="map"><i class="fa-solid fa-map"></i>WORLD MAP</button>
+            </div>
+            <div class="p-col">
+                <div class="p-card"><h3>ACTIVITIES<small>AVAILABLE ACTIVITIES</small></h3><div class="p-acts" id="pmActs"></div></div>
+                <button class="p-btn" data-p="settings"><i class="fa-solid fa-gear"></i>SETTINGS</button>
+            </div>
+            <div class="p-col">
+                <div class="p-card time"><h3>TIME</h3><b id="pmTime">00:00</b><small id="pmDate">—</small></div>
+                <button class="p-btn quit" data-p="quit"><i class="fa-solid fa-power-off"></i>QUIT GAME</button>
+            </div>
+        </div>
+        <div class="p-keys"><kbd>↑</kbd><kbd>↓</kbd> NAVIGATE <span>/</span> <kbd>ENTER</kbd> SELECT <span>/</span> <kbd>ESC</kbd> RESUME</div>
+    </div>
+</div>
 <script src="app.js"></script></body></html>

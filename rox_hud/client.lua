@@ -6,7 +6,7 @@ local belt, voiceMode, radioTalk = false, 2, false
 -- player settings (saved on the client with KVP)
 local settings = {
     compass = Config.Compass, info = Config.PlayerInfo, mapOnFoot = not Config.HideMinimapOnFoot,
-    vignette = Config.LowHealthVignette, alwaysStatus = false, showMap = true, unit = Config.SpeedUnit, color = Config.Color, hidden = false,
+    vignette = Config.LowHealthVignette, alwaysStatus = false, showMap = true, showId = true, showJob = true, scale = 100, unit = Config.SpeedUnit, color = Config.Color, hidden = false,
 }
 do
     local raw = GetResourceKvpString('rox_hud_settings')
@@ -167,9 +167,10 @@ end, false)
 RegisterNUICallback('saveSettings', function(d, cb)
     cb('ok')
     if type(d) ~= 'table' then return end
-    for _, k in ipairs({ 'compass', 'info', 'mapOnFoot', 'vignette', 'hidden', 'alwaysStatus', 'showMap' }) do
+    for _, k in ipairs({ 'compass', 'info', 'mapOnFoot', 'vignette', 'hidden', 'alwaysStatus', 'showMap', 'showId', 'showJob' }) do
         if type(d[k]) == 'boolean' then settings[k] = d[k] end
     end
+    if type(d.scale) == 'number' then settings.scale = math.max(60, math.min(140, math.floor(d.scale))) end
     if d.unit == 'kmh' or d.unit == 'mph' then settings.unit = d.unit end
     if type(d.color) == 'string' and d.color:match('^#%x%x%x%x%x%x$') then settings.color = d.color end
     saveSettings()
@@ -177,6 +178,53 @@ RegisterNUICallback('saveSettings', function(d, cb)
 end)
 
 RegisterNUICallback('closeSettings', function(_, cb) cb('ok') SetNuiFocus(false, false) end)
+
+-- /cash and /bank
+RegisterCommand(Config.CashCommand, function() SendNUIMessage({ action = 'money', which = 'cash', time = Config.MoneyShowTime }) end, false)
+RegisterCommand(Config.BankCommand, function() SendNUIMessage({ action = 'money', which = 'bank', time = Config.MoneyShowTime }) end, false)
+
+-- ESC pause menu
+local pauseOpen = false
+local function openPause()
+    if pauseOpen then return end
+    pauseOpen = true
+    TriggerServerEvent('rox_hud:server:pause')
+    local ped = PlayerPedId()
+    local c = GetEntityCoords(ped)
+    local s1 = GetStreetNameAtCoord(c.x, c.y, c.z)
+    SendNUIMessage({ action = 'pause', open = true, info = playerInfo(), activities = Config.Activities, server = Config.ServerName,
+        location = GetLabelText(GetNameOfZone(c.x, c.y, c.z)) .. ' - ' .. GetStreetNameFromHashKey(s1) })
+    SetNuiFocus(true, true)
+end
+local function closePause()
+    pauseOpen = false
+    SendNUIMessage({ action = 'pause', open = false })
+    SetNuiFocus(false, false)
+end
+RegisterNetEvent('rox_hud:client:pause', function(d) if pauseOpen then SendNUIMessage({ action = 'pauseData', data = d }) end end)
+
+if Config.PauseMenu then
+    CreateThread(function()
+        while true do
+            Wait(0)
+            DisableControlAction(0, 200, true) -- ESC
+            DisableControlAction(0, 199, true) -- P
+            if not pauseOpen and not IsPauseMenuActive() and (IsDisabledControlJustReleased(0, 200) or IsDisabledControlJustReleased(0, 199)) then
+                openPause()
+            end
+        end
+    end)
+end
+
+RegisterNUICallback('pause', function(d, cb)
+    cb('ok')
+    local a = type(d) == 'table' and d.action
+    closePause()
+    if a == 'map' then ActivateFrontendMenu(`FE_MENU_VERSION_MP_PAUSE`, false, -1)
+    elseif a == 'settings' then ActivateFrontendMenu(`FE_MENU_VERSION_LANDING_MENU`, false, -1)
+    elseif a == 'hud' then SendNUIMessage({ action = 'settings', settings = settings }) SetNuiFocus(true, true)
+    elseif a == 'quit' then TriggerServerEvent('rox_hud:server:quit') end
+end)
 
 -- other scripts can hide the HUD (cutscenes, iPads ...)
 exports('SetHidden', function(state) settings.hidden = state == true end)

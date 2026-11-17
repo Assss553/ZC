@@ -4,7 +4,7 @@ const post = (n, d = {}) => RES ? fetch(`https://${RES}/${n}`, { method: 'POST',
 const $ = (id) => document.getElementById(id);
 const rgb = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
 const root = document.documentElement;
-let S = { showMap: true, alwaysStatus: false, compass: true, info: true, mapOnFoot: false, vignette: true, unit: 'kmh', color: '#ff5a1f', hidden: false }, MAX = 300;
+let S = { showId: true, showJob: true, scale: 100, showMap: true, alwaysStatus: false, compass: true, info: true, mapOnFoot: false, vignette: true, unit: 'kmh', color: '#ff5a1f', hidden: false }, MAX = 300;
 
 /* ---------- triangle status (auto show / hide) ---------- */
 const HEX = [['hunger', 'burger'], ['thirst', 'droplet'], ['stress', 'brain'], ['stamina', 'person-running'], ['oxygen', 'lungs'], ['voice', 'microphone']];
@@ -39,17 +39,20 @@ const compass = (h) => STRIP.forEach(s => { s.style.left = (230 + (s.dataset.d -
 let MAXS = 300; function buildTicks() {}
 
 /* ---------- settings ---------- */
-const TOGGLES = [['compass', 'compass', 'Compass'], ['info', 'id-card', 'Player info (ID, job, money)'], ['showMap', 'map', 'Show minimap'], ['mapOnFoot', 'map-location', 'Minimap on foot'], ['vignette', 'heart-pulse', 'Low health effect'], ['alwaysStatus', 'eye', 'Always show status'], ['hidden', 'eye-slash', 'Hide HUD (cinematic)']];
+const TOGGLES = [['compass', 'compass', 'Compass'], ['info', 'id-card', 'Player info'], ['showId', 'hashtag', 'Show ID & time'], ['showJob', 'briefcase', 'Show job'], ['showMap', 'map', 'Show minimap'], ['mapOnFoot', 'map-location', 'Minimap on foot'], ['vignette', 'heart-pulse', 'Low health effect'], ['alwaysStatus', 'eye', 'Always show status'], ['hidden', 'eye-slash', 'Hide HUD (cinematic)']];
 const COLORS = ['#ff5a1f', '#ff2a3a', '#ffb020', '#3ddc84', '#1fc9b8', '#4da3ff', '#8a6cff', '#ff5ec4'];
 function renderSettings() {
     $('sList').innerHTML = TOGGLES.map(([k, ic, l]) => `<div class="s-row ${S[k] ? 'on' : ''}" data-k="${k}"><i class="fa-solid fa-${ic}"></i><span>${l}</span><div class="sw"></div></div>`).join('');
     $('swatches').innerHTML = COLORS.map(c => `<button style="--s:${c}" class="${S.color === c ? 'on' : ''}" data-c="${c}"></button>`).join('');
+    $('scale').value = S.scale; $('scaleV').textContent = S.scale + '%';
     document.querySelectorAll('#unitSeg button').forEach(b => b.classList.toggle('on', b.dataset.u === S.unit));
 }
 function apply() {
     root.style.setProperty('--accent', S.color); root.style.setProperty('--accent-rgb', rgb(S.color));
     $('unit').textContent = S.unit === 'mph' ? 'MPH' : 'KM/H';
     $('compass').classList.toggle('off', !S.compass); $('info').classList.toggle('off', !S.info);
+    $('iTop').classList.toggle('off', !S.showId); $('pjob').classList.toggle('off', !S.showJob);
+    root.style.setProperty('--zoom', (S.scale || 100) / 100);
 }
 const save = () => { apply(); renderSettings(); post('saveSettings', S); };
 $('settings').addEventListener('click', (e) => {
@@ -59,6 +62,8 @@ $('settings').addEventListener('click', (e) => {
     else if (u) { S.unit = u.dataset.u; save(); }
     else if (a) closeSettings();
 });
+$('scale').addEventListener('input', (e) => { S.scale = Number(e.target.value); $('scaleV').textContent = S.scale + '%'; apply(); });
+$('scale').addEventListener('change', () => save());
 function closeSettings() { $('settings').classList.remove('on'); post('closeSettings'); }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('settings').classList.contains('on')) closeSettings(); });
 
@@ -68,8 +73,45 @@ function setMap(m) { if (!m) return; root.style.setProperty('--mx', m.x * 100 + 
 let last = {};
 function text(id, v) { if (last[id] === v) return false; last[id] = v; $(id).textContent = v; return true; }
 
+let lastInfo = {}, moneyT = {};
+function showMoney(which, ms) { const el = document.querySelector('.i-money .' + which); el.classList.add('show'); clearTimeout(moneyT[which]); moneyT[which] = setTimeout(() => el.classList.remove('show'), ms || 6000); }
+
+/* ---------- pause menu ---------- */
+let pauseSel = 0;
+const pBtns = () => [...document.querySelectorAll('.p-btn')];
+function pauseAct(a) { $('pause').classList.remove('on'); document.body.classList.remove('paused'); post('pause', { action: a }); }
+$('pause').addEventListener('click', (e) => { const b = e.target.closest('.p-btn'); if (b) pauseAct(b.dataset.p); });
+document.addEventListener('keydown', (e) => {
+    if (!$('pause').classList.contains('on')) return;
+    const bs = pBtns();
+    if (e.key === 'Escape') pauseAct('resume');
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { pauseSel = (pauseSel + 1) % bs.length; }
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { pauseSel = (pauseSel - 1 + bs.length) % bs.length; }
+    else if (e.key === 'Enter') return pauseAct(bs[pauseSel].dataset.p);
+    bs.forEach((b, i) => b.classList.toggle('sel', i === pauseSel));
+});
+function openPause(d) {
+    const i = d.info || lastInfo || {};
+    $('pmTitle').textContent = (d.server || 'ROX') + ' · PAUSE MENU'; $('pmLoc').textContent = d.location || '';
+    $('pmJob').textContent = (i.job || 'Citizen') + (i.grade ? ' · ' + i.grade : ''); $('pmId').textContent = i.id ?? '';
+    $('pmCash').textContent = money(i.cash); $('pmBank').textContent = money(i.bank); $('pmTime').textContent = i.time || '';
+    $('pmDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: '2-digit' }).toUpperCase();
+    $('pmActs').dataset.list = JSON.stringify(d.activities || []); renderActs(0);
+    pauseSel = 0; pBtns().forEach((b, k) => b.classList.toggle('sel', k === 0));
+    $('pause').classList.add('on'); document.body.classList.add('paused');
+}
+function renderActs(police) {
+    const list = JSON.parse($('pmActs').dataset.list || '[]');
+    $('pmActs').innerHTML = list.map(a => `<div class="p-act ${police >= a.police ? 'on' : ''}"><i class="fa-solid fa-${a.icon}"></i>${a.label.toUpperCase()}<small>${police >= a.police ? 'AVAILABLE' : a.police + ' POLICE NEEDED'}</small></div>`).join('');
+}
+
 window.addEventListener('message', (e) => {
     const d = e.data || {};
+    if (d.action === 'money') return showMoney(d.which, d.time);
+    if (d.action === 'pause') { if (d.open) openPause(d); else { $('pause').classList.remove('on'); document.body.classList.remove('paused'); } return; }
+    if (d.action === 'pauseData') { const p = d.data; $('pmName').textContent = p.name || ''; $('pmCid').textContent = p.cid || '';
+        $('pmOn').textContent = p.online; $('pmMax').textContent = p.max; $('pmPol').textContent = p.police; $('pmEms').textContent = p.ems;
+        $('pmRing').style.strokeDashoffset = 264 * (1 - Math.min(1, p.online / Math.max(1, p.max))); renderActs(p.police); return; }
     if (d.action === 'init') { if (d.settings) S = Object.assign(S, d.settings);  setMap(d.map); apply(); return; }
     if (d.action === 'map') return setMap(d.map);
     if (d.action === 'settings') { if (d.settings) S = Object.assign(S, d.settings); renderSettings(); $('settings').classList.add('on'); return; }
@@ -91,11 +133,10 @@ window.addEventListener('message', (e) => {
 
     if (d.info) {
         text('pid', String(d.info.id)); text('ptime', d.info.time);
-        $('pjob').style.display = d.info.job ? '' : 'none'; text('pjobTxt', (d.info.job || '') + (d.info.grade ? ' · ' + d.info.grade : ''));
+        $('pjob').style.display = d.info.job ? '' : 'none'; lastInfo = d.info; text('pjobTxt', (d.info.job || '') + (d.info.grade ? ' · ' + d.info.grade : ''));
         $('pduty').classList.toggle('off', d.info.duty === false);
         if (d.info.cash != null && text('pcash', money(d.info.cash))) { $('pcash').classList.remove('bump'); void $('pcash').offsetWidth; $('pcash').classList.add('bump'); }
         if (d.info.bank != null && text('pbank', money(d.info.bank))) { $('pbank').classList.remove('bump'); void $('pbank').offsetWidth; $('pbank').classList.add('bump'); }
-        document.querySelector('.i-money').style.display = d.info.cash == null && d.info.bank == null ? 'none' : '';
     }
 
     const car = d.veh; $('veh').classList.toggle('on', !!car); if (!car) return;
@@ -121,5 +162,9 @@ if (!RES) {
             heading: h, dir: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.floor((h + 22.5) / 45) % 8], street: 'Vespucci Blvd', cross: 'Alta St', zone: 'Pillbox Hill',
             info: { id: 12, time: '21:43', job: 'LSPD', grade: 'Captain', duty: true, cash: 12450, bank: 284500 },
             veh: foot ? null : { speed: sp, rpm: .35 + (sp % 40) / 70, gear: 4, fuel: 64, engine: 92, belt: false, lights: true, locked: true, running: true } }, '*'); }, 80);
+    if (q.get('pause')) setTimeout(() => { window.postMessage({ action: 'pause', open: true, server: 'ROX', location: 'Mission Row - Atlee St', info: { id: 1, time: '16:37', job: 'LSPD', grade: 'Captain', cash: 12450, bank: 284500 },
+        activities: [{ label: 'Store Robbery', icon: 'store', police: 2 }, { label: 'House Robbery', icon: 'house', police: 1 }, { label: 'Fleeca Bank', icon: 'building-columns', police: 4 }, { label: 'Jewelry Store', icon: 'gem', police: 5 }] }, '*');
+        window.postMessage({ action: 'pauseData', data: { online: 37, max: 48, police: 3, ems: 2, name: 'Jaber Dev', cid: 'IW731689' } }, '*'); }, 300);
+    if (q.get('cash')) setTimeout(() => { showMoney('cash', 60000); showMoney('bank', 60000); }, 300);
     if (q.get('settings')) setTimeout(() => window.postMessage({ action: 'settings', settings: S }, '*'), 300);
 }

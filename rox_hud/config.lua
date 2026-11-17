@@ -17,3 +17,21 @@ Config.MapKey = ''                 -- default key ('' = none, players bind it in
 Config.SeatbeltCommand = 'seatbelt'
 Config.SeatbeltKey = 'B'
 Config.Update = 200                -- ms between updates on foot (vehicle: 80)
+
+-- /cash and /bank show the money for a few seconds (hidden the rest of the time)
+Config.CashCommand = 'cash'
+Config.BankCommand = 'bank'
+Config.MoneyShowTime = 6000
+
+-- ESC pause menu (ROX). false = GTA default pause menu
+Config.PauseMenu = true
+Config.ServerName = 'ROX'
+Config.PoliceJobs = { 'police', 'sheriff', 'bcso', 'sasp' }
+Config.EmsJobs = { 'ambulance', 'ems' }
+-- activities shown in the pause menu: available when enough police are on duty
+Config.Activities = {
+    { label = 'Store Robbery',  icon = 'store',         police = 2 },
+    { label = 'House Robbery',  icon = 'house',         police = 1 },
+    { label = 'Fleeca Bank',    icon = 'building-columns', police = 4 },
+    { label = 'Jewelry Store',  icon = 'gem',           police = 5 },
+}
