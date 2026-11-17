@@ -603,7 +603,7 @@ function setFold(open) {
   d.classList.remove('anim-open', 'anim-close'); void d.offsetWidth; d.classList.add(open ? 'anim-open' : 'anim-close');
   document.body.classList.toggle('open', open);
   $('bFold').querySelector('span').textContent = open ? 'Fold' : 'Unfold';
-  if (window.invokeNative) fetch(`https://${GetParentResourceName()}/fold`, { method: 'POST', body: JSON.stringify({ open }) });
+
   setTimeout(() => { drawApps(); const av = $('av'); if (av.classList.contains('on')) { const k = av.dataset.app, el = document.querySelector(`.app[data-app="${k}"]`); if (el) openApp(k, el.dataset.name, el); } sc.classList.remove('busy'); d.classList.remove('anim-open', 'anim-close'); busy = false; }, 720);
 }
 const mode = () => !isOpen() ? 0 : document.body.classList.contains('mid') ? 1 : 2;
@@ -866,9 +866,12 @@ const Bank = (() => { let view = 'home', T = {};
       if (x.dataset.k2) { const k = x.dataset.k2, s2v = String(T.amt || 0); T.amt = k === 'C' ? 0 : k === '⌫' ? +(s2v.slice(0, -1) || 0) : +(s2v + k).slice(0, 9); return check(); }
       if (x.dataset.pay) { const b = BANK.bills[x.dataset.pay]; if (BANK.bank < b[1]) return toast2('Not enough money'); BANK.bank -= b[1]; BANK.tx.unshift(['out', b[0], b[1], 'NOW', 'file-invoice']); BANK.bills.splice(x.dataset.pay, 1); toast2('Bill paid'); render(); } }; }
   function check() { if (!T.req && T.amt > BANK.bank) { T.amt = Math.floor(BANK.bank); render(); $('ab2').classList.add('err'); toast2('Not enough money in your account'); } else render(); }
-  function confirm() { if (!T.req) { BANK.bank -= T.amt; BANK.tx.unshift(['out', 'To ' + T.to, T.amt, 'NOW', 'paper-plane']); }
+  async function confirm() {
+    if (window.invokeNative && !T.req) { const num = (CONTACTS.find(c => c[0] === T.to) || [, T.to])[1];
+      const r = await fetch(`https://${GetParentResourceName()}/bank`, { method: 'POST', body: JSON.stringify({ action: 'transfer', to: num, amount: T.amt, note: T.note || '' }) }).then(x => x.json()).catch(() => null);
+      if (!r || !r.ok) { toast2((r && r.msg) || 'Transfer failed'); return render('review'); } }
+    if (!T.req) { BANK.bank -= T.amt; BANK.tx.unshift(['out', 'To ' + T.to, T.amt, 'NOW', 'paper-plane']); }
     toast2(T.req ? `Request sent to ${T.to}` : `Sent ${m(T.amt)} to ${T.to}`);
-    if (window.invokeNative) fetch(`https://${GetParentResourceName()}/bank`, { method: 'POST', body: JSON.stringify({ action: T.req ? 'request' : 'transfer', to: T.to, amount: T.amt, note: T.note || '' }) });
     render('done'); }
   return { render };
 })();
@@ -923,4 +926,5 @@ clock(); setInterval(clock, 1000);
 if (!window.invokeNative) document.body.classList.add('preview');
 drawApps();
 </script><script src="apps.js"></script>
+<script src="bridge.js"></script>
 </body></html>
