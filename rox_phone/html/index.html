@@ -718,16 +718,17 @@ const Call = (() => {
     $('cEndL').textContent = state === 'in' ? 'Decline' : 'End'; $('pAcc').style.display = state === 'in' ? '' : 'none';
     $('pSt').innerHTML = state === 'in' ? 'Incoming call' : `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`;
     $('cTm').textContent = tm(); if (state === 'in') { $('ctoast').classList.add('on'); $('ctT').textContent = 'Incoming call · ' + who.n; } else $('ctoast').classList.remove('on'); }
-  function incoming(n, p) { if (typeof Sett !== 'undefined' && Sett.st.dnd) return toast2('Missed call (Do not disturb) · ' + n); who = { n, p }; fill(); sec = 0; show('in'); if ($('pos').classList.contains('hide')) peek(true); }
-  function out(n, p) { who = { n, p }; fill(); sec = 0; show('out'); setTimeout(() => st === 'out' && accept(), 1800); }
+  function incoming(n, p, id) { if (window.invokeNative && st) return; if (typeof Sett !== 'undefined' && Sett.st.dnd) return toast2('Missed call (Do not disturb) · ' + n); who = { n, p, id }; fill(); sec = 0; show('in'); if ($('pos').classList.contains('hide')) peek(true); }
+  function out(n, p) { who = { n, p }; fill(); sec = 0; show('out'); if (window.invokeNative) return RX.call(p).then(r => { if (!r || !r.ok) { toast2((r && r.msg) || 'Call failed'); localEnd(); } else who.id = r.id; }); setTimeout(() => st === 'out' && accept(), 1800); }
   function accept() { show('on'); clearInterval(tick); tick = setInterval(() => { sec++; $('cTm').textContent = tm(); if (st === 'on') $('pSt').innerHTML = `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`; }, 1000); }
-  function end() { if (st === 'in') LOG.unshift([new Date().toTimeString().slice(0, 5), 'decl', who.n, 0]); else if (st) LOG.unshift([new Date().toTimeString().slice(0, 5), 'out', who.n, sec]);
+  function localEnd() { st = null; clearInterval(tick); $('call').className = 'call'; $('ctoast').classList.remove('on'); peek(false); Phone.render(); }
+  function end() { if (window.invokeNative) { if (who.id) RX.hang(who.id); return localEnd(); } if (st === 'in') LOG.unshift([new Date().toTimeString().slice(0, 5), 'decl', who.n, 0]); else if (st) LOG.unshift([new Date().toTimeString().slice(0, 5), 'out', who.n, sec]);
     st = null; clearInterval(tick); $('call').className = 'call'; $('ctoast').classList.remove('on'); peek(false); Phone.render(); }
   function peek(on) { const d = new Date(); $('pcT').textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); $('pcD').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); $('pos').classList.toggle('peek', on); $('pos').classList.remove('hide'); }
-  $('cAcc').onclick = $('pAcc').onclick = (e) => { e.stopPropagation(); accept(); }; $('cEnd').onclick = $('pEnd').onclick = (e) => { e.stopPropagation(); end(); };
+  $('cAcc').onclick = $('pAcc').onclick = (e) => { e.stopPropagation(); if (window.invokeNative) return RX.answer(who.id); accept(); }; $('cEnd').onclick = $('pEnd').onclick = (e) => { e.stopPropagation(); end(); };
   $('cMute').onclick = () => $('cMute').classList.toggle('on'); $('cSpk').onclick = () => $('cSpk').classList.toggle('on');
   $('pill').onclick = () => peek(false);
-  return { incoming, out, end, peek, active: () => !!st };
+  return { incoming, out, end, peek, accept, localEnd, active: () => !!st, id: () => who.id };
 })();
 
 const ME = { name: 'Rox Player', number: '(555) 348-8943', job: 'police', jobLabel: 'LSPD', grade: 'Sergeant' };
@@ -868,7 +869,7 @@ const Bank = (() => { let view = 'home', T = {};
   function check() { if (!T.req && T.amt > BANK.bank) { T.amt = Math.floor(BANK.bank); render(); $('ab2').classList.add('err'); toast2('Not enough money in your account'); } else render(); }
   async function confirm() {
     if (window.invokeNative && !T.req) { const num = (CONTACTS.find(c => c[0] === T.to) || [, T.to])[1];
-      const r = await fetch(`https://${GetParentResourceName()}/bank`, { method: 'POST', body: JSON.stringify({ action: 'transfer', to: num, amount: T.amt, note: T.note || '' }) }).then(x => x.json()).catch(() => null);
+      const r = await RX.rpc('transfer', { to: num, amount: T.amt });
       if (!r || !r.ok) { toast2((r && r.msg) || 'Transfer failed'); return render('review'); } }
     if (!T.req) { BANK.bank -= T.amt; BANK.tx.unshift(['out', 'To ' + T.to, T.amt, 'NOW', 'paper-plane']); }
     toast2(T.req ? `Request sent to ${T.to}` : `Sent ${m(T.amt)} to ${T.to}`);

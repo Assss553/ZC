@@ -871,16 +871,17 @@ const Call = (() => {
     $('cEndL').textContent = state === 'in' ? 'Decline' : 'End'; $('pAcc').style.display = state === 'in' ? '' : 'none';
     $('pSt').innerHTML = state === 'in' ? 'Incoming call' : `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`;
     $('cTm').textContent = tm(); if (state === 'in') { $('ctoast').classList.add('on'); $('ctT').textContent = 'Incoming call · ' + who.n; } else $('ctoast').classList.remove('on'); }
-  function incoming(n, p) { if (typeof Sett !== 'undefined' && Sett.st.dnd) return toast2('Missed call (Do not disturb) · ' + n); who = { n, p }; fill(); sec = 0; show('in'); if ($('pos').classList.contains('hide')) peek(true); }
-  function out(n, p) { who = { n, p }; fill(); sec = 0; show('out'); setTimeout(() => st === 'out' && accept(), 1800); }
+  function incoming(n, p, id) { if (window.invokeNative && st) return; if (typeof Sett !== 'undefined' && Sett.st.dnd) return toast2('Missed call (Do not disturb) · ' + n); who = { n, p, id }; fill(); sec = 0; show('in'); if ($('pos').classList.contains('hide')) peek(true); }
+  function out(n, p) { who = { n, p }; fill(); sec = 0; show('out'); if (window.invokeNative) return RX.call(p).then(r => { if (!r || !r.ok) { toast2((r && r.msg) || 'Call failed'); localEnd(); } else who.id = r.id; }); setTimeout(() => st === 'out' && accept(), 1800); }
   function accept() { show('on'); clearInterval(tick); tick = setInterval(() => { sec++; $('cTm').textContent = tm(); if (st === 'on') $('pSt').innerHTML = `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`; }, 1000); }
-  function end() { if (st === 'in') LOG.unshift([new Date().toTimeString().slice(0, 5), 'decl', who.n, 0]); else if (st) LOG.unshift([new Date().toTimeString().slice(0, 5), 'out', who.n, sec]);
+  function localEnd() { st = null; clearInterval(tick); $('call').className = 'call'; $('ctoast').classList.remove('on'); peek(false); Phone.render(); }
+  function end() { if (window.invokeNative) { if (who.id) RX.hang(who.id); return localEnd(); } if (st === 'in') LOG.unshift([new Date().toTimeString().slice(0, 5), 'decl', who.n, 0]); else if (st) LOG.unshift([new Date().toTimeString().slice(0, 5), 'out', who.n, sec]);
     st = null; clearInterval(tick); $('call').className = 'call'; $('ctoast').classList.remove('on'); peek(false); Phone.render(); }
   function peek(on) { const d = new Date(); $('pcT').textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); $('pcD').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); $('pos').classList.toggle('peek', on); $('pos').classList.remove('hide'); }
-  $('cAcc').onclick = $('pAcc').onclick = (e) => { e.stopPropagation(); accept(); }; $('cEnd').onclick = $('pEnd').onclick = (e) => { e.stopPropagation(); end(); };
+  $('cAcc').onclick = $('pAcc').onclick = (e) => { e.stopPropagation(); if (window.invokeNative) return RX.answer(who.id); accept(); }; $('cEnd').onclick = $('pEnd').onclick = (e) => { e.stopPropagation(); end(); };
   $('cMute').onclick = () => $('cMute').classList.toggle('on'); $('cSpk').onclick = () => $('cSpk').classList.toggle('on');
   $('pill').onclick = () => peek(false);
-  return { incoming, out, end, peek, active: () => !!st };
+  return { incoming, out, end, peek, accept, localEnd, active: () => !!st, id: () => who.id };
 })();
 
 const ME = { name: 'Rox Player', number: '(555) 348-8943', job: 'police', jobLabel: 'LSPD', grade: 'Sergeant' };
@@ -1021,7 +1022,7 @@ const Bank = (() => { let view = 'home', T = {};
   function check() { if (!T.req && T.amt > BANK.bank) { T.amt = Math.floor(BANK.bank); render(); $('ab2').classList.add('err'); toast2('Not enough money in your account'); } else render(); }
   async function confirm() {
     if (window.invokeNative && !T.req) { const num = (CONTACTS.find(c => c[0] === T.to) || [, T.to])[1];
-      const r = await fetch(`https://${GetParentResourceName()}/bank`, { method: 'POST', body: JSON.stringify({ action: 'transfer', to: num, amount: T.amt, note: T.note || '' }) }).then(x => x.json()).catch(() => null);
+      const r = await RX.rpc('transfer', { to: num, amount: T.amt });
       if (!r || !r.ok) { toast2((r && r.msg) || 'Transfer failed'); return render('review'); } }
     if (!T.req) { BANK.bank -= T.amt; BANK.tx.unshift(['out', 'To ' + T.to, T.amt, 'NOW', 'paper-plane']); }
     toast2(T.req ? `Request sent to ${T.to}` : `Sent ${m(T.amt)} to ${T.to}`);
@@ -1137,7 +1138,7 @@ APPVIEW.clips = () => ({ raw: true, html: '<div class="clips" id="clp"></div>', 
         : COMMENTS.map(([u, t]) => `<div class="th"><div class="mono">${u[0].toUpperCase()}</div><div><b>${u}</b><span>commented: ${t}</span></div><div class="r">${2 + u.length}m</div></div>`).join('')}</div></div>${nav()}`;
     bind(el, { t: (t) => { if (t === 'plus') return Live.setup(el); tab = t; draw(); },
       like: (n) => { const c = CLIPS[n]; c.liked = !c.liked; c.l += c.liked ? 1 : -1; draw(); }, sv: (n) => { CLIPS[n].sv = !CLIPS[n].sv; draw(); toast2(CLIPS[n].sv ? 'Saved' : 'Removed'); },
-      wd: () => { if (!WALLET.bal) return toast2('Nothing to withdraw'); BANK.bank += WALLET.bal; BANK.tx.unshift(['in', 'Clips earnings', WALLET.bal, 'NOW', 'coins']); toast2(`$${WALLET.bal.toLocaleString('en-US')} sent to your bank`); WALLET.hist.unshift(['Withdraw to bank', -WALLET.bal]); WALLET.bal = 0; draw(); }, golive: () => Live.setup(el), share: () => toast2('Link copied'), watch: (n) => Live.watch(el, n), cm: (n) => { el.insertAdjacentHTML('beforeend', `<div class="sheet" id="sht"><h4>${k(CLIPS[n].cm)} comments<i class="fa-solid fa-xmark" data-cx></i></h4><div class="cl2" id="cl2">${COMMENTS.map(([u, t]) => `<div class="cm"><div class="mono" style="width:30px;height:30px;border-radius:50%">${u[0].toUpperCase()}</div><div><b>${u}</b>${t}</div></div>`).join('')}</div><div class="comp2"><input id="ci" placeholder="Add comment…"><button id="cs"><i class="fa-solid fa-paper-plane"></i></button></div></div>`);
+      wd: async () => { if (!WALLET.bal) return toast2('Nothing to withdraw'); if (window.invokeNative) { const r = await RX.rpc('withdraw'); if (!r || !r.ok) return toast2('Failed'); BANK.bank += WALLET.bal; toast2(`$${WALLET.bal.toLocaleString('en-US')} sent to your bank`); Object.assign(WALLET, r.wallet); return draw(); } BANK.bank += WALLET.bal; BANK.tx.unshift(['in', 'Clips earnings', WALLET.bal, 'NOW', 'coins']); toast2(`$${WALLET.bal.toLocaleString('en-US')} sent to your bank`); WALLET.hist.unshift(['Withdraw to bank', -WALLET.bal]); WALLET.bal = 0; draw(); }, golive: () => Live.setup(el), share: () => toast2('Link copied'), watch: (n) => Live.watch(el, n), cm: (n) => { el.insertAdjacentHTML('beforeend', `<div class="sheet" id="sht"><h4>${k(CLIPS[n].cm)} comments<i class="fa-solid fa-xmark" data-cx></i></h4><div class="cl2" id="cl2">${COMMENTS.map(([u, t]) => `<div class="cm"><div class="mono" style="width:30px;height:30px;border-radius:50%">${u[0].toUpperCase()}</div><div><b>${u}</b>${t}</div></div>`).join('')}</div><div class="comp2"><input id="ci" placeholder="Add comment…"><button id="cs"><i class="fa-solid fa-paper-plane"></i></button></div></div>`);
         stopKeys($('sht')); const send = () => { const v = $('ci').value.trim(); if (!v) return; COMMENTS.push(['rox_player', v]); CLIPS[n].cm++; $('cl2').insertAdjacentHTML('beforeend', `<div class="cm"><div class="mono" style="width:30px;height:30px;border-radius:50%">R</div><div><b>rox_player</b>${v.replace(/</g, '&lt;')}</div></div>`); $('ci').value = ''; };
         $('cs').onclick = send; $('ci').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; $('sht').querySelector('[data-cx]').onclick = () => $('sht').remove(); } });
     const feed = $('feed'); if (feed) { feed.ondblclick = (e) => { const r = el.getBoundingClientRect(); el.insertAdjacentHTML('beforeend', `<i class="bigheart fa-solid fa-heart" style="left:${e.clientX - r.left}px;top:${e.clientY - r.top}px"></i>`); setTimeout(() => el.querySelector('.bigheart')?.remove(), 800); const c = CLIPS[i]; if (!c.liked) { c.liked = true; c.l++; setTimeout(draw, 500); } };
@@ -1221,7 +1222,7 @@ APPVIEW.maps = () => R(() => { PH().innerHTML = head('MAPS', 'LOS SANTOS') + `<d
   <div class="mapv"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><g stroke="#262b33" stroke-width="5" fill="none"><path d="M0 30H100M0 65H100M30 0V100M70 0V100M0 100L100 10"/></g><g stroke="#3a414c" stroke-width="1.2" fill="none"><path d="M0 30H100M0 65H100M30 0V100M70 0V100M0 100L100 10"/><path d="M0 48H100M50 0V100M15 0V100M85 0V100" stroke-width=".6"/></g><path d="M58 0Q40 40 62 100" stroke="#2f7cf6" stroke-width="2.5" fill="none" opacity=".25"/></svg>
   <div class="me"></div>${PLACES.map(([n, x, y, ic], i) => `<div class="pin" style="left:${x}%;top:${y}%" data-p="${i}"><i class="fa-solid fa-location-dot"></i></div>`).join('')}</div>
   <div class="ph-body" style="flex:none;max-height:150px">${PLACES.map(([n, , , ic], i) => `<div class="th" data-p="${i}"><div class="mono"><i class="fa-solid fa-${ic}"></i></div><div><b>${n}</b><span>${((i + 1) * 0.6).toFixed(1)} km · ${i + 2} min</span></div><button class="cb" data-p="${i}"><i class="fa-solid fa-location-arrow"></i></button></div>`).join('')}</div>`;
-  stopKeys(PH()); bind(PH(), { p: (i) => { toast2('GPS set: ' + PLACES[i][0]); PH().querySelectorAll('.pin').forEach((p, k) => p.innerHTML = `<i class="fa-solid fa-location-dot"></i>${k == i ? `<span>${PLACES[i][0]}</span>` : ''}`); } }); });
+  stopKeys(PH()); bind(PH(), { p: (i) => { if (PLACES[i][4] !== undefined) RX.post('waypoint', { x: PLACES[i][4], y: PLACES[i][5] }); toast2('GPS set: ' + PLACES[i][0]); PH().querySelectorAll('.pin').forEach((p, k) => p.innerHTML = `<i class="fa-solid fa-location-dot"></i>${k == i ? `<span>${PLACES[i][0]}</span>` : ''}`); } }); });
 
 /* ---------- Music ---------- */
 const SONGS = [['Night Drive', 'ROX Beats', 214, SCENES[4]], ['Vinewood Lights', 'Sara K', 187, SCENES[7]], ['Siren Remix', 'DJ Dispatch', 201, SCENES[5]], ['Pier Sunset', 'Abu Snow', 240, SCENES[0]]];
@@ -1275,7 +1276,7 @@ APPVIEW.camera = () => ({ raw: true, html: `<div class="cam2" id="cam2"><div cla
       vf.style.filter = (getComputedStyle(vf).filter === 'none' ? '' : '') + ` brightness(${1 + ev * .18})${mode === 'PORTRAIT' ? ' contrast(1.05)' : ''}`; $('ltag').innerHTML = `<b>${zoom}x</b> · ${mode === 'PORTRAIT' ? 'DEPTH' : 'AUTO'}${ev ? ' · ' + (ev > 0 ? '+' : '') + ev.toFixed(1) + ' EV' : ''}`; };
     const thumb = () => { $('thumb').style.background = GALLERY[0] ? GALLERY[0].bg : '#222'; }; thumb();
     const flash = () => { root.insertAdjacentHTML('beforeend', '<div class="flash go" style="z-index:9"></div>'); setTimeout(() => root.querySelector('.flash')?.remove(), 400); };
-    const save = (v) => { GALLERY.unshift({ bg: SCENES[Math.random() * SCENES.length | 0], v, f: 0 }); thumb(); $('thumb').animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], 250); };
+    const save = async (v) => { if (window.invokeNative) { if (v) return toast2('Video recording is not available yet'); const r = await RX.photo(); if (!r || !r.ok) return toast2((r && r.msg) || 'Photo failed'); GALLERY.unshift({ bg: `url('${r.url}') center/cover`, url: r.url }); thumb(); return toast2('Photo saved'); } GALLERY.unshift({ bg: SCENES[Math.random() * SCENES.length | 0], v, f: 0 }); thumb(); $('thumb').animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], 250); };
     const shoot = () => { if (mode === 'VIDEO' || mode === 'LAPSE') return toggleRec(); flash(); save(); toast2(mode === 'PORTRAIT' ? 'Portrait saved' : 'Photo saved to gallery'); };
     const toggleRec = () => { const sh = $('sh'); if (!rec) { sec = 0; sh.classList.add('recording'); $('rec').classList.add('on'); rec = setInterval(() => { sec++; $('rec').textContent = `00:${String(sec).padStart(2, '0')}`; if (sec >= 30) toggleRec(); }, 1000); }
       else { clearInterval(rec); rec = null; sh.classList.remove('recording'); $('rec').classList.remove('on'); $('rec').textContent = '00:00'; save(Math.max(1, sec)); toast2(`${mode === 'LAPSE' ? 'Time-lapse' : 'Video'} saved · ${sec}s`); } };
@@ -1305,7 +1306,7 @@ const Live = (() => { let st = null;
     const sp = $('setup'); stopKeys(sp); let o = 'live';
     bind(sp, { o: (v) => { o = v; sp.querySelectorAll('[data-o]').forEach(x => x.classList.toggle('on', x.dataset.o === v)); $('tf').style.display = v === 'live' ? '' : 'none'; $('gl').innerHTML = v === 'live' ? '<i class="fa-solid fa-tower-broadcast"></i> GO LIVE' : '<i class="fa-solid fa-camera"></i> OPEN CAMERA'; },
       cat: (c, b) => sp.querySelectorAll('[data-cat]').forEach(x => x.classList.toggle('on', x === b)), cx: () => sp.remove() });
-    $('gl').onclick = () => { const t = $('ltitle').value || 'LIVE'; sp.remove(); if (o === 'post') { closeApp(); return setTimeout(() => openApp('camera', 'Camera', $('hb')), 300); } start(host, t, true); }; }
+    $('gl').onclick = async () => { const t = $('ltitle').value || 'LIVE'; sp.remove(); if (window.invokeNative && o === 'live') { await RX.rpc('liveStart', { title: t }); Live.hostId = RX.me.src; } if (o === 'post') { closeApp(); return setTimeout(() => openApp('camera', 'Camera', $('hb')), 300); } start(host, t, true); }; }
   function screen(host, me, title, who) { host.insertAdjacentHTML('beforeend', `<div class="live" id="live"><div class="stage">${camView()}</div>
     <div class="lt"><div class="host"><div class="mono">${(who || 'R')[0].toUpperCase()}</div><div><b>${who || 'rox_player'}</b><span>${title}</span></div></div><span class="badge">LIVE</span><span class="vw"><i class="fa-solid fa-eye"></i> <span id="lv">0</span></span><button class="x2" data-end><i class="fa-solid fa-xmark"></i></button></div>
     <div class="earn"><span id="lt2"><i class="fa-solid fa-clock"></i>00:00</span><span id="le"><i class="fa-solid fa-coins"></i>$0</span><span id="ll"><i class="fa-solid fa-heart" style="color:#ff2d55"></i>0</span></div>
@@ -1318,29 +1319,29 @@ const Live = (() => { let st = null;
     L.insertAdjacentHTML('beforeend', `<div class="gpop"><div class="mono">${from[0].toUpperCase()}</div><div><b>${from}</b><span>sent ${g[1]}</span></div><em>${g[0]}</em><strong>x1</strong></div>`); setTimeout(() => L.querySelector('.gpop')?.remove(), 2600);
     if (g[2] >= 100) { L.insertAdjacentHTML('beforeend', `<div class="bigg">${g[0]}</div>`); setTimeout(() => L.querySelector('.bigg')?.remove(), 2200); }
     say('gift', `<b>${from}</b>sent ${g[0]} ${g[1]} · $${g[2]}`); const e = $('le'); e.innerHTML = `<i class="fa-solid fa-coins"></i>$${st.earn.toLocaleString('en-US')}`; e.classList.remove('pulse'); void e.offsetWidth; e.classList.add('pulse'); };
-  function start(host, title, me, who) { const L = screen(host, me, title, who); st = { t0: Date.now(), v: me ? 0 : 200, peak: 0, total: 0, likes: 0, earn: 0, gifts: {}, giftN: 0, me };
-    const tick = setInterval(() => { if (!$('live')) return clearInterval(tick); const s = (Date.now() - st.t0) / 1000 | 0; $('lt2').innerHTML = `<i class="fa-solid fa-clock"></i>${String(s / 60 | 0).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  function start(host, title, me, who) { const L = screen(host, me, title, who); st = { t0: Date.now(), v: 0, peak: 0, total: 0, likes: 0, earn: 0, gifts: {}, giftN: 0, me, host: Live.hostId };
+    const tick = setInterval(() => { if (!$('live')) return clearInterval(tick); const s = (Date.now() - st.t0) / 1000 | 0; $('lt2').innerHTML = `<i class="fa-solid fa-clock"></i>${String(s / 60 | 0).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; if (window.invokeNative) return;
       if (Math.random() < .55) { const d = Math.random() < .75 ? 1 + (Math.random() * 3 | 0) : -1; st.v = Math.max(0, st.v + d); if (d > 0) { st.total += d; say('join', `${FANS[Math.random() * FANS.length | 0]} joined`); } st.peak = Math.max(st.peak, st.v); $('lv').textContent = st.v; }
       if (Math.random() < .5) say('', `<b>${FANS[Math.random() * FANS.length | 0]}</b>${CHATS2[Math.random() * CHATS2.length | 0]}`);
       if (Math.random() < .6) { st.likes += 1 + (Math.random() * 6 | 0); heart(); $('ll').innerHTML = `<i class="fa-solid fa-heart" style="color:#ff2d55"></i>${st.likes}`; }
       if (me && Math.random() < .22) gift(FANS[Math.random() * FANS.length | 0], GIFTS[Math.random() < .85 ? Math.random() * 5 | 0 : 5 + (Math.random() * 3 | 0)]); }, 900);
     say('join', me ? 'You are LIVE. Welcome your viewers!' : `You joined @${who}'s live`);
-    const send = () => { const v = $('li').value.trim(); if (!v) return; say('', `<b>${me ? 'rox_player (host)' : 'rox_player'}</b>${v.replace(/</g, '&lt;')}`); $('li').value = ''; };
+    const send = () => { const v = $('li').value.trim(); if (!v) return; if (window.invokeNative) { RX.rpc('liveChat', { host: st.host, body: v }); $('li').value = ''; return; } say('', `<b>${me ? 'rox_player (host)' : 'rox_player'}</b>${v.replace(/</g, '&lt;')}`); $('li').value = ''; };
     $('li').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); };
-    L.querySelector('.stage').onclick = () => { heart(); st.likes++; };
-    bind(L, { hrt: () => { for (let i = 0; i < 5; i++) setTimeout(heart, i * 90); st.likes += 5; }, flipl: () => L.querySelector('.vf').classList.toggle('selfie'),
+    L.querySelector('.stage').onclick = () => { if (window.invokeNative) return RX.rpc('liveChat', { host: st.host, heart: 1 }); heart(); st.likes++; };
+    bind(L, { hrt: () => { if (window.invokeNative) return RX.rpc('liveChat', { host: st.host, heart: 1 }); for (let i = 0; i < 5; i++) setTimeout(heart, i * 90); st.likes += 5; }, flipl: () => L.querySelector('.vf').classList.toggle('selfie'),
       gift: () => { L.insertAdjacentHTML('beforeend', `<div class="gifts" id="gs"><h4>Send a gift <span><i class="fa-solid fa-building-columns"></i> $${Math.floor(BANK.bank).toLocaleString('en-US')}</span></h4><div class="gg">${GIFTS.map((g, i) => `<div data-g="${i}"><em>${g[0]}</em>${g[1]}<br><small>$${g[2]}</small></div>`).join('')}</div></div>`);
-        bind($('gs'), { g: (i) => { const g = GIFTS[i]; if (BANK.bank < g[2]) return toast2('Not enough money'); BANK.bank -= g[2]; BANK.tx.unshift(['out', `Gift to @${who}`, g[2], 'NOW', 'gift']); $('gs').remove(); gift('rox_player', g); } }); },
-      end: () => { clearInterval(tick); me ? summary(host) : (L.remove(), toast2('Left the live')); } }); }
+        bind($('gs'), { g: async (i) => { const g = GIFTS[i]; if (window.invokeNative) { const r = await RX.rpc('liveGift', { host: st.host, gift: +i + 1 }); if (!r || !r.ok) return toast2((r && r.msg) || 'Not enough money'); BANK.bank -= g[2]; $('gs').remove(); return; } if (BANK.bank < g[2]) return toast2('Not enough money'); BANK.bank -= g[2]; BANK.tx.unshift(['out', `Gift to @${who}`, g[2], 'NOW', 'gift']); $('gs').remove(); gift('rox_player', g); } }); },
+      end: async () => { clearInterval(tick); if (window.invokeNative) { if (me) { const r = await RX.rpc('liveEnd'); if (r) { st.earn = r.earn; st.peak = r.peak; st.likes = r.likes; st.giftN = r.gifts; Object.assign(WALLET, r.wallet); } } else RX.rpc('liveLeave', { host: st.host }); } me ? summary(host) : (L.remove(), toast2('Left the live')); } }); }
   function summary(host) { $('live')?.remove(); const dur = (Date.now() - st.t0) / 1000 | 0, top = Object.entries(st.gifts).sort((a, b) => b[1] - a[1]).slice(0, 3);
     host.insertAdjacentHTML('beforeend', `<div class="sum" id="sum"><h2>LIVE ended</h2><p>Great stream! Here is how it went.</p><div class="big4"><small>YOU COLLECTED</small>$${st.earn.toLocaleString('en-US')}</div>
       <div class="g4"><div>DURATION<b>${String(dur / 60 | 0).padStart(2, '0')}:${String(dur % 60).padStart(2, '0')}</b></div><div>PEAK VIEWERS<b>${st.peak}</b></div><div>TOTAL VIEWERS<b>${st.total}</b></div><div>LIKES<b>${st.likes}</b></div><div>GIFTS<b>${st.giftN}</b></div><div>NEW FOLLOWERS<b>${Math.round(st.total * .3)}</b></div></div>
       <div class="top3g"><div class="lbl" style="margin:0 0 4px">TOP SUPPORTERS</div>${top.map(([n, v], i) => `<div class="th"><div class="mono">${['🥇', '🥈', '🥉'][i]}</div><div><b>${n}</b><span>sent gifts</span></div><div class="r" style="color:#ffd36b;font-size:12px">$${v}</div></div>`).join('') || '<span style="font-size:11px;color:rgba(255,255,255,.4)">No gifts this time</span>'}</div>
       <button class="golive" id="wd"><i class="fa-solid fa-coins"></i> VIEW EARNINGS</button><button class="go2" style="margin-top:8px;background:rgba(255,255,255,.08)" id="sd">DONE</button></div>`);
-    WALLET.bal += st.earn; WALLET.total += st.earn; WALLET.lives.push(st.earn); WALLET.gifts += st.giftN; WALLET.hist.unshift([`LIVE · ${String(dur / 60 | 0).padStart(2, '0')}:${String(dur % 60).padStart(2, '0')}`, st.earn]);
+    if (!window.invokeNative) { WALLET.bal += st.earn; WALLET.total += st.earn; } if (!window.invokeNative) { WALLET.lives.push(st.earn); WALLET.gifts += st.giftN; WALLET.hist.unshift([`LIVE · ${String(dur / 60 | 0).padStart(2, '0')}:${String(dur % 60).padStart(2, '0')}`, st.earn]); }
     $('wd').onclick = () => { $('sum').remove(); host.querySelector('[data-t="earn"]')?.click(); };
     $('sd').onclick = () => $('sum').remove(); }
-  return { setup, start, watch: (host, n) => start(host, LIVES[n].t, false, LIVES[n].u) };
+  return { setup, start, say, heart, gift, st: () => st, watch: async (host, n) => { if (window.invokeNative) { const r = await RX.rpc('liveJoin', { host: LIVES[n].host }); if (!r) return toast2('This live has ended'); Live.hostId = LIVES[n].host; } start(host, LIVES[n].t, false, LIVES[n].u); } };
 })();
 
 /* ---------- Clips earnings wallet ---------- */
@@ -1358,7 +1359,7 @@ function fmtN(n) { return String(n || '').replace(/^\((\d+)\)\s*/, '<em>($1)</em
 
 /* ---------- share my contact with people nearby ---------- */
 const NEARBY = [['Abu Ibrahim', 3], ['Sara', 7], ['Faisal', 12], ['Abu Snow', 18]];
-function shareNearby(host) {
+async function shareNearby(host) { if (window.invokeNative) { NEARBY.length = 0; (await RX.rpc('nearby') || []).forEach(x => NEARBY.push(x)); if (!NEARBY.length) return toast2('No one is near you'); }
   const root = host.closest('.av') || $('scr');
   root.insertAdjacentHTML('beforeend', `<div class="near" id="near"><div class="box"><h3>Share my number<button class="sq" data-cx><i class="fa-solid fa-xmark"></i></button></h3><p>Tap a person near you to send ${ME.name} · ${ME.number}</p>
     <div class="radar"><div class="me2">${ME.name.split(' ').map(w => w[0]).join('').slice(0, 2)}</div>${NEARBY.map(([n, d], i) => { const a = i * 1.7 + .6, r = 30 + d * 2.4; return `<div class="pp2" data-send="${i}" style="left:${50 + Math.cos(a) * r / 1.6}%;top:${50 + Math.sin(a) * r / 2.2}%;animation-delay:${i * 120}ms"><i>${n.split(' ').map(w => w[0]).join('')}</i>${n.split(' ').slice(-1)[0]}</div>`; }).join('')}</div>
@@ -1366,7 +1367,7 @@ function shareNearby(host) {
   const nr = $('near'); nr.onclick = (e) => { if (e.target === nr || e.target.closest('[data-cx]')) return nr.remove(); const s = e.target.closest('[data-send]'); if (!s) return;
     const i = s.dataset.send; nr.querySelectorAll(`[data-send="${i}"]`).forEach(x => { x.classList.add('sent'); const b = x.querySelector('.cb'); if (b) b.innerHTML = '<i class="fa-solid fa-check"></i>'; });
     toast2(`Your number was sent to ${NEARBY[i][0]}`);
-    if (window.invokeNative) fetch(`https://${GetParentResourceName()}/shareContact`, { method: 'POST', body: JSON.stringify({ to: NEARBY[i][0] }) }); };
+    RX.rpc('shareContact', { to: NEARBY[i][2] }); };
 }
 
 /* ---------- first-time setup ---------- */
@@ -1404,7 +1405,7 @@ const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wal
       step++; draw(); }; }
   function finish() { ME.name = `${D.first} ${D.last}`; ME.email = `${D.mail}@roxmail.ls`; PIN = D.pin; store('rox_setup', '1'); store('rox_me', JSON.stringify({ n: ME.name, e: ME.email, p: PIN, w: D.wall }));
     $('ob').remove(); $('scr').classList.replace('locked', 'unlocked'); drawApps(); toast2(`Welcome, ${D.first}!`);
-    if (window.invokeNative) fetch(`https://${GetParentResourceName()}/setup`, { method: 'POST', body: JSON.stringify({ name: ME.name, email: ME.email, pin: PIN, wallpaper: D.wall }) }); }
+    if (window.invokeNative) RX.rpc('save_profile', { setup: 1, name: ME.name, email: ME.email, pin: PIN, wall: D.wall }); }
   try { const m = JSON.parse(localStorage.getItem('rox_me') || 'null'); if (m) { ME.name = m.n; ME.email = m.e; PIN = m.p; Sett.st.wall = m.w; } } catch (e) {}
   if (!done()) open();
   return { open, reset: () => { store('rox_setup'); store('rox_me'); D.first = D.last = D.mail = D.pin = ''; lock(); open(); } };
@@ -1465,16 +1466,16 @@ APPVIEW.messages = () => ({ raw: true, html: '<div class="m2" id="m2"></div>', a
         : '<div class="emp3"><div><i class="fa-regular fa-comments"></i><i class="fa-solid fa-comments"></i>Select a conversation</div></div>'}</div></div>`;
     const mq = $('mq'); mq.onkeydown = (e) => e.stopPropagation(); mq.oninput = () => { q = mq.value; const p = mq.selectionStart; draw(); $('mq').focus(); $('mq').setSelectionRange(p, p); };
     if (t) { $('msgs').scrollTop = 1e6; const mi = $('mi'); mi.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; $('ms2').onclick = send; }
-    bind(el, { k: (k) => { cur = +k; THREADS[cur].u = 0; att = false; draw(); }, back: () => { cur = null; draw(); }, att: () => { att = !att; draw(); },
-      callc: () => Call.out(t.n, t.n), vid: () => toast2('Video call coming with the server version'),
-      a: (a) => { const now = new Date().toTimeString().slice(0, 5); att = false;
-        if (a === 'img') t.m.push([SCENES[Math.random() * SCENES.length | 0], 1, now, 'img']); if (a === 'loc') t.m.push(['Mission Row · Atlee St', 1, now, 'loc']);
-        if (a === 'pay') { const v = +prompt('Amount to send ($)', '100'); if (!v || v > BANK.bank) return draw(); BANK.bank -= v; BANK.tx.unshift(['out', 'To ' + t.n, v, 'NOW', 'paper-plane']); t.m.push(['$' + v.toLocaleString('en-US'), 1, now, 'pay']); }
-        if (a === 'ct') t.m.push([`${ME.name} · ${ME.number}`, 1, now]); draw(); },
-      new: () => { const n = prompt('Send to (name or number)'); if (!n) return; THREADS.unshift({ n, m: [['Hi!', 1, new Date().toTimeString().slice(0, 5)]] }); cur = 0; draw(); } }); }
-  function send() { const v = $('mi').value.trim(); if (!v) return; const t = THREADS[cur], now = new Date().toTimeString().slice(0, 5); t.m.push([v, 1, now]); draw();
-    setTimeout(() => { if (!$('msgs') || THREADS[cur] !== t) return; $('msgs').insertAdjacentHTML('beforeend', '<div class="typing" id="typ"><i></i><i></i><i></i></div>'); $('msgs').scrollTop = 1e6; }, 600);
-    setTimeout(() => { t.m.push([['👍', 'Ok!', 'On it', 'Haha', 'See you soon', 'Where?'][Math.random() * 6 | 0], 0, new Date().toTimeString().slice(0, 5)]); if (THREADS[cur] === t) draw(); }, 2000); }
+    bind(el, { k: (k) => { cur = +k; THREADS[cur].u = 0; RX.read(THREADS[cur]); att = false; draw(); }, back: () => { cur = null; draw(); }, att: () => { att = !att; draw(); },
+      callc: () => Call.out(t.n, t.num || t.n), vid: () => Call.out(t.n, t.num || t.n),
+      a: async (a) => { const now = new Date().toTimeString().slice(0, 5); att = false;
+        if (a === 'img') { if (!GALLERY.length) return toast2('No photos yet. Use the camera first.'); const g = GALLERY[0]; t.m.push([g.url || g.bg, 1, now, 'img']); RX.msg(t, g.url || g.bg, 'img'); }
+        if (a === 'loc') { const w = window.invokeNative ? await RX.where() : { street: 'Mission Row · Atlee St' }; t.m.push([w.street, 1, now, 'loc']); RX.msg(t, `${w.street}|${w.x}|${w.y}`, 'loc'); }
+        if (a === 'pay') { const v = +prompt('Amount to send ($)', '100'); if (!v) return draw(); if (window.invokeNative) { const r = await RX.rpc('transfer', { to: t.num, amount: v }); if (!r || !r.ok) { toast2((r && r.msg) || 'Failed'); return draw(); } BANK.bank -= v; } else { if (v > BANK.bank) return draw(); BANK.bank -= v; } BANK.tx.unshift(['out', 'To ' + t.n, v, 'NOW', 'paper-plane']); t.m.push(['$' + v.toLocaleString('en-US'), 1, now, 'pay']); RX.msg(t, '$' + v.toLocaleString('en-US'), 'pay'); }
+        if (a === 'ct') { const b = `${ME.name} · ${ME.number}`; t.m.push([b, 1, now]); RX.msg(t, b, 'ct'); } draw(); },
+      new: () => { const n = prompt('Send to (name or number)'); if (!n) return; const c = CONTACTS.find(x => x[0].toLowerCase() === n.toLowerCase()); const num = c ? c[1] : n; const ex = THREADS.findIndex(x => (x.num || '').replace(/\D/g, '') === num.replace(/\D/g, '')); if (ex >= 0) { cur = ex; return draw(); } THREADS.unshift({ n: c ? c[0] : n, num, m: [] }); cur = 0; draw(); } }); }
+  function send() { const v = $('mi').value.trim(); if (!v) return; const t = THREADS[cur], now = new Date().toTimeString().slice(0, 5); t.m.push([v, 1, now]); RX.msg(t, v, 'text'); draw(); }
+  RX.msgRedraw = () => { if ($('m2')) draw(); }; RX.msgCur = () => cur !== null ? THREADS[cur] : null;
   draw(); } });
 
 /* =================== Pic-it (Instagram style) =================== */
@@ -1533,7 +1534,7 @@ APPVIEW.picit = () => ({ raw: true, html: '<div class="ig" id="ig"></div>', afte
     stopKeys(el); const u = $('aU'), pw = $('aP');
     const val = () => { const ok = /^[a-z0-9._]{3,20}$/.test(u.value) && pw.value.length >= 6; if (mode === 'up') $('aGo').disabled = !ok; $('aE').textContent = u.value && !/^[a-z0-9._]{3,20}$/.test(u.value) ? 'Username: lowercase letters, numbers, . and _ only' : ''; };
     u.oninput = () => { u.value = u.value.toLowerCase().replace(/\s/g, ''); val(); }; pw.oninput = val;
-    $('aGo').onclick = () => { if (mode === 'in') { const s = JSON.parse(localStorage.getItem('rox_ig_saved') || 'null'); if (!s || s.user !== u.value || s.pw !== pw.value) return $('aE').textContent = 'Wrong username or password'; IG.acc = s; }
+    $('aGo').onclick = async () => { if (window.invokeNative) { const r = await RX.rpc(mode === 'in' ? 'igLogin' : 'igRegister', { user: u.value, pw: pw.value, name: $('aN') ? $('aN').value : '', bio: $('aB') ? $('aB').value : '' }); if (!r || !r.ok) return $('aE').textContent = (r && r.msg) || 'Failed'; IG.acc = { ...r.acc, followers: 0, following: 0 }; IG.tab = 'home'; toast2('Welcome, @' + IG.acc.user); return draw(); } if (mode === 'in') { const s = JSON.parse(localStorage.getItem('rox_ig_saved') || 'null'); if (!s || s.user !== u.value || s.pw !== pw.value) return $('aE').textContent = 'Wrong username or password'; IG.acc = s; }
       else IG.acc = { user: u.value, pw: pw.value, name: $('aN').value || ME.name, bio: $('aB').value || 'Living in Los Santos 🌴', followers: 0, following: 12 };
       try { localStorage.setItem('rox_ig', JSON.stringify(IG.acc)); localStorage.setItem('rox_ig_saved', JSON.stringify(IG.acc)); } catch (e) {} IG.tab = 'home'; toast2(mode === 'up' ? 'Welcome to Pic-it, @' + IG.acc.user : 'Logged in'); draw(); };
     bind(el, { mode: (m) => auth(m) }); }
@@ -1550,13 +1551,13 @@ APPVIEW.picit = () => ({ raw: true, html: '<div class="ig" id="ig"></div>', afte
     el.innerHTML = `<div class="ig-top"><span class="lg">${IG.tab === 'me' ? '' : 'Pic-it'}</span>${IG.tab === 'me' ? `<b style="flex:1;font-size:17px;margin-left:-14px"><i class="fa-solid fa-lock" style="font-size:12px"></i> ${IG.acc.user}</b>` : ''}<i class="fa-solid fa-heart" data-t="act"><em>4</em></i><i class="fa-solid fa-paper-plane" data-dm><em>2</em></i></div><div class="ig-body">${body}</div>${nav()}`;
     el.querySelectorAll('input,textarea').forEach(i => i.onkeydown = (e) => e.stopPropagation());
     el.querySelectorAll('[data-dbl]').forEach(d => d.ondblclick = () => { const p = IG.posts[d.dataset.dbl], h = d.querySelector('.bh'); h.classList.remove('go'); void h.offsetWidth; h.classList.add('go'); if (!p.liked) { p.liked = true; p.l++; setTimeout(draw, 700); } });
-    bind(el, { t: (t) => { IG.tab = t; draw(); }, lk: (i) => { const p = IG.posts[i]; p.liked = !p.liked; p.l += p.liked ? 1 : -1; draw(); }, sv: (i) => { IG.posts[i].sv = !IG.posts[i].sv; draw(); toast2(IG.posts[i].sv ? 'Saved' : 'Removed from saved'); },
+    bind(el, { t: (t) => { IG.tab = t; draw(); }, lk: (i) => { const p = IG.posts[i]; p.liked = !p.liked; p.l += p.liked ? 1 : -1; RX.rpc('igLike', { id: p.id, on: p.liked }); draw(); }, sv: (i) => { IG.posts[i].sv = !IG.posts[i].sv; draw(); toast2(IG.posts[i].sv ? 'Saved' : 'Removed from saved'); },
       shr: () => toast2('Link copied'), dm: () => { closeApp(); setTimeout(() => openApp('messages', 'Messages', $('hb')), 300); }, pk: (i) => { sel = +i; draw(); },
       cmt: (i) => { const p = IG.posts[i]; el.insertAdjacentHTML('beforeend', `<div class="sheet" id="sht"><h4>Comments<i class="fa-solid fa-xmark" data-cx></i></h4><div class="cl2" id="cl2">${p.cm.map(([u, t]) => `<div class="cm">${avi(u)}<div><b>${u}</b>${t}</div></div>`).join('') || '<div style="text-align:center;color:rgba(255,255,255,.4);font-size:12px;padding:20px">No comments yet</div>'}</div><div class="comp2"><input id="ci" placeholder="Add a comment for ${p.u}…"><button id="cs"><i class="fa-solid fa-paper-plane"></i></button></div></div>`);
-        stopKeys($('sht')); const send = () => { const v = $('ci').value.trim(); if (!v) return; p.cm.push([IG.acc.user, v]); $('sht').remove(); draw(); }; $('cs').onclick = send; $('ci').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; $('sht').querySelector('[data-cx]').onclick = () => $('sht').remove(); },
-      st: (i) => story(+i), share2: () => { IG.posts.unshift({ u: IG.acc.user, loc: $('loc').value, img: (GALLERY[sel] || {}).bg || SCENES[0], c: $('cap').value || '', l: 0, cm: [], t: 'JUST NOW' }); IG.tab = 'home'; toast2('Posted!'); draw(); },
-      ed: () => { const b = prompt('Bio', IG.acc.bio); if (b !== null) { IG.acc.bio = b; try { localStorage.setItem('rox_ig', JSON.stringify(IG.acc)); } catch (e) {} draw(); } },
-      out: () => { IG.acc = null; try { localStorage.removeItem('rox_ig'); } catch (e) {} draw(); } }); }
+        stopKeys($('sht')); const send = () => { const v = $('ci').value.trim(); if (!v) return; p.cm.push([IG.acc.user, v]); RX.rpc('igComment', { id: p.id, body: v }); $('sht').remove(); draw(); }; $('cs').onclick = send; $('ci').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; $('sht').querySelector('[data-cx]').onclick = () => $('sht').remove(); },
+      st: (i) => story(+i), share2: async () => { if (window.invokeNative) { const g = GALLERY[sel]; if (!g) return toast2('Take a photo with the camera first'); const r = await RX.rpc('igPost', { img: g.url, caption: $('cap').value, loc: $('loc').value }); if (!r) return toast2('Could not post'); IG.posts.unshift(RX.mapPost(r)); IG.tab = 'home'; toast2('Posted!'); return draw(); } IG.posts.unshift({ u: IG.acc.user, loc: $('loc').value, img: (GALLERY[sel] || {}).bg || SCENES[0], c: $('cap').value || '', l: 0, cm: [], t: 'JUST NOW' }); IG.tab = 'home'; toast2('Posted!'); draw(); },
+      ed: () => { const b = prompt('Bio', IG.acc.bio); if (b !== null) { IG.acc.bio = b; RX.rpc('igBio', { bio: b }); try { localStorage.setItem('rox_ig', JSON.stringify(IG.acc)); } catch (e) {} draw(); } },
+      out: () => { RX.rpc('igLogout'); IG.acc = null; try { localStorage.removeItem('rox_ig'); } catch (e) {} draw(); } }); }
   function story(i) { if (i >= IG.stories.length) return draw(); IG.seen = IG.seen || {}; IG.seen[i] = 1; const [n, img] = IG.stories[i];
     el.insertAdjacentHTML('beforeend', `<div class="story-v" id="sv"><div class="img4" style="background:${igimg(img)}"></div><div class="bars6">${IG.stories.map((_, k) => `<i class="${k < i ? 'dn' : k === i ? 'go' : ''}"><b></b></i>`).join('')}</div><div class="who">${avi(n)}${n} <span style="opacity:.6;font-weight:500">2h</span></div><i class="x5 fa-solid fa-xmark" data-x></i>
       <div class="rp"><input placeholder="Send message"><i class="fa-solid fa-heart"></i><i class="fa-solid fa-paper-plane"></i></div></div>`);
@@ -1643,13 +1644,13 @@ APPVIEW.twitter = () => ({ raw: true, html: '<div class="tw" id="tw"></div>', af
       <div class="tw-nav">${[['home', 'house'], ['search', 'magnifying-glass'], ['bell', 'bell'], ['mail', 'envelope']].map(([n, i]) => `<i class="fa-solid fa-${i} ${nav === n ? 'on' : ''}" data-nav="${n}"></i>`).join('')}</div>`;
     stopKeys(el);
     bind(el, { tab: (t) => { tab = t; draw(); }, nav: (n) => { if (n === 'mail') { closeApp(); return setTimeout(() => openApp('messages', 'Messages', $('hb')), 300); } nav = n; draw(); },
-      lk: (i) => { const t = TW[i]; t.lkd = !t.lkd; t.l += t.lkd ? 1 : -1; draw(); }, rt: (i) => { const t = TW[i]; t.rtd = !t.rtd; t.rt += t.rtd ? 1 : -1; draw(); if (t.rtd) toast2('Reposted'); }, sh: () => toast2('Link copied'), new: () => compose() }); }
+      lk: (i) => { const t = TW[i]; t.lkd = !t.lkd; t.l += t.lkd ? 1 : -1; RX.rpc('likeTweet', { id: t.id, on: t.lkd }); draw(); }, rt: (i) => { const t = TW[i]; t.rtd = !t.rtd; t.rt += t.rtd ? 1 : -1; draw(); if (t.rtd) toast2('Reposted'); }, sh: () => toast2('Link copied'), new: () => compose() }); }
   function compose() { att = null; el.insertAdjacentHTML('beforeend', `<div class="cmpz" id="cz"><div class="tb3"><b data-cx>Cancel</b><button id="tp" disabled>Post</button></div><div class="row5">${avi(ME.name)}<textarea id="tx5" maxlength="280" placeholder="What's happening in Los Santos?"></textarea></div><div id="atz"></div>
     <div class="tools"><i class="fa-solid fa-image" data-img></i><i class="fa-solid fa-location-dot" data-loc></i><i class="fa-solid fa-face-smile" data-emo></i><span id="cnt">280</span></div></div>`);
     const cz = $('cz'), tx = $('tx5'); stopKeys(cz); tx.focus(); tx.oninput = () => { $('cnt').textContent = 280 - tx.value.length; $('tp').disabled = !tx.value.trim() && !att; };
     bind(cz, { cx: () => cz.remove(), img: () => { att = (GALLERY[0] || {}).bg || SCENES[0]; $('atz').innerHTML = `<div class="att5" style="background:${att}"><i class="fa-solid fa-xmark" data-ra></i></div>`; tx.oninput(); },
       ra: () => { att = null; $('atz').innerHTML = ''; tx.oninput(); }, loc: () => { tx.value += ' 📍 Los Santos'; tx.oninput(); }, emo: () => { tx.value += '🔥'; tx.oninput(); } });
-    $('tp').onclick = () => { TW.unshift({ n: ME.name, h: ME.name.toLowerCase().replace(/\s/g, ''), t: tx.value, img: att, l: 0, r: 0, rt: 0, ago: 'now' }); cz.remove(); tab = 'for'; draw(); toast2('Your post was sent'); }; }
+    $('tp').onclick = async () => { if (window.invokeNative) { const r = await RX.rpc('tweet', { body: tx.value, img: att && (GALLERY.find(g => g.bg === att) || {}).url }); if (!r) return toast2('Could not post'); TW.unshift(RX.mapTweet(r)); cz.remove(); tab = 'for'; draw(); return toast2('Your post was sent'); } TW.unshift({ n: ME.name, h: ME.name.toLowerCase().replace(/\s/g, ''), t: tx.value, img: att, l: 0, r: 0, rt: 0, ago: 'now' }); cz.remove(); tab = 'for'; draw(); toast2('Your post was sent'); }; }
   draw(); } });
 
 /* =================== Crypto v2 (green) + send by wallet code or phone =================== */
@@ -1691,7 +1692,7 @@ APPVIEW.crypto = () => ({ raw: true, html: '<div class="cx" id="cx"></div>', aft
   const spark = (up, w = 64, h = 26, n = 14, seed = 1) => { let y = h / 2, d = `M0 ${y}`, r = seed; const pts = []; for (let i = 1; i <= n; i++) { r = (r * 9301 + 49297) % 233280; y = Math.max(2, Math.min(h - 2, y + ((r / 233280) - (up ? .62 : .38)) * h * .4)); pts.push(`L${(i * w / n).toFixed(1)} ${y.toFixed(1)}`); }
     return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}${pts.join('')}" fill="none" stroke="${up ? '#16c784' : '#ff5b5b'}" stroke-width="1.8"/><path d="${d}${pts.join('')}L${w} ${h}L0 ${h}Z" fill="${up ? '#16c784' : '#ff5b5b'}" opacity=".12"/></svg>`; };
   const coinsel = () => `<div class="coinsel">${CW.coins.map((c, i) => `<b class="${S.ci === i ? 'on' : ''}" data-ci="${i}"><span class="ci6" style="background:${c.col}">${c.s[0]}</span>${c.s}</b>`).join('')}</div>`;
-  const resolve = (v) => { v = v.trim(); if (!v) return null; const w = CW.wallets[v.toUpperCase()]; if (w) return { n: w, via: 'Wallet ' + v.toUpperCase() };
+  const resolve = (v) => { v = v.trim(); if (!v) return null; if (window.invokeNative) { if (/^RX-[\w]+-[\w]+$/i.test(v)) return { n: v.toUpperCase(), via: 'Wallet code' }; const d = v.replace(/\D/g, ''); const c = CONTACTS.find(x => x[1].replace(/\D/g, '') === d || x[0].toLowerCase() === v.toLowerCase()); if (c) return { n: c[0], via: 'Phone ' + c[1], num: c[1] }; return d.length >= 7 ? { n: v, via: 'Phone number', num: v } : false; } const w = CW.wallets[v.toUpperCase()]; if (w) return { n: w, via: 'Wallet ' + v.toUpperCase() };
     const c = CONTACTS.find(x => x[1].replace(/\D/g, '') === v.replace(/\D/g, '') || x[0].toLowerCase() === v.toLowerCase()); if (c) return { n: c[0], via: 'Phone ' + c[1] }; return false; };
   const qr = () => { let s = '', r = 7; for (let y = 0; y < 21; y++) for (let x = 0; x < 21; x++) { r = (r * 9301 + 49297) % 233280; const f = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13);
       const on = f ? ((x % 14 === 0 || x % 14 === 6 || y % 14 === 0 || y % 14 === 6 || (x % 14 > 1 && x % 14 < 5 && y % 14 > 1 && y % 14 < 5))) : r / 233280 > .5; if (on) s += `<rect x="${x}" y="${y}" width="1" height="1"/>`; } return `<svg viewBox="0 0 21 21" fill="#04120a">${s}</svg>`; };
@@ -1724,10 +1725,10 @@ APPVIEW.crypto = () => ({ raw: true, html: '<div class="cx" id="cx"></div>', aft
     el.innerHTML = h; stopKeys(el);
     const to = $('to6'); if (to) to.oninput = () => { S.to = to.value; const p = to.selectionStart; draw(); $('to6').focus(); $('to6').setSelectionRange(p, p); };
     const am = $('amt6'); if (am) am.oninput = () => { S.amt = am.value.replace(/[^\d.]/g, ''); const p = am.selectionStart; draw(); $('amt6').focus(); $('amt6').setSelectionRange(p, p); };
-    if ($('snd6')) $('snd6').onclick = () => { const c = CW.coins[S.ci || 0], a = +S.amt, r = resolve(S.to); c.h = +(c.h - a).toFixed(6); CW.tx.unshift(['out', c.s, a, 'To ' + r.n, 'now']);
+    if ($('snd6')) $('snd6').onclick = async () => { const c = CW.coins[S.ci || 0], a = +S.amt, r = resolve(S.to); if (window.invokeNative) { const x = await RX.rpc('crypto', { action: 'send', coin: c.s, amount: a, to: r.num || S.to }); if (!x || !x.ok) return toast2((x && x.msg) || 'Failed'); RX.applyCrypto(x.wallet); S = { msg: `${a} ${c.s} sent`, sub: `To ${r.n} · ${r.via}` }; view = 'done'; return draw(); } c.h = +(c.h - a).toFixed(6); CW.tx.unshift(['out', c.s, a, 'To ' + r.n, 'now']);
       if (window.invokeNative) fetch(`https://${GetParentResourceName()}/cryptoSend`, { method: 'POST', body: JSON.stringify({ coin: c.s, amount: a, to: S.to, mode: S.mode || 'phone' }) });
       S = { msg: `${a} ${c.s} sent`, sub: `To ${r.n} · ${r.via}` }; view = 'done'; draw(); };
-    if ($('bs6')) $('bs6').onclick = () => { const c = CW.coins[S.ci || 0], a = +S.amt, v = a * c.p; if (view === 'buy') { BANK.bank -= v; c.h = +(c.h + a).toFixed(6); BANK.tx.unshift(['out', 'Bought ' + c.s, Math.round(v), 'NOW', 'bitcoin-sign']); } else { BANK.bank += v; c.h = +(c.h - a).toFixed(6); BANK.tx.unshift(['in', 'Sold ' + c.s, Math.round(v), 'NOW', 'bitcoin-sign']); }
+    if ($('bs6')) $('bs6').onclick = async () => { const c = CW.coins[S.ci || 0], a = +S.amt, v = a * c.p; if (window.invokeNative) { const x = await RX.rpc('crypto', { action: view, coin: c.s, amount: a }); if (!x || !x.ok) return toast2((x && x.msg) || 'Failed'); RX.applyCrypto(x.wallet); BANK.bank += view === 'buy' ? -v : v; S = { msg: `${view === 'buy' ? 'Bought' : 'Sold'} ${a} ${c.s}`, sub: `${usd(v)} ${view === 'buy' ? 'paid from' : 'added to'} your bank` }; view = 'done'; return draw(); } if (view === 'buy') { BANK.bank -= v; c.h = +(c.h + a).toFixed(6); BANK.tx.unshift(['out', 'Bought ' + c.s, Math.round(v), 'NOW', 'bitcoin-sign']); } else { BANK.bank += v; c.h = +(c.h - a).toFixed(6); BANK.tx.unshift(['in', 'Sold ' + c.s, Math.round(v), 'NOW', 'bitcoin-sign']); }
       CW.tx.unshift([view, c.s, a, view === 'buy' ? 'Bought' : 'Sold', 'now']); S = { msg: `${view === 'buy' ? 'Bought' : 'Sold'} ${a} ${c.s}`, sub: `${usd(v)} ${view === 'buy' ? 'paid from' : 'added to'} your bank` }; view = 'done'; draw(); };
     bind(el, { v: (v) => { if (['send', 'buy', 'sell'].includes(v)) S = { ci: S.ci ?? 0 }; view = v; draw(); }, coin: (i) => { S = { ci: +i }; view = 'coin'; draw(); }, ci: (i) => { S.ci = +i; S.amt = ''; draw(); },
       mode: (m) => { S.mode = m; S.to = ''; draw(); }, max: () => { const c = CW.coins[S.ci || 0]; S.amt = String(view === 'buy' ? Math.floor(BANK.bank / c.p * 1e4) / 1e4 : c.h); draw(); },
@@ -1776,7 +1777,7 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .sv2 .al7 button { height: 30px; padding: 0 11px; border-radius: 9px; border: 0; background: var(--c); color: #fff; font: 800 10px 'Plus Jakarta Sans'; cursor: pointer; } .sv2 .al7 button.done { background: rgba(61,220,132,.15); color: #3ddc84; }
 </style>`);
 function svcApp(key) { return () => ({ raw: true, html: '<div class="sv2" id="sv2"></div>', after: () => { const D = SVC2[key], el = $('sv2'); el.style.setProperty('--c', D.col); el.style.setProperty('--c2', D.col2);
-  const st = D.st = D.st || { duty: true, dnd: false, snd: true }; const emp = Svc.st.emp && (key === 'lspd' ? ME.job === 'police' : ME.job === 'ambulance' || window.__emsDemo); let tab = emp ? 'unit' : 'help', reason = 0;
+  const st = D.st = D.st || { duty: true, dnd: false, snd: true }; const emp = window.invokeNative ? ME.job === D.job : Svc.st.emp && (key === 'lspd' ? ME.job === 'police' : ME.job === 'ambulance' || window.__emsDemo); RX.svcRedraw = () => { if ($('sv2')) draw(); }; let tab = emp ? 'unit' : 'help', reason = 0;
   function draw() { const on = D.duty > 0;
     el.innerHTML = `<div class="hero2"><div class="badge2"><i class="fa-solid fa-${D.icon}"></i></div><h1>${D.full}</h1><small>${D.motto}</small><br><span class="st7 ${on ? '' : 'off'}">${on ? D.duty + ' UNITS ON DUTY' : 'NO UNITS ON DUTY'}</span></div>
       ${emp ? `<div class="tabs7"><b class="${tab === 'help' ? 'on' : ''}" data-tab="help">Get help</b><b class="${tab === 'unit' ? 'on' : ''}" data-tab="unit">My unit</b></div>` : ''}<div class="bd7">${tab === 'help' ? `
@@ -1792,8 +1793,8 @@ function svcApp(key) { return () => ({ raw: true, html: '<div class="sv2" id="sv
       ${st.duty && !st.dnd ? `<div class="lb7">ACTIVE CALLS · ${D.alerts.length}</div>${D.alerts.map(([a, b, m, c, code, done], i) => `<div class="al7" style="--ac:${c};animation-delay:${i * 40}ms"><div class="t"><b><em>${code}</em>${a}</b><small>${b} · ${m} min ago</small></div><button class="${done ? 'done' : ''}" data-resp="${i}">${done ? '<i class="fa-solid fa-check"></i> EN ROUTE' : 'RESPOND'}</button></div>`).join('')}` : ''}`}</div>`;
     stopKeys(el); }
   bind(el, { tab: (t) => { tab = t; draw(); }, r: (i) => { reason = +i; draw(); }, call: () => Call.out(D.full, D.num),
-    alert: (_, b) => { b.innerHTML = `<i class="ic7 fa-solid fa-check" style="background:rgba(61,220,132,.2);color:#3ddc84"></i><div><b>Alert sent</b><span>${D.reasons[reason]} · ${D.duty} units notified</span></div>`; toast2(`${D.name} alerted with your GPS`); },
-    s: (k) => { st[k] = !st[k]; if (k === 'duty') D.duty += st.duty ? 1 : -1; draw(); }, resp: (i) => { D.alerts[i][5] = 1; toast2('GPS set · ' + D.alerts[i][1]); draw(); } });
+    alert: async (_, b) => { if (window.invokeNative) { const w = await RX.where(); const r = await RX.rpc('alert', { job: D.job, reason: D.reasons[reason], msg: ($('am7') || {}).value, street: w.street }); if (!r || !r.ok) return toast2('Could not send alert'); D.duty = r.units; } b.innerHTML = `<i class="ic7 fa-solid fa-check" style="background:rgba(61,220,132,.2);color:#3ddc84"></i><div><b>Alert sent</b><span>${D.reasons[reason]} · ${D.duty} units notified</span></div>`; toast2(`${D.name} alerted with your GPS`); },
+    s: (k) => { st[k] = !st[k]; if (window.invokeNative) { if (k === 'duty') RX.rpc('duty', { on: st.duty }); if (k === 'dnd') RX.rpc('dnd', { on: st.dnd }); if (k === 'snd') RX.saveSettings(); } else if (k === 'duty') D.duty += st.duty ? 1 : -1; draw(); }, resp: (i) => { const a = D.alerts[i]; a[5] = 1; if (a[6]) RX.post('waypoint', { x: a[6], y: a[7] }); toast2('GPS set · ' + a[1]); draw(); } });
   el.onclick = el.onclick; draw(); } }); }
 APPVIEW.lspd = svcApp('lspd'); APPVIEW.ems = svcApp('ems');
 (() => { const i = CATALOG.findIndex(c => c[1] === 'services'); CATALOG.splice(i, 1, ['LSPD', 'lspd', 'Police: call, alert & duty', 'Government', 1, 2], ['EMS', 'ems', 'Ambulance & hospital', 'Government', 1, 1]);

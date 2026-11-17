@@ -21,7 +21,7 @@ end
 local function playerData()
     local p = exports.qbx_core:GetPlayerData() or {}
     local ci, job, money = p.charinfo or {}, p.job or {}, p.money or {}
-    return { name = ((ci.firstname or '') .. ' ' .. (ci.lastname or '')), number = ci.phone or '', cid = p.citizenid,
+    return { src = GetPlayerServerId(PlayerId()), name = ((ci.firstname or '') .. ' ' .. (ci.lastname or '')), number = ci.phone or '', cid = p.citizenid,
         job = job.name, jobLabel = job.label, grade = job.grade and job.grade.name, duty = job.onduty, cash = money.cash or 0, bank = money.bank or 0 }
 end
 
@@ -102,3 +102,33 @@ end)
 -- ---------------- bank ----------------
 RegisterNUICallback('bank', function(d, cb) cb(lib.callback.await('rox_phone:transfer', false, d) or { ok = false }) end)
 RegisterNetEvent('QBCore:Player:SetPlayerData', function() if open then SendNUIMessage({ action = 'me', me = playerData() }) end end)
+
+-- ================= data bridge =================
+RegisterNUICallback('rpc', function(d, cb) cb(lib.callback.await('rox_phone:rpc', false, d.name, d.args) or false) end)
+RegisterNetEvent('rox_phone:push', function(t, d)
+    if t == 'call:accepted' then exports['pma-voice']:setCallChannel(d.id) end
+    if t == 'call:ended' then exports['pma-voice']:setCallChannel(0) end
+    if t == 'call:incoming' and not open then lib.notify({ title = 'Incoming call', description = d.name or d.from, type = 'inform' }) end
+    if t == 'msg' and not open then lib.notify({ title = d.name or d.sender, description = d.kind == 'text' and d.body or 'New message', type = 'inform' }) end
+    if t == 'alert' then lib.notify({ title = d.job:upper() .. ' · ' .. (d.reason or ''), description = d.street or '', type = 'warning' }) end
+    SendNUIMessage({ action = 'push', type = t, data = d })
+end)
+RegisterNUICallback('waypoint', function(d, cb) if d.x and d.y then SetNewWaypoint(d.x + 0.0, d.y + 0.0) end cb(1) end)
+RegisterNUICallback('places', function(_, cb) cb(Config.Places) end)
+RegisterNUICallback('gifts', function(_, cb) cb(Config.Gifts) end)
+RegisterNUICallback('whereami', function(_, cb)
+    local c = GetEntityCoords(cache.ped)
+    cb({ x = c.x, y = c.y, street = GetStreetNameFromHashKey(GetStreetNameAtCoord(c.x, c.y, c.z)) .. ', ' .. GetLabelText(GetNameOfZone(c.x, c.y, c.z)) })
+end)
+RegisterNUICallback('photo', function(_, cb)
+    if Config.PhotoUpload == '' or GetResourceState('screenshot-basic') ~= 'started' then cb({ ok = false, msg = 'Camera needs screenshot-basic + Config.PhotoUpload' }) return end
+    SendNUIMessage({ action = 'shoot', on = true }); Wait(150)
+    exports['screenshot-basic']:requestScreenshotUpload(Config.PhotoUpload, Config.PhotoField, function(data)
+        SendNUIMessage({ action = 'shoot', on = false })
+        local ok, r = pcall(json.decode, data or '')
+        local url = ok and r and ((r.attachments and r.attachments[1] and r.attachments[1].url) or r.url or (r.data and r.data.url))
+        if not url then cb({ ok = false, msg = 'Upload failed' }) return end
+        lib.callback.await('rox_phone:rpc', false, 'savePhoto', { url = url })
+        cb({ ok = true, url = url })
+    end)
+end)

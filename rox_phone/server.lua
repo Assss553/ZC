@@ -35,20 +35,3 @@ RegisterNetEvent('rox_phone:server:lock', function(netId, lock)
     if owns then SetVehicleDoorsLocked(veh, lock and 2 or 1) end
 end)
 
--- bank transfer to a phone number (receiver must be in the city)
-lib.callback.register('rox_phone:transfer', function(src, d)
-    local p = exports.qbx_core:GetPlayer(src); if not p or d.action ~= 'transfer' then return { ok = false } end
-    local amount = math.floor(tonumber(d.amount) or 0); if amount <= 0 or amount > 10000000 then return { ok = false, msg = 'Invalid amount' } end
-    local digits = tostring(d.to or ''):gsub('%D', '')
-    local target
-    for _, t in pairs(exports.qbx_core:GetQBPlayers()) do
-        local ph = tostring((t.PlayerData.charinfo or {}).phone or ''):gsub('%D', '')
-        if ph ~= '' and ph == digits then target = t break end
-    end
-    if not target then return { ok = false, msg = 'No one with that number is in the city' } end
-    if target.PlayerData.source == src then return { ok = false, msg = 'You cannot send money to yourself' } end
-    if not p.Functions.RemoveMoney('bank', amount, 'rox_phone-transfer') then return { ok = false, msg = 'Not enough money' } end
-    target.Functions.AddMoney('bank', amount, 'rox_phone-transfer')
-    TriggerClientEvent('ox_lib:notify', target.PlayerData.source, { title = 'ROX Bank', description = ('You received $%s'):format(amount), type = 'success' })
-    return { ok = true }
-end)
