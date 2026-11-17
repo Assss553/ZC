@@ -209,6 +209,48 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 /* toast */
 .ctoast { position: fixed; top: 28px; right: 28px; display: none; align-items: center; gap: 10px; padding: 10px 16px; background: rgba(14,14,17,.9); border-bottom: 2px solid var(--a); font-size: 12px; font-weight: 600; transform: skewX(-6deg); }
 .ctoast.on { display: flex; animation: fadeUp .3s; } .ctoast i { width: 10px; height: 10px; border-radius: 50%; background: var(--a); box-shadow: 0 0 8px var(--a); animation: bl2 1s infinite; } @keyframes bl2 { 50% { opacity: .3; } }
+
+/* ===== shared tech bits ===== */
+.ph-body { flex: 1; overflow-y: auto; padding: 0 16px 14px; } .ph-body::-webkit-scrollbar { width: 0; }
+.th { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; animation: fadeUp .3s backwards; }
+.th:hover b { color: var(--a); } .th b { font-size: 13px; font-weight: 600; display: block; transition: .15s; } .th span { font-size: 11px; color: rgba(255,255,255,.5); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.th .r { text-align: right; font-size: 9px; font-weight: 800; letter-spacing: 1px; color: rgba(255,255,255,.4); } .th .r i { display: inline-grid; place-items: center; min-width: 17px; height: 17px; margin-top: 4px; border-radius: 4px; background: var(--a); color: #fff; font-style: normal; font-size: 9px; }
+.th.unread span { color: #fff; font-weight: 600; }
+.chatv { display: flex; flex-direction: column; height: 100%; } .chatv .msgs { flex: 1; padding: 12px 16px; }
+.chatv .day { align-self: center; font-size: 8px; font-weight: 800; letter-spacing: 1.5px; color: rgba(255,255,255,.35); margin: 4px 0; }
+.bub small { display: block; font-size: 8px; opacity: .55; margin-top: 3px; text-align: right; }
+.bub.loc { padding: 0; overflow: hidden; width: 170px; } .bub.loc .map { height: 80px; background: repeating-linear-gradient(35deg, #2a2a30 0 2px, #1c1c21 2px 14px), #1c1c21; position: relative; }
+.bub.loc .map i { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -70%); color: #ff3b30; font-size: 22px; } .bub.loc div:last-child { padding: 6px 10px; font-size: 11px; }
+.qa { display: flex; gap: 6px; padding: 0 16px 6px; } .qa button { height: 24px; padding: 0 9px; border-radius: 4px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); color: rgba(255,255,255,.7); font: 700 9px Inter; letter-spacing: .8px; cursor: pointer; } .qa button:hover { border-color: var(--a); color: var(--a); }
+.comp2 { display: flex; gap: 8px; padding: 6px 16px 10px; } .comp2 input { flex: 1; height: 36px; border-radius: 6px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.05); color: #fff; padding: 0 12px; font: 500 12px Inter; outline: none; } .comp2 input:focus { border-color: var(--a); }
+.comp2 button { width: 36px; height: 36px; border-radius: 6px; border: 0; background: var(--a); color: #fff; cursor: pointer; }
+/* services */
+.svc { border-radius: 6px; border: 1px solid; padding: 12px; margin-bottom: 10px; position: relative; overflow: hidden; animation: fadeUp .35s backwards; }
+.svc::after { content: ''; position: absolute; right: -20px; top: -20px; width: 110px; height: 110px; border-radius: 50%; background: currentColor; opacity: .06; }
+.svc.pol { border-color: rgba(80,140,255,.35); background: linear-gradient(135deg, rgba(80,140,255,.14), transparent 70%); color: #7aa7ff; }
+.svc.ems { border-color: rgba(255,77,77,.35); background: linear-gradient(135deg, rgba(255,77,77,.14), transparent 70%); color: #ff6b6b; }
+.svc.mech { border-color: rgba(255,176,32,.35); background: linear-gradient(135deg, rgba(255,176,32,.12), transparent 70%); color: #ffb020; }
+.svc .hd { display: flex; align-items: center; gap: 11px; } .svc .lg { width: 42px; height: 42px; border-radius: 8px; display: grid; place-items: center; font-size: 18px; background: rgba(255,255,255,.06); border: 1px solid currentColor; }
+.svc h3 { color: #fff; font-size: 14px; } .svc .hd small { font-size: 8.5px; font-weight: 800; letter-spacing: 1.3px; display: flex; align-items: center; gap: 5px; } .svc .hd small::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
+.svc .stats { display: flex; gap: 16px; margin: 10px 0; font-size: 8.5px; font-weight: 800; letter-spacing: 1.2px; color: rgba(255,255,255,.45); } .svc .stats b { display: block; color: #fff; font-size: 16px; letter-spacing: 0; }
+.svc .bt { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .svc .bt button { height: 34px; border-radius: 5px; border: 1px solid currentColor; background: rgba(255,255,255,.04); color: inherit; font: 800 9px Inter; letter-spacing: 1.2px; cursor: pointer; } .svc .bt button:hover { background: currentColor; } .svc .bt button:hover span { color: #0b0b0d; }
+.svc .bt button.fill { background: currentColor; } .svc .bt button.fill span { color: #0b0b0d; } .svc .bt i { margin-right: 6px; }
+.svc.off { filter: grayscale(.8); opacity: .7; }
+.emp { border-radius: 6px; border: 1px dashed rgba(255,90,31,.45); padding: 12px; margin-bottom: 12px; background: rgba(255,90,31,.06); }
+.emp .row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; font-size: 11.5px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.05); } .emp .row:last-child { border: 0; }
+.emp .row small { display: block; font-size: 9px; color: rgba(255,255,255,.45); font-weight: 500; }
+.emp .top3 { display: flex; justify-content: space-between; font-size: 8.5px; font-weight: 800; letter-spacing: 1.4px; color: var(--a); margin-bottom: 4px; }
+.alert { display: grid; grid-template-columns: 4px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.05); } .alert::before { content: ''; height: 100%; min-height: 34px; border-radius: 2px; background: var(--c, #ff4d4d); }
+.alert b { font-size: 12px; display: block; } .alert span { font-size: 10px; color: rgba(255,255,255,.5); }
+.dnd-banner { display: none; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 5px; background: rgba(124,92,255,.12); border: 1px solid rgba(124,92,255,.35); color: #b8a6ff; font-size: 10px; font-weight: 700; margin-bottom: 10px; } .dnd-banner.on { display: flex; }
+/* settings */
+.set-card { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 6px; border: 1px solid rgba(255,90,31,.3); background: linear-gradient(135deg, rgba(255,90,31,.14), transparent 70%); margin-bottom: 14px; }
+.set-card .mono { width: 48px; height: 48px; font-size: 16px; } .set-card b { font-size: 15px; display: block; } .set-card span { font-size: 10.5px; color: rgba(255,255,255,.55); font-family: ui-monospace, Consolas, monospace; }
+.sg { border: 1px solid rgba(255,255,255,.07); border-radius: 6px; margin-bottom: 14px; }
+.so { display: flex; align-items: center; gap: 10px; padding: 10px 11px; font-size: 12px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.06); cursor: pointer; } .so:last-child { border: 0; }
+.so .si2 { width: 26px; height: 26px; border-radius: 5px; display: grid; place-items: center; font-size: 11px; border: 1px solid; } .so > span { flex: 1; } .so small { font-size: 10px; color: rgba(255,255,255,.45); }
+.so input[type=range] { width: 110px; accent-color: var(--a); } .so select { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: #fff; border-radius: 4px; height: 26px; font: 600 11px Inter; padding: 0 6px; }
+.walls2 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px 11px; } .walls2 i { height: 64px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; } .walls2 i.on { border-color: var(--a); }
 /* ---------- preview controls ---------- */
 .ctrl { position: fixed; left: 30px; top: 30px; display: flex; flex-direction: column; gap: 8px; }
 .ctrl h1 { font-family: 'Barlow Condensed'; font-style: italic; font-size: 38px; } .ctrl h1 b { color: var(--a); }
@@ -223,6 +265,7 @@ body:not(.preview) .ctrl { display: none; }
   <button id="bFold"><i class="fa-solid fa-tablet-screen-button"></i><span>Unfold</span></button>
   <button id="bLock"><i class="fa-solid fa-lock"></i>Lock phone</button>
   <button id="bCall"><i class="fa-solid fa-phone-volume"></i>Simulate incoming call</button>
+  <button id="bJob"><i class="fa-solid fa-id-badge"></i><span>I'm police (employee)</span></button>
   <button id="bHide"><i class="fa-solid fa-eye-slash"></i>Put away / take out</button></div>
 
 <div class="pos" id="pos"><div class="device" id="dev">
@@ -252,8 +295,8 @@ body:not(.preview) .ctrl { display: none; }
 <script src="icons.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
-const APPS = [['Twitter','twitter'],['Photos','photos'],['Calculator','calculator'],['Clock','clock'],['Notes','notes'],['Banking','banking',1],['Drop','drop'],['Pic-it','picit'],['Maps','maps'],
-  ['Pigeon','pigeon'],['Vibe','vibe'],['Crew','crew'],['Services','services'],['RoxMusic','music'],['Garage','garage'],['Crypto','crypto',1],['DOJ','doj'],['Racing','racing']];
+const APPS = [['Services','services',3],['Twitter','twitter'],['Photos','photos'],['Calculator','calculator'],['Clock','clock'],['Notes','notes'],['Banking','banking',1],['Drop','drop'],['Pic-it','picit'],['Maps','maps'],
+  ['Pigeon','pigeon'],['Vibe','vibe'],['Crew','crew'],['RoxMusic','music'],['Garage','garage'],['Crypto','crypto',1],['DOJ','doj'],['Racing','racing']];
 const DOCK = [['Phone','phone'],['Messages','messages',2],['Camera','camera'],['Settings','settings']];
 const tile = ([n, k, b], i, label = true) => `<div class="app" data-app="${k}" data-name="${n}" style="animation-delay:${i * 22}ms">${b ? `<em>${b}</em>` : ''}<div class="ic">${RoxIcons.svg(k, label ? 46 : 48)}</div>${label ? n : ''}</div>`;
 const isOpen = () => document.body.classList.contains('open');
@@ -281,6 +324,7 @@ function setFold(open) {
 }
 $('bFold').onclick = () => setFold(!isOpen());
 $('bLock').onclick = lock; $('bHide').onclick = () => { if (Call.active()) return Call.peek(!$('pos').classList.contains('peek')); $('pos').classList.toggle('hide'); };
+$('bJob').onclick = () => { Svc.st.emp = !Svc.st.emp; $('bJob').querySelector('span').textContent = Svc.st.emp ? "I'm police (employee)" : 'I\'m a civilian'; if ($('av').dataset.app === 'services') Svc.render(); };
 $('bCall').onclick = () => Call.incoming('Abu Ibrahim', '(555) 100-9944');
 
 /* drag the handle: pull left to unfold, push right to fold */
@@ -350,7 +394,7 @@ const Call = (() => {
     $('cEndL').textContent = state === 'in' ? 'Decline' : 'End'; $('pAcc').style.display = state === 'in' ? '' : 'none';
     $('pSt').innerHTML = state === 'in' ? 'Incoming call' : `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`;
     $('cTm').textContent = tm(); if (state === 'in') { $('ctoast').classList.add('on'); $('ctT').textContent = 'Incoming call · ' + who.n; } else $('ctoast').classList.remove('on'); }
-  function incoming(n, p) { who = { n, p }; fill(); sec = 0; show('in'); if ($('pos').classList.contains('hide')) peek(true); }
+  function incoming(n, p) { if (typeof Sett !== 'undefined' && Sett.st.dnd) return toast2('Missed call (Do not disturb) · ' + n); who = { n, p }; fill(); sec = 0; show('in'); if ($('pos').classList.contains('hide')) peek(true); }
   function out(n, p) { who = { n, p }; fill(); sec = 0; show('out'); setTimeout(() => st === 'out' && accept(), 1800); }
   function accept() { show('on'); clearInterval(tick); tick = setInterval(() => { sec++; $('cTm').textContent = tm(); if (st === 'on') $('pSt').innerHTML = `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`; }, 1000); }
   function end() { if (st === 'in') LOG.unshift([new Date().toTimeString().slice(0, 5), 'decl', who.n, 0]); else if (st) LOG.unshift([new Date().toTimeString().slice(0, 5), 'out', who.n, sec]);
@@ -361,6 +405,91 @@ const Call = (() => {
   $('pill').onclick = () => peek(false);
   return { incoming, out, end, peek, active: () => !!st };
 })();
+
+const ME = { name: 'Rox Player', number: '(555) 348-8943', job: 'police', jobLabel: 'LSPD', grade: 'Sergeant' };
+const head = (title, sub, btn) => `<div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span>${ME.number}</span></div>
+  <div class="ph-h"><div><h1>${title}</h1><small>${sub}</small></div>${btn ? `<button class="sq" data-hb>${btn}</button>` : ''}</div></div>`;
+const esc2 = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const ini4 = (n) => /^[\d(]/.test(n) ? '#' : n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+/* ---------- Messages ---------- */
+const THREADS = [{ n: 'Abu Ibrahim', u: 2, m: [['Where are you?', 0, '02:40'], ['On my way', 1, '02:41'], ['Meet me at Legion Square', 0, '02:44']] },
+  { n: 'Mechanic Shop', m: [['Your car is ready for pickup', 0, '01:12']] }, { n: 'Sara', m: [['Thanks for yesterday!', 0, '23:10'], ['Anytime', 1, '23:12']] },
+  { n: 'LSPD Dispatch', m: [['Reminder: shift starts at 18:00', 0, 'Mon']] }, { n: '(555) 772-0915', m: [['Who is this?', 0, 'Sun']] }];
+const Msg = (() => { let cur = null;
+  const now = () => new Date().toTimeString().slice(0, 5);
+  function list() { const un = THREADS.reduce((a, t) => a + (t.u || 0), 0);
+    return head('MESSAGES', `${THREADS.length} THREADS · ${un} UNREAD`, '<i class="fa-solid fa-pen-to-square"></i>') + `<div class="ph-top"><div class="srch"><i class="fa-solid fa-magnifying-glass"></i>Search messages</div></div>
+      <div class="ph-body">${THREADS.map((t, k) => { const l = t.m[t.m.length - 1]; return `<div class="th ${t.u ? 'unread' : ''}" data-k="${k}" style="animation-delay:${k * 35}ms"><div class="mono">${ini4(t.n)}</div><div style="min-width:0"><b>${esc2(t.n)}</b><span>${l[1] ? 'You: ' : ''}${esc2(l[0])}</span></div><div class="r">${l[2]}${t.u ? `<br><i>${t.u}</i>` : ''}</div></div>`; }).join('')}</div>`; }
+  function chat(k) { const t = THREADS[k];
+    return `<div class="chatv"><div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span>${ME.number}</span></div></div>
+      <div class="back"><button data-back><i class="fa-solid fa-chevron-left"></i>BACK</button><div style="display:flex;gap:6px;align-items:center"><b style="font-size:12px;margin-right:6px">${esc2(t.n)}</b><button class="sq" data-callc><i class="fa-solid fa-phone"></i></button></div></div>
+      <div class="msgs" id="msgs"><div class="day">TODAY</div>${t.m.map(([x, me, tm, loc]) => loc ? `<div class="bub loc ${me ? 'me' : ''}"><div class="map"><i class="fa-solid fa-location-dot"></i></div><div>${x}<small>${tm}</small></div></div>` : `<div class="bub ${me ? 'me' : ''}">${esc2(x)}<small>${tm}</small></div>`).join('')}</div>
+      <div class="qa"><button data-q="loc"><i class="fa-solid fa-location-dot"></i> LOCATION</button><button data-q="On my way">ON MY WAY</button><button data-q="Call me">CALL ME</button></div>
+      <div class="comp2"><input id="mi" placeholder="Type a message…"><button id="ms"><i class="fa-solid fa-paper-plane"></i></button></div></div>`; }
+  function push(x, loc) { const t = THREADS[cur]; t.m.push([x, 1, now(), loc]); render(); $('msgs').scrollTop = 1e6; }
+  function render() { const el = $('ph'); if (!el) return; el.innerHTML = cur === null ? list() : chat(cur);
+    if (cur !== null) { $('msgs').scrollTop = 1e6; const send = () => { const v = $('mi').value.trim(); if (v) push(v); };
+      $('ms').onclick = send; $('mi').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; setTimeout(() => $('mi') && $('mi').focus(), 50); }
+    el.onclick = (e) => { const x = e.target.closest('[data-k],[data-back],[data-q],[data-callc]'); if (!x) return;
+      if (x.dataset.k) { cur = +x.dataset.k; THREADS[cur].u = 0; return render(); } if (x.dataset.back !== undefined) { cur = null; return render(); }
+      if (x.dataset.callc !== undefined) return Call.out(THREADS[cur].n, THREADS[cur].n);
+      if (x.dataset.q) x.dataset.q === 'loc' ? push('Mission Row · Atlee St', 1) : push(x.dataset.q); }; }
+  return { render: () => { cur = null; render(); } };
+})();
+
+/* ---------- Services: Police / EMS / Mechanic ---------- */
+const SERVICES = [{ id: 'police', cls: 'pol', name: 'Los Santos Police', short: 'LSPD', icon: 'shield-halved', num: '911', duty: 6 },
+  { id: 'ambulance', cls: 'ems', name: 'Pillbox Medical', short: 'EMS', icon: 'truck-medical', num: '912', duty: 3 },
+  { id: 'mechanic', cls: 'mech', name: 'Benny\'s Mechanic', short: 'MECH', icon: 'wrench', num: '913', duty: 0 }];
+const ALERTS = [['Shots fired', 'Grove St · 2 min ago', '#ff4d4d'], ['Vehicle theft', 'Vinewood Blvd · 6 min ago', '#ffb020'], ['911 call: robbery', 'Fleeca, Route 68 · 9 min ago', '#ff4d4d']];
+const Svc = (() => { const st = { duty: true, dnd: false, calls: true, emp: true };
+  function render() { const el = $('ph'); if (!el) return; const mine = st.emp && SERVICES.find(x => x.id === ME.job);
+    el.innerHTML = head('SERVICES', 'CITY EMERGENCY LINES') + `<div class="ph-body">
+      ${mine ? `<div class="emp"><div class="top3"><span>YOUR UNIT · ${mine.short}</span><span>${ME.grade.toUpperCase()}</span></div>
+        <div class="row"><div>On duty<small>Show as available to the city</small></div><i class="tg ${st.duty ? 'on' : ''}" data-s="duty"></i></div>
+        <div class="row"><div>Do not disturb<small>Stop receiving ${mine.short} calls & alerts</small></div><i class="tg ${st.dnd ? 'on' : ''}" data-s="dnd" style="${st.dnd ? 'background:#7c5cff' : ''}"></i></div>
+        <div class="row"><div>Dispatch sounds<small>Ping when a new call comes in</small></div><i class="tg ${st.calls ? 'on' : ''}" data-s="calls"></i></div></div>
+        <div class="dnd-banner ${st.dnd ? 'on' : ''}"><i class="fa-solid fa-moon"></i>Do not disturb is on — you won't get ${mine.short} calls.</div>
+        ${!st.dnd && st.duty ? `<div class="lbl" style="margin:0 0 4px">ACTIVE CALLS · ${ALERTS.length}</div>${ALERTS.map(([a, b, c], i) => `<div class="alert" style="--c:${c}"><div><b>${a}</b><span>${b}</span></div><button class="cb" data-gps="${i}" title="Set GPS"><i class="fa-solid fa-location-arrow"></i></button></div>`).join('')}<div style="height:12px"></div>` : ''}` : ''}
+      <div class="lbl" style="margin:0 0 6px">CONTACT A SERVICE</div>
+      ${SERVICES.map((x, i) => { const on = x.duty > 0; return `<div class="svc ${x.cls} ${on ? '' : 'off'}" style="animation-delay:${i * 60}ms"><div class="hd"><div class="lg"><i class="fa-solid fa-${x.icon}"></i></div><div><h3>${x.name}</h3><small>${on ? 'AVAILABLE' : 'NO UNITS ON DUTY'}</small></div></div>
+        <div class="stats"><div>ON DUTY<b>${x.duty}</b></div><div>LINE<b>${x.num}</b></div><div>AVG RESPONSE<b>${on ? (2 + i) + 'm' : '—'}</b></div></div>
+        <div class="bt"><button class="fill" data-call="${i}" ${on ? '' : 'disabled'}><span><i class="fa-solid fa-phone"></i>CALL</span></button><button data-alert="${i}" ${on ? '' : 'disabled'}><span><i class="fa-solid fa-tower-broadcast"></i>SEND ALERT</span></button></div></div>`; }).join('')}
+      <div style="text-align:center;font-size:9px;color:rgba(255,255,255,.35);margin-top:4px">Alerts send your GPS location to on-duty units.</div></div>`;
+    el.onclick = (e) => { const x = e.target.closest('[data-s],[data-call],[data-alert],[data-gps]'); if (!x || x.disabled) return;
+      if (x.dataset.s) { st[x.dataset.s] = !st[x.dataset.s]; return render(); }
+      if (x.dataset.call) { const v = SERVICES[x.dataset.call]; return Call.out(v.name, v.num); }
+      if (x.dataset.alert) { const v = SERVICES[x.dataset.alert]; x.innerHTML = '<span><i class="fa-solid fa-check"></i>SENT</span>'; x.classList.add('fill'); toast2(`Alert sent to ${v.short} with your location`); }
+      if (x.dataset.gps) toast2('GPS set: ' + ALERTS[x.dataset.gps][1].split(' · ')[0]); }; }
+  return { render, st };
+})();
+function toast2(m) { $('ctoast').classList.add('on'); $('ctT').textContent = m; clearTimeout(toast2.t); toast2.t = setTimeout(() => $('ctoast').classList.remove('on'), 2500); }
+
+/* ---------- Settings ---------- */
+const WALLS = ['linear-gradient(165deg,#1d1d22,#0c0c0e 55%,#150b07)', 'linear-gradient(160deg,#0f2027,#203a43,#2c5364)', 'linear-gradient(160deg,#41295a,#2f0743)', 'linear-gradient(160deg,#ff5a1f,#3a0d00)',
+  'linear-gradient(160deg,#134e5e,#71b280)', 'linear-gradient(160deg,#232526,#414345)', 'radial-gradient(circle at 30% 20%,#ff5a1f55,transparent 50%),#0b0b0d', 'linear-gradient(160deg,#1e3c72,#2a5298)'];
+const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif: true, bright: 100, size: 100, wall: 0, ring: 'ROX Pulse', pin: true };
+  const row = (i, c, n, right, attr = '') => `<div class="so" ${attr}><i class="si2 fa-solid fa-${i}" style="color:${c};border-color:${c}55;background:${c}18"></i><span>${n}</span>${right}</div>`;
+  const tg = (k) => `<i class="tg ${st[k] ? 'on' : ''}" data-t="${k}"></i>`;
+  function render() { const el = $('ph'); if (!el) return;
+    el.innerHTML = head('SETTINGS', 'ROX OS 1.0') + `<div class="ph-body">
+      <div class="set-card"><div class="mono">${ini4(ME.name)}</div><div><b>${ME.name}</b><span>${ME.number}</span></div></div>
+      <div class="lbl" style="margin:0 0 6px">CONNECTIVITY</div><div class="sg">${row('plane', '#ff9500', 'Airplane mode', tg('air'))}${row('wifi', '#2f7cf6', 'Wi-Fi', '<small>ROX-Net</small>')}${row('signal', '#3ddc84', 'Mobile data', '<small>5G</small>')}</div>
+      <div class="lbl" style="margin:0 0 6px">SOUND & ALERTS</div><div class="sg">${row('moon', '#7c5cff', 'Do not disturb', tg('dnd'))}${row('bell-slash', '#ff4d4d', 'Silent mode', tg('silent'))}${row('bell', '#ffb020', 'Notifications', tg('notif'))}
+        ${row('music', '#ff5ea8', 'Ringtone', `<select data-sel="ring">${['ROX Pulse', 'Classic', 'Night Drive', 'Siren'].map(r => `<option ${r === st.ring ? 'selected' : ''}>${r}</option>`).join('')}</select>`)}</div>
+      <div class="lbl" style="margin:0 0 6px">DISPLAY</div><div class="sg">${row('sun', '#ffd36b', 'Brightness', `<input type="range" min="40" max="100" value="${st.bright}" data-r="bright">`)}${row('maximize', '#0ea5e9', 'Phone size', `<input type="range" min="80" max="120" value="${st.size}" data-r="size">`)}
+        ${row('image', '#22c55e', 'Wallpaper', '')}<div class="walls2">${WALLS.map((w, k) => `<i style="background:${w}" class="${k === st.wall ? 'on' : ''}" data-w="${k}"></i>`).join('')}</div></div>
+      <div class="lbl" style="margin:0 0 6px">SECURITY</div><div class="sg">${row('lock', '#94a3b8', 'Passcode lock', tg('pin'))}${row('key', '#94a3b8', 'Change passcode', '<i class="fa-solid fa-chevron-right" style="font-size:10px;opacity:.4"></i>')}</div>
+      <div class="lbl" style="margin:0 0 6px">ABOUT</div><div class="sg">${row('mobile-screen', '#ff5a1f', 'Model', '<small>ROX Fold</small>')}${row('circle-info', '#6b7280', 'Version', '<small>ROX OS 1.0</small>')}${row('database', '#6b7280', 'Storage', '<small>38 GB of 256 GB</small>')}</div></div>`;
+    el.onclick = (e) => { const t = e.target.closest('[data-t]'); if (t) { st[t.dataset.t] = !st[t.dataset.t]; apply(); return render(); }
+      const w = e.target.closest('[data-w]'); if (w) { st.wall = +w.dataset.w; apply(); render(); } };
+    el.querySelectorAll('[data-r]').forEach(r => r.oninput = () => { st[r.dataset.r] = +r.value; apply(); });
+    el.querySelectorAll('[data-sel]').forEach(r => r.onchange = () => { st[r.dataset.sel] = r.value; }); }
+  function apply() { document.querySelector('.wall').style.background = WALLS[st.wall]; $('scr').style.filter = `brightness(${st.bright / 100})`; $('dev').style.zoom = st.size / 100;
+    document.querySelector('.sb .r').innerHTML = (st.air ? '<i class="fa-solid fa-plane"></i>' : '<i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i>') + (st.dnd ? '<i class="fa-solid fa-moon"></i>' : '') + (st.silent ? '<i class="fa-solid fa-bell-slash"></i>' : '') + '<span class="bat"><i></i></span>'; }
+  return { render, st };
+})();
 /* ---------- apps ---------- */
 const COL = ['#ff5a1f','#2f7cf6','#a855f7','#22c55e','#eab308','#ec4899'];
 const ini = (n) => n.split(' ').map(w => w[0]).join('').slice(0, 2);
@@ -370,28 +499,13 @@ const CHATS = [{ n: 'Jaber', t: '2m', u: 2, m: [['Where are you?'], ['On my way'
 const TX = [['Paycheck - LSPD', '+2,500', 'p', 'briefcase', 'Today'], ['24/7 Supermarket', '-42', '', 'cart-shopping', 'Today'], ['Transfer from Jaber', '+300', 'p', 'arrow-down', 'Yesterday'],
   ['Mechanic Shop', '-850', '', 'wrench', 'Yesterday'], ['Fuel - LTD Gasoline', '-96', '', 'gas-pump', 'Mon']];
 const APPVIEW = {
-  messages: () => { let cur = 0;
-    const list = () => `<div class="srch"><i class="fa-solid fa-magnifying-glass"></i>Search</div>` + CHATS.map((c, k) => `<div class="li ${k === cur && isOpen() ? 'sel' : ''}" data-c="${k}">${avatar(c.n, k)}<div class="tx"><b>${c.n}</b><span>${c.m[c.m.length - 1][0]}</span></div><small>${c.t}</small>${c.u ? `<i class="un">${c.u}</i>` : ''}</div>`).join('');
-    const chat = (k) => { const c = CHATS[k]; return `<div class="chat"><div class="ch">${isOpen() ? '' : '<button class="ib" data-back><i class="fa-solid fa-chevron-left"></i></button>'}${avatar(c.n, k)}<b>${c.n}</b><button class="ib"><i class="fa-solid fa-phone"></i></button></div>
-      <div class="msgs" id="msgs">${c.m.map(([t, me]) => `<div class="bub ${me ? 'me' : ''}">${t}</div>`).join('')}</div><div class="comp"><input id="mi" placeholder="Message"><button id="ms"><i class="fa-solid fa-paper-plane"></i></button></div></div>`; };
-    const draw = (inChat) => { const b = $('ab'); if (isOpen()) { b.className = 'ab split'; b.innerHTML = `<div>${list()}</div>${chat(cur)}`; } else b.innerHTML = inChat ? chat(cur) : list(); bind(); };
-    const bind = () => { $('ab').querySelectorAll('[data-c]').forEach(e => e.onclick = () => { cur = +e.dataset.c; CHATS[cur].u = 0; draw(true); });
-      const back = $('ab').querySelector('[data-back]'); if (back) back.onclick = () => draw(false);
-      const send = () => { const v = $('mi').value.trim(); if (!v) return; CHATS[cur].m.push([v, 1]); CHATS[cur].t = 'now'; $('msgs').insertAdjacentHTML('beforeend', `<div class="bub me">${v.replace(/</g, '&lt;')}</div>`); $('mi').value = ''; $('msgs').scrollTop = 1e6; };
-      if ($('ms')) { $('ms').onclick = send; $('mi').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; } };
-    return { title: 'Messages', btn: 'pen-to-square', html: '', after: () => draw(false) }; },
+  messages: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Msg.render() }),
+  services: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Svc.render() }),
   phone: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Phone.render('log') }),
   banking: () => ({ title: 'Banking', btn: 'bell', html: `<div class="card"><small>TOTAL BALANCE</small><div class="bal">$62,881.00</div><div class="row"><span>•••• 4821</span><span class="chip"></span></div></div>
     <div class="acts"><div><i class="fa-solid fa-paper-plane"></i>Send</div><div><i class="fa-solid fa-arrow-down"></i>Request</div><div><i class="fa-solid fa-file-invoice-dollar"></i>Bills</div><div><i class="fa-solid fa-chart-line"></i>Stats</div></div>
     <div class="sec">Transactions <span>See all</span></div>${TX.map(([n, a, c, i, d]) => `<div class="li"><div class="ti"><i class="fa-solid fa-${i}"></i></div><div class="tx"><b>${n}</b><span>${d}</span></div><div class="amt ${c}">${a.startsWith('+') ? '+$' + a.slice(1) : '-$' + a.slice(1)}</div></div>`).join('')}` }),
-  settings: () => ({ title: 'Settings', html: `<div class="prof">${avatar('Rox Player', 0)}<div class="tx"><b>Rox Player</b><span style="font-size:11px;color:rgba(255,255,255,.5)">(555) 348-8943 · ROX ID</span></div></div>
-    <div class="grp">${[['plane', '#ff9500', 'Airplane mode', 'tg'], ['wifi', '#2f7cf6', 'Wi-Fi', 'ROX-Net'], ['moon', '#7c5cff', 'Do not disturb', 'tg'], ['bell', '#ff3b30', 'Notifications', '']].map(([i, c, n, v]) => `<div class="sr"><i class="si fa-solid fa-${i}" style="background:${c}"></i><span>${n}</span>${v === 'tg' ? '<i class="tg"></i>' : `<small>${v}</small><i class="fa-solid fa-chevron-right"></i>`}</div>`).join('')}</div>
-    <div class="grp"><div class="sr"><i class="si fa-solid fa-image" style="background:#22c55e"></i><span>Wallpaper</span></div><div class="walls" id="walls"></div></div>
-    <div class="grp">${[['lock', '#64748b', 'Passcode', 'On'], ['mobile-screen', '#0ea5e9', 'Display & brightness', ''], ['circle-info', '#6b7280', 'About', 'ROX OS 1.0']].map(([i, c, n, v]) => `<div class="sr"><i class="si fa-solid fa-${i}" style="background:${c}"></i><span>${n}</span><small>${v}</small><i class="fa-solid fa-chevron-right"></i></div>`).join('')}</div>`,
-    after: () => { $('ab').querySelectorAll('.tg').forEach(t => t.parentElement.onclick = () => t.classList.toggle('on'));
-      const W = ['linear-gradient(165deg,#1d1d22,#0c0c0e 55%,#150b07)', 'linear-gradient(160deg,#0f2027,#203a43,#2c5364)', 'linear-gradient(160deg,#41295a,#2f0743)', 'linear-gradient(160deg,#ff5a1f,#3a0d00)'];
-      $('walls').innerHTML = W.map((w, k) => `<i style="background:${w}" data-w="${k}"></i>`).join('');
-      $('walls').onclick = (e) => { const i = e.target.closest('[data-w]'); if (!i) return; document.querySelector('.wall').style.background = W[i.dataset.w]; [...$('walls').children].forEach(x => x.classList.toggle('on', x === i)); }; } }),
+  settings: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Sett.render() }),
 };
 function openApp(key, name, from) {
   const av = $('av'), r = from.getBoundingClientRect(), sr = $('scr').getBoundingClientRect();
