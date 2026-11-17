@@ -11,6 +11,7 @@ Config.Framework = 'auto'
 -- Default language: 'en' (primary) | 'ar' (alternative).
 -- Every player can switch language from the iPad Settings app.
 Config.Locale = 'en'
+Config.AllowPlayerLanguage = false   -- false = English only for everyone (hides the language switch)
 
 Config.Currency = '$'
 

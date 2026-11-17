@@ -128,6 +128,7 @@ CurrentLangSrc = nil -- server: set while a callback runs
 ClientLang = nil     -- client: chosen in the iPad settings
 
 function CurrentLang(src)
+    if not Config.AllowPlayerLanguage then return Config.Locale end
     if IsDuplicityVersion() then
         src = src or CurrentLangSrc
         return (src and PlayerLang[src]) or Config.Locale

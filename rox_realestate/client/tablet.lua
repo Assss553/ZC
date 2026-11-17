@@ -29,7 +29,7 @@ end
 
 local function staticData()
     return {
-        locale = CurrentLang(), defaultLocale = Config.Locale, currency = Config.Currency, interiors = UIInteriors(),
+        locale = CurrentLang(), defaultLocale = Config.Locale, allowLang = Config.AllowPlayerLanguage, currency = Config.Currency, interiors = UIInteriors(),
         furnitureImages = ClientRegistry and ClientRegistry.furnitureImages or {},
         wallpaper = Config.Tablet.DefaultWallpaper,
         furniture = FurnitureCatalog, categories = FurnitureCategories,

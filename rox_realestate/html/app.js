@@ -98,7 +98,7 @@ function applySettings() {
     const wall = S.settings.wallpaper || (S.st && S.st.wallpaper) || WALLPAPERS[0];
     $('#screen').style.setProperty('--wall', `url('${String(wall).replace(/'/g, '%27')}')`);
     $('#tablet').style.setProperty('--scale', S.settings.scale || 1);
-    LANG = S.settings.lang || (S.st && (S.st.defaultLocale || S.st.locale)) || 'en';
+    LANG = (S.st && S.st.allowLang === false) ? (S.st.defaultLocale || 'en') : (S.settings.lang || (S.st && (S.st.defaultLocale || S.st.locale)) || 'en');
     document.documentElement.lang = LANG;
     document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
 }
@@ -262,10 +262,10 @@ Views.settings = () => {
                 <div class="set-row"><span class="muted">${t('set_small')}</span><input type="range" class="range" id="scaleRange" min="70" max="115" step="1" value="${pct}"><span class="muted">${t('set_large')}</span>
                 <button class="btn ghost" data-act="resetscale">${t('set_reset')}</button></div>
             </section>
-            <section class="set-card">
+            ${S.st && S.st.allowLang === false ? '' : `<section class="set-card">
                 <div class="set-head">${icon('globe')}<div><b>${t('set_lang')}</b><small>${t('set_lang_sub')}</small></div></div>
                 <div class="seg" style="max-width:360px"><button class="${LANG === 'en' ? 'on' : ''}" data-act="setlang" data-v="en">English</button><button class="${LANG === 'ar' ? 'on' : ''}" data-act="setlang" data-v="ar">العربية</button></div>
-            </section>
+            </section>`}
             <section class="set-card">
                 <div class="set-head">${icon('info')}<div><b>${t('set_about')}</b><small>ROX Realty OS · v1.2 · © ROX Store · ${esc(S.data.name)} · ID ${S.data.serverId}</small></div>
                 ${S.data.isRealtor ? `<span class="chip orange">${t('realtor_badge', S.data.grade)}</span>` : ''}</div>

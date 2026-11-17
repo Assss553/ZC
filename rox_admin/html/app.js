@@ -27,7 +27,7 @@ const T = {
     admin: 'الإداري', action: 'الإجراء', target: 'الهدف', details: 'التفاصيل', time: 'الوقت', identifier: 'المعرّف', rank: 'الرتبة', addStaff: 'إضافة إداري', none: 'بدون', remove: 'إزالة',
     perm: 'الصلاحية', keysHelp: 'اضغط على الزر ثم اضغط الزر الجديد. ESC يمسحه. محفوظ لك أنت فقط.', reset: 'إرجاع الافتراضي', conflict: 'الزر مستخدم في', press: 'اضغط…', done: 'تم', denied: 'ما عندك صلاحية', failed: 'فشل', amount: 'المبلغ', grade: 'الرتبة', ip: 'IP', yes: 'نعم', no: 'لا', type: 'النوع', unknown: 'غير معروف' },
 };
-let lang = (() => { try { return localStorage.getItem('rox_admin_lang'); } catch { return null; } })() || 'ar';
+let lang = (() => { try { return localStorage.getItem('rox_admin_lang'); } catch { return null; } })() || 'en';
 const t = (k) => T[lang][k] ?? k;
 function setLang(l) { lang = l; try { localStorage.setItem('rox_admin_lang', l); } catch {}
   document.documentElement.lang = l; document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr'; $('lang').textContent = l === 'ar' ? 'EN' : 'ع';
@@ -283,5 +283,5 @@ function Mock(n, d) {
 }
 if (PREVIEW) { document.body.classList.add('preview'); const q = new URLSearchParams(location.search);
   setTimeout(() => { window.postMessage({ action: 'open', open: true, me: { name: 'PreviewUser', rank: 'owner', perms: {}, ranks: [{ name: 'owner', label: 'Owner' }, { name: 'admin', label: 'Admin' }, { name: 'supervisor', label: 'Supervisor' }, { name: 'moderator', label: 'Moderator' }],
-    permNames: { view_players: 1, kick: 1, teleport: 1 }, keybinds: [{ action: 'open', label: 'Open panel', default: 'F10' }, { action: 'noclip', label: 'Noclip', default: '' }], locale: q.get('lang') || 'ar' } }, '*');
+    permNames: { view_players: 1, kick: 1, teleport: 1 }, keybinds: [{ action: 'open', label: 'Open panel', default: 'F10' }, { action: 'noclip', label: 'Noclip', default: '' }], locale: q.get('lang') || 'en' } }, '*');
     setTimeout(() => { if (q.get('tab')) show(q.get('tab')); if (q.get('profile')) profile({ id: 1 }); }, 200); }, 100); }

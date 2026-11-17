@@ -3,7 +3,7 @@ Config = {}
 
 Config.OpenCommand = 'admin'
 Config.OpenKey = 'F10'          -- default; every admin can rebind it in GTA keybinds
-Config.Locale = 'ar'            -- 'ar' (RTL) or 'en' default UI language
+Config.Locale = 'en'            -- default panel language; each admin can switch to Arabic with the button
 Config.RefreshMs = 3000         -- live refresh while the panel is open
 Config.LogIPs = false           -- store player IPs in join logs (only if your rules allow it)
 Config.Webhook = ''             -- optional Discord webhook for join/quit

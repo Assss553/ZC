@@ -43,6 +43,6 @@ function push(d) {
 window.addEventListener('message', (e) => e.data && e.data.text !== undefined && push(e.data));
 if (!window.invokeNative) { document.body.classList.add('preview');
   push({ title: 'Long message', text: 'A notification with a much longer message, so you can see the lines in the background on the right side of the box.', duration: 60000 });
-  push({ title: 'تم', text: 'تم سحب $1,000 من حسابك البنكي', type: 'success', duration: 60000 });
+  push({ title: 'Success', text: 'You withdrew $1,000 from your bank account', type: 'success', duration: 60000 });
   push({ title: 'Error', text: 'Not enough money', type: 'error', duration: 60000 }); push({ title: 'Warning', text: 'Low fuel', type: 'warning', duration: 60000 }); }
 </script></body></html>
