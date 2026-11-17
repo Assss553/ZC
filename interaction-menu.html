@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interaction Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #e8661c;
+    --accent-glow: rgba(232, 102, 28, 0.55);
+    --item-bg: rgba(40, 40, 44, 0.78);
+    --item-border: rgba(255, 255, 255, 0.55);
+    --text: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: transparent; /* transparent for in-game NUI */
+    font-family: 'Oswald', sans-serif;
+    user-select: none;
+    overflow: hidden;
+    min-height: 100vh;
+  }
+  body.preview { background: #2b2b2b; }
+
+  .menu {
+    position: absolute;
+    top: 45%;
+    left: 42%;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .menu.hidden { display: none; }
+
+  .key {
+    width: 34px; height: 34px;
+    background: linear-gradient(180deg, #ef7a2e, #c4500f);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600;
+    border-radius: 3px;
+    box-shadow: 0 0 10px var(--accent-glow), inset 0 0 0 1px rgba(255,255,255,.25);
+    margin-top: -2px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 6px; }
+
+  .option {
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer;
+  }
+  .radio {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.75);
+    background: rgba(0,0,0,.35);
+    flex-shrink: 0;
+    transition: .15s;
+  }
+  .label {
+    position: relative;
+    width: 200px;
+    padding: 4px 12px;
+    color: var(--text);
+    font-size: 14px;
+    text-align: center;
+    letter-spacing: .3px;
+    background: var(--item-bg);
+    border: 1px solid var(--item-border);
+    transform: skewX(-18deg);
+    transition: .15s;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+  .label span { display: block; transform: skewX(18deg); }
+
+  .option.active .radio {
+    border-color: var(--accent);
+    background: radial-gradient(circle, var(--accent) 45%, rgba(0,0,0,.35) 50%);
+    box-shadow: 0 0 6px var(--accent-glow);
+  }
+  .option.active .label {
+    background: linear-gradient(90deg, rgba(232,102,28,.95), rgba(196,80,15,.9));
+    border-color: #ffb27a;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .option:hover:not(.active) .label { background: rgba(70,70,74,.85); }
+</style>
+</head>
+<body class="preview">
+
+<div class="menu" id="menu">
+  <div class="key" id="key">E</div>
+  <div class="options" id="options"></div>
+</div>
+
+<script>
+  let items = [
+    { label: "Browse IAA Vehicles",         action: "browse_vehicles" },
+    { label: "Return Nearby IAA Vehicle",   action: "return_vehicle" },
+    { label: "Retrieve IAA Helicopter",     action: "retrieve_heli" },
+    { label: "Return Nearby IAA Helicopter",action: "return_heli" }
+  ];
+  let index = 0;
+  const menu = document.getElementById('menu');
+  const list = document.getElementById('options');
+
+  function render() {
+    list.innerHTML = '';
+    items.forEach((it, i) => {
+      const el = document.createElement('div');
+      el.className = 'option' + (i === index ? ' active' : '');
+      el.innerHTML = `<div class="radio"></div><div class="label"><span>${it.label}</span></div>`;
+      el.onmouseenter = () => { index = i; render(); };
+      el.onclick = () => { index = i; select(); };
+      list.appendChild(el);
+    });
+  }
+
+  function select() {
+    const it = items[index];
+    console.log('Selected:', it.action);
+    // FiveM NUI callback (ignored outside the game)
+    if (typeof GetParentResourceName === 'function') {
+      fetch(`https://${GetParentResourceName()}/select`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(it)
+      });
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (menu.classList.contains('hidden')) return;
+    if (e.key === 'ArrowDown') { index = (index + 1) % items.length; render(); }
+    if (e.key === 'ArrowUp')   { index = (index - 1 + items.length) % items.length; render(); }
+    if (e.key.toLowerCase() === 'e' || e.key === 'Enter') select();
+  });
+  document.addEventListener('wheel', e => {
+    index = (index + (e.deltaY > 0 ? 1 : -1) + items.length) % items.length; render();
+  });
+
+  // Messages from the game: { action: "open", items: [...], key: "E" } / { action: "close" }
+  window.addEventListener('message', ({ data }) => {
+    if (data.action === 'open') {
+      if (data.items) items = data.items;
+      if (data.key) document.getElementById('key').textContent = data.key;
+      index = 0; document.body.classList.remove('preview');
+      menu.classList.remove('hidden'); render();
+    } else if (data.action === 'close') {
+      menu.classList.add('hidden');
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
