@@ -63,7 +63,7 @@ CreateThread(function()
         if inVeh then
             local sp = GetEntitySpeed(veh) * (Config.SpeedUnit == 'mph' and 2.236936 or 3.6)
             data.veh = { speed = math.floor(sp), rpm = GetVehicleCurrentRpm(veh), gear = GetVehicleCurrentGear(veh), fuel = fuel(veh),
-                engine = GetVehicleEngineHealth(veh) / 10, belt = belt, lights = select(2, GetVehicleLightsState(veh)) == 1 }
+                engine = GetVehicleEngineHealth(veh) / 10, belt = belt, lights = select(2, GetVehicleLightsState(veh)) == 1, locked = GetVehicleDoorLockStatus(veh) >= 2, maxGear = GetVehicleHighGear(veh) }
         end
         SendNUIMessage(data)
         Wait(inVeh and 80 or Config.Update)
