@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!-- ROX Store | rox_hud V3 | All rights reserved. -->
+<html lang="en"><head><meta charset="UTF-8"><title>ROX HUD</title>
+<link rel="stylesheet" href="fa/css/fontawesome.min.css"><link rel="stylesheet" href="fa/css/solid.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Rajdhani:wght@600;700&family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="vignette" class="vignette"></div>
+<div id="hud" class="hud">
+
+    <!-- compass -->
+    <div id="compass" class="compass"><div class="strip" id="strip"></div><div class="marker"><b id="deg">0</b></div></div>
+
+    <!-- player info -->
+    <div id="info" class="info">
+        <div class="i-top"><span class="logo">ROX</span><span class="pill"><i class="fa-solid fa-id-badge"></i>ID <b id="pid">0</b></span><span class="pill"><i class="fa-solid fa-clock"></i><b id="ptime">00:00</b></span></div>
+        <div class="i-job" id="pjob"><i class="fa-solid fa-briefcase"></i><span id="pjobTxt">Unemployed</span><i class="dot" id="pduty"></i></div>
+        <div class="i-money"><span class="cash"><i class="fa-solid fa-money-bill-wave"></i><b id="pcash">$0</b></span><span class="bank"><i class="fa-solid fa-building-columns"></i><b id="pbank">$0</b></span></div>
+    </div>
+
+    <!-- minimap frame -->
+    <div id="mapFrame" class="map-frame"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i></div>
+
+    <!-- status column (next to the minimap) -->
+    <div id="col" class="col">
+        <div class="loc"><div class="dir" id="dir">N</div><div class="lt"><b id="street">—</b><span id="zone">—</span></div></div>
+        <div class="bar hp"><span class="ic"><i class="fa-solid fa-heart"></i></span><div class="track"><b id="hpFill"></b><i class="ticks"></i></div><span class="val" id="hpVal">100</span></div>
+        <div class="bar ar" id="arRow"><span class="ic"><i class="fa-solid fa-shield-halved"></i></span><div class="track"><b id="arFill"></b><i class="ticks"></i></div><span class="val" id="arVal">0</span></div>
+        <div class="rings" id="rings"></div>
+    </div>
+
+    <!-- speedometer -->
+    <div id="speedo" class="speedo">
+        <svg viewBox="0 0 200 200" class="gauge">
+            <defs><linearGradient id="spdGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--accent)" stop-opacity=".5"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
+            <circle cx="100" cy="100" r="98" class="disc"/>
+            <path id="arcBg" class="arc-bg"/><path id="arcFill" class="arc-fill"/>
+            <g id="ticks"></g>
+            <path id="rpmBg" class="rpm-bg"/><path id="rpmFill" class="rpm-fill"/>
+        </svg>
+        <div class="center"><div class="spd" id="spd"><span class="dim">00</span>0</div><div class="unit" id="unit">KM/H</div>
+            <div class="sub"><span class="gear" id="gear">N</span><span class="fuel" id="fuelBox"><i class="fa-solid fa-gas-pump"></i><span class="ftrack"><b id="fuelFill"></b></span></span></div></div>
+        <div class="inds"><span id="iBelt"><i class="fa-solid fa-user-shield"></i></span><span id="iEng"><i class="fa-solid fa-oil-can"></i></span><span id="iLgt"><i class="fa-solid fa-lightbulb"></i></span><span id="iLock"><i class="fa-solid fa-lock"></i></span></div>
+    </div>
+</div>
+
+<!-- /hud settings -->
+<div id="settings" class="settings"><div class="s-card">
+    <div class="s-head"><span class="logo">ROX</span><div><b>HUD Settings</b><small>Saved on your PC</small></div><button class="s-x" data-a="close"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="s-list" id="sList"></div>
+    <div class="s-sec">Accent colour</div><div class="swatches" id="swatches"></div>
+    <div class="s-sec">Speed unit</div><div class="seg" id="unitSeg"><button data-u="kmh">KM/H</button><button data-u="mph">MPH</button></div>
+    <button class="s-done" data-a="close">Done</button>
+</div></div>
+<script src="app.js"></script></body></html>
