@@ -4,20 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interaction Menu</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap" rel="stylesheet">
 <style>
   :root {
-    --orange: #e8661c;
-    --orange-light: #f08a4b;
-    --orange-dark: rgba(150, 62, 18, 0.88);
-    --grey-fill: rgba(70, 64, 58, 0.55);
-    --grey-line: rgba(225, 225, 225, 0.85);
+    --orange: #e3650e;
     --scale: 1.4;            /* overall size of the menu */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: transparent;   /* transparent in game (NUI) */
     font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 400;
     user-select: none;
     overflow: hidden;
     min-height: 100vh;
@@ -34,27 +31,40 @@
   }
   .menu.hidden { display: none; }
 
-  /* ---- E key ---- */
+  /* ---- E key (matches reference: 45% orange fill + corner brackets) ---- */
   .key {
+    position: relative;
     width: 34px;
-    height: 30px;
+    height: 31px;
     margin-top: -3px;
-    margin-right: 10px;
-    background: rgba(140, 58, 18, 0.9);
-    border: 1.5px solid var(--orange-light);
+    margin-right: 14px;
+    background: rgba(231, 122, 49, 0.45);
+    border-top: 2px solid #e2742f;
+    border-left: 1.5px solid #d76c28;
+    border-right: 1.5px solid #cb7132;
+    border-bottom: 1.5px solid rgba(242, 213, 195, 0.85);
     color: #fff;
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 19px;
+    line-height: 27px;
     text-align: center;
-    box-shadow: 0 0 4px rgba(0, 0, 0, .5);
+    transform: skewX(-2deg);
   }
+  .key::before, .key::after {
+    content: "";
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border: 0 solid #d0661f;
+  }
+  .key::before { top: -5px; left: -5px; border-top-width: 2px; border-left-width: 2px; }
+  .key::after  { bottom: -5px; right: -5px; border-bottom-width: 2px; border-right-width: 2px; }
 
   /* ---- options ---- */
   .options { display: flex; flex-direction: column; gap: 6px; }
   .option {
     display: flex;
     align-items: center;
-    height: 26px;
+    height: 27px;
     cursor: pointer;
   }
 
@@ -64,53 +74,45 @@
     margin-right: 18px;
     border-radius: 50%;
     border: 1.5px solid rgba(215, 215, 215, .9);
-    background: rgba(40, 40, 40, .6);
+    background: rgba(40, 40, 40, .55);
     flex-shrink: 0;
   }
   .option.active .radio {
     border-color: #f5a070;
     background: var(--orange);
-    box-shadow: 0 0 5px rgba(232, 102, 28, .8);
+    box-shadow: 0 0 5px rgba(227, 101, 14, .8);
   }
 
   .label {
     position: relative;
     width: 200px;
-    height: 26px;
+    height: 27px;
     color: #fff;
-    font-size: 14px;
-    line-height: 26px;
+    font-size: 15px;
+    line-height: 28px;
     text-align: center;
-    letter-spacing: .2px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .55);
   }
   /* skewed parallelogram behind the text */
   .label::before {
     content: "";
     position: absolute;
     inset: 0;
-    transform: skewX(-22deg);
-    background: var(--grey-fill);
-    border: 1px solid var(--grey-line);
-    border-top-width: 2.5px;
+    transform: skewX(-15deg);
     z-index: -1;
+    /* inactive: same 40% transparency, grey tones, white top bar */
+    background: linear-gradient(180deg, rgba(45, 45, 45, .4), rgba(140, 135, 130, .4));
+    border: 1px solid rgba(235, 235, 235, .7);
+    border-top: 2.5px solid rgba(240, 240, 240, .95);
   }
   .label span { position: relative; z-index: 1; }
 
+  /* active: colours sampled from the reference image */
   .option.active .label::before {
-    background: linear-gradient(90deg, rgba(120, 50, 15, .55), var(--orange-dark) 40%, rgba(150, 62, 18, .75));
-    border-color: var(--orange);
-    border-top-width: 3px;
-  }
-  /* orange top line extends a little past the shape on the active item */
-  .option.active .label::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 2px;
-    right: -6px;
-    height: 3px;
-    background: var(--orange);
+    background: linear-gradient(180deg, rgba(59, 32, 17, .4), rgba(184, 87, 22, .4));
+    border: 1px solid rgba(255, 195, 160, .7);
+    border-left-color: rgba(227, 101, 14, .75);
+    border-top: 2.5px solid var(--orange);
   }
 </style>
 </head>
