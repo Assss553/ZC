@@ -4,15 +4,21 @@ const post = (n, d = {}) => RES ? fetch(`https://${RES}/${n}`, { method: 'POST',
 const $ = (id) => document.getElementById(id);
 const rgb = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
 const root = document.documentElement;
-let S = { compass: true, info: true, mapOnFoot: false, vignette: true, unit: 'kmh', color: '#ff5a1f', hidden: false }, MAX = 300;
+let S = { alwaysStatus: false, compass: true, info: true, mapOnFoot: false, vignette: true, unit: 'kmh', color: '#ff5a1f', hidden: false }, MAX = 300;
 
-/* ---------- hex status ---------- */
-const HEX = [['hunger', 'burger', '#ffb020'], ['thirst', 'droplet', '#4da3ff'], ['stress', 'brain', '#ff5c8a'], ['stamina', 'person-running', '#3ddc84'], ['oxygen', 'lungs', '#7fe3ff'], ['voice', 'microphone', '#ffffff']];
-$('hexRow').innerHTML = HEX.map(([k, ic, c]) => `<div class="st" id="r-${k}" style="--c:${c};--cr:${rgb(c)}"><span class="hex"><i class="fa-solid fa-${ic}"></i></span></div>`).join('');
-function ring(k, v, show = true, lowAt) {
-    const r = $('r-' + k); r.classList.toggle('hide', !show); if (!show) return;
-    v = Math.max(0, Math.min(100, v)); r.querySelector('.hex').style.setProperty('--fill', v + '%');
-    r.classList.toggle('low', lowAt != null && v <= lowAt);
+/* ---------- triangle status (auto show / hide) ---------- */
+const HEX = [['hunger', 'burger'], ['thirst', 'droplet'], ['stress', 'brain'], ['stamina', 'person-running'], ['oxygen', 'lungs'], ['voice', 'microphone']];
+const TRI_UP = 'M24 3 L45 40 L3 40 Z', TRI_DN = 'M3 4 L45 4 L24 41 Z';
+$('hexRow').innerHTML = HEX.map(([k, ic], i) => { const up = i % 2 === 0;
+    return `<div class="st ${up ? 'up' : 'dn'}" id="r-${k}"><svg viewBox="0 0 48 44"><path class="tb" d="${up ? TRI_UP : TRI_DN}"/><path class="tf" d="${up ? TRI_UP : TRI_DN}" pathLength="100"/></svg><i class="fa-solid fa-${ic}"></i></div>`; }).join('');
+// show when it matters, hide when full (setting "always" keeps them visible)
+function ring(k, v, show = true, lowAt, hideAbove = 90) {
+    const r = $('r-' + k); v = Math.max(0, Math.min(100, v));
+    const low = lowAt != null && v <= lowAt;
+    const visible = show && (S.alwaysStatus || low || v < hideAbove || k === 'voice');
+    r.classList.toggle('hide', !visible);
+    r.querySelector('.tf').style.strokeDashoffset = 100 - v;
+    r.classList.toggle('low', low);
 }
 const segs = (el, n, curve) => { el.innerHTML = Array.from({ length: n }, (_, i) => `<i style="--h:${curve ? 40 + 60 * Math.sin(i / (n - 1) * Math.PI / 2) : 100}%"></i>`).join(''); return [...el.children]; };
 const HP = segs($('hpSegs'), 26), RPMS = segs($('rpm'), 22, true), FUELS = segs($('fuel'), 20);
@@ -33,7 +39,7 @@ const compass = (h) => STRIP.forEach(s => { s.style.left = (230 + (s.dataset.d -
 let MAXS = 300; function buildTicks() {}
 
 /* ---------- settings ---------- */
-const TOGGLES = [['compass', 'compass', 'Compass'], ['info', 'id-card', 'Player info (ID, job, money)'], ['mapOnFoot', 'map', 'Minimap on foot'], ['vignette', 'heart-pulse', 'Low health effect'], ['hidden', 'eye-slash', 'Hide HUD (cinematic)']];
+const TOGGLES = [['compass', 'compass', 'Compass'], ['info', 'id-card', 'Player info (ID, job, money)'], ['mapOnFoot', 'map', 'Minimap on foot'], ['vignette', 'heart-pulse', 'Low health effect'], ['alwaysStatus', 'eye', 'Always show status'], ['hidden', 'eye-slash', 'Hide HUD (cinematic)']];
 const COLORS = ['#ff5a1f', '#ff2a3a', '#ffb020', '#3ddc84', '#1fc9b8', '#4da3ff', '#8a6cff', '#ff5ec4'];
 function renderSettings() {
     $('sList').innerHTML = TOGGLES.map(([k, ic, l]) => `<div class="s-row ${S[k] ? 'on' : ''}" data-k="${k}"><i class="fa-solid fa-${ic}"></i><span>${l}</span><div class="sw"></div></div>`).join('');
@@ -79,8 +85,8 @@ window.addEventListener('message', (e) => {
     $('arLine').style.width = d.armor + '%'; $('arTxt').style.display = d.armor ? '' : 'none'; text('arVal', String(d.armor));
     $('voice').classList.toggle('talk', !!d.talking && !d.radio); $('voice').classList.toggle('radio', !!d.radio); text('vTxt', d.radio ? 'Radio' : (VOICE[d.voice] || 'Normal'));
 
-    ring('hunger', d.hunger, true, 15); ring('thirst', d.thirst, true, 15); ring('stress', d.stress, d.stress > 5); ring('stamina', d.stamina, d.stamina < 98, 10);
-    ring('oxygen', d.oxygen ?? 100, d.oxygen != null, 25); ring('voice', (d.voice || 2) / 3 * 100);
+    ring('hunger', d.hunger, true, 20); ring('thirst', d.thirst, true, 20); ring('stress', d.stress, d.stress > 5, null, 101); ring('stamina', 100 - d.stamina, d.stamina > 3, 15, 97);
+    ring('oxygen', d.oxygen ?? 100, d.oxygen != null, 25, 101); ring('voice', (d.voice || 2) / 3 * 100, true, null, 101);
     $('r-voice').classList.toggle('talk', !!d.talking && !d.radio); $('r-voice').classList.toggle('radio', !!d.radio);
 
     if (d.info) {

@@ -6,7 +6,7 @@ local belt, voiceMode, radioTalk = false, 2, false
 -- player settings (saved on the client with KVP)
 local settings = {
     compass = Config.Compass, info = Config.PlayerInfo, mapOnFoot = not Config.HideMinimapOnFoot,
-    vignette = Config.LowHealthVignette, unit = Config.SpeedUnit, color = Config.Color, hidden = false,
+    vignette = Config.LowHealthVignette, alwaysStatus = false, unit = Config.SpeedUnit, color = Config.Color, hidden = false,
 }
 do
     local raw = GetResourceKvpString('rox_hud_settings')
@@ -160,7 +160,7 @@ end, false)
 RegisterNUICallback('saveSettings', function(d, cb)
     cb('ok')
     if type(d) ~= 'table' then return end
-    for _, k in ipairs({ 'compass', 'info', 'mapOnFoot', 'vignette', 'hidden' }) do
+    for _, k in ipairs({ 'compass', 'info', 'mapOnFoot', 'vignette', 'hidden', 'alwaysStatus' }) do
         if type(d[k]) == 'boolean' then settings[k] = d[k] end
     end
     if d.unit == 'kmh' or d.unit == 'mph' then settings.unit = d.unit end
