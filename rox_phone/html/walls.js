@@ -48,5 +48,29 @@ const RoxWalls = (() => {
   L.push(['Sandy Shores', svg(`<rect width="${W}" height="${H}" fill="url(#d)"/><circle cx="260" cy="360" r="70" fill="#fff0c2"/><path d="M-20 520 L60 440 L130 500 L220 420 L320 480 L420 430 V900 H-20z" fill="#b5654a"/>
     <path d="M-20 620 Q200 560 420 640 V900 H-20z" fill="#7a3b2e"/><path d="M-20 720 Q200 680 420 730 V900 H-20z" fill="#3a1c1a"/><g fill="#2a1414"><rect x="70" y="600" width="6" height="60"/><rect x="58" y="615" width="5" height="20" rx="2"/><rect x="82" y="608" width="5" height="22" rx="2"/></g>`,
     `<linearGradient id="d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d6bd6"/><stop offset=".5" stop-color="#f2a35e"/><stop offset=".62" stop-color="#ffd59a"/></linearGradient>`)]);
-  return { list: L.map(x => url(x[1])), names: L.map(x => x[0]) };
+  // 9 Palm avenue + supercar (original art, GTA vibe)
+  const car = (x, y, s, c, light) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 40 C10 20 40 14 70 12 L110 0 C140 -4 170 2 190 16 L230 24 C246 27 254 34 256 44 L256 52 L0 52z" fill="${c}"/>
+    <path d="M78 12 L112 2 C135 -1 158 3 176 15z" fill="#0d0d12" opacity=".85"/><circle cx="52" cy="52" r="17" fill="#07070a"/><circle cx="52" cy="52" r="8" fill="#3a3a44"/><circle cx="206" cy="52" r="17" fill="#07070a"/><circle cx="206" cy="52" r="8" fill="#3a3a44"/>
+    <path d="M240 30 L256 36 L256 42 L236 38z" fill="${light}"/><path d="M0 34 L10 34 L8 42 L0 42z" fill="#ff2d3a"/><path d="M256 38 L400 20 L400 60 L256 44z" fill="${light}" opacity=".18"/></g>`;
+  L.push(['Palm Avenue', svg(`<rect width="${W}" height="${H}" fill="url(#pa)"/><circle cx="200" cy="420" r="120" fill="url(#ps)"/>
+    ${[0, 1, 2, 3].map(i => `<rect x="70" y="${440 + i * 16}" width="260" height="${3 + i * 2}" fill="url(#pa)"/>`).join('')}
+    <path d="M0 540 L400 540 L400 ${H} L0 ${H}z" fill="#1a0c22"/><path d="M200 540 L-200 ${H} L600 ${H}z" fill="#241430"/>${Array.from({ length: 7 }, (_, i) => `<rect x="${198 - i * .5}" y="${560 + i * i * 7}" width="${3 + i * 1.5}" height="${8 + i * 4}" fill="#ffd36b" opacity=".75"/>`).join('')}
+    ${palm(30, 190, 1.35, '#12081a')}${palm(372, 230, 1.2, '#12081a')}${palm(95, 380, .7, '#1c0e26')}${palm(305, 395, .65, '#1c0e26')}${palm(150, 470, .38, '#2a1434')}${palm(255, 475, .36, '#2a1434')}
+    ${car(90, 600, .85, '#0b0b10', '#ffe6a8')}<rect y="${H - 120}" width="${W}" height="120" fill="url(#pf)"/>`,
+    `<linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c0f4a"/><stop offset=".3" stop-color="#8b2a7a"/><stop offset=".5" stop-color="#ff5a6a"/><stop offset=".63" stop-color="#ffb05a"/></linearGradient>
+     <linearGradient id="ps" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset="1" stop-color="#ff4f6a"/></linearGradient><linearGradient id="pf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".7"/></linearGradient>`)]);
+  // 10 Neon beach + car (Vice vibe)
+  L.push(['Neon Beach', svg(`<rect width="${W}" height="${H}" fill="url(#nb)"/>${stars(40)}<circle cx="210" cy="400" r="100" fill="url(#nbs)"/>
+    <rect y="470" width="${W}" height="${H}" fill="url(#sea)"/>${Array.from({ length: 6 }, (_, i) => `<rect x="${150 - i * 10}" y="${480 + i * 14}" width="${120 + i * 20}" height="2" fill="#ff7ad9" opacity="${.7 - i * .1}"/>`).join('')}
+    <path d="M-20 600 Q200 560 420 600 V${H} H-20z" fill="#2a0f3a"/>${palm(40, 260, 1.25, '#0e0618')}${palm(360, 300, 1.05, '#0e0618')}${palm(320, 470, .5, '#1a0a28')}
+    <rect x="-10" y="700" width="420" height="4" fill="#25f4ee" opacity=".6"/>${car(60, 610, .95, '#120a1c', '#25f4ee')}<rect y="${H - 140}" width="${W}" height="140" fill="#05020a" opacity=".7"/>`,
+    `<linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0326"/><stop offset=".45" stop-color="#5b1a7a"/><stop offset=".55" stop-color="#ff3f9a"/></linearGradient>
+     <linearGradient id="nbs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe17a"/><stop offset=".7" stop-color="#ff3f9a"/></linearGradient><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1468"/><stop offset="1" stop-color="#0a0320"/></linearGradient>`)]);
+  // custom wallpapers added by the player (URL), stored locally
+  let custom = []; try { custom = JSON.parse(localStorage.getItem('rox_walls') || '[]'); } catch (e) {}
+  custom.forEach(u => L.push(['Custom', null, u]));
+  const toCss = (x) => x[2] ? `url('${x[2].replace(/'/g, '%27')}') center/cover` : url(x[1]);
+  const api = { list: L.map(toCss), names: L.map(x => x[0]),
+    add(u) { L.push(['Custom', null, u]); api.list.push(toCss(L[L.length - 1])); api.names.push('Custom'); custom.push(u); try { localStorage.setItem('rox_walls', JSON.stringify(custom)); } catch (e) {} return api.list.length - 1; } };
+  return api;
 })();

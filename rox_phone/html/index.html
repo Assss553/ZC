@@ -660,7 +660,7 @@ function toast2(m) { $('ctoast').classList.add('on'); $('ctT').textContent = m; 
 
 /* ---------- Settings ---------- */
 const WALLS = RoxWalls.list;
-const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif: true, bright: 100, size: 100, wall: 0, ring: 'ROX Pulse', pin: true };
+const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif: true, bright: 100, size: 100, wall: 8, ring: 'ROX Pulse', pin: true };
   const row = (i, c, n, right, attr = '') => `<div class="so" ${attr}><i class="si2 fa-solid fa-${i}" style="color:${c};border-color:${c}55;background:${c}18"></i><span>${n}</span>${right}</div>`;
   const tg = (k) => `<i class="tg ${st[k] ? 'on' : ''}" data-t="${k}"></i>`;
   function render() { const el = $('ph'); if (!el) return;
@@ -670,12 +670,13 @@ const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif:
       <div class="lbl" style="margin:0 0 6px">SOUND & ALERTS</div><div class="sg">${row('moon', '#7c5cff', 'Do not disturb', tg('dnd'))}${row('bell-slash', '#ff4d4d', 'Silent mode', tg('silent'))}${row('bell', '#ffb020', 'Notifications', tg('notif'))}
         ${row('music', '#ff5ea8', 'Ringtone', `<select data-sel="ring">${['ROX Pulse', 'Classic', 'Night Drive', 'Siren'].map(r => `<option ${r === st.ring ? 'selected' : ''}>${r}</option>`).join('')}</select>`)}</div>
       <div class="lbl" style="margin:0 0 6px">DISPLAY</div><div class="sg">${row('sun', '#ffd36b', 'Brightness', `<input type="range" min="40" max="100" value="${st.bright}" data-r="bright">`)}${row('maximize', '#0ea5e9', 'Phone size', `<span class="seg3">${['S', 'M', 'L'].map((z, k) => `<b class="${st.size === [85, 100, 118][k] ? 'on' : ''}" data-sz="${[85, 100, 118][k]}">${z}</b>`).join('')}</span>`)}
-        ${row('image', '#22c55e', 'Wallpaper', '')}<div class="walls2">${WALLS.map((w, k) => `<i title="${RoxWalls.names[k]}" style="background:${w}" class="${k === st.wall ? 'on' : ''}" data-w="${k}"></i>`).join('')}</div></div>
+        ${row('image', '#22c55e', 'Wallpaper', '<small>'+RoxWalls.names[st.wall]+'</small>')}<div class="walls2">${WALLS.map((w, k) => `<i title="${RoxWalls.names[k]}" style="background:${w}" class="${k === st.wall ? 'on' : ''}" data-w="${k}"></i>`).join('')}</div><div style="display:flex;gap:6px;padding:0 11px 11px"><div class="fld" style="flex:1;min-width:0;margin:0;height:34px"><i class="fa-solid fa-link"></i><input style="min-width:0" id="wurl" placeholder="Paste image URL (your own wallpaper)"></div><button class="pay" data-addw style="height:34px">ADD</button></div></div>
       <div class="lbl" style="margin:0 0 6px">SECURITY</div><div class="sg">${row('lock', '#94a3b8', 'Passcode lock', tg('pin'))}${row('key', '#94a3b8', 'Change passcode', '<i class="fa-solid fa-chevron-right" style="font-size:10px;opacity:.4"></i>')}</div>
       <div class="lbl" style="margin:0 0 6px">ABOUT</div><div class="sg">${row('mobile-screen', '#ff5a1f', 'Model', '<small>ROX Fold</small>')}${row('circle-info', '#6b7280', 'Version', '<small>ROX OS 1.0</small>')}${row('database', '#6b7280', 'Storage', '<small>38 GB of 256 GB</small>')}</div></div>`;
-    el.onclick = (e) => { const z = e.target.closest('[data-sz]'); if (z) { st.size = +z.dataset.sz; apply(); return render(); } const t = e.target.closest('[data-t]'); if (t) { st[t.dataset.t] = !st[t.dataset.t]; apply(); return render(); }
+    el.onclick = (e) => { if (e.target.closest('[data-addw]')) { const u = $('wurl').value.trim(); if (!/^https?:\/\/|^img\//.test(u)) return toast2('Paste an image link (https://…)'); st.wall = RoxWalls.add(u); apply(); toast2('Wallpaper added'); return render(); } const z = e.target.closest('[data-sz]'); if (z) { st.size = +z.dataset.sz; apply(); return render(); } const t = e.target.closest('[data-t]'); if (t) { st[t.dataset.t] = !st[t.dataset.t]; apply(); return render(); }
       const w = e.target.closest('[data-w]'); if (w) { st.wall = +w.dataset.w; apply(); render(); } };
     el.querySelectorAll('[data-r]').forEach(r => r.oninput = () => { st[r.dataset.r] = +r.value; apply(); });
+    el.querySelectorAll('#wurl').forEach(i => i.onkeydown = (e) => e.stopPropagation());
     el.querySelectorAll('[data-sel]').forEach(r => r.onchange = () => { st[r.dataset.sel] = r.value; }); }
   function apply() { document.querySelector('.wall').style.background = WALLS[st.wall]; $('scr').style.filter = `brightness(${st.bright / 100})`; $('pos').style.zoom = st.size / 100;
     document.querySelector('.sb .r').innerHTML = (st.air ? '<i class="fa-solid fa-plane"></i>' : '<i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i>') + (st.dnd ? '<i class="fa-solid fa-moon"></i>' : '') + (st.silent ? '<i class="fa-solid fa-bell-slash"></i>' : '') + '<span class="bat"><i></i></span>'; }
