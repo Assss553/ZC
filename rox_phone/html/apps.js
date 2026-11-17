@@ -237,3 +237,62 @@ function earnView() { const mx = Math.max(...WALLET.lives.slice(-7), 1);
   <div class="lbl" style="margin:0 0 6px">LAST LIVES</div><div class="bars5">${WALLET.lives.slice(-7).map((v, i) => `<div style="height:${Math.max(6, v / mx * 100)}%;animation-delay:${i * 60}ms"><span>$${v >= 1000 ? (v / 1000).toFixed(1) + 'K' : v}</span></div>`).join('')}</div>
   <div class="lbl" style="margin:14px 0 4px">HISTORY</div>${WALLET.hist.map(([n, v]) => `<div class="th"><div class="mono"><i class="fa-solid fa-${v > 0 ? 'tower-broadcast' : 'building-columns'}"></i></div><div><b>${n}</b><span>${v > 0 ? 'Gifts received' : 'Sent to ROX Bank'}</span></div><div class="r" style="font-size:12px;color:${v > 0 ? '#3ddc84' : 'rgba(255,255,255,.6)'}">${v > 0 ? '+' : '-'}$${Math.abs(v).toLocaleString('en-US')}</div></div>`).join('')}</div>`; }
 Sett.apply();
+
+/* ---------- phone number formatting ---------- */
+function fmtN(n) { return String(n || '').replace(/^\((\d+)\)\s*/, '<em>($1)</em> '); }
+
+/* ---------- share my contact with people nearby ---------- */
+const NEARBY = [['Abu Ibrahim', 3], ['Sara', 7], ['Faisal', 12], ['Abu Snow', 18]];
+function shareNearby(host) {
+  const root = host.closest('.av') || $('scr');
+  root.insertAdjacentHTML('beforeend', `<div class="near" id="near"><div class="box"><h3>Share my number<button class="sq" data-cx><i class="fa-solid fa-xmark"></i></button></h3><p>Tap a person near you to send ${ME.name} · ${ME.number}</p>
+    <div class="radar"><div class="me2">${ME.name.split(' ').map(w => w[0]).join('').slice(0, 2)}</div>${NEARBY.map(([n, d], i) => { const a = i * 1.7 + .6, r = 30 + d * 2.4; return `<div class="pp2" data-send="${i}" style="left:${50 + Math.cos(a) * r / 1.6}%;top:${50 + Math.sin(a) * r / 2.2}%;animation-delay:${i * 120}ms"><i>${n.split(' ').map(w => w[0]).join('')}</i>${n.split(' ').slice(-1)[0]}</div>`; }).join('')}</div>
+    ${NEARBY.map(([n, d], i) => `<div class="bk" data-send="${i}"><div class="mono">${n.split(' ').map(w => w[0]).join('')}</div><b>${n}</b><span>${d} m away</span><button class="cb" style="margin-left:8px"><i class="fa-solid fa-paper-plane"></i></button></div>`).join('')}</div></div>`);
+  const nr = $('near'); nr.onclick = (e) => { if (e.target === nr || e.target.closest('[data-cx]')) return nr.remove(); const s = e.target.closest('[data-send]'); if (!s) return;
+    const i = s.dataset.send; nr.querySelectorAll(`[data-send="${i}"]`).forEach(x => { x.classList.add('sent'); const b = x.querySelector('.cb'); if (b) b.innerHTML = '<i class="fa-solid fa-check"></i>'; });
+    toast2(`Your number was sent to ${NEARBY[i][0]}`);
+    if (window.invokeNative) fetch(`https://${GetParentResourceName()}/shareContact`, { method: 'POST', body: JSON.stringify({ to: NEARBY[i][0] }) }); };
+}
+
+/* ---------- first-time setup ---------- */
+const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wall: 8 }; let step = 0;
+  const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+  const done = () => { try { return localStorage.getItem('rox_setup') === '1'; } catch (e) { return false; } };
+  const dots = () => `<div class="dots2">${[0, 1, 2, 3, 4].map(i => `<i class="${i <= step ? 'on' : ''}"></i>`).join('')}</div>`;
+  const S = [
+    () => `<div class="st4"><div class="logo">ROX</div><h2>Welcome to<br>your ROX phone</h2><p>Let's set it up. It only takes a minute: your name, your ROX Mail, a passcode and a wallpaper.</p><button class="nxt" data-next>Get started</button></div>`,
+    () => `<div class="st4"><h2>What's your name?</h2><p>This is shown on your contact card and when you call people.</p>
+      <div class="fld"><i class="fa-solid fa-user"></i><input id="obF" placeholder="First name" value="${D.first}"></div><div class="fld"><i class="fa-solid fa-user"></i><input id="obL" placeholder="Last name" value="${D.last}"></div>
+      <button class="nxt" data-next id="obN">Continue</button><button class="bk2" data-back>Back</button></div>`,
+    () => `<div class="st4"><h2>Create your<br>ROX Mail</h2><p>Pick an email address. You will use it for apps, bills and messages.</p>
+      <div class="fld"><i class="fa-solid fa-at"></i><input id="obM" placeholder="username" value="${D.mail}"><span>@roxmail.ls</span></div><div class="hint2" id="obH">Letters, numbers, dots and _ only.</div>
+      <button class="nxt" data-next id="obN">Continue</button><button class="bk2" data-back>Back</button></div>`,
+    () => `<div class="st4"><h2>Set a passcode</h2><p>4 digits to unlock your phone.</p><div class="pinbox">${[0, 1, 2, 3].map(i => `<i class="${D.pin.length > i ? 'on' : ''}">${D.pin[i] ? '•' : ''}</i>`).join('')}</div>
+      <div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map(k => k ? `<button class="${k === 'del' ? 't' : ''}" data-k="${k}">${k === 'del' ? '<i class="fa-solid fa-delete-left"></i>' : k}</button>` : '<span></span>').join('')}</div>
+      <button class="nxt" data-next ${D.pin.length === 4 ? '' : 'disabled'} style="margin-top:16px">Continue</button><button class="bk2" data-back>Back</button></div>`,
+    () => `<div class="st4"><h2>Choose a wallpaper</h2><p>You can change it any time in Settings.</p><div class="wg">${[8, 9, 0, 1, 3, 4, 5, 7, 2].map(i => `<i style="background:${RoxWalls.list[i]}" class="${i === D.wall ? 'on' : ''}" data-w="${i}"></i>`).join('')}</div>
+      <button class="nxt" data-next style="margin-top:16px">Continue</button><button class="bk2" data-back>Back</button></div>`,
+    () => `<div class="st4"><div class="done2"><i class="fa-solid fa-check"></i></div><h2 style="text-align:center">You're all set!</h2><p style="text-align:center">Your ROX phone is ready.</p>
+      <div class="sumc"><div><span>Name</span><b>${D.first} ${D.last}</b></div><div><span>Number</span><b class="pn">${fmtN(ME.number)}</b></div><div><span>Email</span><b>${D.mail}@roxmail.ls</b></div></div>
+      <button class="nxt" data-finish>Start using ROX</button></div>`];
+  function draw() { const o = $('ob'); o.innerHTML = (step < 5 ? dots() : '') + S[step](); o.querySelectorAll('input').forEach(i => i.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') o.querySelector('[data-next]')?.click(); });
+    const val = () => { const n = $('obN'); if (!n) return; if (step === 1) n.disabled = !($('obF').value.trim() && $('obL').value.trim());
+      if (step === 2) { const ok = /^[a-z0-9._]{3,20}$/i.test($('obM').value.trim()); n.disabled = !ok; $('obH').className = 'hint2' + (ok || !$('obM').value ? '' : ' bad'); $('obH').textContent = ok ? $('obM').value.trim().toLowerCase() + '@roxmail.ls is available ✓' : 'Letters, numbers, dots and _ only (3–20).'; } };
+    o.querySelectorAll('input').forEach(i => i.oninput = val); val(); setTimeout(() => o.querySelector('input')?.focus(), 60); }
+  function open() { if ($('ob')) return; $('scr').insertAdjacentHTML('beforeend', '<div class="ob" id="ob"></div>'); step = 0; draw();
+    $('ob').onclick = (e) => { const x = e.target.closest('[data-next],[data-back],[data-k],[data-w],[data-finish]'); if (!x || x.disabled) return;
+      if (x.dataset.back !== undefined) { step--; return draw(); }
+      if (x.dataset.k) { D.pin = x.dataset.k === 'del' ? D.pin.slice(0, -1) : (D.pin + x.dataset.k).slice(0, 4); return draw(); }
+      if (x.dataset.w) { D.wall = +x.dataset.w; Sett.st.wall = D.wall; Sett.apply(); return draw(); }
+      if (x.dataset.finish !== undefined) return finish();
+      if (step === 1) { D.first = $('obF').value.trim(); D.last = $('obL').value.trim(); } if (step === 2) D.mail = $('obM').value.trim().toLowerCase();
+      step++; draw(); }; }
+  function finish() { ME.name = `${D.first} ${D.last}`; ME.email = `${D.mail}@roxmail.ls`; PIN = D.pin; store('rox_setup', '1'); store('rox_me', JSON.stringify({ n: ME.name, e: ME.email, p: PIN, w: D.wall }));
+    $('ob').remove(); $('scr').classList.replace('locked', 'unlocked'); drawApps(); toast2(`Welcome, ${D.first}!`);
+    if (window.invokeNative) fetch(`https://${GetParentResourceName()}/setup`, { method: 'POST', body: JSON.stringify({ name: ME.name, email: ME.email, pin: PIN, wallpaper: D.wall }) }); }
+  try { const m = JSON.parse(localStorage.getItem('rox_me') || 'null'); if (m) { ME.name = m.n; ME.email = m.e; PIN = m.p; Sett.st.wall = m.w; } } catch (e) {}
+  if (!done()) open();
+  return { open, reset: () => { store('rox_setup'); store('rox_me'); D.first = D.last = D.mail = D.pin = ''; lock(); open(); } };
+})();
+$('bSetup').onclick = () => Onboard.reset();
+Sett.apply();

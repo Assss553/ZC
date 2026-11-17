@@ -434,6 +434,43 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .est { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; } .est div { padding: 10px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); font-size: 8.5px; font-weight: 800; letter-spacing: 1px; color: rgba(255,255,255,.5); } .est b { display: block; font-size: 15px; color: #fff; letter-spacing: 0; margin-top: 3px; }
 .bars5 { display: flex; align-items: flex-end; gap: 6px; height: 100px; padding: 10px 10px 20px; border-radius: 12px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
 .bars5 div { flex: 1; border-radius: 5px 5px 2px 2px; background: linear-gradient(#ff2d55, #ff5a1f); position: relative; min-height: 4px; animation: grow .6s backwards; transform-origin: bottom; } .bars5 div span { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 8px; color: rgba(255,255,255,.45); } @keyframes grow { from { transform: scaleY(0); } }
+
+/* ===== 3 sizes: phone / half open / tablet ===== */
+.open.mid .device { width: 560px; } .open.mid .apps { grid-template-columns: repeat(6, 1fr); } .open.mid .top .w:nth-child(3), .open.mid .top .w:nth-child(4) { display: none; } .open.mid .crease { opacity: 0; }
+/* phone numbers */
+.pn { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important; font-variant-numeric: tabular-nums; letter-spacing: .3px; font-weight: 700; } .pn em { font-style: normal; color: var(--a); font-weight: 800; margin-right: 1px; }
+.ph-meta .pn { font-size: 10px; letter-spacing: .6px; color: #fff; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,.06); }
+.bk .pn { font-size: 11px; color: rgba(255,255,255,.55); } .bk .pn em { color: rgba(255,90,31,.8); }
+/* keypad sheet: dim behind, centered on wide screens */
+.kps.on { box-shadow: 0 -2000px 0 2000px rgba(0,0,0,.55); } .open .kps { left: 50%; right: auto; width: 320px; margin-left: -160px; border-radius: 20px 20px 0 0; border: 1px solid rgba(255,90,31,.3); border-bottom: 0; }
+/* my card */
+.mycard { display: flex; align-items: center; gap: 11px; padding: 12px; margin: 4px 0 8px; border-radius: 14px; border: 1px solid rgba(255,90,31,.35); background: linear-gradient(135deg, rgba(255,90,31,.16), rgba(255,90,31,.02) 70%); }
+.mycard .mono { width: 46px; height: 46px; border-radius: 50%; font-size: 15px; background: linear-gradient(145deg, #ff7a3d, #e04a10); color: #fff; border: 0; }
+.mycard .mi { flex: 1; min-width: 0; } .mycard small { font-size: 8px; font-weight: 800; letter-spacing: 1.4px; color: var(--a); } .mycard b { display: block; font-size: 14px; } .mycard .pn { font-size: 12px; } .mycard em { display: block; font-style: normal; font-size: 10px; color: rgba(255,255,255,.45); }
+.mycard .mb { display: flex; gap: 6px; } .mycard .mb button { width: 34px; height: 34px; border-radius: 10px; border: 0; background: rgba(255,255,255,.08); color: #fff; cursor: pointer; } .mycard .mb button:first-child { background: var(--a); }
+/* share nearby sheet */
+.near { position: absolute; inset: 0; z-index: 20; background: rgba(0,0,0,.55); display: flex; flex-direction: column; justify-content: flex-end; animation: fadeUp .2s; }
+.near .box { background: #131317; border-radius: 20px 20px 0 0; padding: 16px 16px 26px; animation: up .3s cubic-bezier(.2,.9,.3,1); } .open .near .box { width: 360px; margin: 0 auto; }
+.near h3 { font-size: 15px; display: flex; justify-content: space-between; align-items: center; } .near p { font-size: 11px; color: rgba(255,255,255,.5); margin: 2px 0 12px; }
+.radar { position: relative; height: 150px; margin-bottom: 12px; border-radius: 14px; background: radial-gradient(circle, rgba(255,90,31,.15), transparent 70%); overflow: hidden; }
+.radar::before, .radar::after { content: ''; position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px; border-radius: 50%; border: 1.5px solid rgba(255,90,31,.5); animation: ring2 2s infinite; } .radar::after { animation-delay: 1s; }
+.radar .me2 { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px; border-radius: 50%; background: linear-gradient(145deg, #ff7a3d, #e04a10); display: grid; place-items: center; font-size: 11px; font-weight: 800; z-index: 2; }
+.radar .pp2 { position: absolute; width: 40px; text-align: center; font-size: 8.5px; font-weight: 700; cursor: pointer; transform: translate(-50%, -50%); animation: pop .4s backwards; } .radar .pp2 i { display: grid; place-items: center; width: 30px; height: 30px; margin: 0 auto 2px; border-radius: 50%; background: #2a2a31; font-style: normal; font-size: 10px; border: 1.5px solid rgba(255,255,255,.2); } .radar .pp2.sent i { background: #3ddc84; color: #04120a; }
+/* first-time setup */
+.ob { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 56px 22px 26px; background: radial-gradient(circle at 80% 0%, rgba(255,90,31,.35), transparent 50%), radial-gradient(circle at 0% 100%, rgba(255,45,85,.2), transparent 50%), #09090b; }
+.open .ob { padding: 56px 25% 26px; }
+.ob .dots2 { display: flex; gap: 5px; margin-bottom: 26px; } .ob .dots2 i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.12); transition: .3s; } .ob .dots2 i.on { background: var(--a); }
+.ob .st4 { flex: 1; display: flex; flex-direction: column; animation: fadeUp .35s; } .ob h2 { font-size: 26px; font-weight: 800; letter-spacing: -.6px; line-height: 1.15; } .ob p { font-size: 12px; color: rgba(255,255,255,.55); margin: 6px 0 22px; line-height: 1.5; }
+.ob .logo { width: 84px; height: 84px; border-radius: 24px; margin: 30px 0 22px; display: grid; place-items: center; font-weight: 900; font-size: 26px; letter-spacing: -1px; background: linear-gradient(145deg, #ff7a3d, #c2340a); box-shadow: 0 20px 50px rgba(255,90,31,.45); }
+.ob .fld { height: 46px; } .ob .fld input { font-size: 14px; } .ob .fld span { font-size: 12.5px; color: rgba(255,255,255,.45); font-weight: 600; }
+.ob .hint2 { font-size: 10.5px; color: rgba(255,255,255,.45); margin-top: -4px; } .ob .hint2.bad { color: #ff6b6b; }
+.ob .nxt { margin-top: auto; height: 50px; border-radius: 14px; border: 0; background: var(--a); color: #fff; font: 800 13px 'Plus Jakarta Sans'; cursor: pointer; box-shadow: 0 10px 26px rgba(255,90,31,.35); } .ob .nxt:disabled { opacity: .35; box-shadow: none; }
+.ob .bk2 { background: none; border: 0; color: rgba(255,255,255,.55); font: 700 12px 'Plus Jakarta Sans'; margin-top: 10px; cursor: pointer; }
+.ob .pinbox { display: flex; gap: 12px; justify-content: center; margin: 10px 0 18px; } .ob .pinbox i { width: 48px; height: 58px; border-radius: 12px; background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.1); display: grid; place-items: center; font-style: normal; font-size: 24px; font-weight: 800; } .ob .pinbox i.on { border-color: var(--a); }
+.ob .pad { margin: 0 auto; } .ob .wg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .ob .wg i { height: 120px; border-radius: 12px; cursor: pointer; border: 2.5px solid transparent; background-size: cover !important; transition: .2s; } .ob .wg i.on { border-color: var(--a); transform: scale(.96); }
+.ob .done2 { width: 86px; height: 86px; margin: 40px auto 20px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; color: #3ddc84; background: rgba(61,220,132,.12); border: 2px solid #3ddc84; animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+.ob .sumc { padding: 14px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); font-size: 12px; } .ob .sumc div { display: flex; justify-content: space-between; padding: 5px 0; } .ob .sumc span { color: rgba(255,255,255,.5); }
+.ob .fld input { min-width: 0; } .ob .fld span { flex: none; } .mycard .pn, .mycard b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* ---------- preview controls ---------- */
 .ctrl { position: fixed; left: 30px; top: 30px; display: flex; flex-direction: column; gap: 8px; }
 .ctrl h1 { font-family: 'Barlow Condensed'; font-style: italic; font-size: 38px; } .ctrl h1 b { color: var(--a); }
@@ -450,6 +487,7 @@ body:not(.preview) .ctrl { display: none; }
   <button id="bCall"><i class="fa-solid fa-phone-volume"></i>Simulate incoming call</button>
   <button id="bJob"><i class="fa-solid fa-id-badge"></i><span>I'm police (employee)</span></button>
   <button id="bSize"><i class="fa-solid fa-magnifying-glass-plus"></i><span>Size: M</span></button>
+  <button id="bSetup"><i class="fa-solid fa-rotate"></i>Reset first-time setup</button>
   <button id="bHide"><i class="fa-solid fa-eye-slash"></i>Put away / take out</button></div>
 
 <div class="pos" id="pos"><div class="device" id="dev">
@@ -493,7 +531,7 @@ const isOpen = () => document.body.classList.contains('open');
 function drawApps() { $('apps').innerHTML = appsNow().slice(0, isOpen() ? 18 : 12).map((a, k) => tile(a, k)).join(''); $('dockApps').innerHTML = DOCK.map((a, k) => tile(a, k, false)).join(''); }
 
 /* lock */
-let code = ''; const PIN = '1234';
+let code = ''; let PIN = '1234';
 $('pad').innerHTML = ['1','2','3','4','5','6','7','8','9','Cancel','0','del'].map(k => `<button class="${k.length > 1 ? 't' : ''}" data-k="${k}">${k === 'del' ? '<i class="fa-solid fa-delete-left"></i>' : k}</button>`).join('');
 const pins = () => [...$('pins').children].forEach((p, i) => p.classList.toggle('on', i < code.length));
 function key(k) { if (k === 'Cancel') code = ''; else if (k === 'del') code = code.slice(0, -1); else if (code.length < 4) code += k; pins();
@@ -512,7 +550,13 @@ function setFold(open) {
   if (window.invokeNative) fetch(`https://${GetParentResourceName()}/fold`, { method: 'POST', body: JSON.stringify({ open }) });
   setTimeout(() => { drawApps(); const av = $('av'); if (av.classList.contains('on')) { const k = av.dataset.app, el = document.querySelector(`.app[data-app="${k}"]`); if (el) openApp(k, el.dataset.name, el); } sc.classList.remove('busy'); d.classList.remove('anim-open', 'anim-close'); busy = false; }, 720);
 }
-$('bFold').onclick = () => setFold(!isOpen());
+const mode = () => !isOpen() ? 0 : document.body.classList.contains('mid') ? 1 : 2;
+function setMode(n) { const b = document.body; if (n === mode()) return;
+  if (n === 0) { setFold(false); setTimeout(() => b.classList.remove('mid'), 700); }
+  else if (!isOpen()) { b.classList.toggle('mid', n === 1); setFold(true); }
+  else { b.classList.toggle('mid', n === 1); $('scr').classList.add('busy'); setTimeout(() => { drawApps(); $('scr').classList.remove('busy'); }, 420); }
+  setTimeout(() => $('bFold').querySelector('span').textContent = ['Phone', 'Half open', 'Tablet'][mode()] + ' (next)', 760); }
+$('bFold').onclick = () => setMode((mode() + 1) % 3);
 $('bLock').onclick = lock; $('bHide').onclick = () => { if (Call.active()) return Call.peek(!$('pos').classList.contains('peek')); $('pos').classList.toggle('hide'); };
 $('bJob').onclick = () => { Svc.st.emp = !Svc.st.emp; $('bJob').querySelector('span').textContent = Svc.st.emp ? "I'm police (employee)" : 'I\'m a civilian'; if ($('av').dataset.app === 'services') Svc.render(); };
 $('bSize').onclick = () => { const z = [85, 100, 118], n = z[(z.indexOf(Sett.st.size) + 1) % 3]; Sett.st.size = n; Sett.apply(); $('bSize').querySelector('span').textContent = 'Size: ' + 'SML'[z.indexOf(n)]; };
@@ -520,17 +564,17 @@ $('bCall').onclick = () => Call.incoming('Abu Ibrahim', '(555) 100-9944');
 
 /* drag the handle: pull left to unfold, push right to fold */
 let drag = null;
-$('grip').addEventListener('mousedown', (e) => { drag = { x: e.clientX }; e.preventDefault(); });
+let drag0 = 0; $('grip').addEventListener('mousedown', (e) => { drag = { x: e.clientX }; e.preventDefault(); });
 document.addEventListener('mousemove', (e) => { if (!drag) return;
-  const dx = isOpen() ? e.clientX - drag.x : drag.x - e.clientX, p = Math.max(0, Math.min(1, dx / 140));
+  drag0 = e.clientX - drag.x; const dx = Math.abs(drag0), p = Math.max(0, Math.min(1, dx / 140));
   $('tip').classList.toggle('on', p > 0.05); $('tipT').textContent = p >= 1 ? 'Release' : 'Keep pulling';
   [...$('bars').children].forEach((b, i) => b.classList.toggle('on', p > i / 4));
   $('dev').style.transform = `translateX(${(isOpen() ? 1 : -1) * p * 10}px)`;
   drag.p = p; });
-document.addEventListener('mouseup', () => { if (!drag) return; const done = drag.p >= 1; drag = null; $('tip').classList.remove('on'); $('dev').style.transform = ''; if (done) setFold(!isOpen()); });
+document.addEventListener('mouseup', () => { if (!drag) return; const done = drag.p >= 1; drag = null; $('tip').classList.remove('on'); $('dev').style.transform = ''; if (done) setMode(isOpen() && drag0 > 0 ? mode() - 1 : Math.min(2, mode() + 1)); });
 
 document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; if (/^\d$/.test(e.key) && $('scr').classList.contains('locked')) key(e.key); if (e.key === 'Backspace') key('del');
-  if (e.key.toLowerCase() === 'f') setFold(!isOpen()); if (e.key.toLowerCase() === 'l') lock(); });
+  if (e.key.toLowerCase() === 'f') setMode((mode() + 1) % 3); if (e.key.toLowerCase() === 'l') lock(); });
 
 
 /* ---------- Phone app ---------- */
@@ -541,7 +585,7 @@ const Phone = (() => {
   const ini2 = (n) => /^\(/.test(n) ? '#' : n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const num = (n) => (CONTACTS.find(c => c[0] === n) || [, n])[1];
   const fmt = (x) => `${x / 60 | 0}:${String(x % 60).padStart(2, '0')}`;
-  function shell(inner) { return `<div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span>(555) 348-8943</span></div></div>${inner}
+  function shell(inner) { return `<div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span class="pn">${fmtN(ME.number)}</span></div></div>${inner}
     <div class="ph-nav"><button class="${tab === 'log' ? 'on' : ''}" data-t="log"><small>01</small>LOG</button><button class="${tab === 'book' ? 'on' : ''}" data-t="book"><small>02</small>BOOK</button><button class="sq" data-kp><i class="fa-solid fa-table-cells"></i></button></div>
     <div class="kps" id="kps"><div class="num" id="kNum"></div><div class="dial"><div class="kp">${[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].map(([d, l]) => `<button data-d="${d}">${d}<small>${l || '&nbsp;'}</small></button>`).join('')}</div>
     <div style="display:flex;justify-content:center;gap:30px;margin-top:12px"><button class="sq" data-kclose style="width:44px;height:44px;border-radius:50%"><i class="fa-solid fa-chevron-down"></i></button><button class="cbtn btn-g" data-kcall style="width:56px;height:56px;border-radius:50%;border:0;color:#fff;font-size:18px;animation:none;cursor:pointer"><i class="fa-solid fa-phone"></i></button><button class="sq" data-kdel style="width:44px;height:44px;border-radius:50%"><i class="fa-solid fa-delete-left"></i></button></div></div></div>`; }
@@ -549,13 +593,14 @@ const Phone = (() => {
     return shell(`<div class="ph-top"><div class="ph-h"><div><h1>CALL LOG</h1><small>${LOG.length} ENTRIES · ${miss} MISSED</small></div><button class="sq"><i class="fa-solid fa-magnifying-glass"></i></button></div>
       <div class="chips"><button class="${filt === 'all' ? 'on' : ''}" data-f="all">ALL<b>${LOG.length}</b></button><button class="${filt === 'miss' ? 'on' : ''}" data-f="miss">MISSED<b>${miss}</b></button></div></div>
       <div class="ph-list">${rows.map(([t, k, n, d], i) => `<div class="cl" data-n="${n}" style="animation-delay:${i * 30}ms"><div class="t">${t}<small class="k-${k}">${k.toUpperCase()}</small></div><i class="d k-${k}"></i>
-        <div><b>${n}</b>${d ? `<div class="bar2 k-${k}"><i style="--p:${Math.min(100, d / 1.3)}%"></i><span>${fmt(d)}</span></div>` : `<div class="dec">${k === 'miss' ? 'MISSED' : 'DECLINED'}</div>`}</div>
+        <div><b>${/^\(/.test(n) ? `<span class="pn">${fmtN(n)}</span>` : n}</b>${d ? `<div class="bar2 k-${k}"><i style="--p:${Math.min(100, d / 1.3)}%"></i><span>${fmt(d)}</span></div>` : `<div class="dec">${k === 'miss' ? 'MISSED' : 'DECLINED'}</div>`}</div>
         <button class="cb" data-call="${n}"><i class="fa-solid fa-phone"></i></button></div>`).join('')}</div>`); }
   function book() { const g = {}; CONTACTS.slice().sort().forEach(c => (g[c[0][0]] = g[c[0][0]] || []).push(c));
     return shell(`<div class="ph-top"><div class="ph-h"><div><h1>CONTACTS</h1><small>${CONTACTS.length} SAVED</small></div><button class="sq"><i class="fa-solid fa-user-plus"></i></button></div></div>
-      <div class="ph-list">${Object.keys(g).map(L => `<div class="letter">${L}</div>` + g[L].map(([n, p]) => `<div class="bk" data-n="${n}"><div class="mono">${ini2(n)}</div><b>${n}</b><span>${p}</span></div>`).join('')).join('')}</div>`); }
+      <div class="ph-list"><div class="mycard"><div class="mono">${ini2(ME.name)}</div><div class="mi"><small>MY CARD</small><b>${ME.name}</b><span class="pn">${fmtN(ME.number)}</span><em>${ME.email || ''}</em></div>
+        <div class="mb"><button data-share title="Share nearby"><i class="fa-solid fa-tower-broadcast"></i></button><button data-copyme title="Copy number"><i class="fa-solid fa-copy"></i></button></div></div>${Object.keys(g).map(L => `<div class="letter">${L}</div>` + g[L].map(([n, p]) => `<div class="bk" data-n="${n}"><div class="mono">${ini2(n)}</div><b>${n}</b><span class="pn">${fmtN(p)}</span></div>`).join('')).join('')}</div>`); }
   function contact(n) { const calls = LOG.filter(l => l[2] === n), talk = calls.reduce((a, l) => a + l[3], 0);
-    return `<div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span>(555) 348-8943</span></div></div>
+    return `<div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span class="pn">${fmtN(ME.number)}</span></div></div>
       <div class="back"><button data-back><i class="fa-solid fa-chevron-left"></i>BACK</button><button class="sq"><i class="fa-solid fa-star"></i></button></div>
       <div class="cc"><div class="top2"><div class="mono">${ini2(n)}</div><div><b>${n}</b><div class="num">${num(n)}<i class="fa-solid fa-copy"></i></div></div></div><div class="sub"><span>ROXCELL SUBSCRIBER</span><span>ID ${37000 + n.length * 53}</span></div></div>
       <div class="tiles"><button class="g" data-call="${n}"><i class="fa-solid fa-phone"></i>CALL</button><button class="b"><i class="fa-solid fa-message"></i>MSG</button><button class="o"><i class="fa-solid fa-pen"></i>EDIT</button><button class="r"><i class="fa-solid fa-trash"></i>DEL</button></div>
@@ -563,7 +608,7 @@ const Phone = (() => {
       <div class="lbl">RECENT WITH ${n.toUpperCase()}</div><div class="reg">${calls.map(([t, k, , d]) => `<div><span class="k-${k}">${k.toUpperCase()} &nbsp; TODAY ${t}</span><b style="font-size:8.5px;letter-spacing:1px">${d ? fmt(d) : (k === 'miss' ? 'MISSED' : 'DECLINED')}</b></div>`).join('') || '<div>NO CALLS</div>'}</div>`; }
   function render(t, arg) { if (t) tab = t; const el = $('ph'); if (!el) return;
     el.innerHTML = tab === 'contact' ? contact(arg) : tab === 'book' ? book() : log();
-    el.onclick = (e) => { const x = e.target.closest('[data-t],[data-f],[data-call],[data-n],[data-back],[data-kp],[data-kclose],[data-d],[data-kcall],[data-kdel]'); if (!x) return;
+    el.onclick = (e) => { if (e.target.closest('[data-share]')) return shareNearby(el); if (e.target.closest('[data-copyme]')) return toast2('Number copied: ' + ME.number); const x = e.target.closest('[data-t],[data-f],[data-call],[data-n],[data-back],[data-kp],[data-kclose],[data-d],[data-kcall],[data-kdel]'); if (!x) return;
       if (x.dataset.t) return render(x.dataset.t); if (x.dataset.f) { filt = x.dataset.f; return render('log'); }
       if (x.dataset.call) return Call.out(x.dataset.call, num(x.dataset.call)); if (x.dataset.back !== undefined) return render('log');
       if (x.dataset.kp !== undefined) return $('kps').classList.add('on'); if (x.dataset.kclose !== undefined) return $('kps').classList.remove('on');
