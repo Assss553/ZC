@@ -116,36 +116,36 @@ def luxury(s, st, W, D, H, floors, wins, door_x, dw, ww):
 
 
 STYLES = dict(
-    craftsman=dict(floor='planks', wall='paint_cream', door='door_green', crown=True, rows=2),
-    townhouse=dict(floor='parquet', wall='paint_white', door='door_black', cols=3),
-    ranch=dict(floor='planks', wall='paint_sand', door='door_red', win_w=1.8, cols=3),
-    cottage=dict(floor='planks', wall='paint_cream', door='door_blue', rows=2, rot=90.0),
+    craftsman=dict(floor='planks', wall='paint_cream', door='door_green', crown=True, rows=2, lux=True, acc='trim', band='wood_dark', inlay='wood_dark', medallion='tile_beige'),
+    townhouse=dict(floor='parquet', wall='paint_white', door='door_black', cols=3, lux=True, acc='trim', band='wood_dark', inlay='wood_dark', medallion='tile_white', medallion_on=False),
+    ranch=dict(floor='planks', wall='paint_sand', door='door_red', win_w=1.8, cols=3, lux=True, acc='trim', band='wood_door', inlay='wood_dark', medallion='tile_beige'),
+    cottage=dict(floor='planks', wall='paint_cream', door='door_blue', rows=2, rot=90.0, lux=True, acc='trim', band='wood_dark', inlay='wood_dark', medallion='tile_terra', medallion_on=False),
     villa=dict(floor='parquet', wall='paint_white', door='door_wood', door_w=1.2, win_w=2.0, cols=3, sill=0.5, crown=True, lux=True, wains=('wainscot', 1.0), acc='trim', inlay='wood_dark', medallion='tile_white'),
     beach=dict(floor='planks', wall='paint_sky', door='door_yellow', win_w=1.9, sill=0.5, lux=True, acc='trim', band='planks', inlay='wood_door', medallion='tile_white', medallion_on=False),
     family=dict(floor='planks', wall='paint_sage', door='door_maroon', crown=True, lux=True, acc='trim', band='wood_door', inlay='wood_dark', medallion='tile_beige', coffer=False),
     mansion=dict(floor='parquet', wall='paint_cream', door='door_white', door_w=1.3, win_w=2.0, cols=3, rows=2, sill=0.5, crown=True, lux=True, acc='trim', band='wood_dark', inlay='wood_dark', medallion='countertop', coffer_sp=2.6),
-    studio=dict(floor='concrete_floor', wall='paint_white', door='door_grey', win_w=1.4),
-    bungalow=dict(floor='planks', wall='paint_blush', door='door_wood', rows=2),
-    longhouse=dict(floor='tile_beige', wall='paint_sand', door='door_blue', win_w=1.6, cols=3),
-    garden=dict(floor='parquet', wall='paint_sage', door='door_white', win_w=1.8, cols=3, sill=0.5),
+    studio=dict(floor='concrete_floor', wall='paint_white', door='door_grey', win_w=1.4, lux=True, acc='trim', inlay='wood_dark', medallion='tile_white', medallion_on=False, coffer_sp=2.0),
+    bungalow=dict(floor='planks', wall='paint_blush', door='door_wood', rows=2, lux=True, acc='trim', inlay='wood_dark', medallion='tile_beige'),
+    longhouse=dict(floor='tile_beige', wall='paint_sand', door='door_blue', win_w=1.6, cols=3, lux=True, acc='trim', inlay='wood_dark', medallion='stone', medallion_on=False),
+    garden=dict(floor='parquet', wall='paint_sage', door='door_white', win_w=1.8, cols=3, sill=0.5, lux=True, acc='trim', inlay='wood_dark', medallion='tile_white'),
     estate=dict(floor='tile_white', wall='paint_white', door='door_black', door_w=1.2, win_w=2.0, cols=3, sill=0.5, crown=True, lux=True, acc='trim', inlay='countertop', medallion='stone'),
 )
 
 SPECS = [
     # two storeys high (one open volume)
-    ('rox_open_cottage',   'ROX Cottage (2 floors, empty)',     'كوخ ROX (دورين، فاضي)',          7.6,  7.6, 2, -0.9, 'cottage',   'small'),
-    ('rox_open_craftsman', 'ROX Craftsman (2 floors, empty)',   'كرافتسمان ROX (دورين، فاضي)',     8.4,  8.2, 2,  1.2, 'craftsman', 'small'),
-    ('rox_open_townhouse', 'ROX Townhouse (2 floors, empty)',   'تاون هاوس ROX (دورين، فاضي)',     7.2, 10.2, 2, -0.6, 'townhouse', 'narrow'),
+    ('rox_open_cottage',   'ROX Cottage PREMIUM (2 floors, empty)',     'كوخ ROX بريميوم (دورين، فاضي)',          7.6,  7.6, 2, -0.9, 'cottage',   'small'),
+    ('rox_open_craftsman', 'ROX Craftsman PREMIUM (2 floors, empty)',   'كرافتسمان ROX بريميوم (دورين، فاضي)',     8.4,  8.2, 2,  1.2, 'craftsman', 'small'),
+    ('rox_open_townhouse', 'ROX Townhouse PREMIUM (2 floors, empty)',   'تاون هاوس ROX بريميوم (دورين، فاضي)',     7.2, 10.2, 2, -0.6, 'townhouse', 'narrow'),
     ('rox_open_beach',     'ROX Beach House PREMIUM (2 floors, empty)', 'بيت الشاطئ ROX بريميوم (دورين، فاضي)',    9.2,  9.6, 2, -1.5, 'beach',     'medium'),
     ('rox_open_family',    'ROX Family Home PREMIUM (2 floors, empty)', 'بيت العائلة ROX بريميوم (دورين، فاضي)',  10.6,  8.6, 2,  2.1, 'family',    'medium'),
-    ('rox_open_ranch',     'ROX Ranch House (2 floors, empty)', 'رانش ROX (دورين، فاضي)',         12.4,  8.2, 2,  2.9, 'ranch',     'wide'),
+    ('rox_open_ranch',     'ROX Ranch House PREMIUM (2 floors, empty)', 'رانش ROX بريميوم (دورين، فاضي)',         12.4,  8.2, 2,  2.9, 'ranch',     'wide'),
     ('rox_open_villa',     'ROX Villa PREMIUM (2 floors, empty)',       'فيلا ROX بريميوم (دورين، فاضي)',         14.2, 10.2, 2,  0.0, 'villa',     'large'),
     ('rox_open_mansion',   'ROX Mansion PREMIUM (2 floors, empty)', 'قصر ROX بريميوم (دورين، فاضي)',          16.4, 11.6, 2,  0.0, 'mansion',   'large'),
     # single storey
-    ('rox_open1_studio',   'ROX Studio (1 floor, empty)',       'ستوديو ROX (دور واحد، فاضي)',     6.0,  6.0, 1,  0.0, 'studio',    'small'),
-    ('rox_open1_bungalow', 'ROX Bungalow (1 floor, empty)',     'بنغلو ROX (دور واحد، فاضي)',      8.0,  7.0, 1, -1.5, 'bungalow',  'small'),
-    ('rox_open1_long',     'ROX Long House (1 floor, empty)',   'البيت الطويل ROX (دور واحد، فاضي)', 6.6, 11.0, 1,  0.0, 'longhouse', 'narrow'),
-    ('rox_open1_garden',   'ROX Garden House (1 floor, empty)', 'بيت الحديقة ROX (دور واحد، فاضي)', 11.0,  8.0, 1,  2.0, 'garden',    'wide'),
+    ('rox_open1_studio',   'ROX Studio PREMIUM (1 floor, empty)',       'ستوديو ROX بريميوم (دور واحد، فاضي)',     6.0,  6.0, 1,  0.0, 'studio',    'small'),
+    ('rox_open1_bungalow', 'ROX Bungalow PREMIUM (1 floor, empty)',     'بنغلو ROX بريميوم (دور واحد، فاضي)',      8.0,  7.0, 1, -1.5, 'bungalow',  'small'),
+    ('rox_open1_long',     'ROX Long House PREMIUM (1 floor, empty)',   'البيت الطويل ROX بريميوم (دور واحد، فاضي)', 6.6, 11.0, 1,  0.0, 'longhouse', 'narrow'),
+    ('rox_open1_garden',   'ROX Garden House PREMIUM (1 floor, empty)', 'بيت الحديقة ROX بريميوم (دور واحد، فاضي)', 11.0,  8.0, 1,  2.0, 'garden',    'wide'),
     ('rox_open1_estate',   'ROX Estate PREMIUM (1 floor, empty)', 'عزبة ROX بريميوم (دور واحد، فاضي)',      14.0, 10.0, 1,  0.0, 'estate',    'large'),
 ]
 
