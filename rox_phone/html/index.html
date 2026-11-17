@@ -547,7 +547,7 @@ body:not(.preview) .ctrl { display: none; }
   <button id="bHide"><i class="fa-solid fa-eye-slash"></i>Put away / take out</button></div>
 
 <div class="pos" id="pos"><div class="device" id="dev">
-  <div class="grip" id="grip"><div class="tip" id="tip"><span class="bars" id="bars"><i></i><i></i><i></i><i></i></span><span id="tipT">Keep pulling</span></div></div>
+  <div class="grip" id="grip"><div class="tip" id="tip"><span class="bars" id="bars"><i></i><i></i><i></i></span><span id="tipT">Keep pulling</span></div></div>
   <div class="screen locked" id="scr"><div class="wall"></div><div class="hinge"></div>
   <div class="content">
   <div class="sb"><span class="brand"><b>ROX</b>Cell</span><span class="r"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><span class="bat"><i></i></span></span></div>
@@ -623,8 +623,8 @@ let drag = null;
 let drag0 = 0; $('grip').addEventListener('mousedown', (e) => { drag = { x: e.clientX }; e.preventDefault(); });
 document.addEventListener('mousemove', (e) => { if (!drag) return;
   drag0 = e.clientX - drag.x; const dx = Math.abs(drag0), p = Math.max(0, Math.min(1, dx / 140));
-  $('tip').classList.toggle('on', p > 0.05); $('tipT').textContent = p >= 1 ? 'Release' : 'Keep pulling';
-  [...$('bars').children].forEach((b, i) => b.classList.toggle('on', p > i / 4));
+  $('tip').classList.toggle('on', p > 0.05); 
+  const tgt = isOpen() && drag0 > 0 ? mode() - 1 : Math.min(2, mode() + 1); [...$('bars').children].forEach((b, i) => b.classList.toggle('on', i <= tgt)); $('tipT').textContent = (p >= 1 ? 'Release: ' : 'Pull: ') + ['Phone', 'Half', 'Tablet'][tgt];
   $('dev').style.transform = `translateX(${(isOpen() ? 1 : -1) * p * 10}px)`;
   drag.p = p; });
 document.addEventListener('mouseup', () => { if (!drag) return; const done = drag.p >= 1; drag = null; $('tip').classList.remove('on'); $('dev').style.transform = ''; if (done) setMode(isOpen() && drag0 > 0 ? mode() - 1 : Math.min(2, mode() + 1)); });
@@ -793,7 +793,7 @@ function toast2(m) { $('ctoast').classList.add('on'); $('ctT').textContent = m; 
 
 /* ---------- Settings ---------- */
 const WALLS = RoxWalls.list;
-const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif: true, bright: 100, size: 100, wall: 12, ring: 'ROX Pulse', pin: true };
+const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif: true, bright: 100, size: 100, wall: 0, ring: 'ROX Pulse', pin: true };
   const row = (i, c, n, right, attr = '') => `<div class="so" ${attr}><i class="si2 fa-solid fa-${i}" style="color:${c};border-color:${c}55;background:${c}18"></i><span>${n}</span>${right}</div>`;
   const tg = (k) => `<i class="tg ${st[k] ? 'on' : ''}" data-t="${k}"></i>`;
   function render() { const el = $('ph'); if (!el) return;
@@ -802,11 +802,11 @@ const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif:
       <div class="lbl" style="margin:0 0 6px">CONNECTIVITY</div><div class="sg">${row('plane', '#ff9500', 'Airplane mode', tg('air'))}${row('wifi', '#2f7cf6', 'Wi-Fi', '<small>ROX-Net</small>')}${row('signal', '#3ddc84', 'Mobile data', '<small>5G</small>')}</div>
       <div class="lbl" style="margin:0 0 6px">SOUND & ALERTS</div><div class="sg">${row('moon', '#7c5cff', 'Do not disturb', tg('dnd'))}${row('bell-slash', '#ff4d4d', 'Silent mode', tg('silent'))}${row('bell', '#ffb020', 'Notifications', tg('notif'))}
         ${row('music', '#ff5ea8', 'Ringtone', `<select data-sel="ring">${['ROX Pulse', 'Classic', 'Night Drive', 'Siren'].map(r => `<option ${r === st.ring ? 'selected' : ''}>${r}</option>`).join('')}</select>`)}</div>
-      <div class="lbl" style="margin:0 0 6px">DISPLAY</div><div class="sg">${row('sun', '#ffd36b', 'Brightness', `<input type="range" min="40" max="100" value="${st.bright}" data-r="bright">`)}${row('maximize', '#0ea5e9', 'Phone size', `<span class="seg3">${['S', 'M', 'L'].map((z, k) => `<b class="${st.size === [85, 100, 118][k] ? 'on' : ''}" data-sz="${[85, 100, 118][k]}">${z}</b>`).join('')}</span>`)}
+      <div class="lbl" style="margin:0 0 6px">DISPLAY</div><div class="sg">${row('sun', '#ffd36b', 'Brightness', `<input type="range" min="40" max="100" value="${st.bright}" data-r="bright">`)}${row('mobile-screen', '#ff5a1f', 'Layout', `<span class="seg3">${['Phone', 'Half', 'Tablet'].map((z, k) => `<b style="width:auto;padding:0 8px" class="${mode() === k ? 'on' : ''}" data-lay="${k}">${z}</b>`).join('')}</span>`)}${row('maximize', '#0ea5e9', 'Phone size', `<span class="seg3">${['S', 'M', 'L'].map((z, k) => `<b class="${st.size === [85, 100, 118][k] ? 'on' : ''}" data-sz="${[85, 100, 118][k]}">${z}</b>`).join('')}</span>`)}
         ${row('image', '#22c55e', 'Wallpaper', '<small>'+RoxWalls.names[st.wall]+'</small>')}<div class="walls2">${WALLS.map((w, k) => `<i title="${RoxWalls.names[k]}" style="background:${w}" class="${k === st.wall ? 'on' : ''}" data-w="${k}"></i>`).join('')}</div><div style="display:flex;gap:6px;padding:0 11px 11px"><div class="fld" style="flex:1;min-width:0;margin:0;height:34px"><i class="fa-solid fa-link"></i><input style="min-width:0" id="wurl" placeholder="Paste image URL (your own wallpaper)"></div><button class="pay" data-addw style="height:34px">ADD</button></div></div>
       <div class="lbl" style="margin:0 0 6px">SECURITY</div><div class="sg">${row('lock', '#94a3b8', 'Passcode lock', tg('pin'))}${row('key', '#94a3b8', 'Change passcode', '<i class="fa-solid fa-chevron-right" style="font-size:10px;opacity:.4"></i>')}</div>
       <div class="lbl" style="margin:0 0 6px">ABOUT</div><div class="sg">${row('mobile-screen', '#ff5a1f', 'Model', '<small>ROX Fold</small>')}${row('circle-info', '#6b7280', 'Version', '<small>ROX OS 1.0</small>')}${row('database', '#6b7280', 'Storage', '<small>38 GB of 256 GB</small>')}</div></div>`;
-    el.onclick = (e) => { if (e.target.closest('[data-addw]')) { const u = $('wurl').value.trim(); if (!/^https?:\/\/|^img\//.test(u)) return toast2('Paste an image link (https://…)'); st.wall = RoxWalls.add(u); apply(); toast2('Wallpaper added'); return render(); } const z = e.target.closest('[data-sz]'); if (z) { st.size = +z.dataset.sz; apply(); return render(); } const t = e.target.closest('[data-t]'); if (t) { st[t.dataset.t] = !st[t.dataset.t]; apply(); return render(); }
+    el.onclick = (e) => { const ly = e.target.closest('[data-lay]'); if (ly) { setMode(+ly.dataset.lay); return setTimeout(render, 800); } if (e.target.closest('[data-addw]')) { const u = $('wurl').value.trim(); if (!/^https?:\/\/|^img\//.test(u)) return toast2('Paste an image link (https://…)'); st.wall = RoxWalls.add(u); apply(); toast2('Wallpaper added'); return render(); } const z = e.target.closest('[data-sz]'); if (z) { st.size = +z.dataset.sz; apply(); return render(); } const t = e.target.closest('[data-t]'); if (t) { st[t.dataset.t] = !st[t.dataset.t]; apply(); return render(); }
       const w = e.target.closest('[data-w]'); if (w) { st.wall = +w.dataset.w; apply(); render(); } };
     el.querySelectorAll('[data-r]').forEach(r => r.oninput = () => { st[r.dataset.r] = +r.value; apply(); });
     el.querySelectorAll('#wurl').forEach(i => i.onkeydown = (e) => e.stopPropagation());

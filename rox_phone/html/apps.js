@@ -84,12 +84,47 @@ APPVIEW.calculator = () => ({ raw: true, html: `<div class="ph" id="ph" style="j
       else { if (op && !fresh) cur = String(calc(acc, +cur, op)); acc = +cur; op = k; fresh = true; $('ch').textContent = `${acc} ${op}`; } show(); } }); } });
 
 /* ---------- Notes ---------- */
-const NOTES = [['Shopping', 'Bread, water, repair kit', 'Today'], ['Meeting', 'Crew meet at 21:00 near the pier', 'Yesterday'], ['Plates', '06HBT193 · 5UB26785', 'Mon']];
-APPVIEW.notes = () => R(() => { const list = () => { PH().innerHTML = head('NOTES', `${NOTES.length} NOTES`) + `<div class="ph-body">${NOTES.map(([t, b, d], i) => `<div class="card2" data-n="${i}" style="cursor:pointer;animation-delay:${i * 40}ms;border-left:3px solid #ffb800"><b style="font-size:13px">${t}</b><p style="font-size:11.5px;color:rgba(255,255,255,.55);margin-top:3px">${b}</p><span style="font-size:9px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.35)">${d.toUpperCase()}</span></div>`).join('')}</div><button class="fab" data-n="new"><i class="fa-solid fa-plus"></i></button>`;
-  bind(PH(), { n: (i) => edit(i) }); };
-  const edit = (i) => { const n = i === 'new' ? ['', '', 'Today'] : NOTES[i]; PH().innerHTML = head('NOTE', 'EDITING') + `<div class="ph-body"><div class="back" style="margin:0 -16px 12px"><button data-bk><i class="fa-solid fa-chevron-left"></i>NOTES</button>${i !== 'new' ? '<button class="sq" data-dl><i class="fa-solid fa-trash"></i></button>' : ''}</div>
-    <div class="fld"><input id="nt" placeholder="Title" value="${n[0]}"></div><textarea class="ta" id="nb" style="min-height:220px" placeholder="Write something…">${n[1]}</textarea><button class="go2" data-sv>SAVE</button></div>`; stopKeys(PH());
-    bind(PH(), { bk: () => list(), dl: () => { NOTES.splice(i, 1); list(); }, sv: () => { const v = [$('nt').value || 'Untitled', $('nb').value, 'Today']; if (i === 'new') NOTES.unshift(v); else NOTES[i] = v; toast2('Note saved'); list(); } }); }; list(); });
+const NOTES = [{ t: 'Shopping list', b: 'Bread\nWater\nRepair kit\nBandages', c: '#ffb020', pin: 1, d: Date.now() - 36e5, todo: [['Bread', 1], ['Water', 0], ['Repair kit', 0], ['Bandages', 1]] },
+  { t: 'Crew meeting', b: 'Meet at 21:00 near the pier. Bring the van and two radios.', c: '#ff5a1f', d: Date.now() - 864e5 },
+  { t: 'Plates to check', b: '06HBT193\n5UB26785\n33ROX777', c: '#3ddc84', d: Date.now() - 2 * 864e5 },
+  { t: 'Ideas', b: 'Open a taco truck at Vespucci beach. Hire Sara as chef.', c: '#7aa7ff', d: Date.now() - 5 * 864e5 }];
+const NCOL = ['#ffb020', '#ff5a1f', '#3ddc84', '#7aa7ff', '#ff5ea8', '#a78bfa'];
+document.head.insertAdjacentHTML('beforeend', `<style>
+.nt2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .open .nt2 { grid-template-columns: repeat(3, 1fr); }
+.nc { position: relative; padding: 12px; border-radius: 14px; min-height: 120px; cursor: pointer; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.07); animation: fadeUp .3s backwards; transition: transform .15s; }
+.nc:hover { transform: translateY(-2px); } .nc::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); } .nc::after { content: ''; position: absolute; right: -30px; top: -30px; width: 90px; height: 90px; border-radius: 50%; background: var(--c); opacity: .12; }
+.nc b { display: block; font-size: 13px; margin-bottom: 5px; } .nc p { font-size: 10.5px; color: rgba(255,255,255,.55); line-height: 1.45; white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.nc small { position: absolute; left: 12px; bottom: 9px; font-size: 8px; font-weight: 800; letter-spacing: 1px; color: rgba(255,255,255,.35); } .nc .pin { position: absolute; right: 10px; top: 10px; color: var(--c); font-size: 10px; z-index: 1; }
+.nc.wide { grid-column: span 2; } .nsrch { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(255,255,255,.06); margin-bottom: 12px; } .nsrch input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: #fff; font: 600 12px 'Plus Jakarta Sans'; } .nsrch i { color: rgba(255,255,255,.4); font-size: 11px; }
+.ned { display: flex; flex-direction: column; height: 100%; } .ned .tb2 { display: flex; align-items: center; gap: 6px; padding: 38px 14px 10px; } .ned .tb2 .sp { flex: 1; }
+.ned .tb2 button { height: 30px; min-width: 30px; padding: 0 9px; border-radius: 8px; border: 0; background: rgba(255,255,255,.07); color: #fff; cursor: pointer; font: 700 10.5px 'Plus Jakarta Sans'; } .ned .tb2 .sv { background: var(--a); }
+.ned .cols { display: flex; gap: 6px; padding: 0 16px 8px; } .ned .cols i { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; } .ned .cols i.on { border-color: #fff; }
+.ned input.tt { background: none; border: 0; outline: 0; color: #fff; font: 800 22px 'Plus Jakarta Sans'; padding: 4px 16px; letter-spacing: -.4px; } .ned .meta { padding: 0 16px 8px; font-size: 9px; font-weight: 800; letter-spacing: 1.2px; color: rgba(255,255,255,.35); }
+.ned textarea { flex: 1; background: none; border: 0; outline: 0; resize: none; color: rgba(255,255,255,.88); font: 500 13px/1.6 'Plus Jakarta Sans'; padding: 4px 16px; }
+.ned .todo { padding: 0 16px 6px; } .ned .todo div { display: flex; align-items: center; gap: 9px; padding: 6px 0; font-size: 12.5px; cursor: pointer; } .ned .todo i.bx { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid rgba(255,255,255,.3); display: grid; place-items: center; font-size: 9px; font-style: normal; }
+.ned .todo div.dn { color: rgba(255,255,255,.35); text-decoration: line-through; } .ned .todo div.dn i.bx { background: var(--nc); border-color: var(--nc); color: #111; }
+.ned .bot { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 24px; font-size: 9.5px; color: rgba(255,255,255,.4); border-top: 1px solid rgba(255,255,255,.06); }
+</style>`);
+APPVIEW.notes = () => R(() => { let q = '';
+  const ago = (t) => { const m = (Date.now() - t) / 6e4 | 0; return m < 60 ? (m || 1) + 'm ago' : m < 1440 ? (m / 60 | 0) + 'h ago' : (m / 1440 | 0) + 'd ago'; };
+  const list = () => { const L = NOTES.map((n, i) => [n, i]).filter(([n]) => !q || (n.t + n.b).toLowerCase().includes(q.toLowerCase())).sort((a, b) => (b[0].pin || 0) - (a[0].pin || 0) || b[0].d - a[0].d);
+    PH().innerHTML = head('NOTES', `${NOTES.length} NOTES · ${NOTES.filter(n => n.pin).length} PINNED`, '<i class="fa-solid fa-plus"></i>') + `<div class="ph-body"><div class="nsrch"><i class="fa-solid fa-magnifying-glass"></i><input id="nq" placeholder="Search notes" value="${q}"></div>
+      <div class="nt2">${L.map(([n, i], k) => `<div class="nc ${k === 0 && n.pin ? 'wide' : ''}" style="--c:${n.c};animation-delay:${k * 40}ms" data-n="${i}">${n.pin ? '<i class="pin fa-solid fa-thumbtack"></i>' : ''}<b>${n.t}</b><p>${n.todo ? n.todo.map(([x, d]) => (d ? '☑ ' : '☐ ') + x).join('\n') : n.b}</p><small>${ago(n.d).toUpperCase()}</small></div>`).join('') || '<div class="dec" style="grid-column:span 2;text-align:center;padding:30px">NO NOTES</div>'}</div></div>`;
+    const nq = $('nq'); nq.onkeydown = (e) => e.stopPropagation(); nq.oninput = () => { q = nq.value; const p = nq.selectionStart; list(); $('nq').focus(); $('nq').setSelectionRange(p, p); };
+    bind(PH(), { n: (i) => edit(+i), hb: () => { NOTES.unshift({ t: '', b: '', c: NCOL[NOTES.length % NCOL.length], d: Date.now() }); edit(0); } }); };
+  const edit = (i) => { const n = NOTES[i];
+    PH().innerHTML = `<div class="ned" style="--nc:${n.c}"><div class="tb2"><button data-bk><i class="fa-solid fa-chevron-left"></i></button><span class="sp"></span><button data-pin title="Pin"><i class="fa-solid fa-thumbtack" style="color:${n.pin ? n.c : '#fff'}"></i></button><button data-td title="Checklist"><i class="fa-solid fa-list-check"></i></button><button data-sh title="Share"><i class="fa-solid fa-share-nodes"></i></button><button data-dl title="Delete"><i class="fa-solid fa-trash"></i></button><button class="sv" data-sv>Done</button></div>
+      <div class="cols">${NCOL.map(c => `<i style="background:${c}" class="${c === n.c ? 'on' : ''}" data-c="${c}"></i>`).join('')}</div>
+      <input class="tt" id="nt" placeholder="Title" value="${n.t.replace(/"/g, '&quot;')}"><div class="meta">EDITED ${ago(n.d).toUpperCase()}</div>
+      ${n.todo ? `<div class="todo">${n.todo.map(([x, d], k) => `<div class="${d ? 'dn' : ''}" data-tk="${k}"><i class="bx">${d ? '✓' : ''}</i>${x}</div>`).join('')}<div data-add style="color:rgba(255,255,255,.45)"><i class="fa-solid fa-plus" style="width:17px;text-align:center"></i>Add item</div></div>` : ''}
+      <textarea id="nb" placeholder="Start writing…">${n.todo ? '' : n.b}</textarea><div class="bot"><span id="wc">${(n.b.match(/\S+/g) || []).length} words</span><span>${new Date(n.d).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></div></div>`;
+    stopKeys(PH()); $('nb').oninput = () => $('wc').textContent = ($('nb').value.match(/\S+/g) || []).length + ' words'; if (!n.t) $('nt').focus();
+    const save = () => { n.t = $('nt').value.trim() || 'Untitled'; if (!n.todo) n.b = $('nb').value; n.d = Date.now(); };
+    bind(PH(), { bk: () => { save(); if (!n.b && n.t === 'Untitled' && !n.todo) NOTES.splice(i, 1); list(); }, sv: () => { save(); toast2('Note saved'); list(); },
+      pin: () => { save(); n.pin = !n.pin; edit(i); }, c: (c) => { save(); n.c = c; edit(i); }, dl: () => { NOTES.splice(i, 1); toast2('Note deleted'); list(); },
+      sh: () => { save(); toast2('Note shared to nearby player'); }, td: () => { save(); n.todo = n.todo ? null : (n.b.split('\n').filter(Boolean).map(x => [x, 0]).concat(n.b ? [] : [['New item', 0]])); edit(i); },
+      tk: (k) => { save(); n.todo[k][1] ^= 1; edit(i); }, add: () => { save(); const v = prompt('Item'); if (v) n.todo.push([v, 0]); edit(i); } }); };
+  list(); });
 
 /* ---------- Clock ---------- */
 const ALARMS = [['07:00', 'Work', 1], ['18:00', 'LSPD shift', 1], ['23:30', 'Car meet', 0]];
@@ -255,7 +290,7 @@ function shareNearby(host) {
 }
 
 /* ---------- first-time setup ---------- */
-const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wall: 12 }; let step = 0;
+const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wall: 0 }; let step = 0;
   const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
   const done = () => { try { return localStorage.getItem('rox_setup') === '1'; } catch (e) { return false; } };
   const dots = () => `<div class="dots2">${[0, 1, 2, 3, 4].map(i => `<i class="${i <= step ? 'on' : ''}"></i>`).join('')}</div>`;
@@ -270,7 +305,7 @@ const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wal
     () => `<div class="st4"><h2>Set a passcode</h2><p>4 digits to unlock your phone.</p><div class="pinbox">${[0, 1, 2, 3].map(i => `<i class="${D.pin.length > i ? 'on' : ''}">${D.pin[i] ? '•' : ''}</i>`).join('')}</div>
       <div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map(k => k ? `<button class="${k === 'del' ? 't' : ''}" data-k="${k}">${k === 'del' ? '<i class="fa-solid fa-delete-left"></i>' : k}</button>` : '<span></span>').join('')}</div>
       <button class="nxt" data-next ${D.pin.length === 4 ? '' : 'disabled'} style="margin-top:16px">Continue</button><button class="bk2" data-back>Back</button></div>`,
-    () => `<div class="st4"><h2>Choose a wallpaper</h2><p>You can change it any time in Settings.</p><div class="wg">${[12, 13, 14, 8, 9, 10, 11, 0, 1].map(i => `<i style="background:${RoxWalls.list[i]}" class="${i === D.wall ? 'on' : ''}" data-w="${i}"></i>`).join('')}</div>
+    () => `<div class="st4"><h2>Choose a wallpaper</h2><p>You can change it any time in Settings.</p><div class="wg">${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<i style="background:${RoxWalls.list[i]}" class="${i === D.wall ? 'on' : ''}" data-w="${i}"></i>`).join('')}</div>
       <button class="nxt" data-next style="margin-top:16px">Continue</button><button class="bk2" data-back>Back</button></div>`,
     () => `<div class="st4"><div class="done2"><i class="fa-solid fa-check"></i></div><h2 style="text-align:center">You're all set!</h2><p style="text-align:center">Your ROX phone is ready.</p>
       <div class="sumc"><div><span>Name</span><b>${D.first} ${D.last}</b></div><div><span>Number</span><b class="pn">${fmtN(ME.number)}</b></div><div><span>Email</span><b>${D.mail}@roxmail.ls</b></div></div>
