@@ -251,6 +251,53 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .so .si2 { width: 26px; height: 26px; border-radius: 5px; display: grid; place-items: center; font-size: 11px; border: 1px solid; } .so > span { flex: 1; } .so small { font-size: 10px; color: rgba(255,255,255,.45); }
 .so input[type=range] { width: 110px; accent-color: var(--a); } .so select { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: #fff; border-radius: 4px; height: 26px; font: 600 11px Inter; padding: 0 6px; }
 .walls2 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px 11px; } .walls2 i { height: 64px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; } .walls2 i.on { border-color: var(--a); }
+
+/* ===== Bank ===== */
+.bk-card { position: relative; border-radius: 8px; padding: 14px; overflow: hidden; border: 1px solid rgba(255,90,31,.4); background: linear-gradient(135deg, #2a1209, #120a07 55%, #0b0b0d); margin-bottom: 12px; animation: fadeUp .35s; }
+.bk-card::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, rgba(255,90,31,.06) 0 1px, transparent 1px 10px); -webkit-mask: linear-gradient(90deg, transparent 40%, #000); }
+.bk-card .t1 { display: flex; justify-content: space-between; font-size: 8.5px; font-weight: 800; letter-spacing: 1.5px; color: rgba(255,255,255,.55); position: relative; }
+.bk-card .t1 b { color: var(--a); } .bk-card .bal2 { font-size: 30px; font-weight: 800; letter-spacing: -.5px; margin: 6px 0 2px; position: relative; } .bk-card .bal2 small { font-size: 15px; opacity: .5; }
+.bk-card .acc { font-family: ui-monospace, Consolas, monospace; font-size: 10.5px; color: rgba(255,255,255,.55); position: relative; cursor: pointer; } .bk-card .acc i { margin-left: 5px; font-size: 9px; }
+.bk-card .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; position: relative; }
+.bk-card .split div { padding: 8px 10px; border-radius: 5px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); font-size: 8px; font-weight: 800; letter-spacing: 1.2px; color: rgba(255,255,255,.5); }
+.bk-card .split b { display: block; font-size: 14px; color: #fff; letter-spacing: 0; margin-top: 2px; }
+.qt { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; } .qt button { height: 54px; border-radius: 6px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.035); color: rgba(255,255,255,.8); font: 800 8.5px Inter; letter-spacing: 1.2px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.qt i { font-size: 15px; color: var(--a); } .qt button:hover { border-color: var(--a); background: rgba(255,90,31,.1); }
+.people { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; } .people::-webkit-scrollbar { height: 0; }
+.people div { text-align: center; font-size: 9.5px; font-weight: 600; color: rgba(255,255,255,.7); cursor: pointer; flex: none; width: 52px; } .people .mono { width: 44px; height: 44px; margin: 0 auto 5px; border-radius: 50%; } .people div:hover .mono { border-color: var(--a); }
+.people .add .mono { background: none; border: 1px dashed rgba(255,255,255,.3); color: rgba(255,255,255,.6); }
+.tx { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.05); animation: fadeUp .3s backwards; }
+.tx .ti2 { width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center; font-size: 12px; border: 1px solid; } .tx b { font-size: 12.5px; font-weight: 600; display: block; } .tx span { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,.4); }
+.tx .v { text-align: right; font-weight: 800; font-size: 13px; } .tx .v small { display: block; font-size: 8px; letter-spacing: 1px; font-weight: 800; }
+.tx.in .ti2 { color: #3ddc84; border-color: rgba(61,220,132,.3); background: rgba(61,220,132,.08); } .tx.in .v { color: #3ddc84; } .tx.out .ti2 { color: #ff8a4c; border-color: rgba(255,138,76,.3); background: rgba(255,138,76,.08); }
+/* transfer */
+.stp { display: flex; gap: 4px; margin: 0 0 12px; } .stp i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); } .stp i.on { background: var(--a); }
+.to { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,90,31,.35); background: rgba(255,90,31,.07); margin-bottom: 12px; } .to b { font-size: 13px; display: block; } .to span { font-size: 10px; color: rgba(255,255,255,.5); font-family: ui-monospace, Consolas, monospace; }
+.to button { margin-left: auto; } .fld { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); margin-bottom: 10px; }
+.fld:focus-within { border-color: var(--a); } .fld i { color: rgba(255,255,255,.4); font-size: 12px; } .fld input { flex: 1; background: none; border: 0; outline: 0; color: #fff; font: 600 12.5px Inter; }
+.amt-big { text-align: center; font-size: 44px; font-weight: 800; letter-spacing: -1px; margin: 4px 0 2px; } .amt-big small { font-size: 22px; opacity: .45; vertical-align: top; } .amt-big.err { color: #ff4d4d; animation: shake .35s; }
+.amt-sub { text-align: center; font-size: 9px; font-weight: 800; letter-spacing: 1.3px; color: rgba(255,255,255,.45); margin-bottom: 10px; } .amt-sub b { color: var(--a); }
+.qam { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; } .qam button { height: 28px; border-radius: 5px; border: 1px solid rgba(255,255,255,.1); background: none; color: #fff; font: 700 10.5px Inter; cursor: pointer; } .qam button:hover { border-color: var(--a); color: var(--a); }
+.npad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; } .npad button { height: 42px; border-radius: 6px; border: 0; background: rgba(255,255,255,.06); color: #fff; font: 500 19px Inter; cursor: pointer; } .npad button:active { background: rgba(255,255,255,.18); }
+.go2 { width: 100%; height: 44px; border-radius: 6px; border: 0; background: var(--a); color: #fff; font: 800 11px Inter; letter-spacing: 1.5px; cursor: pointer; position: relative; overflow: hidden; } .go2:disabled { opacity: .35; cursor: default; }
+.go2 .hold { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(255,255,255,.25); } .go2.holding .hold { width: 100%; transition: width 1s linear; }
+.rcp { border: 1px solid rgba(255,255,255,.08); border-radius: 6px; margin-bottom: 12px; } .rcp div { display: flex; justify-content: space-between; padding: 9px 11px; font-size: 8.5px; font-weight: 800; letter-spacing: 1.2px; color: rgba(255,255,255,.5); border-bottom: 1px dashed rgba(255,255,255,.08); }
+.rcp div:last-child { border: 0; } .rcp b { color: #fff; font-size: 11.5px; letter-spacing: 0; } .rcp .tot b { color: var(--a); font-size: 15px; }
+.done { text-align: center; padding-top: 30px; } .done .ok { width: 76px; height: 76px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: rgba(61,220,132,.12); border: 2px solid #3ddc84; color: #3ddc84; font-size: 30px; animation: pop .45s cubic-bezier(.2,1.6,.4,1); box-shadow: 0 0 30px rgba(61,220,132,.3); }
+.done h2 { font-size: 20px; } .done p { font-size: 11px; color: rgba(255,255,255,.55); margin: 4px 0 18px; }
+.bill { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); } .bill b { font-size: 12.5px; display: block; } .bill span { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #ff6b6b; }
+.bill .pay { height: 28px; padding: 0 11px; border-radius: 5px; border: 1px solid var(--a); background: rgba(255,90,31,.12); color: var(--a); font: 800 9px Inter; letter-spacing: 1px; cursor: pointer; } .bill .pay:hover { background: var(--a); color: #fff; } .bill .paid { color: #3ddc84; font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+/* ===== App store ===== */
+.hero { position: relative; height: 130px; border-radius: 8px; overflow: hidden; margin-bottom: 12px; padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; border: 1px solid rgba(255,90,31,.35);
+  background: radial-gradient(circle at 85% 30%, rgba(255,90,31,.55), transparent 55%), linear-gradient(135deg, #1d0d06, #0b0b0d); }
+.hero .big { position: absolute; right: 12px; top: 14px; transform: rotate(10deg); filter: drop-shadow(0 10px 20px rgba(0,0,0,.6)); }
+.hero small { font-size: 8.5px; font-weight: 800; letter-spacing: 1.5px; color: var(--a); } .hero b { font-size: 18px; } .hero span { font-size: 10.5px; color: rgba(255,255,255,.6); }
+.sapp { display: grid; grid-template-columns: 46px 1fr auto; gap: 11px; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.05); animation: fadeUp .3s backwards; }
+.sapp b { font-size: 13px; display: block; } .sapp span { font-size: 10px; color: rgba(255,255,255,.5); display: block; } .sapp em { font-style: normal; font-size: 8.5px; font-weight: 800; letter-spacing: 1px; color: rgba(255,255,255,.35); }
+.get { min-width: 64px; height: 28px; border-radius: 14px; border: 0; background: rgba(255,90,31,.16); color: var(--a); font: 800 10px Inter; letter-spacing: 1px; cursor: pointer; position: relative; overflow: hidden; }
+.get:hover { background: var(--a); color: #fff; } .get.open { background: rgba(255,255,255,.1); color: #fff; } .get.rm { background: rgba(255,77,77,.12); color: #ff6b6b; min-width: 28px; margin-left: 4px; }
+.get.ing { background: rgba(255,255,255,.08); color: transparent; } .get.ing::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p, 0%); background: var(--a); transition: width .15s; }
+.get.ing::before { content: attr(data-p); position: absolute; inset: 0; display: grid; place-items: center; color: #fff; z-index: 1; font-size: 9.5px; }
 /* ---------- preview controls ---------- */
 .ctrl { position: fixed; left: 30px; top: 30px; display: flex; flex-direction: column; gap: 8px; }
 .ctrl h1 { font-family: 'Barlow Condensed'; font-style: italic; font-size: 38px; } .ctrl h1 b { color: var(--a); }
@@ -295,12 +342,17 @@ body:not(.preview) .ctrl { display: none; }
 <script src="icons.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
-const APPS = [['Services','services',3],['Twitter','twitter'],['Photos','photos'],['Calculator','calculator'],['Clock','clock'],['Notes','notes'],['Banking','banking',1],['Drop','drop'],['Pic-it','picit'],['Maps','maps'],
-  ['Pigeon','pigeon'],['Vibe','vibe'],['Crew','crew'],['RoxMusic','music'],['Garage','garage'],['Crypto','crypto',1],['DOJ','doj'],['Racing','racing']];
+const CATALOG = [['Services','services','Police, EMS & mechanic lines','Utilities',1,3],['Banking','banking','Your ROX Bank account','Finance',1,1],['App Store','store','Get more apps','Utilities',1],
+  ['Twitter','twitter','What is happening in Los Santos','Social'],['Photos','photos','Your gallery','Media',1],['Calculator','calculator','Quick maths','Utilities'],['Clock','clock','Alarms & timers','Utilities'],
+  ['Notes','notes','Write things down','Utilities'],['Drop','drop','Share files nearby','Utilities'],['Pic-it','picit','Share photos with the city','Social'],['Maps','maps','GPS & places','Navigation',1],
+  ['Pigeon','pigeon','Anonymous messages','Social'],['Vibe','vibe','Voice rooms','Social'],['Crew','crew','Your crew & gang','Social'],['RoxMusic','music','Music & radio','Media'],
+  ['Garage','garage','Your vehicles','Utilities'],['Crypto','crypto','Buy & sell coins','Finance'],['DOJ','doj','Court & lawyers','Government'],['Racing','racing','Street races','Games'],['Mail','mail','Your inbox','Social'],['Houses','houses','Real estate','Finance']];
+let INSTALLED = ['services','banking','store','twitter','photos','calculator','clock','notes','maps','music','garage','crypto','picit','racing'];
+const appsNow = () => CATALOG.filter(c => INSTALLED.includes(c[1])).map(c => [c[0], c[1], c[5]]);
 const DOCK = [['Phone','phone'],['Messages','messages',2],['Camera','camera'],['Settings','settings']];
 const tile = ([n, k, b], i, label = true) => `<div class="app" data-app="${k}" data-name="${n}" style="animation-delay:${i * 22}ms">${b ? `<em>${b}</em>` : ''}<div class="ic">${RoxIcons.svg(k, label ? 46 : 48)}</div>${label ? n : ''}</div>`;
 const isOpen = () => document.body.classList.contains('open');
-function drawApps() { $('apps').innerHTML = APPS.slice(0, isOpen() ? 18 : 12).map((a, k) => tile(a, k)).join(''); $('dockApps').innerHTML = DOCK.map((a, k) => tile(a, k, false)).join(''); }
+function drawApps() { $('apps').innerHTML = appsNow().slice(0, isOpen() ? 18 : 12).map((a, k) => tile(a, k)).join(''); $('dockApps').innerHTML = DOCK.map((a, k) => tile(a, k, false)).join(''); }
 
 /* lock */
 let code = ''; const PIN = '1234';
@@ -490,6 +542,82 @@ const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif:
     document.querySelector('.sb .r').innerHTML = (st.air ? '<i class="fa-solid fa-plane"></i>' : '<i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i>') + (st.dnd ? '<i class="fa-solid fa-moon"></i>' : '') + (st.silent ? '<i class="fa-solid fa-bell-slash"></i>' : '') + '<span class="bat"><i></i></span>'; }
   return { render, st };
 })();
+
+/* ---------- Bank + transfers ---------- */
+const BANK = { bank: 62881, cash: 4250, acc: 'ROX-4821-7730', tx: [['in','Paycheck · LSPD',2500,'TODAY 02:00','briefcase'],['out','24/7 Supermarket',42,'TODAY 01:31','cart-shopping'],['in','From Abu Ibrahim',300,'YESTERDAY','arrow-down'],
+  ['out','Mechanic Shop',850,'YESTERDAY','wrench'],['out','LTD Gasoline',96,'MON','gas-pump']], bills: [['Speeding ticket · LSPD',250,'file-invoice'],['Pillbox Medical',600,'kit-medical'],['House rent · Alta St',1200,'house']] };
+const Bank = (() => { let view = 'home', T = {};
+  const m = (n) => '$' + Math.round(n).toLocaleString('en-US');
+  const back = (to = 'home', label = 'BANKING') => `<div class="back" style="margin:0 -16px 12px"><button data-go="${to}"><i class="fa-solid fa-chevron-left"></i>${label}</button><span style="font-size:8.5px;font-weight:800;letter-spacing:1.4px;color:rgba(255,255,255,.4)">ROX BANK</span></div>`;
+  const home = () => head('BANKING', 'ROX BANK · CHECKING', '<i class="fa-solid fa-bell"></i>') + `<div class="ph-body">
+    <div class="bk-card"><div class="t1"><span>AVAILABLE BALANCE</span><b>● ACTIVE</b></div><div class="bal2">${m(BANK.bank)}<small>.00</small></div><div class="acc" data-copy>${BANK.acc}<i class="fa-solid fa-copy"></i></div>
+      <div class="split"><div>BANK<b>${m(BANK.bank)}</b></div><div>CASH IN HAND<b>${m(BANK.cash)}</b></div></div></div>
+    <div class="qt"><button data-go="send"><i class="fa-solid fa-paper-plane"></i>SEND</button><button data-go="request"><i class="fa-solid fa-hand-holding-dollar"></i>REQUEST</button><button data-go="bills"><i class="fa-solid fa-file-invoice-dollar"></i>BILLS<span style="color:#ff6b6b">${BANK.bills.length ? '● ' + BANK.bills.length : ''}</span></button><button data-go="history"><i class="fa-solid fa-clock-rotate-left"></i>HISTORY</button></div>
+    <div class="lbl" style="margin:0 0 8px">SEND AGAIN</div><div class="people"><div class="add" data-go="send"><div class="mono"><i class="fa-solid fa-plus"></i></div>New</div>${CONTACTS.slice(0, 6).map(([n, p]) => `<div data-pick="${n}"><div class="mono">${ini4(n)}</div>${n.split(' ').slice(-1)[0]}</div>`).join('')}</div>
+    <div class="sec" style="margin-bottom:2px">Recent activity <span data-go="history" style="cursor:pointer">SEE ALL</span></div>${txl(BANK.tx.slice(0, 4))}</div>`;
+  const txl = (l) => l.map(([k, n, v, d, i], j) => `<div class="tx ${k}" style="animation-delay:${j * 35}ms"><div class="ti2"><i class="fa-solid fa-${i}"></i></div><div><b>${n}</b><span>${d}</span></div><div class="v">${k === 'in' ? '+' : '-'}${m(v)}<small style="color:${k === 'in' ? '#3ddc84' : 'rgba(255,255,255,.35)'}">${k === 'in' ? 'RECEIVED' : 'SENT'}</small></div></div>`).join('');
+  const history = () => head('HISTORY', `${BANK.tx.length} TRANSACTIONS`) + `<div class="ph-top"><div class="chips"><button class="on">ALL</button><button>IN</button><button>OUT</button></div></div><div class="ph-body">${back()}${txl(BANK.tx)}</div>`;
+  const bills = () => head('BILLS', `${BANK.bills.length} UNPAID · ${m(BANK.bills.reduce((a, b) => a + b[1], 0))}`) + `<div class="ph-body">${back()}${BANK.bills.map(([n, v, i], k) => `<div class="bill"><div class="mono"><i class="fa-solid fa-${i}"></i></div><div><b>${n}</b><span>DUE · ${m(v)}</span></div><button class="pay" data-pay="${k}">PAY ${m(v)}</button></div>`).join('') || '<div class="dec" style="text-align:center;padding:30px">ALL BILLS PAID</div>'}</div>`;
+  // transfer: 1 recipient, 2 amount, 3 review, 4 done
+  const steps = (n) => `<div class="stp">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</div>`;
+  const s1 = () => head(T.req ? 'REQUEST' : 'SEND MONEY', 'STEP 1 · RECIPIENT') + `<div class="ph-body">${back()}${steps(1)}
+    <div class="fld"><i class="fa-solid fa-magnifying-glass"></i><input id="rq" placeholder="Name, phone number or account"></div>
+    <div class="lbl" style="margin:4px 0 4px">CONTACTS</div><div id="rl">${rlist('')}</div></div>`;
+  const rlist = (q) => CONTACTS.filter(c => !q || (c[0] + c[1]).toLowerCase().includes(q.toLowerCase())).map(([n, p]) => `<div class="bk" data-to="${n}"><div class="mono">${ini4(n)}</div><b>${n}</b><span>${p}</span></div>`).join('')
+    + (/\d{3}/.test(q) ? `<div class="bk" data-to="${q}"><div class="mono">#</div><b>Send to ${q}</b><span>number / account</span></div>` : '');
+  const s2 = () => head(T.req ? 'REQUEST' : 'SEND MONEY', 'STEP 2 · AMOUNT') + `<div class="ph-body">${back('send', 'RECIPIENT')}${steps(2)}
+    <div class="to"><div class="mono">${ini4(T.to)}</div><div><b>${T.to}</b><span>${(CONTACTS.find(c => c[0] === T.to) || [, T.to])[1]}</span></div></div>
+    <div class="amt-big" id="ab2"><small>$</small>${(T.amt || 0).toLocaleString('en-US')}</div><div class="amt-sub">${T.req ? 'THEY WILL GET A REQUEST' : `AVAILABLE <b>${m(BANK.bank)}</b> · NO FEE`}</div>
+    <div class="qam">${[100, 500, 1000, 5000].map(v => `<button data-add="${v}">+${v >= 1000 ? v / 1000 + 'K' : v}</button>`).join('')}</div>
+    <div class="npad">${['1','2','3','4','5','6','7','8','9','C','0','⌫'].map(k => `<button data-k2="${k}">${k}</button>`).join('')}</div>
+    <div class="fld"><i class="fa-solid fa-pen"></i><input id="note" placeholder="Add a note (optional)" value="${T.note || ''}"></div>
+    <button class="go2" data-go="review" ${T.amt > 0 ? '' : 'disabled'}>CONTINUE</button></div>`;
+  const s3 = () => head(T.req ? 'REQUEST' : 'SEND MONEY', 'STEP 3 · CONFIRM') + `<div class="ph-body">${back('amount', 'AMOUNT')}${steps(3)}
+    <div class="amt-big"><small>$</small>${T.amt.toLocaleString('en-US')}</div><div class="amt-sub">${T.req ? 'REQUEST FROM' : 'TO'} <b>${T.to.toUpperCase()}</b></div>
+    <div class="rcp"><div>FROM<b>${BANK.acc}</b></div><div>TO<b>${T.to}</b></div><div>NOTE<b>${T.note || '—'}</b></div><div>FEE<b>$0</b></div>${T.req ? '' : `<div>BALANCE AFTER<b>${m(BANK.bank - T.amt)}</b></div>`}<div class="tot">TOTAL<b>${m(T.amt)}</b></div></div>
+    <button class="go2" id="hold"><span class="hold"></span><span style="position:relative">HOLD TO ${T.req ? 'REQUEST' : 'SEND'}</span></button></div>`;
+  const s4 = () => `<div class="ph-body"><div class="done"><div class="ok"><i class="fa-solid fa-check"></i></div><h2>${T.req ? 'Request sent' : 'Money sent'}</h2><p>${m(T.amt)} ${T.req ? 'requested from' : 'sent to'} ${T.to}</p>
+    <div class="rcp" style="text-align:left"><div>REFERENCE<b>TX-${(Date.now() % 1e6).toString().padStart(6, '0')}</b></div><div>DATE<b>${new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</b></div>${T.req ? '' : `<div>NEW BALANCE<b>${m(BANK.bank)}</b></div>`}</div>
+    <button class="go2" data-go="home">DONE</button></div></div>`;
+  function render(v) { if (v) view = v; const el = $('ph'); if (!el) return;
+    el.innerHTML = ({ home, history, bills, send: s1, request: s1, amount: s2, review: s3, done: s4 })[view]();
+    if ($('rq')) { $('rq').oninput = () => $('rl').innerHTML = rlist($('rq').value.trim()); $('rq').onkeydown = (e) => e.stopPropagation(); }
+    if ($('note')) { $('note').oninput = () => T.note = $('note').value; $('note').onkeydown = (e) => e.stopPropagation(); }
+    if ($('hold')) { const h = $('hold'); let t; const up = () => { clearTimeout(t); h.classList.remove('holding'); };
+      h.onmousedown = () => { h.classList.add('holding'); t = setTimeout(confirm, 1000); }; h.onmouseup = up; h.onmouseleave = up; }
+    el.onclick = (e) => { const x = e.target.closest('[data-go],[data-to],[data-pick],[data-add],[data-k2],[data-pay],[data-copy]'); if (!x || x.disabled) return;
+      if (x.dataset.copy !== undefined) return toast2('Account number copied');
+      if (x.dataset.go) { if (x.dataset.go === 'send' || x.dataset.go === 'request') T = { req: x.dataset.go === 'request', amt: 0 }; return render(x.dataset.go === 'request' ? 'send' : x.dataset.go); }
+      if (x.dataset.to || x.dataset.pick) { T.to = x.dataset.to || x.dataset.pick; if (x.dataset.pick) T = { to: T.to, amt: 0 }; return render('amount'); }
+      if (x.dataset.add) { T.amt = (T.amt || 0) + +x.dataset.add; return check(); }
+      if (x.dataset.k2) { const k = x.dataset.k2, s2v = String(T.amt || 0); T.amt = k === 'C' ? 0 : k === '⌫' ? +(s2v.slice(0, -1) || 0) : +(s2v + k).slice(0, 9); return check(); }
+      if (x.dataset.pay) { const b = BANK.bills[x.dataset.pay]; if (BANK.bank < b[1]) return toast2('Not enough money'); BANK.bank -= b[1]; BANK.tx.unshift(['out', b[0], b[1], 'NOW', 'file-invoice']); BANK.bills.splice(x.dataset.pay, 1); toast2('Bill paid'); render(); } }; }
+  function check() { if (!T.req && T.amt > BANK.bank) { T.amt = Math.floor(BANK.bank); render(); $('ab2').classList.add('err'); toast2('Not enough money in your account'); } else render(); }
+  function confirm() { if (!T.req) { BANK.bank -= T.amt; BANK.tx.unshift(['out', 'To ' + T.to, T.amt, 'NOW', 'paper-plane']); }
+    toast2(T.req ? `Request sent to ${T.to}` : `Sent ${m(T.amt)} to ${T.to}`);
+    if (window.invokeNative) fetch(`https://${GetParentResourceName()}/bank`, { method: 'POST', body: JSON.stringify({ action: T.req ? 'request' : 'transfer', to: T.to, amount: T.amt, note: T.note || '' }) });
+    render('done'); }
+  return { render };
+})();
+
+/* ---------- App Store ---------- */
+const Store = (() => { let cat = 'All';
+  const CORE = ['services', 'banking', 'store'];
+  function render() { const el = $('ph'); if (!el) return; const cats = ['All', ...new Set(CATALOG.map(c => c[3]))];
+    const list = CATALOG.filter(c => cat === 'All' || c[3] === cat);
+    el.innerHTML = head('APP STORE', `${CATALOG.length} APPS · ${INSTALLED.length} INSTALLED`, '<i class="fa-solid fa-magnifying-glass"></i>') + `<div class="ph-body">
+      <div class="hero"><div class="big">${RoxIcons.svg('crew', 70)}</div><small>FEATURED</small><b>Crew</b><span>Run your crew, share GPS & plan jobs</span></div>
+      <div class="chips" style="flex-wrap:wrap">${cats.map(c => `<button class="${c === cat ? 'on' : ''}" data-cat="${c}">${c.toUpperCase()}</button>`).join('')}</div>
+      ${list.map(([n, k, d, c], i) => { const inst = INSTALLED.includes(k); return `<div class="sapp" style="animation-delay:${i * 25}ms">${RoxIcons.svg(k, 46)}<div><b>${n}</b><span>${d}</span><em>${c.toUpperCase()}${CORE.includes(k) ? ' · SYSTEM' : ''}</em></div>
+        <div style="display:flex">${inst ? `<button class="get open" data-open="${k}">OPEN</button>${CORE.includes(k) ? '' : `<button class="get rm" data-rm="${k}" title="Remove"><i class="fa-solid fa-trash"></i></button>`}` : `<button class="get" data-get="${k}">GET</button>`}</div></div>`; }).join('')}</div>`;
+    el.onclick = (e) => { const x = e.target.closest('[data-cat],[data-get],[data-rm],[data-open]'); if (!x) return;
+      if (x.dataset.cat) { cat = x.dataset.cat; return render(); }
+      if (x.dataset.rm) { INSTALLED = INSTALLED.filter(a => a !== x.dataset.rm); drawApps(); toast2('App removed'); return render(); }
+      if (x.dataset.open) { const c = CATALOG.find(a => a[1] === x.dataset.open); closeApp(); return setTimeout(() => { const t = document.querySelector(`.app[data-app="${c[1]}"]`); openApp(c[1], c[0], t || x); }, 300); }
+      if (x.dataset.get) { let p = 0; x.className = 'get ing'; const t = setInterval(() => { p += 9 + Math.random() * 14; x.style.setProperty('--p', Math.min(p, 100) + '%'); x.dataset.p = Math.min(100, p | 0) + '%';
+        if (p >= 100) { clearInterval(t); INSTALLED.push(x.dataset.get); drawApps(); toast2(CATALOG.find(a => a[1] === x.dataset.get)[0] + ' installed'); render(); } }, 120); } }; }
+  return { render };
+})();
 /* ---------- apps ---------- */
 const COL = ['#ff5a1f','#2f7cf6','#a855f7','#22c55e','#eab308','#ec4899'];
 const ini = (n) => n.split(' ').map(w => w[0]).join('').slice(0, 2);
@@ -502,9 +630,8 @@ const APPVIEW = {
   messages: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Msg.render() }),
   services: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Svc.render() }),
   phone: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Phone.render('log') }),
-  banking: () => ({ title: 'Banking', btn: 'bell', html: `<div class="card"><small>TOTAL BALANCE</small><div class="bal">$62,881.00</div><div class="row"><span>•••• 4821</span><span class="chip"></span></div></div>
-    <div class="acts"><div><i class="fa-solid fa-paper-plane"></i>Send</div><div><i class="fa-solid fa-arrow-down"></i>Request</div><div><i class="fa-solid fa-file-invoice-dollar"></i>Bills</div><div><i class="fa-solid fa-chart-line"></i>Stats</div></div>
-    <div class="sec">Transactions <span>See all</span></div>${TX.map(([n, a, c, i, d]) => `<div class="li"><div class="ti"><i class="fa-solid fa-${i}"></i></div><div class="tx"><b>${n}</b><span>${d}</span></div><div class="amt ${c}">${a.startsWith('+') ? '+$' + a.slice(1) : '-$' + a.slice(1)}</div></div>`).join('')}` }),
+  banking: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Bank.render('home') }),
+  store: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Store.render() }),
   settings: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Sett.render() }),
 };
 function openApp(key, name, from) {
