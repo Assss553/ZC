@@ -65,11 +65,10 @@ body.preview .map-frame { background: linear-gradient(rgba(255,255,255,.06) 1px,
     background: linear-gradient(90deg, rgba(10,10,13,.85), rgba(10,10,13,.7)); clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%); }
 .mh-bar b { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mh-bar span { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,.55); white-space: nowrap; }
-.map-head.foot { bottom: 72px; left: var(--mx); width: 330px; }
+.map-head.foot { bottom: 22px; left: var(--mx); width: 330px; }
 
 /* hex status under the map */
-.hex-row { position: absolute; left: var(--mx); bottom: calc(100vh - var(--my) + 54px); display: flex; gap: 6px; transition: bottom .4s; }
-.hex-row.foot { bottom: 22px; }
+.hex-row { display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; padding-right: 12px; }
 .st { position: relative; width: 48px; height: 44px; margin-right: -12px; transition: opacity .35s ease, transform .35s cubic-bezier(.2,.9,.3,1.3), width .35s, margin .35s; }
 .st svg { position: absolute; inset: 0; width: 48px; height: 44px; overflow: visible; }
 .st .tb { fill: rgba(12,12,15,.82); stroke: rgba(255,255,255,.1); stroke-width: 1.2; }
@@ -141,3 +140,11 @@ body.preview .map-frame { background: linear-gradient(rgba(255,255,255,.06) 1px,
 .seg button { flex: 1; height: 30px; border: 0; border-radius: 6px; background: transparent; color: #999; font-weight: 800; cursor: pointer; font-family: inherit; }
 .seg button.on { background: var(--accent); color: #fff; }
 .s-done { width: 100%; margin-top: 16px; height: 40px; border: 0; border-radius: 9px; background: var(--accent); color: #fff; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 8px 20px rgba(var(--accent-rgb), .35); }
+
+/* 3D tilt */
+.health { transform: perspective(700px) rotateY(-16deg) rotateX(4deg); transform-origin: right bottom; }
+.veh { transform-origin: left bottom; }
+.veh.on { transform: perspective(700px) rotateY(16deg) rotateX(4deg); }
+.map-head { transform: perspective(700px) rotateY(12deg); transform-origin: left center; }
+.info { transform: perspective(700px) rotateY(-12deg); transform-origin: right top; }
+.health, .veh, .map-head, .info { filter: drop-shadow(0 8px 14px rgba(0,0,0,.45)); }

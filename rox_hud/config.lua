@@ -11,7 +11,9 @@ Config.HideMinimapOnFoot = true    -- minimap only in vehicles
 Config.LowHealthVignette = true    -- red screen edges when health is low
 Config.HideDefaultHud = true       -- hide GTA street name / area / vehicle name and the health bars under the minimap
 
-Config.SettingsCommand = 'hud'     -- /hud opens the HUD settings
+Config.SettingsCommand = 'hud'
+Config.MapCommand = 'minimap'      -- /minimap shows / hides the map
+Config.MapKey = ''                 -- default key ('' = none, players bind it in settings)     -- /hud opens the HUD settings
 Config.SeatbeltCommand = 'seatbelt'
 Config.SeatbeltKey = 'B'
 Config.Update = 200                -- ms between updates on foot (vehicle: 80)

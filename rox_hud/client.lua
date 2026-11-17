@@ -6,7 +6,7 @@ local belt, voiceMode, radioTalk = false, 2, false
 -- player settings (saved on the client with KVP)
 local settings = {
     compass = Config.Compass, info = Config.PlayerInfo, mapOnFoot = not Config.HideMinimapOnFoot,
-    vignette = Config.LowHealthVignette, alwaysStatus = false, unit = Config.SpeedUnit, color = Config.Color, hidden = false,
+    vignette = Config.LowHealthVignette, alwaysStatus = false, showMap = true, unit = Config.SpeedUnit, color = Config.Color, hidden = false,
 }
 do
     local raw = GetResourceKvpString('rox_hud_settings')
@@ -116,7 +116,7 @@ CreateThread(function()
         local veh = GetVehiclePedIsIn(ped, false)
         local inVeh = veh ~= 0
         if not inVeh then belt = false end
-        local radar = (inVeh or settings.mapOnFoot) and not settings.hidden
+        local radar = settings.showMap and (inVeh or settings.mapOnFoot) and not settings.hidden
         DisplayRadar(radar)
 
         -- resolution / safe zone changed: re-align with the minimap
@@ -151,6 +151,13 @@ CreateThread(function()
     end
 end)
 
+-- /minimap shows / hides the minimap (bind it in GTA settings > Key Bindings > FiveM)
+RegisterCommand(Config.MapCommand, function()
+    settings.showMap = not settings.showMap
+    saveSettings(); sendInit()
+end, false)
+RegisterKeyMapping(Config.MapCommand, 'Show / hide minimap', 'keyboard', Config.MapKey)
+
 -- /hud settings
 RegisterCommand(Config.SettingsCommand, function()
     SendNUIMessage({ action = 'settings', settings = settings })
@@ -160,7 +167,7 @@ end, false)
 RegisterNUICallback('saveSettings', function(d, cb)
     cb('ok')
     if type(d) ~= 'table' then return end
-    for _, k in ipairs({ 'compass', 'info', 'mapOnFoot', 'vignette', 'hidden', 'alwaysStatus' }) do
+    for _, k in ipairs({ 'compass', 'info', 'mapOnFoot', 'vignette', 'hidden', 'alwaysStatus', 'showMap' }) do
         if type(d[k]) == 'boolean' then settings[k] = d[k] end
     end
     if d.unit == 'kmh' or d.unit == 'mph' then settings.unit = d.unit end

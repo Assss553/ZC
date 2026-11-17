@@ -4,7 +4,7 @@ const post = (n, d = {}) => RES ? fetch(`https://${RES}/${n}`, { method: 'POST',
 const $ = (id) => document.getElementById(id);
 const rgb = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
 const root = document.documentElement;
-let S = { alwaysStatus: false, compass: true, info: true, mapOnFoot: false, vignette: true, unit: 'kmh', color: '#ff5a1f', hidden: false }, MAX = 300;
+let S = { showMap: true, alwaysStatus: false, compass: true, info: true, mapOnFoot: false, vignette: true, unit: 'kmh', color: '#ff5a1f', hidden: false }, MAX = 300;
 
 /* ---------- triangle status (auto show / hide) ---------- */
 const HEX = [['hunger', 'burger'], ['thirst', 'droplet'], ['stress', 'brain'], ['stamina', 'person-running'], ['oxygen', 'lungs'], ['voice', 'microphone']];
@@ -39,7 +39,7 @@ const compass = (h) => STRIP.forEach(s => { s.style.left = (230 + (s.dataset.d -
 let MAXS = 300; function buildTicks() {}
 
 /* ---------- settings ---------- */
-const TOGGLES = [['compass', 'compass', 'Compass'], ['info', 'id-card', 'Player info (ID, job, money)'], ['mapOnFoot', 'map', 'Minimap on foot'], ['vignette', 'heart-pulse', 'Low health effect'], ['alwaysStatus', 'eye', 'Always show status'], ['hidden', 'eye-slash', 'Hide HUD (cinematic)']];
+const TOGGLES = [['compass', 'compass', 'Compass'], ['info', 'id-card', 'Player info (ID, job, money)'], ['showMap', 'map', 'Show minimap'], ['mapOnFoot', 'map-location', 'Minimap on foot'], ['vignette', 'heart-pulse', 'Low health effect'], ['alwaysStatus', 'eye', 'Always show status'], ['hidden', 'eye-slash', 'Hide HUD (cinematic)']];
 const COLORS = ['#ff5a1f', '#ff2a3a', '#ffb020', '#3ddc84', '#1fc9b8', '#4da3ff', '#8a6cff', '#ff5ec4'];
 function renderSettings() {
     $('sList').innerHTML = TOGGLES.map(([k, ic, l]) => `<div class="s-row ${S[k] ? 'on' : ''}" data-k="${k}"><i class="fa-solid fa-${ic}"></i><span>${l}</span><div class="sw"></div></div>`).join('');
@@ -77,7 +77,7 @@ window.addEventListener('message', (e) => {
 
     $('hud').classList.toggle('hidden', !!d.hidden);
     $('vignette').classList.toggle('on', S.vignette && !d.hidden && d.health > 0 && d.health < 30);
-    $('mapFrame').classList.toggle('off', !d.radar); $('mapHead').classList.toggle('foot', !d.radar); $('hexRow').classList.toggle('foot', !d.radar);
+    $('mapFrame').classList.toggle('off', !d.radar); $('mapHead').classList.toggle('foot', !d.radar);
     compass(d.heading); text('deg', Math.round(d.heading) + '°'); text('dir', d.dir);
     text('street', d.street + (d.cross ? ' / ' + d.cross : '')); text('zone', d.zone || '');
 
