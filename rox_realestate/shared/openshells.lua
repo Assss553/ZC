@@ -7,16 +7,16 @@ OpenShells = {
     { model = 'rox_open_cottage', label = 'ROX Cottage (2 floors, empty)', labelAr = 'كوخ ROX (دورين، فاضي)', w = 8.00, d = 8.00, doorX = -0.90, rooms = 1, floors = 2, tag = 'small' },
     { model = 'rox_open_craftsman', label = 'ROX Craftsman (2 floors, empty)', labelAr = 'كرافتسمان ROX (دورين، فاضي)', w = 8.80, d = 8.60, doorX = 1.20, rooms = 1, floors = 2, tag = 'small' },
     { model = 'rox_open_townhouse', label = 'ROX Townhouse (2 floors, empty)', labelAr = 'تاون هاوس ROX (دورين، فاضي)', w = 7.60, d = 10.60, doorX = -0.60, rooms = 1, floors = 2, tag = 'narrow' },
-    { model = 'rox_open_beach', label = 'ROX Beach House (2 floors, empty)', labelAr = 'بيت الشاطئ ROX (دورين، فاضي)', w = 9.60, d = 10.00, doorX = -1.50, rooms = 1, floors = 2, tag = 'medium' },
-    { model = 'rox_open_family', label = 'ROX Family Home (2 floors, empty)', labelAr = 'بيت العائلة ROX (دورين، فاضي)', w = 11.00, d = 9.00, doorX = 2.10, rooms = 1, floors = 2, tag = 'medium' },
+    { model = 'rox_open_beach', label = 'ROX Beach House PREMIUM (2 floors, empty)', labelAr = 'بيت الشاطئ ROX بريميوم (دورين، فاضي)', w = 9.60, d = 10.00, doorX = -1.50, rooms = 1, floors = 2, tag = 'medium' },
+    { model = 'rox_open_family', label = 'ROX Family Home PREMIUM (2 floors, empty)', labelAr = 'بيت العائلة ROX بريميوم (دورين، فاضي)', w = 11.00, d = 9.00, doorX = 2.10, rooms = 1, floors = 2, tag = 'medium' },
     { model = 'rox_open_ranch', label = 'ROX Ranch House (2 floors, empty)', labelAr = 'رانش ROX (دورين، فاضي)', w = 12.80, d = 8.60, doorX = 2.90, rooms = 1, floors = 2, tag = 'wide' },
-    { model = 'rox_open_villa', label = 'ROX Villa (2 floors, empty)', labelAr = 'فيلا ROX (دورين، فاضي)', w = 14.60, d = 10.60, doorX = 0.00, rooms = 1, floors = 2, tag = 'large' },
-    { model = 'rox_open_mansion', label = 'ROX Mansion (2 floors, empty)', labelAr = 'قصر ROX (دورين، فاضي)', w = 16.80, d = 12.00, doorX = 0.00, rooms = 1, floors = 2, tag = 'large' },
+    { model = 'rox_open_villa', label = 'ROX Villa PREMIUM (2 floors, empty)', labelAr = 'فيلا ROX بريميوم (دورين، فاضي)', w = 14.60, d = 10.60, doorX = 0.00, rooms = 1, floors = 2, tag = 'large' },
+    { model = 'rox_open_mansion', label = 'ROX Mansion PREMIUM (2 floors, empty)', labelAr = 'قصر ROX بريميوم (دورين، فاضي)', w = 16.80, d = 12.00, doorX = 0.00, rooms = 1, floors = 2, tag = 'large' },
     { model = 'rox_open1_studio', label = 'ROX Studio (1 floor, empty)', labelAr = 'ستوديو ROX (دور واحد، فاضي)', w = 6.40, d = 6.40, doorX = 0.00, rooms = 1, floors = 1, tag = 'small' },
     { model = 'rox_open1_bungalow', label = 'ROX Bungalow (1 floor, empty)', labelAr = 'بنغلو ROX (دور واحد، فاضي)', w = 8.40, d = 7.40, doorX = -1.50, rooms = 1, floors = 1, tag = 'small' },
     { model = 'rox_open1_long', label = 'ROX Long House (1 floor, empty)', labelAr = 'البيت الطويل ROX (دور واحد، فاضي)', w = 7.00, d = 11.40, doorX = 0.00, rooms = 1, floors = 1, tag = 'narrow' },
     { model = 'rox_open1_garden', label = 'ROX Garden House (1 floor, empty)', labelAr = 'بيت الحديقة ROX (دور واحد، فاضي)', w = 11.40, d = 8.40, doorX = 2.00, rooms = 1, floors = 1, tag = 'wide' },
-    { model = 'rox_open1_estate', label = 'ROX Estate (1 floor, empty)', labelAr = 'عزبة ROX (دور واحد، فاضي)', w = 14.40, d = 10.40, doorX = 0.00, rooms = 1, floors = 1, tag = 'large' },
+    { model = 'rox_open1_estate', label = 'ROX Estate PREMIUM (1 floor, empty)', labelAr = 'عزبة ROX بريميوم (دور واحد، فاضي)', w = 14.40, d = 10.40, doorX = 0.00, rooms = 1, floors = 1, tag = 'large' },
 }
 
 OpenShellByModel = {}
