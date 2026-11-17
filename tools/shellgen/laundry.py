@@ -14,6 +14,31 @@ def heading(dx, dy):
     return (math.degrees(math.atan2(-dx, dy)) + 360) % 360
 
 
+def ring(s, mat, C, n, r0, r1, depth, seg=28, inner=True):
+    """Ring (porthole bezel) standing on a vertical plane with outward normal n."""
+    C, n = np.asarray(C, float), np.asarray(n, float); u = np.cross(Z, n)
+    P, N, UV, T, I = [], [], [], [], []
+    def q(a, b, c, d, nn):
+        o = len(P); P.extend([a, b, c, d]); N.extend([nn] * 4); UV.extend([(0, 0), (1, 0), (1, 1), (0, 1)]); T.extend([list(u) + [1.0]] * 4); I.extend([o, o + 1, o + 2, o, o + 2, o + 3])
+    for k in range(seg):
+        a0, a1 = 2 * math.pi * k / seg, 2 * math.pi * (k + 1) / seg
+        d0, d1 = u * math.cos(a0) + Z * math.sin(a0), u * math.cos(a1) + Z * math.sin(a1)
+        f = C + n * depth
+        q(f + d0 * r1, f + d1 * r1, f + d1 * r0, f + d0 * r0, n)                          # front annulus
+        q(C + d0 * r1, C + d1 * r1, f + d1 * r1, f + d0 * r1, (d0 + d1) / np.linalg.norm(d0 + d1))   # outer wall
+        if inner: q(f + d0 * r0, f + d1 * r0, C + d1 * r0, C + d0 * r0, -(d0 + d1) / np.linalg.norm(d0 + d1))
+    s._add(mat, '', P, N, UV, T, I)
+
+
+def disc(s, mat, C, n, r, seg=28):
+    C, n = np.asarray(C, float), np.asarray(n, float); u = np.cross(Z, n)
+    P = [C] + [C + (u * math.cos(2 * math.pi * k / seg) + Z * math.sin(2 * math.pi * k / seg)) * r for k in range(seg)]
+    I = []
+    for k in range(seg): I += [0, 1 + k, 1 + (k + 1) % seg]
+    UV = [(0.5, 0.5)] + [(0.5 + 0.5 * math.cos(2 * math.pi * k / seg), 0.5 - 0.5 * math.sin(2 * math.pi * k / seg)) for k in range(seg)]
+    s._add(mat, '', P, [n] * len(P), UV, [list(u) + [1.0]] * len(P), I)
+
+
 def machine(s, kind, x, y, face, z0=0.0, h=0.95, w=0.7, d=0.72):
     """Front loader. face = 'N','S','E','W' (direction the door looks at). (x, y) = centre of the footprint."""
     fx, fy = {'N': (0, 1), 'S': (0, -1), 'E': (1, 0), 'W': (-1, 0)}[face]
@@ -30,6 +55,21 @@ def machine(s, kind, x, y, face, z0=0.0, h=0.95, w=0.7, d=0.72):
     if face == 'N': s.surf(tex, (x + hx - 0.01, y + hy + e, z0 + 0.01), -X, Z, 2 * hx - 0.02, h - 0.02, step=0, fit=True)
     if face == 'E': s.surf(tex, (x + hx + e, y - hy + 0.01, z0 + 0.01), Y, Z, 2 * hy - 0.02, h - 0.02, step=0, fit=True)
     if face == 'W': s.surf(tex, (x - hx - e, y + hy - 0.01, z0 + 0.01), -Y, Z, 2 * hy - 0.02, h - 0.02, step=0, fit=True)
+    # real 3D porthole: chrome bezel, tinted glass dome, lit drum, control strip with dial
+    n = np.array([fx, fy, 0.0]); front = max(hx, hy) if face in 'EW' else hy
+    front = hx if face in 'EW' else hy
+    zc = z0 + h * 0.42
+    C = np.array([x + fx * front, y + fy * front, zc])
+    ring(s, 'steel', C, n, 0.2, 0.25, 0.05)
+    ring(s, 'metal_dark', C + n * 0.05, n, 0.165, 0.2, 0.012, inner=False)
+    disc(s, 'black_glass', C + n * 0.035, n, 0.2)
+    disc(s, 'light' if kind == 'washer' else 'window_dark', C - n * 0.15, n, 0.17) if False else None
+    u = np.cross(Z, n)
+    ph = C + Z * (h * 0.58 - 0.08)
+    a, b = ph - u * (hx if face in 'NS' else hy) * 0.92, ph + u * (hx if face in 'NS' else hy) * 0.92
+    s.box('metal_dark' if kind == 'washer' else 'steel', min(a[0], b[0]) - (0.012 if face in 'EW' else 0), min(a[1], b[1]) - (0.012 if face in 'NS' else 0), ph[2] - 0.07,
+          max(a[0], b[0]) + (0.012 if face in 'EW' else 0) + (fx * 0.015 if fx > 0 else 0), max(a[1], b[1]) + (0.012 if face in 'NS' else 0) + (fy * 0.015 if fy > 0 else 0), ph[2] + 0.07) if False else None
+    ring(s, 'appliance', ph + u * 0.18, n, 0.0, 0.035, 0.03, seg=14, inner=False)
     px, py = x + fx * (max(hx, hy) + 0.55), y + fy * (max(hx, hy) + 0.55)
     MACHINES.append(dict(kind=kind, x=round(px, 3), y=round(py, 3), z=round(z0 + h * 0.5, 3), h=round(heading(-fx, -fy), 1)))
 
@@ -37,7 +77,7 @@ def machine(s, kind, x, y, face, z0=0.0, h=0.95, w=0.7, d=0.72):
 def building():
     s = Shell('rox_laundromat', 'ROX Laundry', 'مغسلة ROX', H=H, wall_t=T)
     s.hull = False; s.txd, s.lod = 'rox_laundry_txd', 400
-    s.room('main', X0, Y0, X1, Y1, floor='tile_check', wall='paint_white', ceil='ceiling_tile', H=H,
+    s.room('main', X0, Y0, X1, Y1, floor='tile_check', wall='paint_white', ceil='concrete_wall', H=H,
            wains=('tile_mint', 1.45), base=None, crown=True)
     # ---- shop front: double door + two big windows (open frames you can see through)
     s.door('main', 'S', -0.8, 1.0, h=2.5, casing='metal_dark')
@@ -50,13 +90,13 @@ def building():
     s.build_rooms()
     exterior(s)
     interior(s)
-    s.bb = (X0 - 1.6, Y0 - 3.2, -0.1, X1 + 0.6, Y1 + 0.6, H + 1.6)
+    s.bb = (X0 - 1.6, Y0 - 3.2, -0.1, X1 + 0.6, Y1 + 0.6, H + 4.0)
     s.meta = dict(model='rox_laundromat', machines=MACHINES)
     return s
 
 
 def exterior(s):
-    Hx = H + 1.0
+    Hx = H + 3.6
     for side in 'SNWE':
         O, U, Nn, L = s.frame('main', side)
         holes = [(L + T - h[2], h[1], L + T - h[0], h[3]) for h in s.holes[('main', side)]]
@@ -67,9 +107,28 @@ def exterior(s):
             s._reveal('main', side, h[0], h[2], h[1], h[3], T, 'stone', back=None)
         s.cbox(*(lambda p, q: (min(p[0], q[0]), min(p[1], q[1]), H, max(p[0], q[0]), max(p[1], q[1]), Hx))(Oo, O - Nn * 0.0 + U * 0), 13, occ=False) if False else None
     # roof + parapet
-    s.box('roof', X0 - T, Y0 - T, H + 0.2, X1 + T, Y1 + T, H + 0.25, faces='Z', tag='ceil')
-    s.box('stone', X0 - T - 0.05, Y0 - T - 0.05, H + 1.0, X1 + T + 0.05, Y1 + T + 0.05, H + 1.12, faces='xXyYZ')
-    s.cbox(X0 - T, Y0 - T, H, X1 + T, Y1 + T, H + 0.25, 1)
+    s.box('roof', X0 - T, Y0 - T, H + 3.35, X1 + T, Y1 + T, H + 3.4, faces='Z', tag='ceil')
+    s.box('stone', X0 - T - 0.05, Y0 - T - 0.05, H + 3.6, X1 + T + 0.05, Y1 + T + 0.05, H + 3.75, faces='xXyYZ')
+    s.box('stone', X0 - T - 0.2, Y0 - T - 0.35, H + 3.3, X1 + T + 0.2, Y0 - T, H + 3.6, faces='xXyzZ')
+    for k in range(int((X1 - X0 + 2 * T) / 0.6)):
+        x = X0 - T + 0.3 + k * 0.6; s.box('stone', x - 0.1, Y0 - T - 0.28, H + 3.05, x + 0.1, Y0 - T, H + 3.3)
+    # upper storey: dark windows with stone sills / lintels (apartments above the shop)
+    for x in (-6.2, -3.1, 3.1, 6.2):
+        for (sd, yy, nn) in (('S', Y0 - T, -1),):
+            s.box('stone', x - 0.75, yy - 0.12, H + 1.0, x + 0.75, yy, H + 1.1); s.box('stone', x - 0.75, yy - 0.08, H + 2.6, x + 0.75, yy, H + 2.75)
+            s.box('black_glass', x - 0.6, yy - 0.012, H + 1.1, x + 0.6, yy, H + 2.6, faces='y')
+            s.box('trim', x - 0.025, yy - 0.04, H + 1.1, x + 0.025, yy, H + 2.6); s.box('trim', x - 0.6, yy - 0.04, H + 1.83, x + 0.6, yy, H + 1.88)
+            s.box('metal_dark', x - 0.75, yy - 0.45, H + 1.1, x + 0.75, yy - 0.4, H + 1.14); s.box('metal_dark', x - 0.75, yy - 0.45, H + 1.9, x + 0.75, yy - 0.42, H + 1.93)
+            for i in range(9): s.box('metal_dark', x - 0.72 + i * 0.18, yy - 0.44, H + 1.14, x - 0.7 + i * 0.18, yy - 0.42, H + 1.9)
+            s.box('metal_dark', x - 0.75, yy - 0.45, H + 1.1, x - 0.72, yy, H + 1.93); s.box('metal_dark', x + 0.72, yy - 0.45, H + 1.1, x + 0.75, yy, H + 1.93)
+    s.cbox(X0 - T, Y0 - T, H, X1 + T, Y1 + T, H + 3.6, 13, occ=False)
+    # projecting blade sign on the corner
+    s.box('metal_dark', X1 - 0.2, Y0 - T - 1.25, 2.95, X1 - 0.1, Y0 - T, 3.05); s.box('metal_dark', X1 - 0.2, Y0 - T - 1.25, 5.55, X1 - 0.1, Y0 - T, 5.65)
+    s.box('metal_dark', X1 - 0.21, Y0 - T - 1.2, 3.05, X1 - 0.09, Y0 - T - 0.1, 5.55)
+    s.surf('blade_laundry', (X1 - 0.215, Y0 - T - 0.12, 3.12), -Y, Z, 1.06, 2.36, step=0, fit=True)
+    s.surf('blade_laundry', (X1 - 0.085, Y0 - T - 1.18, 3.12), Y, Z, 1.06, 2.36, step=0, fit=True)
+    s.light(X1 - 0.8, Y0 - T - 0.65, 4.2, color=(255, 120, 60), intensity=4, falloff=5)
+    s.cbox(X0 - T, Y0 - T, H + 3.2, X1 + T, Y1 + T, H + 3.4, 1)
     # stone plinth + cornice on the front
     s.box('stone', X0 - T - 0.04, Y0 - T - 0.06, 0, X1 + T + 0.04, Y0 - T, 0.45, faces='xXyZ')
     s.box('stone', X0 - T - 0.1, Y0 - T - 0.25, 3.05, X1 + T + 0.1, Y0 - T, 3.2, faces='xXyzZ')
@@ -141,11 +200,17 @@ def interior(s):
     s.box('paint_red', X1 - 0.8, -3.5, 0, X1 - 0.02, -2.55, 1.95, col=56, occ=True); s.box('black_glass', X1 - 0.81, -3.4, 0.6, X1 - 0.8, -2.85, 1.8, faces='x')
     s.box('light', X1 - 0.82, -2.82, 0.6, X1 - 0.8, -2.65, 1.8, faces='x'); s.light(X1 - 1.4, -3.0, 1.3, color=(220, 235, 255), intensity=2, falloff=3)
     # waiting area by the windows: chairs + magazine table + plants
+    # window bench: oak top, cushions, coffee bar with machine
+    s.box('wood_door', -7.4, Y0 + 0.25, 0.0, -1.7, Y0 + 0.75, 0.45, col=70, occ=True); s.box('countertop', -7.45, Y0 + 0.22, 0.45, -1.65, Y0 + 0.78, 0.5)
     for k in range(6):
-        x = -6.8 + k * 0.62
-        s.box('paint_orange', x - 0.24, Y0 + 0.35, 0.42, x + 0.24, Y0 + 0.82, 0.48, col=70); s.box('paint_orange', x - 0.24, Y0 + 0.3, 0.48, x + 0.24, Y0 + 0.36, 0.95)
-        for lx in (-0.2, 0.2): s.box('steel', x + lx - 0.015, Y0 + 0.4, 0, x + lx + 0.015, Y0 + 0.77, 0.42, faces='xXyY')
-    s.box('steel', -6.95, Y0 + 0.36, 0.02, -3.35, Y0 + 0.78, 0.06)
+        x = -7.0 + k * 0.9
+        s.box(('paint_teal', 'paint_pink', 'paint_ochre')[k % 3], x - 0.36, Y0 + 0.3, 0.5, x + 0.36, Y0 + 0.72, 0.6)
+    s.box('wood_door', 1.9, Y0 + 0.25, 0.95, 7.3, Y0 + 0.6, 1.0, col=70); s.box('metal_dark', 2.0, Y0 + 0.28, 0, 2.05, Y0 + 0.33, 0.95); s.box('metal_dark', 7.15, Y0 + 0.28, 0, 7.2, Y0 + 0.33, 0.95)
+    for k in range(5):
+        x = 2.6 + k * 1.0
+        s.cyl('metal_dark', x, Y0 + 0.95, 0, 0.18, 0.03, seg=12); s.cyl('steel', x, Y0 + 0.95, 0.03, 0.025, 0.68, seg=8); s.cyl('wood_dark', x, Y0 + 0.95, 0.71, 0.19, 0.05, seg=14)
+        s.cbox(x - 0.18, Y0 + 0.77, 0, x + 0.18, Y0 + 1.13, 0.76, 70, occ=False)
+    s.box('black_glass', 6.4, Y0 + 0.3, 1.0, 6.85, Y0 + 0.58, 1.45); s.box('steel', 6.45, Y0 + 0.28, 1.12, 6.8, Y0 + 0.3, 1.38)
     for x in (-7.5, 1.5, 7.4):
         s.cyl('paint_charcoal', x, Y0 + 0.5 if x != 7.4 else 4.6, 0, 0.22, 0.45, seg=14, r2=0.26); sphere(s, 'hedge', x, Y0 + 0.5 if x != 7.4 else 4.6, 1.05, 0.42, sq=1.3)
     # laundry carts
@@ -163,11 +228,33 @@ def interior(s):
     s.box('appliance', 4.35, Y1 - 0.04, 2.35, 4.85, Y1, 2.85); s.box('metal_dark', 4.59, Y1 - 0.05, 2.6, 4.61, Y1 - 0.04, 2.8); s.box('metal_dark', 4.6, Y1 - 0.05, 2.59, 4.75, Y1 - 0.04, 2.61)
     # restroom / staff door on the north wall
     s.box('trim', 3.3, Y1 - 0.05, 0, 4.3, Y1, 2.15, faces='y'); s.surf('door_grey', (3.35, Y1 - 0.055, 0), X, Z, 0.9, 2.1, step=0, fit=True)
-    # ceiling: linear lights + fans
-    for y in (-3.2, -1.2, 1.0, 3.2):
-        for x in (-5.5, -1.5, 2.5, 6.0):
-            s.linear_light(x, y, H, 1.6, 'x', drop=0.02, intensity=4.5, falloff=7)
-    s.fan(-2.0, -2.0, H); s.fan(3.8, 0.3, H)
+    # ceiling: exposed concrete, black track rails with spots, long LED bars, pendants over the folding tables
+    for y in (-3.4, 3.0):
+        s.box('metal_dark', X0 + 0.6, y - 0.03, H - 0.06, X1 - 0.6, y + 0.03, H)
+        for k in range(9):
+            x = X0 + 1.2 + k * 1.7
+            s.box('metal_dark', x - 0.05, y - 0.05, H - 0.2, x + 0.05, y + 0.05, H - 0.06); s.cyl('metal_dark', x, y, H - 0.38, 0.06, 0.18, seg=12)
+            s.cyl('light', x, y, H - 0.385, 0.05, 0.004, seg=12)
+            if k % 2 == 0: s.light(x, y, H - 0.6, color=(255, 228, 190), intensity=5, falloff=7)
+    for x in (-4.0, 0.0):
+        s.box('metal_dark', x - 1.4, -0.05, H - 0.7, x + 1.4, 0.05, H - 0.62); s.box('light', x - 1.35, -0.04, H - 0.705, x + 1.35, 0.04, H - 0.7, faces='z')
+        for k in range(4): s.box('metal_dark', x - 1.3 + k * 0.86, -0.006, H - 0.62, x - 1.29 + k * 0.86, 0.006, H)
+        s.light(x, 0, H - 1.0, color=(240, 244, 255), intensity=6, falloff=8)
+    for (a, b) in ((2.6, -1.0), (2.6, 1.6)):
+        for k in range(3):
+            x = a + 0.5 + k * 0.9
+            s.box('metal_dark', x - 0.004, b - 0.004, 1.9, x + 0.004, b + 0.004, H); s.cyl('brass', x, b, 1.62, 0.2, 0.28, seg=16, r2=0.05, caps=False)
+            s.cyl('light', x, b, 1.615, 0.17, 0.006, seg=16); s.light(x, b, 1.45, color=(255, 210, 150), intensity=3.5, falloff=4.5)
+    # neon signs on the walls
+    s.box('paint_black', 2.0, Y1 - 0.06, 2.35, 5.0, Y1 - 0.02, 2.9); s.surf('neon_wash', (2.05, Y1 - 0.065, 2.38), X, Z, 2.9, 0.48, step=0, fit=True)
+    s.light(3.5, Y1 - 0.7, 2.6, color=(255, 90, 200), intensity=3, falloff=4)
+    s.box('paint_black', X0 + 0.02, -4.4, 2.3, X0 + 0.06, -2.0, 2.85); s.surf('neon_heart', (X0 + 0.065, -4.35, 2.33), Y, Z, 2.3, 0.48, step=0, fit=True)
+    s.light(X0 + 0.8, -3.2, 2.5, color=(90, 230, 255), intensity=3, falloff=4)
+    # oak slat feature wall behind the cashier + LED shelf strips
+    for k in range(24):
+        x = 5.0 + k * 0.12
+        if x < X1 - 0.05: s.box('wood_door', x, Y1 - 0.06, 0, x + 0.07, Y1 - 0.02, 2.25 if False else 1.25)
+    s.box('light', 6.2, Y1 - 0.34, 1.28, X1 - 0.05, Y1 - 0.32, 1.29, faces='z')
 
 
 def all_pieces():
