@@ -39,3 +39,24 @@ body.preview { background: radial-gradient(circle at 50% 55%, #3a3630, #121110 7
 .core-btn:hover { background: var(--accent); transform: scale(1.1); }
 .title.pop { animation: pop .2s ease; }
 @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ---------- V2.1 premium ---------- */
+.menu { perspective: 1100px; }
+.ring, .core { transform-style: preserve-3d; }
+.stage3d { position: absolute; left: 0; top: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 14deg)) rotateY(var(--ry, 0deg)); transition: transform .25s ease-out; }
+.track { position: absolute; left: 0; top: 0; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;
+    border: 1px dashed rgba(255,255,255,.12); box-shadow: 0 0 0 1px rgba(0,0,0,.25), inset 0 0 60px rgba(0,0,0,.35); animation: spin 60s linear infinite; }
+.track.inner { border: 2px solid rgba(var(--accent-rgb), .18); border-style: solid; animation: none; box-shadow: 0 0 24px rgba(var(--accent-rgb), .15); }
+@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.beam { position: absolute; left: 0; top: 0; height: 2px; transform-origin: 0 50%; pointer-events: none; opacity: 0; transition: opacity .15s, width .18s ease, transform .18s ease;
+    background: linear-gradient(90deg, rgba(var(--accent-rgb), 0), rgba(var(--accent-rgb), .9)); box-shadow: 0 0 10px var(--accent); }
+.beam.show { opacity: 1; }
+.tile .box { transform-style: preserve-3d; }
+.tile .box::after { content: ''; position: absolute; left: 3px; right: 3px; bottom: -7px; height: 8px; border-radius: 0 0 9px 9px; z-index: -1;
+    background: linear-gradient(180deg, #050506, #000); box-shadow: 0 12px 18px rgba(0,0,0,.6); transition: background .15s; }
+.tile:hover .box::after, .tile.hover .box::after { background: linear-gradient(180deg, #a3330b, #5c1d06); }
+.tile .key { position: absolute; left: 6px; top: 5px; font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.35); }
+.tile:hover .key { color: rgba(255,255,255,.8); }
+.core { width: 120px; height: 120px; justify-content: center; border-radius: 50%;
+    background: radial-gradient(circle, rgba(10,10,12,.55), rgba(10,10,12,0) 70%); }
+.brand { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 9px; letter-spacing: 3px; color: rgba(255,255,255,.35); }

@@ -25,9 +25,12 @@ function render() {
         const x = Math.cos(a) * r, y = Math.sin(a) * r * .92;
         const big = isNum(it.label);
         return `<div class="tile" data-i="${i}" style="--x:${x.toFixed(1)}px;--y:${y.toFixed(1)}px;--d:${(i * 18)}ms">
-            <div class="box">${big ? `<span class="num">${esc(it.label)}</span>` : `<i class="fa-solid fa-${esc(it.icon || 'circle')}"></i>`}${it.items ? '<span class="sub"></span>' : ''}</div>
+            <div class="box">${i < 9 ? `<span class="key">${i + 1}</span>` : ''}${big ? `<span class="num">${esc(it.label)}</span>` : `<i class="fa-solid fa-${esc(it.icon || 'circle')}"></i>`}${it.items ? '<span class="sub"></span>' : ''}</div>
             <div class="lbl">${esc(big && it.sub ? it.sub : it.label)}</div></div>`;
     }).join('');
+    S.r = r; const tO = $('trackO'), tI = $('trackI');
+    tO.style.width = tO.style.height = (r * 2 + 40) + 'px'; tI.style.width = tI.style.height = (r * 2 - 70) + 'px';
+    $('beam').classList.remove('show');
     setTitle(S.stack.length > 1 ? lvl.title : S.title);
     coreBtn.innerHTML = S.stack.length > 1 ? '<i class="fa-solid fa-rotate-left"></i>' : '<i class="fa-solid fa-xmark"></i>';
     requestAnimationFrame(() => ring.querySelectorAll('.tile').forEach(t => t.classList.add('in')));
@@ -38,8 +41,10 @@ ring.addEventListener('mouseover', (e) => {
     const t = e.target.closest('.tile'); if (!t || t.dataset.hov) return;
     ring.querySelectorAll('.tile').forEach(x => delete x.dataset.hov); t.dataset.hov = 1;
     setTitle(cur().items[t.dataset.i].label); beep(1800, .03, .02);
+    const n = cur().items.length, a = (t.dataset.i / n) * Math.PI * 2 - Math.PI / 2, bm = $('beam');
+    bm.style.width = (S.r - 48) + 'px'; bm.style.transform = `translate(0,-1px) rotate(${Math.atan2(Math.sin(a) * .92, Math.cos(a))}rad) translateX(30px)`; bm.classList.add('show');
 });
-ring.addEventListener('mouseleave', () => { ring.querySelectorAll('.tile').forEach(x => delete x.dataset.hov); setTitle(S.stack.length > 1 ? cur().title : S.title); });
+ring.addEventListener('mouseleave', () => { $('beam').classList.remove('show'); ring.querySelectorAll('.tile').forEach(x => delete x.dataset.hov); setTitle(S.stack.length > 1 ? cur().title : S.title); });
 ring.addEventListener('click', (e) => {
     const t = e.target.closest('.tile'); if (!t) return;
     const it = cur().items[t.dataset.i];
@@ -48,11 +53,17 @@ ring.addEventListener('click', (e) => {
     post('select', { id: it.id });
 });
 coreBtn.addEventListener('click', back);
+document.addEventListener('mousemove', (e) => {
+    if (!S.open) return;
+    const dx = (e.clientX / innerWidth - .5), dy = (e.clientY / innerHeight - .5);
+    $('stage').style.setProperty('--ry', (dx * 10).toFixed(2) + 'deg'); $('stage').style.setProperty('--rx', (14 - dy * 10).toFixed(2) + 'deg');
+});
 document.addEventListener('contextmenu', (e) => { e.preventDefault(); if (S.open) back(); });
 document.addEventListener('keydown', (e) => {
     if (!S.open) return;
     if (e.key === 'Escape') close();
     else if (e.key === 'Backspace') back();
+    else if (/^[1-9]$/.test(e.key)) { const t = ring.querySelector(`.tile[data-i="${Number(e.key) - 1}"]`); if (t) t.click(); }
     else if (e.key === 'F1' && !S.keepInput) close();
 });
 
