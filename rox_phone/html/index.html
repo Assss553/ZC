@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!-- ROX Store | rox_phone (design preview) | All rights reserved. -->
+<html lang="en"><head><meta charset="utf-8"><title>ROX Phone</title>
+<link rel="stylesheet" href="fa/css/fontawesome.min.css"><link rel="stylesheet" href="fa/css/solid.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+<style>
+:root { --a: #ff5a1f; --a2: #ff8a4c; --glass: rgba(28,28,32,.55); --ln: rgba(255,255,255,.08); --W: 330px; --H: 680px; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; color: #fff; background: transparent; overflow: hidden; user-select: none; height: 100vh; }
+body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) center/cover; }
+
+/* ---------- device ---------- */
+.dock-pos { position: fixed; right: 40px; bottom: 30px; perspective: 1800px; transition: transform .5s; }
+.dock-pos.hide { transform: translateY(120%); }
+.device { position: relative; width: var(--W); height: var(--H); border-radius: 46px; padding: 10px;
+  background: linear-gradient(145deg, #3a3a40, #121214 40%, #2a2a2e); box-shadow: 0 0 0 1.5px #55555c inset, 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px #000;
+  transition: width .75s cubic-bezier(.65,0,.25,1), border-radius .75s; transform-style: preserve-3d; }
+.device::before, .device::after { content: ''; position: absolute; width: 3px; border-radius: 2px; background: #2c2c30; }
+.device::before { right: -3px; top: 150px; height: 70px; } .device::after { left: -3px; top: 120px; height: 44px; box-shadow: 0 60px 0 #2c2c30; }
+.unfolded .device { width: calc(var(--W) * 2 + 40px); border-radius: 38px; }
+.screen { position: relative; width: 100%; height: 100%; border-radius: 37px; overflow: hidden; background: #0a0a0c; transition: border-radius .75s; }
+.unfolded .screen { border-radius: 29px; }
+.wall { position: absolute; inset: 0; background: radial-gradient(circle at 75% 15%, rgba(255,90,31,.45), transparent 45%), radial-gradient(circle at 15% 85%, rgba(255,90,31,.22), transparent 45%),
+  repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 2px, transparent 2px 14px), linear-gradient(160deg, #1b1b20, #0b0b0d 60%, #160c08); transition: filter .4s; }
+.locked .wall { filter: blur(14px) brightness(.6); }
+/* hinge crease + fold flap animation */
+.crease { position: absolute; top: 0; bottom: 0; left: 50%; width: 22px; transform: translateX(-50%); opacity: 0; pointer-events: none; z-index: 30;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,.35) 45%, rgba(255,255,255,.07) 50%, rgba(0,0,0,.35) 55%, transparent); transition: opacity .6s .4s; }
+.unfolded .crease { opacity: .6; }
+.flap { position: absolute; top: 10px; bottom: 10px; right: 10px; width: calc(50% - 10px); border-radius: 0 29px 29px 0; background: linear-gradient(90deg, #111, #1d1d22);
+  transform-origin: left center; transform: rotateY(-180deg); opacity: 0; pointer-events: none; z-index: 40; backface-visibility: hidden; }
+.anim-open .flap { animation: flapOpen .75s cubic-bezier(.65,0,.25,1); }
+.anim-close .flap { animation: flapClose .75s cubic-bezier(.65,0,.25,1); }
+@keyframes flapOpen { 0% { opacity: 1; transform: rotateY(-178deg); } 90% { opacity: 1; } 100% { opacity: 0; transform: rotateY(0); } }
+@keyframes flapClose { 0% { opacity: 1; transform: rotateY(0); } 100% { opacity: 1; transform: rotateY(-178deg); } }
+
+/* ---------- status bar ---------- */
+.sb { position: absolute; top: 0; left: 0; right: 0; height: 40px; padding: 14px 26px 0; display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; z-index: 20; }
+.sb .brand { font-family: 'Barlow Condensed'; font-style: italic; font-weight: 800; font-size: 14px; letter-spacing: .5px; } .sb .brand b { color: var(--a); }
+.sb .r { display: flex; gap: 6px; align-items: center; font-size: 10.5px; } .bat { width: 22px; height: 11px; border: 1.5px solid #fff; border-radius: 3px; padding: 1px; position: relative; }
+.bat i { display: block; height: 100%; width: 80%; background: #fff; border-radius: 1px; } .bat::after { content: ''; position: absolute; right: -4px; top: 2.5px; width: 2px; height: 4px; background: #fff; border-radius: 0 1px 1px 0; }
+.punch { position: absolute; top: 12px; left: 50%; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #151517; z-index: 21; transition: left .75s cubic-bezier(.65,0,.25,1); }
+.unfolded .punch { left: 75%; }
+
+/* ---------- lock screen ---------- */
+.lock { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; padding-top: 110px; transition: opacity .35s, transform .35s; }
+.unlocked .lock { opacity: 0; transform: scale(1.06); pointer-events: none; }
+.padlock { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,90,31,.22); color: var(--a); font-size: 15px; box-shadow: 0 0 30px rgba(255,90,31,.4); }
+.lock h2 { font-size: 17px; font-weight: 600; margin: 14px 0 16px; }
+.pins { display: flex; gap: 14px; margin-bottom: 40px; } .pins i { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,.18); transition: .15s; }
+.pins i.on { background: var(--a); box-shadow: 0 0 10px var(--a); } .pins.err { animation: shake .4s; } .pins.err i { background: #ff3b4e; }
+@keyframes shake { 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+.pad { display: grid; grid-template-columns: repeat(3, 64px); gap: 14px 22px; }
+.pad button { width: 64px; height: 64px; border-radius: 50%; border: 0; background: rgba(255,255,255,.12); backdrop-filter: blur(10px); color: #fff; font: 500 25px 'Inter'; cursor: pointer; transition: .1s; }
+.pad button:active, .pad button:hover { background: rgba(255,255,255,.24); } .pad button.t { background: none; font-size: 13px; font-weight: 600; }
+.lock .hint { margin-top: auto; margin-bottom: 26px; font-size: 11px; color: rgba(255,255,255,.4); }
+
+/* ---------- home ---------- */
+.home { position: absolute; inset: 40px 0 0; padding: 14px 18px 0; display: flex; flex-direction: column; opacity: 0; transform: scale(.94); transition: .4s .05s; }
+.unlocked .home { opacity: 1; transform: none; }
+.widgets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.unfolded .widgets { grid-template-columns: 1.15fr 1.3fr 1fr 1fr; }
+.clock { grid-column: span 2; padding: 8px 4px; } .unfolded .clock { grid-column: span 1; }
+.clock b { display: block; font-size: 56px; font-weight: 500; letter-spacing: -2px; line-height: 1; } .clock span { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); }
+.w { background: var(--glass); backdrop-filter: blur(18px); border: 1px solid var(--ln); border-radius: 20px; padding: 12px; min-height: 108px; font-size: 11px; position: relative; overflow: hidden; }
+.w h5 { font-size: 9.5px; color: rgba(255,255,255,.55); font-weight: 700; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; } .w h5 em { margin-left: auto; font-style: normal; background: var(--a); color: #fff; border-radius: 8px; padding: 0 5px; }
+.nt { display: flex; gap: 7px; margin-bottom: 7px; } .nt i { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 10px; flex: none; }
+.nt b { font-size: 10.5px; display: block; } .nt span { font-size: 9px; color: rgba(255,255,255,.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 140px; }
+.music .art { width: 44px; height: 44px; border-radius: 10px; background: conic-gradient(from 45deg, var(--a), #8a2be2, var(--a)); margin-bottom: 8px; }
+.music b { display: block; font-size: 12px; } .music span { color: rgba(255,255,255,.5); font-size: 10px; }
+.music .ctl { display: flex; gap: 14px; margin-top: 8px; font-size: 12px; } .hide-f { display: none; } .unfolded .hide-f { display: block; }
+.info b { font-size: 14px; display: block; margin-bottom: 18px; } .info .row { display: flex; justify-content: space-between; color: rgba(255,255,255,.7); font-weight: 700; }
+.ring { width: 54px; height: 54px; border-radius: 50%; background: conic-gradient(var(--a) 0 78%, rgba(255,255,255,.1) 0); display: grid; place-items: center; margin: 4px auto 6px; }
+.ring::after { content: '78%'; width: 44px; height: 44px; border-radius: 50%; background: #151518; display: grid; place-items: center; font-weight: 800; font-size: 11px; }
+.apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 6px; } .unfolded .apps { grid-template-columns: repeat(9, 1fr); }
+.app { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; cursor: pointer; position: relative; animation: pop .45s backwards; }
+.app .ic { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; font-size: 22px; box-shadow: 0 6px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.3); transition: transform .15s; position: relative; overflow: hidden; }
+.app .ic::after { content: ''; position: absolute; inset: 0 0 50% 0; background: linear-gradient(rgba(255,255,255,.22), transparent); }
+.app:hover .ic { transform: translateY(-3px) scale(1.05); } .app em { position: absolute; top: -4px; right: 8px; min-width: 17px; height: 17px; border-radius: 9px; background: #ff3b4e; font-style: normal; font-size: 9.5px; font-weight: 800; display: grid; place-items: center; border: 2px solid #111; z-index: 2; }
+@keyframes pop { from { opacity: 0; transform: scale(.6) translateY(10px); } }
+.search { margin: auto auto 12px; font-size: 10.5px; padding: 5px 12px; border-radius: 12px; background: rgba(255,255,255,.08); color: rgba(255,255,255,.75); }
+.dock { display: flex; justify-content: center; gap: 16px; padding: 12px; margin: 0 auto 14px; border-radius: 26px; background: rgba(255,255,255,.1); backdrop-filter: blur(20px); border: 1px solid var(--ln); }
+.dock .app .ic { width: 52px; height: 52px; }
+.bar { width: 120px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.6); margin: 0 auto 8px; }
+
+/* ---------- preview controls ---------- */
+.ctrl { position: fixed; left: 30px; top: 30px; display: flex; flex-direction: column; gap: 8px; }
+.ctrl h1 { font-family: 'Barlow Condensed'; font-style: italic; font-size: 38px; } .ctrl h1 b { color: var(--a); }
+.ctrl p { font-size: 12px; color: rgba(255,255,255,.75); max-width: 300px; margin-bottom: 6px; }
+.ctrl button { height: 40px; padding: 0 16px; border-radius: 6px; border: 1px solid var(--ln); background: rgba(14,14,17,.85); color: #fff; font: 700 12.5px 'Inter'; cursor: pointer; display: flex; align-items: center; gap: 9px; width: 220px; }
+.ctrl button:hover { background: var(--a); } .ctrl button i { color: var(--a); } .ctrl button:hover i { color: #fff; }
+body:not(.preview) .ctrl { display: none; }
+</style></head><body>
+
+<div class="ctrl"><h1><b>ROX</b> PHONE</h1><p>Design preview. Passcode for the lock screen: <b>1234</b>. Keys: <b>F</b> fold/unfold, <b>L</b> lock.</p>
+  <button id="bFold"><i class="fa-solid fa-mobile-screen"></i><span>Unfold (tablet)</span></button>
+  <button id="bLock"><i class="fa-solid fa-lock"></i>Lock phone</button>
+  <button id="bHide"><i class="fa-solid fa-eye-slash"></i>Put away / take out</button></div>
+
+<div class="dock-pos" id="pos"><div class="device" id="dev"><div class="screen locked" id="scr">
+  <div class="wall"></div>
+  <div class="sb"><span class="brand"><b>ROX</b>Cell</span><span class="r"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><span class="bat"><i></i></span></span></div>
+  <div class="punch"></div>
+
+  <div class="lock" id="lock"><div class="padlock"><i class="fa-solid fa-lock"></i></div><h2>Enter passcode</h2>
+    <div class="pins" id="pins"><i></i><i></i><i></i><i></i></div>
+    <div class="pad" id="pad"></div><div class="hint">Emergency call</div></div>
+
+  <div class="home"><div class="widgets">
+      <div class="clock"><b id="time">23:49</b><span id="date">Wednesday, November 11</span></div>
+      <div class="w"><h5><i class="fa-solid fa-bell"></i>Notifications<em>3</em></h5>
+        <div class="nt"><i style="background:#ff5a1f"><i class="fa-solid fa-building-columns"></i></i><div><b>Money received</b><span>Your bank account was credited $2,500</span></div></div>
+        <div class="nt"><i style="background:#3b82f6"><i class="fa-solid fa-comment"></i></i><div><b>Jaber</b><span>Meet me at Legion Square</span></div></div></div>
+      <div class="w music hide-f"><h5><i class="fa-solid fa-music"></i>Music</h5><div class="art"></div><b>Nothing playing</b><span>Open your library</span><div class="ctl"><i class="fa-solid fa-backward"></i><i class="fa-solid fa-play"></i><i class="fa-solid fa-forward"></i></div></div>
+      <div class="w info hide-f"><h5><i class="fa-solid fa-sim-card"></i>ROXCell</h5><b>(555) 337-8179</b><div class="ring"></div><div class="row"><span><i class="fa-solid fa-battery-three-quarters"></i> 78%</span><span>5G</span></div></div>
+    </div>
+    <div class="apps" id="apps"></div>
+    <div class="search"><i class="fa-solid fa-magnifying-glass"></i> Search</div>
+    <div class="dock" id="dockApps"></div><div class="bar"></div></div>
+  <div class="crease"></div>
+</div><div class="flap"></div></div></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const APPS = [['Messages','comment','#3ddc84','#0f9d58',2],['Banking','building-columns','#ff8a4c','#d23e08',1],['Photos','images','#ffd36b','#ff7a3d'],['Camera','camera','#5c5c66','#26262b'],
+  ['Twitter','feather','#3ea6ff','#1660d6'],['Garage','car','#9aa0ab','#4a4f59'],['Maps','map-location-dot','#4ade80','#0ea5e9'],['Music','music','#ff5ea8','#8a2be2'],
+  ['Notes','note-sticky','#ffe082','#f5b400'],['Calculator','calculator','#4b4b55','#1e1e22'],['Services','briefcase','#60a5fa','#2563eb'],['Crypto','bitcoin-sign','#facc15','#ca8a04',1],
+  ['Racing','flag-checkered','#ff4d5e','#a3001b'],['Houses','house','#a78bfa','#6d28d9'],['Clock','clock','#2b2b31','#0d0d10'],['DOJ','scale-balanced','#93c5fd','#1e3a8a'],
+  ['Mail','envelope','#7dd3fc','#0284c7'],['Settings','gear','#9ca3af','#374151']];
+const DOCK = [['Phone','phone','#4ade80','#16a34a'],['Messages','comment','#3ddc84','#0f9d58'],['Camera','camera','#5c5c66','#26262b'],['Settings','gear','#9ca3af','#374151']];
+const tile = ([n, i, c1, c2, b], k, label = true) => `<div class="app" style="animation-delay:${k * 25}ms">${b ? `<em>${b}</em>` : ''}<div class="ic" style="background:linear-gradient(160deg,${c1},${c2})"><i class="fa-solid fa-${i}"></i></div>${label ? n : ''}</div>`;
+function drawApps() { const unf = document.body.classList.contains('unfolded'); $('apps').innerHTML = APPS.slice(0, unf ? 18 : 12).map((a, k) => tile(a, k)).join(''); $('dockApps').innerHTML = DOCK.map((a, k) => tile(a, k, false)).join(''); }
+
+/* lock */
+let code = ''; const PIN = '1234';
+$('pad').innerHTML = ['1','2','3','4','5','6','7','8','9','Cancel','0','⌫'].map(k => `<button class="${k.length > 1 || k === '⌫' ? 't' : ''}" data-k="${k}">${k === '⌫' ? '<i class="fa-solid fa-delete-left"></i>' : k}</button>`).join('');
+const pins = () => [...$('pins').children].forEach((p, i) => p.classList.toggle('on', i < code.length));
+function key(k) { if (k === 'Cancel') code = ''; else if (k === '⌫') code = code.slice(0, -1); else if (code.length < 4) code += k; pins();
+  if (code.length === 4) setTimeout(() => { if (code === PIN) unlock(); else { $('pins').classList.add('err'); setTimeout(() => { $('pins').classList.remove('err'); code = ''; pins(); }, 450); } }, 150); }
+$('pad').onclick = (e) => { const b = e.target.closest('button'); if (b) key(b.dataset.k); };
+function unlock() { $('scr').classList.replace('locked', 'unlocked'); drawApps(); }
+function lock() { code = ''; pins(); $('scr').classList.replace('unlocked', 'locked'); }
+
+/* fold / unfold  -> in game: also plays the open-phone hand animation (see README) */
+function setFold(open) {
+  const b = document.body; if (b.classList.contains('unfolded') === open) return;
+  $('dev').classList.remove('anim-open', 'anim-close'); void $('dev').offsetWidth; $('dev').classList.add(open ? 'anim-open' : 'anim-close');
+  b.classList.toggle('unfolded', open); setTimeout(drawApps, 380);
+  $('bFold').querySelector('span').textContent = open ? 'Fold (phone)' : 'Unfold (tablet)';
+  if (window.invokeNative) fetch(`https://${GetParentResourceName()}/fold`, { method: 'POST', body: JSON.stringify({ open }) });
+}
+$('bFold').onclick = () => setFold(!document.body.classList.contains('unfolded'));
+$('bLock').onclick = lock; $('bHide').onclick = () => $('pos').classList.toggle('hide');
+document.addEventListener('keydown', (e) => { if (/^\d$/.test(e.key) && $('scr').classList.contains('locked')) key(e.key); if (e.key === 'Backspace') key('⌫');
+  if (e.key.toLowerCase() === 'f') setFold(!document.body.classList.contains('unfolded')); if (e.key.toLowerCase() === 'l') lock(); });
+setInterval(() => { const d = new Date(); $('time').textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); $('date').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }, 1000);
+if (!window.invokeNative) document.body.classList.add('preview');
+drawApps();
+</script></body></html>
