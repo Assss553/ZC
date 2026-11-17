@@ -255,7 +255,7 @@ function shareNearby(host) {
 }
 
 /* ---------- first-time setup ---------- */
-const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wall: 8 }; let step = 0;
+const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wall: 12 }; let step = 0;
   const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
   const done = () => { try { return localStorage.getItem('rox_setup') === '1'; } catch (e) { return false; } };
   const dots = () => `<div class="dots2">${[0, 1, 2, 3, 4].map(i => `<i class="${i <= step ? 'on' : ''}"></i>`).join('')}</div>`;
@@ -270,7 +270,7 @@ const Onboard = (() => { const D = { first: '', last: '', mail: '', pin: '', wal
     () => `<div class="st4"><h2>Set a passcode</h2><p>4 digits to unlock your phone.</p><div class="pinbox">${[0, 1, 2, 3].map(i => `<i class="${D.pin.length > i ? 'on' : ''}">${D.pin[i] ? '•' : ''}</i>`).join('')}</div>
       <div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map(k => k ? `<button class="${k === 'del' ? 't' : ''}" data-k="${k}">${k === 'del' ? '<i class="fa-solid fa-delete-left"></i>' : k}</button>` : '<span></span>').join('')}</div>
       <button class="nxt" data-next ${D.pin.length === 4 ? '' : 'disabled'} style="margin-top:16px">Continue</button><button class="bk2" data-back>Back</button></div>`,
-    () => `<div class="st4"><h2>Choose a wallpaper</h2><p>You can change it any time in Settings.</p><div class="wg">${[8, 9, 10, 11, 0, 1, 3, 4, 5].map(i => `<i style="background:${RoxWalls.list[i]}" class="${i === D.wall ? 'on' : ''}" data-w="${i}"></i>`).join('')}</div>
+    () => `<div class="st4"><h2>Choose a wallpaper</h2><p>You can change it any time in Settings.</p><div class="wg">${[12, 13, 14, 8, 9, 10, 11, 0, 1].map(i => `<i style="background:${RoxWalls.list[i]}" class="${i === D.wall ? 'on' : ''}" data-w="${i}"></i>`).join('')}</div>
       <button class="nxt" data-next style="margin-top:16px">Continue</button><button class="bk2" data-back>Back</button></div>`,
     () => `<div class="st4"><div class="done2"><i class="fa-solid fa-check"></i></div><h2 style="text-align:center">You're all set!</h2><p style="text-align:center">Your ROX phone is ready.</p>
       <div class="sumc"><div><span>Name</span><b>${D.first} ${D.last}</b></div><div><span>Number</span><b class="pn">${fmtN(ME.number)}</b></div><div><span>Email</span><b>${D.mail}@roxmail.ls</b></div></div>

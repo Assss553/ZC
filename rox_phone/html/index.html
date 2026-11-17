@@ -705,7 +705,7 @@ function toast2(m) { $('ctoast').classList.add('on'); $('ctT').textContent = m; 
 
 /* ---------- Settings ---------- */
 const WALLS = RoxWalls.list;
-const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif: true, bright: 100, size: 100, wall: 8, ring: 'ROX Pulse', pin: true };
+const Sett = (() => { const st = { air: false, dnd: false, silent: false, notif: true, bright: 100, size: 100, wall: 12, ring: 'ROX Pulse', pin: true };
   const row = (i, c, n, right, attr = '') => `<div class="so" ${attr}><i class="si2 fa-solid fa-${i}" style="color:${c};border-color:${c}55;background:${c}18"></i><span>${n}</span>${right}</div>`;
   const tg = (k) => `<i class="tg ${st[k] ? 'on' : ''}" data-t="${k}"></i>`;
   function render() { const el = $('ph'); if (!el) return;
