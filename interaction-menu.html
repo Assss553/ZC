@@ -4,22 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interaction Menu</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --orange: #e3650e;
-    --scale: 1.4;            /* overall size of the menu */
+    --orange: #eb6a10;
+    --orange-line: #e4772c;
+    --scale: 1.5;            /* overall size of the menu */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: transparent;   /* transparent in game (NUI) */
     font-family: 'Oswald', 'Arial Narrow', sans-serif;
-    font-weight: 400;
+    font-weight: 500;
     user-select: none;
     overflow: hidden;
     min-height: 100vh;
   }
-  body.preview { background: radial-gradient(circle at 50% 45%, #5a4a3c, #1d1a17 75%); }
+  body.preview { background: radial-gradient(circle at 50% 45%, #8a6a48, #2a2018 75%); }
 
   .menu {
     position: absolute;
@@ -31,88 +32,81 @@
   }
   .menu.hidden { display: none; }
 
-  /* ---- E key (matches reference: 45% orange fill + corner brackets) ---- */
+  /* ---- E key ---- */
   .key {
     position: relative;
     width: 34px;
     height: 31px;
-    margin-top: -3px;
-    margin-right: 14px;
-    background: rgba(231, 122, 49, 0.45);
-    border-top: 2px solid #e2742f;
-    border-left: 1.5px solid #d76c28;
-    border-right: 1.5px solid #cb7132;
-    border-bottom: 1.5px solid rgba(242, 213, 195, 0.85);
+    margin-top: -4px;
+    margin-right: 10px;
+    background: rgba(125, 50, 8, 0.88);
+    border: 1.5px solid #e08a52;
     color: #fff;
     font-size: 19px;
-    line-height: 27px;
+    line-height: 28px;
     text-align: center;
-    transform: skewX(-2deg);
   }
   .key::before, .key::after {
     content: "";
     position: absolute;
-    width: 9px;
-    height: 9px;
-    border: 0 solid #d0661f;
+    width: 8px;
+    height: 8px;
+    border: 0 solid #e08a52;
   }
-  .key::before { top: -5px; left: -5px; border-top-width: 2px; border-left-width: 2px; }
-  .key::after  { bottom: -5px; right: -5px; border-bottom-width: 2px; border-right-width: 2px; }
+  .key::before { top: -4px; left: -4px; border-top-width: 1.5px; border-left-width: 1.5px; }
+  .key::after  { bottom: -4px; right: -4px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
 
   /* ---- options ---- */
-  .options { display: flex; flex-direction: column; gap: 6px; }
+  .options { display: flex; flex-direction: column; gap: 7px; }
   .option {
     display: flex;
     align-items: center;
-    height: 27px;
+    height: 25px;
     cursor: pointer;
   }
 
   .radio {
     width: 13px;
     height: 13px;
-    margin-right: 18px;
+    margin-right: 22px;
     border-radius: 50%;
-    border: 1.5px solid rgba(215, 215, 215, .9);
-    background: rgba(40, 40, 40, .55);
+    border: 1.5px solid rgba(200, 200, 200, .85);
+    background: rgba(30, 25, 20, .45);
     flex-shrink: 0;
   }
   .option.active .radio {
-    border-color: #f5a070;
-    background: var(--orange);
-    box-shadow: 0 0 5px rgba(227, 101, 14, .8);
+    border: 1.5px solid var(--orange);
+    background: radial-gradient(circle, var(--orange) 0 3.2px, rgba(60, 25, 5, .85) 3.7px);
   }
 
   .label {
     position: relative;
-    width: 200px;
-    height: 27px;
+    width: 196px;
+    height: 25px;
     color: #fff;
     font-size: 15px;
-    line-height: 28px;
+    line-height: 25px;
     text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .55);
+    letter-spacing: -.1px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
   }
   /* skewed parallelogram behind the text */
   .label::before {
     content: "";
     position: absolute;
     inset: 0;
-    transform: skewX(-15deg);
+    transform: skewX(-22deg);
     z-index: -1;
-    /* inactive: same 40% transparency, grey tones, white top bar */
-    background: linear-gradient(180deg, rgba(45, 45, 45, .4), rgba(140, 135, 130, .4));
-    border: 1px solid rgba(235, 235, 235, .7);
-    border-top: 2.5px solid rgba(240, 240, 240, .95);
+    background: linear-gradient(180deg, rgba(55, 50, 45, .42), rgba(70, 62, 52, .32));
+    border: 1px solid rgba(225, 222, 212, .85);
+    border-top-width: 1.5px;
   }
   .label span { position: relative; z-index: 1; }
 
-  /* active: colours sampled from the reference image */
   .option.active .label::before {
-    background: linear-gradient(180deg, rgba(59, 32, 17, .4), rgba(184, 87, 22, .4));
-    border: 1px solid rgba(255, 195, 160, .7);
-    border-left-color: rgba(227, 101, 14, .75);
-    border-top: 2.5px solid var(--orange);
+    background: linear-gradient(180deg, rgba(110, 45, 5, .72), rgba(125, 55, 12, .62));
+    border: 1px solid var(--orange-line);
+    border-top-width: 1.5px;
   }
 </style>
 </head>
