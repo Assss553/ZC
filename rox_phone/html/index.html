@@ -119,7 +119,7 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .dial { text-align: center; } .dial .num { font-size: 30px; font-weight: 500; height: 44px; margin: 10px 0 12px; letter-spacing: 1px; }
 .dial .kp { display: grid; grid-template-columns: repeat(3, 62px); gap: 12px 22px; justify-content: center; }
 .dial .kp button { width: 62px; height: 62px; border-radius: 50%; border: 0; background: rgba(255,255,255,.1); color: #fff; font: 500 24px Inter; cursor: pointer; line-height: 1; } .dial .kp button small { display: block; font-size: 8px; font-weight: 700; letter-spacing: 1.5px; opacity: .6; }
-.dial .kp button:active { background: rgba(255,255,255,.25); } .call { width: 62px; height: 62px; border-radius: 50%; border: 0; background: #34c759; color: #fff; font-size: 22px; margin-top: 16px; cursor: pointer; box-shadow: 0 6px 20px rgba(52,199,89,.4); }
+.dial .kp button:active { background: rgba(255,255,255,.25); }
 /* bank */
 .card { position: relative; border-radius: 18px; padding: 18px; height: 168px; overflow: hidden; background: linear-gradient(135deg, #ff7a3d, #c2340a 55%, #2a0f05); box-shadow: 0 14px 30px rgba(255,90,31,.25); }
 .card::before { content: ''; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,.1); } .card::after { content: ''; position: absolute; right: 40px; bottom: -70px; width: 160px; height: 160px; border-radius: 50%; background: rgba(0,0,0,.15); }
@@ -140,6 +140,75 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .walls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; } .walls i { height: 70px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; } .walls i.on { border-color: var(--a); }
 /* placeholder */
 .soon { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: rgba(255,255,255,.55); font-size: 12px; } .soon b { color: #fff; font-size: 18px; }
+
+/* ===== Phone app (tech style) ===== */
+.ph { display: flex; flex-direction: column; height: 100%; font-family: 'Inter'; }
+.ph-top { padding: 0 16px; } .ph-meta { display: flex; justify-content: space-between; font-size: 8.5px; font-weight: 800; letter-spacing: 1.5px; color: rgba(255,255,255,.45); padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.ph-h { display: flex; align-items: flex-start; justify-content: space-between; margin: 12px 0 8px; } .ph-h h1 { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 700; font-size: 28px; letter-spacing: 2px; line-height: 1; }
+.ph-h small { display: flex; align-items: center; gap: 6px; font-size: 8.5px; font-weight: 800; letter-spacing: 1.5px; color: var(--a); margin-top: 4px; } .ph-h small::before { content: ''; width: 14px; height: 2px; background: var(--a); }
+.sq { width: 30px; height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; font-size: 11px; } .sq:hover { border-color: var(--a); color: var(--a); }
+.chips { display: flex; gap: 5px; margin-bottom: 6px; } .chips button { height: 22px; padding: 0 9px; border-radius: 4px; border: 1px solid rgba(255,255,255,.12); background: none; color: rgba(255,255,255,.55); font: 800 8.5px Inter; letter-spacing: 1px; cursor: pointer; }
+.chips button.on { border-color: var(--a); background: rgba(255,90,31,.15); color: var(--a); } .chips b { opacity: .6; margin-left: 4px; }
+.ph-list { flex: 1; overflow-y: auto; padding: 0 16px; } .ph-list::-webkit-scrollbar { width: 0; }
+.cl { display: grid; grid-template-columns: 38px 14px 1fr 30px; align-items: center; gap: 6px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; animation: fadeUp .3s backwards; }
+.cl:hover { background: linear-gradient(90deg, transparent, rgba(255,90,31,.05), transparent); }
+.cl .t { font-size: 11px; font-weight: 700; text-align: right; line-height: 1.3; } .cl .t small { display: block; font-size: 7.5px; font-weight: 800; letter-spacing: 1px; }
+.cl .d { width: 7px; height: 7px; transform: rotate(45deg); margin: 0 auto; } .cl b { font-size: 13px; font-weight: 600; display: block; }
+.cl .bar2 { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 8px; color: rgba(255,255,255,.45); font-weight: 700; } .cl .bar2 i { flex: 1; max-width: 70px; height: 2px; background: rgba(255,255,255,.1); position: relative; } .cl .bar2 i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--p); background: currentColor; }
+.cl .dec { font-size: 8px; font-weight: 800; letter-spacing: 1.2px; color: rgba(255,255,255,.4); margin-top: 4px; }
+.cb { width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(61,220,132,.25); background: rgba(61,220,132,.08); color: #3ddc84; cursor: pointer; font-size: 10px; } .cb:hover { background: #3ddc84; color: #04120a; }
+.k-in { color: #3ddc84; } .k-out { color: #ff8a4c; } .k-decl, .k-miss { color: #ff4d4d; } .d.k-in { background: #3ddc84; } .d.k-out { background: #ff8a4c; } .d.k-decl, .d.k-miss { background: #ff4d4d; }
+.ph-nav { display: flex; align-items: center; gap: 16px; padding: 10px 16px 6px; border-top: 1px solid rgba(255,255,255,.06); }
+.ph-nav button { background: none; border: 0; color: rgba(255,255,255,.4); font: 600 13px 'Inter'; letter-spacing: 1px; cursor: pointer; padding-left: 8px; border-left: 2px solid transparent; } .ph-nav button small { font-size: 7.5px; margin-right: 4px; opacity: .7; }
+.ph-nav button.on { color: #fff; border-left-color: var(--a); } .ph-nav .sq { margin-left: auto; background: rgba(255,90,31,.15); border-color: rgba(255,90,31,.4); color: var(--a); }
+.letter { font-size: 9px; font-weight: 800; color: var(--a); letter-spacing: 1.5px; padding: 10px 0 2px; }
+.bk { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; } .bk:hover b { color: var(--a); }
+.mono { width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center; font-weight: 800; font-size: 12px; background: linear-gradient(145deg, #3a2014, #1c0f09); color: #ffb08a; border: 1px solid rgba(255,90,31,.25); flex: none; }
+.bk b { font-size: 12.5px; flex: 1; } .bk span { font-size: 10px; color: rgba(255,255,255,.4); font-family: ui-monospace, Consolas, monospace; }
+/* contact */
+.back { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.back button:first-child { background: none; border: 0; color: #fff; font: 800 9.5px Inter; letter-spacing: 1.5px; cursor: pointer; } .back button:first-child i { margin-right: 5px; }
+.cc { margin: 12px 16px; border-radius: 6px; border: 1px solid rgba(255,90,31,.3); background: linear-gradient(135deg, rgba(255,90,31,.14), rgba(255,90,31,.02) 60%); padding: 12px; }
+.cc .top2 { display: flex; gap: 12px; align-items: center; } .cc .mono { width: 46px; height: 46px; font-size: 16px; }
+.cc b { font-size: 15px; display: block; } .cc .num { font-size: 11px; color: rgba(255,255,255,.7); font-family: ui-monospace, Consolas, monospace; cursor: pointer; } .cc .num i { font-size: 9px; margin-left: 4px; opacity: .6; }
+.cc .sub { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.1); font-size: 8px; font-weight: 800; letter-spacing: 1.3px; color: rgba(255,255,255,.45); }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0 16px 14px; } .tiles button { height: 48px; border-radius: 5px; border: 1px solid; font: 800 8px Inter; letter-spacing: 1.2px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.tiles i { font-size: 13px; } .tiles .g { background: rgba(61,220,132,.1); border-color: rgba(61,220,132,.3); color: #3ddc84; } .tiles .b { background: rgba(80,140,255,.1); border-color: rgba(80,140,255,.3); color: #7aa7ff; }
+.tiles .o { background: rgba(255,138,76,.1); border-color: rgba(255,138,76,.3); color: #ff8a4c; } .tiles .r { background: rgba(255,77,77,.1); border-color: rgba(255,77,77,.3); color: #ff6b6b; } .tiles button:hover { filter: brightness(1.4); }
+.lbl { font-size: 8px; font-weight: 800; letter-spacing: 1.5px; color: rgba(255,255,255,.45); margin: 0 16px 6px; }
+.reg { margin: 0 16px 14px; border: 1px solid rgba(255,255,255,.07); border-radius: 5px; } .reg div { display: flex; justify-content: space-between; padding: 9px 11px; font-size: 8.5px; font-weight: 800; letter-spacing: 1.2px; color: rgba(255,255,255,.5); border-bottom: 1px solid rgba(255,255,255,.06); }
+.reg div:last-child { border: 0; } .reg b { color: #fff; font-size: 11px; letter-spacing: 0; }
+/* keypad sheet */
+.kps { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(14,14,17,.97); border-top: 1px solid rgba(255,90,31,.3); padding: 12px 0 30px; transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.9,.3,1); z-index: 3; }
+.kps.on { transform: none; } .kps .num { font-size: 26px; text-align: center; height: 36px; font-family: ui-monospace, Consolas, monospace; letter-spacing: 2px; margin-bottom: 8px; }
+/* ===== call screens ===== */
+.call { position: absolute; inset: 0; z-index: 35; display: none; flex-direction: column; align-items: center; padding-top: 80px;
+  background: radial-gradient(circle at 50% 22%, rgba(255,90,31,.28), transparent 50%), linear-gradient(180deg, rgba(10,10,12,.9), #050506); backdrop-filter: blur(20px); }
+.call.on { display: flex; animation: fadeUp .3s; }
+.cav { position: relative; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; font-weight: 700; background: linear-gradient(145deg, #ff7a3d, #e04a10); box-shadow: 0 10px 30px rgba(255,90,31,.45); }
+.ringing .cav::before, .ringing .cav::after { content: ''; position: absolute; inset: -12px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.18); animation: ring2 1.6s infinite; } .ringing .cav::after { animation-delay: .8s; }
+@keyframes ring2 { from { transform: scale(.85); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+.call h2 { font-size: 22px; font-weight: 700; margin-top: 22px; } .call .cn { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 3px; font-family: ui-monospace, Consolas, monospace; }
+.call .st { margin-top: 18px; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 12px; background: rgba(255,255,255,.08); }
+.call .tm { font-size: 34px; font-weight: 300; margin-top: 18px; letter-spacing: 2px; display: none; } .active .tm { display: block; } .active .st { background: none; color: #3ddc84; padding: 0; margin-top: 6px; }
+.wave { display: inline-flex; gap: 2px; margin-right: 6px; vertical-align: middle; } .wave i { width: 2px; height: 10px; background: #3ddc84; border-radius: 1px; animation: wv .9s infinite ease-in-out; } .wave i:nth-child(2) { animation-delay: .15s; } .wave i:nth-child(3) { animation-delay: .3s; } .wave i:nth-child(4) { animation-delay: .45s; }
+@keyframes wv { 50% { transform: scaleY(.3); } }
+.cbtns { margin-top: auto; margin-bottom: 52px; display: flex; gap: 40px; } .cbtns div { text-align: center; font-size: 10px; font-weight: 600; color: rgba(255,255,255,.7); }
+.cbtns button { width: 58px; height: 58px; border-radius: 50%; border: 0; color: #fff; font-size: 19px; cursor: pointer; display: block; margin-bottom: 6px; transition: transform .15s; } .cbtns button:hover { transform: scale(1.08); }
+.btn-r { background: #ff3b30; box-shadow: 0 6px 18px rgba(255,59,48,.45); } .btn-g { background: #34c759; box-shadow: 0 6px 18px rgba(52,199,89,.45); animation: bob 1.2s infinite; } .btn-n { background: rgba(255,255,255,.12); } .btn-n.on { background: #fff; color: #111; }
+@keyframes bob { 50% { transform: translateY(-4px); } }
+.active .cbtns { padding: 14px 20px; border-radius: 22px; background: rgba(255,255,255,.06); gap: 26px; } .active .in-only { display: none; } .active .cbtns { margin-bottom: 46px; } .active .ac-only { display: block; } .ac-only { display: none; }
+/* minimized: phone peeks from the bottom with a call pill */
+.pill { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 45; display: none; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 16px; background: rgba(18,18,22,.92); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+.peek .pill { display: flex; animation: fadeUp .3s; } .pill .cav { width: 30px; height: 30px; font-size: 12px; box-shadow: none; } .pill b { font-size: 12px; display: block; } .pill span { font-size: 9.5px; color: rgba(255,255,255,.55); }
+.pill .x { flex: 1; } .pill button { width: 30px; height: 30px; border-radius: 50%; border: 0; color: #fff; cursor: pointer; font-size: 11px; } .pill .st2 { color: #3ddc84; font-weight: 700; }
+.pclock { position: absolute; inset: 0; z-index: 44; display: none; flex-direction: column; align-items: center; padding-top: 76px; background: inherit; }
+.pclock span { font-size: 11px; font-weight: 700; } .pclock em { font-style: normal; } .pclock b { font-size: 58px; font-weight: 600; letter-spacing: -1px; }
+.peek .pclock { display: flex; background: linear-gradient(165deg, #1d1d22, #0c0c0e 55%, #150b07); }
+.pos.peek { transform: translateY(calc(100% - 175px)); } .pos.peek .call { display: none; }
+/* toast */
+.ctoast { position: fixed; top: 28px; right: 28px; display: none; align-items: center; gap: 10px; padding: 10px 16px; background: rgba(14,14,17,.9); border-bottom: 2px solid var(--a); font-size: 12px; font-weight: 600; transform: skewX(-6deg); }
+.ctoast.on { display: flex; animation: fadeUp .3s; } .ctoast i { width: 10px; height: 10px; border-radius: 50%; background: var(--a); box-shadow: 0 0 8px var(--a); animation: bl2 1s infinite; } @keyframes bl2 { 50% { opacity: .3; } }
 /* ---------- preview controls ---------- */
 .ctrl { position: fixed; left: 30px; top: 30px; display: flex; flex-direction: column; gap: 8px; }
 .ctrl h1 { font-family: 'Barlow Condensed'; font-style: italic; font-size: 38px; } .ctrl h1 b { color: var(--a); }
@@ -149,9 +218,11 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 body:not(.preview) .ctrl { display: none; }
 </style></head><body>
 
+<div class="ctoast" id="ctoast"><i></i><span id="ctT">Incoming call</span></div>
 <div class="ctrl"><h1><b>ROX</b> PHONE</h1><p>Design preview. Passcode <b>1234</b>. Drag the white handle on the left edge to unfold / fold (or press <b>F</b>). <b>L</b> locks.</p>
   <button id="bFold"><i class="fa-solid fa-tablet-screen-button"></i><span>Unfold</span></button>
   <button id="bLock"><i class="fa-solid fa-lock"></i>Lock phone</button>
+  <button id="bCall"><i class="fa-solid fa-phone-volume"></i>Simulate incoming call</button>
   <button id="bHide"><i class="fa-solid fa-eye-slash"></i>Put away / take out</button></div>
 
 <div class="pos" id="pos"><div class="device" id="dev">
@@ -170,7 +241,12 @@ body:not(.preview) .ctrl { display: none; }
     <div class="apps" id="apps"></div>
     <div class="under"><span class="dots"><i class="on"></i><i></i></span><span class="search"><i class="fa-solid fa-magnifying-glass"></i> Search</span></div>
     <div class="dock" id="dockApps"></div></div>
-  <div class="av" id="av"></div><div class="hb" id="hb"></div>
+  <div class="av" id="av"></div>
+  <div class="call" id="call"><div class="cav" id="cAv"></div><h2 id="cName"></h2><div class="cn" id="cNum"></div><div class="tm" id="cTm">00:00</div><div class="st" id="cSt">Incoming call</div>
+    <div class="cbtns"><div class="ac-only"><button class="btn-n" id="cMute"><i class="fa-solid fa-microphone"></i></button>Mute</div><div><button class="btn-r" id="cEnd"><i class="fa-solid fa-phone-slash"></i></button><span id="cEndL">Decline</span></div>
+      <div class="in-only"><button class="btn-g" id="cAcc"><i class="fa-solid fa-phone"></i></button>Accept</div><div class="ac-only"><button class="btn-n" id="cSpk"><i class="fa-solid fa-volume-high"></i></button>Speaker</div></div></div>
+  <div class="pclock" id="pclock"><span><i class="fa-solid fa-lock"></i> <em id="pcD"></em></span><b id="pcT"></b></div>
+  <div class="pill" id="pill"><div class="cav" id="pAv"></div><div class="x"><b id="pName"></b><span id="pSt">Incoming call</span></div><button class="btn-r" id="pEnd"><i class="fa-solid fa-phone-slash"></i></button><button class="btn-g" id="pAcc" style="animation:none"><i class="fa-solid fa-phone"></i></button></div><div class="hb" id="hb"></div>
   </div></div><div class="flap"></div></div></div>
 
 <script src="icons.js"></script>
@@ -204,7 +280,8 @@ function setFold(open) {
   setTimeout(() => { drawApps(); const av = $('av'); if (av.classList.contains('on')) { const k = av.dataset.app, el = document.querySelector(`.app[data-app="${k}"]`); if (el) openApp(k, el.dataset.name, el); } sc.classList.remove('busy'); d.classList.remove('anim-open', 'anim-close'); busy = false; }, 720);
 }
 $('bFold').onclick = () => setFold(!isOpen());
-$('bLock').onclick = lock; $('bHide').onclick = () => $('pos').classList.toggle('hide');
+$('bLock').onclick = lock; $('bHide').onclick = () => { if (Call.active()) return Call.peek(!$('pos').classList.contains('peek')); $('pos').classList.toggle('hide'); };
+$('bCall').onclick = () => Call.incoming('Abu Ibrahim', '(555) 100-9944');
 
 /* drag the handle: pull left to unfold, push right to fold */
 let drag = null;
@@ -220,6 +297,70 @@ document.addEventListener('mouseup', () => { if (!drag) return; const done = dra
 document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; if (/^\d$/.test(e.key) && $('scr').classList.contains('locked')) key(e.key); if (e.key === 'Backspace') key('del');
   if (e.key.toLowerCase() === 'f') setFold(!isOpen()); if (e.key.toLowerCase() === 'l') lock(); });
 
+
+/* ---------- Phone app ---------- */
+const CONTACTS = [['Abu Snow','(555) 217-4410'],['Abu5lf','(555) 902-1188'],['Abu Ibrahim','(555) 100-9944'],['Abu Kayan','(555) 731-0062'],['Abu Samra','(555) 550-0184'],['Faisal','(555) 448-2290'],['Mechanic Shop','(555) 600-1000'],['Sara','(555) 318-7745']];
+const LOG = [['02:47','out','(555) 337-1289',45],['02:46','decl','Abu Samra',0],['02:46','out','Abu Salem',34],['02:42','in','Abu5lf',37],['02:41','in','Abu Kayan',20],['02:40','decl','Abu Kayan',0],['02:40','miss','Abu Snow',0],['01:12','in','Sara',128]];
+const Phone = (() => {
+  let tab = 'log', filt = 'all';
+  const ini2 = (n) => /^\(/.test(n) ? '#' : n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const num = (n) => (CONTACTS.find(c => c[0] === n) || [, n])[1];
+  const fmt = (x) => `${x / 60 | 0}:${String(x % 60).padStart(2, '0')}`;
+  function shell(inner) { return `<div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span>(555) 348-8943</span></div></div>${inner}
+    <div class="ph-nav"><button class="${tab === 'log' ? 'on' : ''}" data-t="log"><small>01</small>LOG</button><button class="${tab === 'book' ? 'on' : ''}" data-t="book"><small>02</small>BOOK</button><button class="sq" data-kp><i class="fa-solid fa-table-cells"></i></button></div>
+    <div class="kps" id="kps"><div class="num" id="kNum"></div><div class="dial"><div class="kp">${[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].map(([d, l]) => `<button data-d="${d}">${d}<small>${l || '&nbsp;'}</small></button>`).join('')}</div>
+    <div style="display:flex;justify-content:center;gap:30px;margin-top:12px"><button class="sq" data-kclose style="width:44px;height:44px;border-radius:50%"><i class="fa-solid fa-chevron-down"></i></button><button class="cbtn btn-g" data-kcall style="width:56px;height:56px;border-radius:50%;border:0;color:#fff;font-size:18px;animation:none;cursor:pointer"><i class="fa-solid fa-phone"></i></button><button class="sq" data-kdel style="width:44px;height:44px;border-radius:50%"><i class="fa-solid fa-delete-left"></i></button></div></div></div>`; }
+  function log() { const miss = LOG.filter(l => l[1] === 'miss' || l[1] === 'decl').length, rows = LOG.filter(l => filt === 'all' || l[1] === 'miss' || l[1] === 'decl');
+    return shell(`<div class="ph-top"><div class="ph-h"><div><h1>CALL LOG</h1><small>${LOG.length} ENTRIES · ${miss} MISSED</small></div><button class="sq"><i class="fa-solid fa-magnifying-glass"></i></button></div>
+      <div class="chips"><button class="${filt === 'all' ? 'on' : ''}" data-f="all">ALL<b>${LOG.length}</b></button><button class="${filt === 'miss' ? 'on' : ''}" data-f="miss">MISSED<b>${miss}</b></button></div></div>
+      <div class="ph-list">${rows.map(([t, k, n, d], i) => `<div class="cl" data-n="${n}" style="animation-delay:${i * 30}ms"><div class="t">${t}<small class="k-${k}">${k.toUpperCase()}</small></div><i class="d k-${k}"></i>
+        <div><b>${n}</b>${d ? `<div class="bar2 k-${k}"><i style="--p:${Math.min(100, d / 1.3)}%"></i><span>${fmt(d)}</span></div>` : `<div class="dec">${k === 'miss' ? 'MISSED' : 'DECLINED'}</div>`}</div>
+        <button class="cb" data-call="${n}"><i class="fa-solid fa-phone"></i></button></div>`).join('')}</div>`); }
+  function book() { const g = {}; CONTACTS.slice().sort().forEach(c => (g[c[0][0]] = g[c[0][0]] || []).push(c));
+    return shell(`<div class="ph-top"><div class="ph-h"><div><h1>CONTACTS</h1><small>${CONTACTS.length} SAVED</small></div><button class="sq"><i class="fa-solid fa-user-plus"></i></button></div></div>
+      <div class="ph-list">${Object.keys(g).map(L => `<div class="letter">${L}</div>` + g[L].map(([n, p]) => `<div class="bk" data-n="${n}"><div class="mono">${ini2(n)}</div><b>${n}</b><span>${p}</span></div>`).join('')).join('')}</div>`); }
+  function contact(n) { const calls = LOG.filter(l => l[2] === n), talk = calls.reduce((a, l) => a + l[3], 0);
+    return `<div class="ph-top"><div class="ph-meta"><span>ROXCELL <i class="fa-solid fa-signal"></i></span><span>(555) 348-8943</span></div></div>
+      <div class="back"><button data-back><i class="fa-solid fa-chevron-left"></i>BACK</button><button class="sq"><i class="fa-solid fa-star"></i></button></div>
+      <div class="cc"><div class="top2"><div class="mono">${ini2(n)}</div><div><b>${n}</b><div class="num">${num(n)}<i class="fa-solid fa-copy"></i></div></div></div><div class="sub"><span>ROXCELL SUBSCRIBER</span><span>ID ${37000 + n.length * 53}</span></div></div>
+      <div class="tiles"><button class="g" data-call="${n}"><i class="fa-solid fa-phone"></i>CALL</button><button class="b"><i class="fa-solid fa-message"></i>MSG</button><button class="o"><i class="fa-solid fa-pen"></i>EDIT</button><button class="r"><i class="fa-solid fa-trash"></i>DEL</button></div>
+      <div class="lbl">CALL REGISTER</div><div class="reg"><div>LAST CONTACT<b>${calls[0] ? calls[0][0] : '—'}</b></div><div>CALLS ON RECORD<b>${calls.length}</b></div><div>TOTAL TALK TIME<b>${fmt(talk)}</b></div><div>STARRED<b>NO</b></div></div>
+      <div class="lbl">RECENT WITH ${n.toUpperCase()}</div><div class="reg">${calls.map(([t, k, , d]) => `<div><span class="k-${k}">${k.toUpperCase()} &nbsp; TODAY ${t}</span><b style="font-size:8.5px;letter-spacing:1px">${d ? fmt(d) : (k === 'miss' ? 'MISSED' : 'DECLINED')}</b></div>`).join('') || '<div>NO CALLS</div>'}</div>`; }
+  function render(t, arg) { if (t) tab = t; const el = $('ph'); if (!el) return;
+    el.innerHTML = tab === 'contact' ? contact(arg) : tab === 'book' ? book() : log();
+    el.onclick = (e) => { const x = e.target.closest('[data-t],[data-f],[data-call],[data-n],[data-back],[data-kp],[data-kclose],[data-d],[data-kcall],[data-kdel]'); if (!x) return;
+      if (x.dataset.t) return render(x.dataset.t); if (x.dataset.f) { filt = x.dataset.f; return render('log'); }
+      if (x.dataset.call) return Call.out(x.dataset.call, num(x.dataset.call)); if (x.dataset.back !== undefined) return render('log');
+      if (x.dataset.kp !== undefined) return $('kps').classList.add('on'); if (x.dataset.kclose !== undefined) return $('kps').classList.remove('on');
+      if (x.dataset.d) return $('kNum').textContent = ($('kNum').textContent + x.dataset.d).slice(0, 14);
+      if (x.dataset.kdel !== undefined) return $('kNum').textContent = $('kNum').textContent.slice(0, -1);
+      if (x.dataset.kcall !== undefined) { const v = $('kNum').textContent; if (v) Call.out(v, v); return; }
+      if (x.dataset.n) render('contact', x.dataset.n); }; }
+  return { render };
+})();
+
+/* ---------- calls (incoming / active / minimized) ---------- */
+const Call = (() => {
+  let st = null, sec = 0, tick = null, who = {};
+  const ini3 = (n) => /^[\d(]/.test(n) ? '#' : n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const fill = () => { for (const k of ['cAv', 'pAv']) $(k).textContent = ini3(who.n); $('cName').textContent = who.n; $('pName').textContent = who.n; $('cNum').textContent = who.p; };
+  const tm = () => `${String(sec / 60 | 0).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+  function show(state) { st = state; const c = $('call'); c.className = 'call on ' + (state === 'in' ? 'ringing' : state === 'out' ? 'ringing active' : 'active');
+    $('cSt').innerHTML = state === 'in' ? 'Incoming call' : state === 'out' ? 'Calling…' : '<span class="wave"><i></i><i></i><i></i><i></i></span>On call';
+    $('cEndL').textContent = state === 'in' ? 'Decline' : 'End'; $('pAcc').style.display = state === 'in' ? '' : 'none';
+    $('pSt').innerHTML = state === 'in' ? 'Incoming call' : `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`;
+    $('cTm').textContent = tm(); if (state === 'in') { $('ctoast').classList.add('on'); $('ctT').textContent = 'Incoming call · ' + who.n; } else $('ctoast').classList.remove('on'); }
+  function incoming(n, p) { who = { n, p }; fill(); sec = 0; show('in'); if ($('pos').classList.contains('hide')) peek(true); }
+  function out(n, p) { who = { n, p }; fill(); sec = 0; show('out'); setTimeout(() => st === 'out' && accept(), 1800); }
+  function accept() { show('on'); clearInterval(tick); tick = setInterval(() => { sec++; $('cTm').textContent = tm(); if (st === 'on') $('pSt').innerHTML = `<span class="st2"><span class="wave"><i></i><i></i><i></i></span>${tm()}</span>`; }, 1000); }
+  function end() { if (st === 'in') LOG.unshift([new Date().toTimeString().slice(0, 5), 'decl', who.n, 0]); else if (st) LOG.unshift([new Date().toTimeString().slice(0, 5), 'out', who.n, sec]);
+    st = null; clearInterval(tick); $('call').className = 'call'; $('ctoast').classList.remove('on'); peek(false); Phone.render(); }
+  function peek(on) { const d = new Date(); $('pcT').textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); $('pcD').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); $('pos').classList.toggle('peek', on); $('pos').classList.remove('hide'); }
+  $('cAcc').onclick = $('pAcc').onclick = (e) => { e.stopPropagation(); accept(); }; $('cEnd').onclick = $('pEnd').onclick = (e) => { e.stopPropagation(); end(); };
+  $('cMute').onclick = () => $('cMute').classList.toggle('on'); $('cSpk').onclick = () => $('cSpk').classList.toggle('on');
+  $('pill').onclick = () => peek(false);
+  return { incoming, out, end, peek, active: () => !!st };
+})();
 /* ---------- apps ---------- */
 const COL = ['#ff5a1f','#2f7cf6','#a855f7','#22c55e','#eab308','#ec4899'];
 const ini = (n) => n.split(' ').map(w => w[0]).join('').slice(0, 2);
@@ -239,9 +380,7 @@ const APPVIEW = {
       const send = () => { const v = $('mi').value.trim(); if (!v) return; CHATS[cur].m.push([v, 1]); CHATS[cur].t = 'now'; $('msgs').insertAdjacentHTML('beforeend', `<div class="bub me">${v.replace(/</g, '&lt;')}</div>`); $('mi').value = ''; $('msgs').scrollTop = 1e6; };
       if ($('ms')) { $('ms').onclick = send; $('mi').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); }; } };
     return { title: 'Messages', btn: 'pen-to-square', html: '', after: () => draw(false) }; },
-  phone: () => ({ title: 'Phone', html: `<div class="tabs2"><button>Recents</button><button>Contacts</button><button class="on">Keypad</button></div>
-    <div class="dial"><div class="num" id="num"></div><div class="kp">${[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].map(([d, l]) => `<button data-d="${d}">${d}<small>${l || '&nbsp;'}</small></button>`).join('')}</div>
-    <button class="call"><i class="fa-solid fa-phone"></i></button></div>`, after: () => $('ab').querySelectorAll('[data-d]').forEach(b => b.onclick = () => { const n = $('num'); n.textContent = (n.textContent + b.dataset.d).slice(0, 14); }) }),
+  phone: () => ({ title: '', raw: true, html: '<div class="ph" id="ph"></div>', after: () => Phone.render('log') }),
   banking: () => ({ title: 'Banking', btn: 'bell', html: `<div class="card"><small>TOTAL BALANCE</small><div class="bal">$62,881.00</div><div class="row"><span>•••• 4821</span><span class="chip"></span></div></div>
     <div class="acts"><div><i class="fa-solid fa-paper-plane"></i>Send</div><div><i class="fa-solid fa-arrow-down"></i>Request</div><div><i class="fa-solid fa-file-invoice-dollar"></i>Bills</div><div><i class="fa-solid fa-chart-line"></i>Stats</div></div>
     <div class="sec">Transactions <span>See all</span></div>${TX.map(([n, a, c, i, d]) => `<div class="li"><div class="ti"><i class="fa-solid fa-${i}"></i></div><div class="tx"><b>${n}</b><span>${d}</span></div><div class="amt ${c}">${a.startsWith('+') ? '+$' + a.slice(1) : '-$' + a.slice(1)}</div></div>`).join('')}` }),
@@ -258,7 +397,7 @@ function openApp(key, name, from) {
   const av = $('av'), r = from.getBoundingClientRect(), sr = $('scr').getBoundingClientRect();
   av.style.setProperty('--ox', (r.left + r.width / 2 - sr.left) + 'px'); av.style.setProperty('--oy', (r.top + r.height / 2 - sr.top) + 'px');
   const v = APPVIEW[key] ? APPVIEW[key]() : { title: name, html: `<div class="soon">${RoxIcons.svg(key, 84)}<b>${name}</b>Coming soon</div>` };
-  av.innerHTML = `<div class="ah"><h1>${v.title}</h1>${v.btn ? `<button><i class="fa-solid fa-${v.btn}"></i></button>` : ''}</div><div class="ab" id="ab" style="${APPVIEW[key] ? '' : 'display:flex'}">${v.html}</div>`;
+  av.innerHTML = v.raw ? `<div class="ab" id="ab" style="padding:0">${v.html}</div>` : `<div class="ah"><h1>${v.title}</h1>${v.btn ? `<button><i class="fa-solid fa-${v.btn}"></i></button>` : ''}</div><div class="ab" id="ab" style="${APPVIEW[key] ? '' : 'display:flex'}">${v.html}</div>`;
   av.className = 'av on'; $('scr').classList.add('inapp'); av.dataset.app = key; if (v.after) v.after();
 }
 function closeApp() { const av = $('av'); if (!av.classList.contains('on')) return; av.classList.add('out'); $('scr').classList.remove('inapp'); setTimeout(() => av.className = 'av', 260); }
