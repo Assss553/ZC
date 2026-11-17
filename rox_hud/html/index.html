@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!-- ROX Store | rox_hud | All rights reserved. -->
+<html lang="en"><head><meta charset="UTF-8"><title>ROX HUD</title>
+<link rel="stylesheet" href="fa/css/fontawesome.min.css"><link rel="stylesheet" href="fa/css/solid.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="hud" class="hud">
+    <div id="compass" class="compass"><div class="strip" id="strip"></div><div class="needle"></div>
+        <div class="loc"><span class="dir" id="dir">N</span><span class="street" id="street"></span><span class="zone" id="zone"></span></div></div>
+
+    <div class="status">
+        <div class="bars">
+            <div class="bar hp"><i class="fa-solid fa-heart"></i><div class="track"><b id="hpFill"></b></div><span id="hpVal">100</span></div>
+            <div class="bar ar" id="arBar"><i class="fa-solid fa-shield-halved"></i><div class="track"><b id="arFill"></b></div><span id="arVal">0</span></div>
+        </div>
+        <div class="tiles" id="tiles"></div>
+    </div>
+
+    <div id="speedo" class="speedo">
+        <svg viewBox="0 0 200 200" class="gauge"><path class="g-bg" d="M38 160 A80 80 0 1 1 162 160"/><path id="rpmArc" class="g-rpm" d="M38 160 A80 80 0 1 1 162 160"/></svg>
+        <div class="sp"><b id="spd">0</b><span id="unit">KM/H</span></div>
+        <div class="gear" id="gear">N</div>
+        <div class="vrow"><span class="vi" id="belt"><i class="fa-solid fa-user-shield"></i></span><span class="vi" id="eng"><i class="fa-solid fa-oil-can"></i></span><span class="vi" id="lgt"><i class="fa-solid fa-lightbulb"></i></span></div>
+        <div class="fuel"><i class="fa-solid fa-gas-pump"></i><div class="track"><b id="fuelFill"></b></div></div>
+    </div>
+</div>
+<script src="app.js"></script></body></html>
