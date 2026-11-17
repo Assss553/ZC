@@ -66,6 +66,13 @@ const RoxWalls = (() => {
     <rect x="-10" y="700" width="420" height="4" fill="#25f4ee" opacity=".6"/>${car(60, 610, .95, '#120a1c', '#25f4ee')}<rect y="${H - 140}" width="${W}" height="140" fill="#05020a" opacity=".7"/>`,
     `<linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0326"/><stop offset=".45" stop-color="#5b1a7a"/><stop offset=".55" stop-color="#ff3f9a"/></linearGradient>
      <linearGradient id="nbs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe17a"/><stop offset=".7" stop-color="#ff3f9a"/></linearGradient><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1468"/><stop offset="1" stop-color="#0a0320"/></linearGradient>`)]);
+  // 11-12 abstract flowing gradients (original)
+  L.push(['Aurora Wave', svg(`<rect width="${W}" height="${H}" fill="#5b2bb0"/><g filter="url(#bl)">
+    <path d="M-60 360 C40 120 140 -40 230 20 C300 70 360 200 470 300 V-80 H-60z" fill="#6a34c4"/><path d="M-60 520 C40 300 160 130 260 170 C340 200 380 330 470 380 V300 C360 200 300 70 230 20 C140 -40 40 120 -60 360z" fill="#3df0b5"/>
+    <path d="M-60 700 C60 520 180 420 280 470 C360 510 400 600 470 640 V380 C380 330 340 200 260 170 C160 130 40 300 -60 520z" fill="#3a6fb0"/><path d="M-60 900 C80 760 180 640 300 680 C380 705 420 770 470 800 V640 C400 600 360 510 280 470 C180 420 60 520 -60 700z" fill="#46e6c0"/>
+    <path d="M-60 980 C100 880 220 760 330 820 C400 860 440 880 470 900 V800 C420 770 380 705 300 680 C180 640 80 760 -60 900z" fill="#4b2a9a"/></g>`, `<filter id="bl"><feGaussianBlur stdDeviation="10"/></filter>`)]);
+  L.push(['Pastel Blur', svg(`<rect width="${W}" height="${H}" fill="#8fb8f2"/><g filter="url(#bl2)"><circle cx="300" cy="120" r="170" fill="#9a8cf0"/><circle cx="90" cy="300" r="160" fill="#b49cf2"/><circle cx="260" cy="430" r="140" fill="#f29ac6"/>
+    <circle cx="80" cy="600" r="170" fill="#7d6ee8"/><circle cx="330" cy="700" r="150" fill="#f6a8d8"/><circle cx="160" cy="840" r="160" fill="#7ec8f5"/></g>`, `<filter id="bl2"><feGaussianBlur stdDeviation="55"/></filter>`)]);
   // custom wallpapers added by the player (URL), stored locally
   let custom = []; try { custom = JSON.parse(localStorage.getItem('rox_walls') || '[]'); } catch (e) {}
   custom.forEach(u => L.push(['Custom', null, u]));
