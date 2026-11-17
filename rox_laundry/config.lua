@@ -21,3 +21,7 @@ Config.Reward = {
 }
 Config.Times = { wash = 22, dry = 16 }   -- seconds of the drum animation (server checks them too)
 Config.Blip = { sprite = 366, color = 47, scale = 0.8, label = 'ROX Laundry' }
+
+-- The GTA props in shared/props.lua look at -Y in their own model space (like vending machines).
+-- If machines appear turned the wrong way in your build, try 0.0 here.
+Config.PropFront = 180.0

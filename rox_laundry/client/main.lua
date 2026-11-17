@@ -14,7 +14,47 @@ local function world(p)    -- local building point -> world coords + heading
     return vector3(location.x + p.x * c - p.y * s, location.y + p.x * s + p.y * c, location.z + (p.z or 0)), (p.h + location.w) % 360.0
 end
 
-local function despawn() if building and DoesEntityExist(building) then DeleteEntity(building) end building = nil end
+local props = {}
+local function despawn()
+    if building and DoesEntityExist(building) then DeleteEntity(building) end
+    building = nil
+    for _, e in ipairs(props) do if DoesEntityExist(e) then DeleteEntity(e) end end
+    props = {}
+end
+
+local function pickModel(list)
+    for _, name in ipairs(list) do local h = joaat(name); if IsModelInCdimage(h) and IsModelValid(h) then return h, name end end
+end
+
+-- real GTA props (shared/props.lua) standing on the floor or on top of another prop
+local function spawnProps()
+    local named, missing = {}, {}
+    local r = math.rad(location.w); local c, s = math.cos(r), math.sin(r)
+    for _, p in ipairs(LaundryProps) do
+        local hash = pickModel(p.m)
+        if not hash then missing[p.m[1]] = true
+        else
+            RequestModel(hash); local t = GetGameTimer() + 4000
+            while not HasModelLoaded(hash) and GetGameTimer() < t do Wait(0) end
+            if HasModelLoaded(hash) then
+                local mn, mx = GetModelDimensions(hash)
+                local wx, wy = location.x + p.x * c - p.y * s, location.y + p.x * s + p.y * c
+                local z = location.z + (p.z or 0.0) - mn.z
+                if p.on and named[p.on] then
+                    local base = named[p.on]; local _, bmx = GetModelDimensions(GetEntityModel(base))
+                    z = GetEntityCoords(base).z + bmx.z - mn.z
+                end
+                local e = CreateObjectNoOffset(hash, wx, wy, z, false, false, false)
+                SetEntityHeading(e, (location.w + p.face + (Config.PropFront or 180.0)) % 360.0)
+                FreezeEntityPosition(e, true)
+                SetModelAsNoLongerNeeded(hash)
+                if p.name then named[p.name] = e end
+                props[#props + 1] = e
+            end
+        end
+    end
+    for name in pairs(missing) do print(('^3[rox_laundry] no model available for %s (edit shared/props.lua)^7'):format(name)) end
+end
 local function spawn()
     despawn()
     if not IsModelInCdimage(MODEL) then return print('^1[rox_laundry] rox_laundromat model is not streamed^7') end
@@ -23,6 +63,7 @@ local function spawn()
     building = CreateObjectNoOffset(MODEL, location.x, location.y, location.z, false, false, false)
     SetEntityHeading(building, location.w); FreezeEntityPosition(building, true); SetEntityLodDist(building, 500)
     SetModelAsNoLongerNeeded(MODEL)
+    spawnProps()
 end
 
 RegisterNetEvent('rox_laundry:location', function(loc)

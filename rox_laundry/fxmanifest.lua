@@ -11,7 +11,7 @@ version '1.0.0'
 this_is_a_map 'yes'
 data_file 'DLC_ITYP_REQUEST' 'stream/rox_laundry.ytyp'
 
-shared_scripts { 'config.lua', 'shared/points.lua', 'shared/locale.lua' }
+shared_scripts { 'config.lua', 'shared/props.lua', 'shared/locale.lua' }
 server_scripts { 'server/main.lua' }
 client_scripts { 'client/main.lua' }
 
