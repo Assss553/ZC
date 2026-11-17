@@ -625,9 +625,9 @@ document.addEventListener('mousemove', (e) => { if (!drag) return;
   drag0 = e.clientX - drag.x; const dx = Math.abs(drag0), p = Math.max(0, Math.min(1, dx / 140));
   $('tip').classList.toggle('on', p > 0.05); 
   const tgt = isOpen() && drag0 > 0 ? mode() - 1 : Math.min(2, mode() + 1); [...$('bars').children].forEach((b, i) => b.classList.toggle('on', i <= tgt)); $('tipT').textContent = (p >= 1 ? 'Release: ' : 'Pull: ') + ['Phone', 'Half', 'Tablet'][tgt];
-  $('dev').style.transform = `translateX(${(isOpen() ? 1 : -1) * p * 10}px)`;
+  { const Wd = [300, 560, 820], cur = Wd[mode()], tg = Wd[isOpen() && drag0 > 0 ? mode() - 1 : Math.min(2, mode() + 1)]; const d = $('dev'); d.style.transition = 'none'; d.style.width = (cur + (tg - cur) * p) + 'px'; }
   drag.p = p; });
-document.addEventListener('mouseup', () => { if (!drag) return; const done = drag.p >= 1; drag = null; $('tip').classList.remove('on'); $('dev').style.transform = ''; if (done) setMode(isOpen() && drag0 > 0 ? mode() - 1 : Math.min(2, mode() + 1)); });
+document.addEventListener('mouseup', () => { if (!drag) return; const done = drag.p >= 1; drag = null; $('tip').classList.remove('on'); $('dev').style.transition = ''; $('dev').style.width = ''; if (done) setMode(isOpen() && drag0 > 0 ? mode() - 1 : Math.min(2, mode() + 1)); });
 
 document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; if (/^\d$/.test(e.key) && $('scr').classList.contains('locked')) key(e.key); if (e.key === 'Backspace') key('del');
   if (e.key.toLowerCase() === 'f') setMode((mode() + 1) % 3); if (e.key.toLowerCase() === 'l') lock(); });
