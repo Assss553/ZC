@@ -14,3 +14,14 @@ Config.Banks = {
     { name = 'Blaine County Savings',  coords = vec3(-113.2, 6470.0, 31.6) },
 }
 Config.Blip = { sprite = 108, color = 2, scale = 0.75 }
+
+-- ---------------- loans ----------------
+Config.Loans = {
+    enabled = true,
+    min = 1000, max = 100000,
+    terms = { 4, 8, 12 },        -- number of weekly payments the player can choose
+    rate = 8,                    -- % total interest
+    intervalHours = 24 * 7,      -- time between payments (real hours)
+    autoCollect = true,          -- take the payment from bank automatically when due
+    lateFeePct = 5,              -- added to the loan if a payment fails
+}
