@@ -11,6 +11,7 @@ Config.Sets = {
     palms   = { 'prop_palm_med_01a', 'prop_palm_med_01b', 'prop_palm_sm_01e', 'prop_palm_fan_03_c' },
     mixed   = { 'prop_tree_jacada_01', 'prop_tree_jacada_02', 'prop_tree_olive_01', 'prop_palm_med_01b' },
     bushes  = { 'prop_bush_lrg_04b', 'prop_bush_lrg_04c', 'prop_bush_med_03' },
+    decor   = { 'prop_bench_01a', 'prop_bench_05', 'prop_streetlight_01', 'prop_bin_01a', 'prop_planter_01' },
 }
 
 Config.Generate = {

@@ -1,0 +1,82 @@
+<!doctype html>
+<!-- ROX Store | All rights reserved -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--a:#2fe36a;--bg:#14171de8;--row:#ffffff08}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100vw;height:100vh;overflow:hidden;font-family:Inter,sans-serif;color:#fff;background:transparent}
+body.demo{background:#4a5560 url(demo.jpg) center/cover}
+#app{position:fixed;right:2vw;top:5vh;bottom:5vh;width:520px;display:none;flex-direction:column;background:var(--bg);backdrop-filter:blur(8px);border:1px solid #ffffff14}
+#app.on{display:flex;animation:in .2s}@keyframes in{from{opacity:0;transform:translateX(20px)}}
+.hd{padding:22px 24px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #ffffff12}
+.lg{width:42px;height:42px;background:var(--a);color:#06210f;display:grid;place-items:center;font:900 20px Montserrat}
+.hd h1{font:900 22px Montserrat;letter-spacing:.5px}.hd small{display:block;font:500 12px Inter;color:#9aa3ad;margin-top:2px}
+.x{margin-left:auto;width:32px;height:32px;display:grid;place-items:center;background:#ffffff10;cursor:pointer;font-size:16px}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#ffffff12;border-bottom:1px solid #ffffff12}
+.st div{background:#14171d;padding:12px 16px}.st b{display:block;font:900 22px Montserrat;color:var(--a)}.st span{font:600 10.5px Montserrat;color:#8a929c;letter-spacing:1px}
+.tabs{display:flex;padding:14px 16px 0;gap:6px;flex-wrap:wrap}
+.tab{padding:9px 14px;font:800 12px Montserrat;letter-spacing:1px;background:var(--row);cursor:pointer;color:#c9ced5}
+.tab.on{background:#fff;color:#111}
+.grid{flex:1;overflow:auto;padding:14px 16px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;align-content:start}
+.card{background:var(--row);border:1px solid transparent;padding:14px;cursor:pointer;display:flex;gap:12px;align-items:center}
+.card:hover{border-color:#ffffff30}.card.on{border-color:var(--a);background:#2fe36a14}
+.ic{width:46px;height:46px;display:grid;place-items:center;font-size:26px;background:#ffffff0a}
+.card b{font:800 13px Montserrat;display:block}.card code{font:500 10.5px Inter;color:#8a929c}
+.sec{padding:14px 16px;border-top:1px solid #ffffff12}
+.sec h3{font:800 12px Montserrat;letter-spacing:1.5px;color:var(--a);margin-bottom:10px}
+.r{display:flex;align-items:center;gap:10px;margin-bottom:10px;font:600 13px Inter;color:#cfd4da}
+.r input[type=range]{flex:1;accent-color:var(--a)}.r .v{width:54px;text-align:right;font:800 13px Montserrat;color:#fff}
+.r select{flex:1;background:#ffffff10;color:#fff;border:0;padding:8px;font:600 13px Inter}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{padding:13px;text-align:center;font:800 13px Montserrat;letter-spacing:1px;background:#ffffff10;cursor:pointer}
+.btn:hover{background:#ffffff1c}.btn.p{background:var(--a);color:#06210f;grid-column:span 2;font-size:14px}
+.btn.d{color:#ff6b6b}
+.help{position:fixed;left:2vw;bottom:5vh;display:none;background:var(--bg);border:1px solid #ffffff14;padding:16px 20px;min-width:340px}
+.help.on{display:block}.help h4{font:900 14px Montserrat;color:var(--a);margin-bottom:8px}
+.help div{font:600 13px Inter;color:#d7dbe0;margin:5px 0}.help kbd{display:inline-block;min-width:26px;text-align:center;background:#fff;color:#111;font:800 11px Montserrat;padding:3px 6px;margin-right:8px}
+.help .m{font:800 13px Montserrat;color:#fff;margin-top:10px}
+.cross{position:fixed;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;display:none}
+.cross.on{display:block}.cross::before,.cross::after{content:"";position:absolute;background:var(--a);box-shadow:0 0 6px #000}
+.cross::before{left:8px;top:0;width:2px;height:18px}.cross::after{top:8px;left:0;height:2px;width:18px}
+</style></head><body>
+<div id="app">
+ <div class="hd"><div class="lg">🌳</div><div><h1>ROX STREETS</h1><small>Spawn & paint trees on the map</small></div><div class="x" onclick="post('close')">✕</div></div>
+ <div class="st"><div><b id="sTotal">0</b><span>TREES ON MAP</span></div><div><b id="sNear">0</b><span>NEAR YOU</span></div><div><b id="sSel">—</b><span>SELECTED</span></div></div>
+ <div class="tabs" id="tabs"></div>
+ <div class="grid" id="grid"></div>
+ <div class="sec"><h3>AIM & PLACE</h3>
+  <div class="r">Brush spacing<input type="range" id="spacing" min="3" max="30" value="10"><span class="v" id="spacingV">10m</span></div>
+  <div class="r">Random rotation<input type="range" id="rr" min="0" max="1" value="1"><span class="v" id="rrV">ON</span></div>
+  <div class="btns"><div class="btn p" onclick="place()">🎯 START AIM & PLACE</div></div></div>
+ <div class="sec"><h3>AUTO PLANT ROADS</h3>
+  <div class="r">Radius<input type="range" id="radius" min="50" max="1500" step="50" value="300"><span class="v" id="radiusV">300m</span></div>
+  <div class="btns"><div class="btn" onclick="post('auto',{set:cat,radius:+$('radius').value})">🛣️ PLANT ALONG ROADS</div><div class="btn" onclick="post('undo')">↶ UNDO LAST</div>
+  <div class="btn d" onclick="post('clear',{radius:+$('radius').value})">🗑 CLEAR RADIUS</div><div class="btn" onclick="post('export')">💾 EXPORT YMAP</div></div></div>
+</div>
+<div class="help" id="help"><h4>AIM & PLACE</h4>
+ <div><kbd>LMB</kbd>Place tree</div><div><kbd>SHIFT</kbd>Hold + LMB = brush (paint trees)</div><div><kbd>WHEEL</kbd>Rotate</div>
+ <div><kbd>G</kbd>Next model &nbsp; <kbd>R</kbd>Random model</div><div><kbd>DEL</kbd>Remove tree you aim at</div><div><kbd>RMB</kbd>Back to menu</div>
+ <div class="m" id="hModel">—</div></div>
+<div class="cross" id="cross"></div>
+<script>
+const ICON={blossom:'🌸',green:'🌳',palms:'🌴',bushes:'🌿',mixed:'🌲',decor:'🪑'};
+let SETS={},cat='blossom',model=null;const $=id=>document.getElementById(id);
+const post=(n,d={})=>fetch(`https://${window.GetParentResourceName?GetParentResourceName():'rox_streets'}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({}));
+const nice=m=>m.replace(/^prop_/,'').replace(/_/g,' ').toUpperCase();
+function render(){$('tabs').innerHTML=Object.keys(SETS).map(k=>`<div class="tab ${k===cat?'on':''}" onclick="cat='${k}';model=null;render()">${ICON[k]||'•'} ${k.toUpperCase()}</div>`).join('');
+ $('grid').innerHTML=(SETS[cat]||[]).map(m=>`<div class="card ${m===model?'on':''}" onclick="model='${m}';render()"><div class="ic">${ICON[cat]||'🌳'}</div><div><b>${nice(m)}</b><code>${m}</code></div></div>`).join('');
+ $('sSel').textContent=model?nice(model).split(' ').slice(-2).join(' '):(cat.toUpperCase());}
+function place(){post('place',{set:cat,model,spacing:+$('spacing').value,randomRot:$('rr').value==='1'})}
+['spacing','radius'].forEach(id=>$(id).oninput=()=>$(id+'V').textContent=$(id).value+'m');$('rr').oninput=()=>$('rrV').textContent=$('rr').value==='1'?'ON':'OFF';
+window.addEventListener('message',e=>{const d=e.data||{};
+ if(d.action==='open'){SETS=d.sets;if(!SETS[cat])cat=Object.keys(SETS)[0];$('app').classList.add('on');$('help').classList.remove('on');$('cross').classList.remove('on');render()}
+ if(d.action==='stats'){$('sTotal').textContent=d.total;$('sNear').textContent=d.near}
+ if(d.action==='aim'){$('app').classList.remove('on');$('help').classList.add('on');$('cross').classList.add('on');$('hModel').textContent='🌳 '+nice(d.model)}
+ if(d.action==='aimModel')$('hModel').textContent='🌳 '+nice(d.model);
+ if(d.action==='hide'){$('app').classList.remove('on');$('help').classList.remove('on');$('cross').classList.remove('on')}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('app').classList.contains('on'))post('close')});
+if(location.hash){document.body.classList.add('demo');SETS={blossom:['prop_tree_jacada_01','prop_tree_jacada_02'],green:['prop_tree_olive_01','prop_tree_maple_02','prop_tree_maple_03','prop_tree_birch_01'],palms:['prop_palm_med_01a','prop_palm_med_01b','prop_palm_sm_01e','prop_palm_fan_03_c'],bushes:['prop_bush_lrg_04b','prop_bush_lrg_04c','prop_bush_med_03'],mixed:['prop_tree_jacada_01','prop_tree_olive_01']};
+ model='prop_tree_jacada_01';$('sTotal').textContent='1,284';$('sNear').textContent='86';
+ if(location.hash==='#aim'){$('help').classList.add('on');$('cross').classList.add('on');$('hModel').textContent='🌳 TREE JACADA 01'}else{$('app').classList.add('on');render()}}
+</script></body></html>

@@ -53,6 +53,16 @@ RegisterNetEvent('rox_streets:undo', function()
     TriggerClientEvent('ox_lib:notify', src, { description = ('Removed last batch (%d)'):format(n) })
 end)
 
+RegisterNetEvent('rox_streets:remove', function(c)
+    local src = source
+    if not isAdmin(src) or type(c) ~= 'vector3' then return end
+    local best, bd = nil, 3.0
+    for i, t in ipairs(trees) do local d = #(vec3(t.x, t.y, t.z) - c); if d < bd then best, bd = i, d end end
+    if not best then return end
+    table.remove(trees, best); history = {}
+    save(); exportYmap(); TriggerClientEvent('rox_streets:sync', -1, trees)
+end)
+
 RegisterNetEvent('rox_streets:clear', function(c, r)
     local src = source
     if not isAdmin(src) or type(c) ~= 'vector3' and type(c) ~= 'table' then return end
