@@ -12,18 +12,26 @@
   </Item>
   <Item type="CBaseArchetypeDef">
    <lodDist value="300.0"/><flags value="0"/><specialAttribute value="0"/>
-   <bbMin x="-9.8" y="-6.8" z="0.0"/><bbMax x="9.8" y="7.0" z="5.0"/>
-   <bsCentre x="0.0" y="0.10000000000000009" z="2.5"/><bsRadius value="17.052"/>
+   <bbMin x="-9.8" y="-6.8" z="0.0"/><bbMax x="9.8" y="9.05" z="5.0"/>
+   <bsCentre x="0.0" y="1.1250000000000004" z="2.5"/><bsRadius value="17.052"/>
    <hdTextureDist value="100.0"/><name>rox_diner_int</name><textureDictionary/>
    <clipDictionary/><drawableDictionary/><physicsDictionary/><assetType>ASSET_TYPE_DRAWABLE</assetType><assetName>rox_diner_int</assetName>
    <extensions/>
   </Item>
   <Item type="CBaseArchetypeDef">
    <lodDist value="300.0"/><flags value="0"/><specialAttribute value="0"/>
-   <bbMin x="-9.15" y="5.85" z="-6.1"/><bbMax x="9.15" y="18.15" z="0.05"/>
-   <bsCentre x="0.0" y="12.0" z="-3.025"/><bsRadius value="15.921000000000001"/>
+   <bbMin x="-9.15" y="5.85" z="-6.1"/><bbMax x="9.15" y="18.15" z="-2.3000002"/>
+   <bsCentre x="0.0" y="12.0" z="-4.2000001"/><bsRadius value="15.921000000000001"/>
    <hdTextureDist value="100.0"/><name>rox_diner_hq</name><textureDictionary/>
    <clipDictionary/><drawableDictionary/><physicsDictionary/><assetType>ASSET_TYPE_DRAWABLE</assetType><assetName>rox_diner_hq</assetName>
+   <extensions/>
+  </Item>
+  <Item type="CBaseArchetypeDef">
+   <lodDist value="300.0"/><flags value="0"/><specialAttribute value="0"/>
+   <bbMin x="0.00999999" y="-0.21000001" z="0.0"/><bbMax x="1.59" y="0.19" z="2.49"/>
+   <bsCentre x="0.7999999950000001" y="-0.010000004999999992" z="1.245"/><bsRadius value="2.1663"/>
+   <hdTextureDist value="100.0"/><name>rox_secret_wall</name><textureDictionary/>
+   <clipDictionary/><drawableDictionary/><physicsDictionary/><assetType>ASSET_TYPE_DRAWABLE</assetType><assetName>rox_secret_wall</assetName>
    <extensions/>
   </Item>
  </archetypes>

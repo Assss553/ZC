@@ -41,6 +41,8 @@ M = {
     "sign": mat("sign", "sign", 0.3, emit=None, tile=0),
     "herringbone": mat("herringbone", "herringbone", 0.35, tile=7.0), "plant": mat("plant", "plant", 0.6, tile=0.6),
     "epoxy": mat("epoxy", "epoxy", 0.12, tile=4.0),
+    "awning": mat("awning", "metal", 0.75, 0.2, tile=2.0), "signbox": mat("signbox", "asphalt", 0.6, 0.4, tile=2.0),
+    "elevator": mat("elevator", "metal", 0.25, 1.0, tile=1.0),
 }
 sb = M["sign"].node_tree.nodes["Principled BSDF"]
 sb.inputs["Emission Strength"].default_value = 5.0
@@ -53,9 +55,13 @@ def box_uv(o, tile):
         n = f.normal; ax = max(range(3), key=lambda i: abs(n[i]))
         for l in f.loops:
             w = o.matrix_world @ l.vert.co
-            if tile == 0:   # stretch whole image on one face (sign)
-                d = o.dimensions
-                u = (l.vert.co.x / d.x + 0.5) if ax != 0 else (l.vert.co.y / d.y + 0.5); v = l.vert.co.z / d.z + 0.5
+            if tile == 0 and not (ax == 1 and n[1] < 0):
+                l[uv].uv = (0.01, 0.01); continue
+            if tile == 0:   # stretch whole image on the front face only (sign)
+                d = o.dimensions; cx = sum(v.co.x for v in bm.verts) / len(bm.verts)
+                cy = sum(v.co.y for v in bm.verts) / len(bm.verts); cz = sum(v.co.z for v in bm.verts) / len(bm.verts)
+                u = ((l.vert.co.x - cx) / d.x + 0.5) if ax != 0 else ((l.vert.co.y - cy) / d.y + 0.5)
+                v = (l.vert.co.z - cz) / d.z + 0.5
                 l[uv].uv = (u, v)
             else:
                 a, b = [(1, 2), (0, 2), (0, 1)][ax]
@@ -89,7 +95,9 @@ W, D, H = 20, 14, 5   # restaurant footprint (m)
 
 # ---- exterior shell ----
 box("ground", (0, 0, -0.05), (60, 40, 0.1), "asphalt", EXT)
-box("wall_back", (0, D/2, H/2), (W, 0.4, H), "brick", EXT)
+box("wall_back_l", ((-W/2 + 6.7) / 2, D/2, H/2), (6.7 + W/2, 0.4, H), "brick", EXT)
+box("wall_back_r", ((8.3 + W/2) / 2, D/2, H/2), (W/2 - 8.3, 0.4, H), "brick", EXT)
+box("wall_back_top", (7.5, D/2, (2.5 + H) / 2), (1.6, 0.4, H - 2.5), "brick", EXT)
 box("wall_left", (-W/2, 0, H/2), (0.4, D, H), "brick", EXT)
 box("wall_right", (W/2, 0, H/2), (0.4, D, H), "brick", EXT)
 for x in (-8, -3, 3, 8):                                   # front pillars
@@ -97,8 +105,13 @@ for x in (-8, -3, 3, 8):                                   # front pillars
 box("front_glass", (0, -D/2, 2), (W, 0.1, 4), "glass", EXT)
 box("front_header", (0, -D/2, 4.6), (W, 0.6, 0.8), "steel", EXT)
 box("roof", (0, 0, H + 0.15), (W + 0.6, D + 0.6, 0.3), "concrete", EXT)
-box("awning", (0, -D/2 - 1.2, 3.6), (W, 2.4, 0.12), "steel", EXT)
-box("sign_ROX", (0, -D/2 - 0.35, 4.6), (7, 0.1, 1.75), "sign", EXT)
+box("awning", (0, -D/2 - 1.2, 3.6), (W, 2.4, 0.12), "awning", EXT)
+box("sign_box", (0, -D/2 - 0.45, 4.35), (5.0, 0.3, 1.3), "signbox", EXT)          # sign cabinet
+box("sign_ROX", (0, -D/2 - 0.61, 4.35), (4.8, 0.02, 1.2), "sign", EXT)         # 4:1 face, front only
+for zz in (3.72, 4.98):
+    box(f"sign_trim_{zz}", (0, -D/2 - 0.62, zz), (5.1, 0.06, 0.06), "steel", EXT)
+for xx in (-2.2, 2.2):
+    box(f"sign_bracket_{xx}", (xx, -D/2 - 0.3, 3.68), (0.08, 0.6, 0.08), "steel", EXT)
 # sidewalk, curb, parking lines, planters, front door, window frames
 box("sidewalk", (0, -D/2 - 3, 0.08), (W + 10, 6, 0.16), "concrete", EXT)
 box("curb", (0, -D/2 - 6, 0.1), (W + 10, 0.3, 0.2), "steel", EXT)
@@ -161,9 +174,24 @@ F.plant("plant_entry_r", 2.8, -6.2, 0.04, INT)
 F.plant("plant_bar", -9.2, 5.8, 0.04, INT, h=1.6)
 
 # ---- secret wall door (back-right storage) -> stairs ----
-box("SECRET_DOOR", (7.5, D/2 - 0.25, 1.25), (1.6, 0.15, 2.5), "brick", INT)   # rotates via script
-for i in range(14):                                       # staircase down
-    box(f"stair_{i}", (7.5, D/2 + 0.6 + i * 0.3, -i * 0.25), (1.6, 0.3, 0.1), "concrete", HQ)
+SEC = coll("ROX_SecretWall")
+# modelled at the hinge origin (left edge, floor) so the script can rotate it around Z
+box("secret_wall", (0.8, 0, 1.25), (1.58, 0.38, 2.48), "brick", SEC)
+box("secret_wall_skirt", (0.8, -0.2, 0.06), (1.58, 0.02, 0.12), "wood", SEC)
+HX, HY = 6.7, D/2                                        # hinge position in the diner
+# hidden elevator room behind the wall
+EY0, EY1 = D/2 + 0.2, D/2 + 2.0
+box("lift_floor", (7.5, (EY0 + EY1) / 2, 0.02), (1.8, EY1 - EY0, 0.04), "concrete", INT)
+box("lift_ceil", (7.5, (EY0 + EY1) / 2, 2.62), (1.8, EY1 - EY0, 0.1), "concrete", INT)
+box("lift_wall_l", (6.55, (EY0 + EY1) / 2, 1.3), (0.1, EY1 - EY0, 2.6), "hqwall", INT)
+box("lift_wall_r", (8.45, (EY0 + EY1) / 2, 1.3), (0.1, EY1 - EY0, 2.6), "hqwall", INT)
+box("lift_wall_b", (7.5, EY1, 1.3), (1.8, 0.1, 2.6), "hqwall", INT)
+for dx in (-0.31, 0.31):
+    box(f"lift_door_{dx}", (7.5 + dx, EY1 - 0.07, 1.1), (0.6, 0.04, 2.2), "elevator", INT)
+box("lift_frame", (7.5, EY1 - 0.06, 2.28), (1.4, 0.06, 0.12), "steel", INT)
+box("lift_panel", (8.2, EY1 - 0.07, 1.2), (0.12, 0.03, 0.3), "steel", INT)
+box("lift_button", (8.2, EY1 - 0.09, 1.25), (0.05, 0.02, 0.05), "neon", INT)
+F.LIGHTS.append((INT, (7.5, (EY0 + EY1) / 2, 2.4), (1.0, 0.15, 0.1), 25, 3.0))       # red warning light
 
 # ---- underground HQ (-6m) ----
 HZ = -6.0
@@ -191,6 +219,10 @@ for dx in (-1.8, 1.8):
 box("hq_weapon_rack", (-8.6, 12, HZ + 1.5), (0.3, 4, 2), "steel", HQ)
 box("hq_stash", (6, 16.5, HZ + 0.6), (3, 1, 1.2), "steel", HQ)
 F.sofa("hq_sofa", 4, 8.6, HZ + 0.1, HQ, length=3.2)
+for dx in (-0.31, 0.31):
+    box(f"hq_lift_door_{dx}", (7.5 + dx, 6.2, HZ + 1.2), (0.6, 0.04, 2.2), "elevator", HQ)
+box("hq_lift_frame", (7.5, 6.19, HZ + 2.38), (1.4, 0.06, 0.12), "steel", HQ)
+box("hq_lift_button", (8.2, 6.18, HZ + 1.3), (0.05, 0.02, 0.05), "neon", HQ)
 box("hq_neon_strip", (0, 17.8, HZ + 3.2), (16, 0.05, 0.1), "neon_hq", HQ)
 
 # ---- lights / camera / render ----
@@ -218,10 +250,17 @@ def shot(name, loc, target, hide=()):
     S.render.filepath = os.path.join(OUT, name); bpy.ops.render.render(write_still=True)
     for c in hide: c.hide_render = False
 
+SEC.hide_render = True
+_open = []
+for o in SEC.objects:
+    c2 = o.copy(); c2.data = o.data.copy(); S.collection.objects.link(c2); _open.append(c2)
+    c2.location = (HX, HY, 0); c2.rotation_euler[2] = math.radians(-80)
 shot("render_exterior.png", (14, -26, 8), (0, 0, 2))
 roof = bpy.data.objects["roof"]; ceil = bpy.data.objects["ceiling"]
 roof.hide_render = ceil.hide_render = True
 shot("render_interior.png", (-2, -5, 14), (0, 2, 0))
+shot("render_secret_open.png", (8.6, 1.5, 1.8), (7.4, D/2 + 1.9, 1.1))
+for c2 in _open: bpy.data.objects.remove(c2)
 shot("render_interior_eye.png", (2.5, -5.8, 1.7), (-6, 0, 0.9))
 shot("render_booths.png", (-5.6, -6.2, 2.2), (-9, -1, 0.6))
 bpy.data.objects["hq_ceiling"].hide_render = True
@@ -242,7 +281,8 @@ try:
     from sollumz.tools.boundhelper import convert_objs_to_single_composite
     from sollumz.ybn.collision_materials import create_collision_material_from_index
     from sollumz.sollumz_properties import SollumType
-    for c, name in ((EXT, "rox_diner_ext"), (INT, "rox_diner_int"), (HQ, "rox_diner_hq")):
+    SEC.hide_render = False
+    for c, name in ((EXT, "rox_diner_ext"), (INT, "rox_diner_int"), (HQ, "rox_diner_hq"), (SEC, "rox_secret_wall")):
         bpy.ops.object.select_all(action="DESELECT")
         meshes = [o for o in c.objects if o.type == "MESH"]
         for o in meshes: o.select_set(True)

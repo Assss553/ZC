@@ -4,7 +4,8 @@ import re, os, sys
 from PIL import Image
 st = sys.argv[1]; TEX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "textures")
 X, Y, Z = 232.0, 300.0, 105.6
-NAMES = ("rox_diner_ext", "rox_diner_int", "rox_diner_hq")
+NAMES = ("rox_diner_ext", "rox_diner_int", "rox_diner_hq", "rox_secret_wall")
+PLACED = NAMES[:3]   # secret wall is spawned + animated by client.lua
 arch, ents = [], []
 for n in NAMES:
     t = open(f"{st}/{n}.ydr.xml").read()
@@ -24,7 +25,7 @@ for n in NAMES:
    <clipDictionary/><drawableDictionary/><physicsDictionary/><assetType>ASSET_TYPE_DRAWABLE</assetType><assetName>{n}</assetName>
    <extensions/>
   </Item>''')
-    ents.append(f'''  <Item type="CEntityDef">
+    if n in PLACED: ents.append(f'''  <Item type="CEntityDef">
    <archetypeName>{n}</archetypeName><flags value="32"/><guid value="0"/>
    <position x="{X}" y="{Y}" z="{Z}"/><rotation x="0.0" y="0.0" z="0.0" w="1.0"/>
    <scaleXY value="1.0"/><scaleZ value="1.0"/><parentIndex value="-1"/><lodDist value="300.0"/><childLodDist value="0.0"/>

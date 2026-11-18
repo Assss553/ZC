@@ -106,9 +106,10 @@ sign = np.zeros((256, 1024, 3), np.uint8)
 from PIL import ImageDraw, ImageFont
 im = Image.fromarray(sign); d = ImageDraw.Draw(im)
 try:
-    fnt = ImageFont.truetype("DejaVuSans-Bold.ttf", 170)
+    fnt = ImageFont.truetype("DejaVuSans-Bold.ttf", 132)
 except OSError:
     fnt = ImageFont.load_default()
-d.text((512, 128), "ROX DINER", fill=(255, 60, 140), font=fnt, anchor="mm")
+d.rounded_rectangle((14, 14, 1010, 242), radius=28, outline=(255, 60, 140), width=8)
+d.text((512, 132), "ROX DINER", fill=(255, 60, 140), font=fnt, anchor="mm")
 im.save(os.path.join(OUT, "rox_sign.png"))
 print("textures ->", OUT, len(os.listdir(OUT)))
