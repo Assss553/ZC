@@ -131,7 +131,7 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 /* ---------- markup ---------- */
 document.body.insertAdjacentHTML('beforeend', `<div id="pm2"><div class="pm-wrap">
   <div class="pm-col"><div class="pm-brand"><div class="lg" id="pmLogo">ROX</div><div><b id="pmSrv">ROX</b><small>Pause menu</small></div></div>
-    ${[['resume', 'play', 'Resume', 'ESC'], ['map', 'map-location-dot', 'Map', 'M'], ['hud', 'sliders', 'HUD settings', ''], ['settings', 'gear', 'Game settings', ''], ['gta', 'earth-americas', 'GTA map', '']].map(([a, i, t, k], n) => `<div class="pm-nav ${n === 0 ? 'sel' : ''}" data-a="${a}"><i class="fa-solid fa-${i}"></i>${t}${k ? `<kbd>${k}</kbd>` : ''}</div>`).join('')}
+    ${[['resume', 'play', 'Resume', 'ESC'], ['map', 'map-location-dot', 'Map', 'M'], ['hud', 'sliders', 'HUD settings', ''], ['settings', 'gear', 'Game settings', ''], ['map3d', 'cube', '3D map', ''], ['gta', 'earth-americas', 'GTA map', '']].map(([a, i, t, k], n) => `<div class="pm-nav ${n === 0 ? 'sel' : ''}" data-a="${a}"><i class="fa-solid fa-${i}"></i>${t}${k ? `<kbd>${k}</kbd>` : ''}</div>`).join('')}
     <div class="pm-sp"></div><div class="pm-me"><div class="r"><div class="av" id="pmAv">R</div><div><b id="pmN">—</b><small id="pmJ">—</small></div></div><div class="m2"><div>CASH<b id="pmC">$0</b></div><div>BANK<b id="pmB">$0</b></div><div>ID<b id="pmI">0</b></div><div>CITIZEN<b id="pqCid">—</b></div></div></div>
     <div class="pm-nav quit" data-a="quit"><i class="fa-solid fa-power-off"></i>Quit game</div></div>
   <div class="pm-map pm-3d" id="pmMap"><div class="pm-view" id="pmView"><div class="pm-plane" id="pmPlane">${mapSvg()}<div id="pmPins"></div><div class="wp" id="pmWp"></div><div class="me-dot" id="pmMe"></div></div></div>

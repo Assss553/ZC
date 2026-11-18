@@ -227,7 +227,8 @@ RegisterNUICallback('pause', function(d, cb)
     cb('ok')
     local a = type(d) == 'table' and d.action
     closePause()
-    if a == 'map' then ActivateFrontendMenu(`FE_MENU_VERSION_MP_PAUSE`, false, -1)
+    if a == 'map3d' then if GetResourceState('zerodream_3dmap') == 'started' then TriggerEvent('3DMap:ShowMap') else TriggerEvent('ox_lib:notify', { type = 'error', description = 'zerodream_3dmap is not installed' }) end
+    elseif a == 'map' then ActivateFrontendMenu(`FE_MENU_VERSION_MP_PAUSE`, false, -1)
     elseif a == 'settings' then ActivateFrontendMenu(`FE_MENU_VERSION_LANDING_MENU`, false, -1)
     elseif a == 'hud' then SendNUIMessage({ action = 'settings', settings = settings }) SetNuiFocus(true, true)
     elseif a == 'quit' then TriggerServerEvent('rox_hud:server:quit') end

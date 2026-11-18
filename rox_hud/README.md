@@ -16,3 +16,6 @@
 ensure rox_hud
 ```
 لا تشغله مع HUD ثاني. سكربتات ثانية تقدر تخفيه: `exports.rox_hud:SetHidden(true)`.
+
+## 3D map (optional)
+The "3D map" button in the ESC menu opens [zerodream_3dmap](https://github.com/kasuganosoras/zerodream_3dmap) if that resource is running. It is GPL-3.0 and not included in ROX: download it yourself and `ensure zerodream_3dmap`.
