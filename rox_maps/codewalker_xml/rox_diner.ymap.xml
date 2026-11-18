@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CMapData>
+ <name>rox_diner</name><parent/><flags value="0"/><contentFlags value="1"/>
+ <streamingExtentsMin x="172.0" y="240.0" z="85.6"/><streamingExtentsMax x="292.0" y="360.0" z="135.6"/>
+ <entitiesExtentsMin x="202.0" y="275.0" z="97.6"/><entitiesExtentsMax x="262.0" y="325.0" z="115.6"/>
+ <entities>
+  <Item type="CEntityDef">
+   <archetypeName>rox_diner_ext</archetypeName><flags value="32"/><guid value="0"/>
+   <position x="232.0" y="300.0" z="105.6"/><rotation x="0.0" y="0.0" z="0.0" w="1.0"/>
+   <scaleXY value="1.0"/><scaleZ value="1.0"/><parentIndex value="-1"/><lodDist value="300.0"/><childLodDist value="0.0"/>
+   <lodLevel>LODTYPES_DEPTH_ORPHANHD</lodLevel><numChildren value="0"/><priorityLevel>PRI_REQUIRED</priorityLevel>
+   <extensions/><ambientOcclusionMultiplier value="255"/><artificialAmbientOcclusion value="255"/><tintValue value="0"/>
+  </Item>
+  <Item type="CEntityDef">
+   <archetypeName>rox_diner_int</archetypeName><flags value="32"/><guid value="0"/>
+   <position x="232.0" y="300.0" z="105.6"/><rotation x="0.0" y="0.0" z="0.0" w="1.0"/>
+   <scaleXY value="1.0"/><scaleZ value="1.0"/><parentIndex value="-1"/><lodDist value="300.0"/><childLodDist value="0.0"/>
+   <lodLevel>LODTYPES_DEPTH_ORPHANHD</lodLevel><numChildren value="0"/><priorityLevel>PRI_REQUIRED</priorityLevel>
+   <extensions/><ambientOcclusionMultiplier value="255"/><artificialAmbientOcclusion value="255"/><tintValue value="0"/>
+  </Item>
+  <Item type="CEntityDef">
+   <archetypeName>rox_diner_hq</archetypeName><flags value="32"/><guid value="0"/>
+   <position x="232.0" y="300.0" z="105.6"/><rotation x="0.0" y="0.0" z="0.0" w="1.0"/>
+   <scaleXY value="1.0"/><scaleZ value="1.0"/><parentIndex value="-1"/><lodDist value="300.0"/><childLodDist value="0.0"/>
+   <lodLevel>LODTYPES_DEPTH_ORPHANHD</lodLevel><numChildren value="0"/><priorityLevel>PRI_REQUIRED</priorityLevel>
+   <extensions/><ambientOcclusionMultiplier value="255"/><artificialAmbientOcclusion value="255"/><tintValue value="0"/>
+  </Item>
+ </entities>
+ <containerLods/><boxOccluders/><occludeModels/><physicsDictionaries/>
+ <instancedData><ImapLink/><PropInstanceList/><GrassInstanceList/></instancedData>
+ <timeCycleModifiers/><carGenerators/><LODLightsSOA/><DistantLODLightsSOA/>
+ <block><version value="0"/><flags value="0"/><name>rox_diner</name><exportedBy>ROX Store</exportedBy><owner/><time/></block>
+</CMapData>

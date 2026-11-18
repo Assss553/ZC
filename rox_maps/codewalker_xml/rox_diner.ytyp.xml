@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CMapTypes>
+ <extensions/>
+ <archetypes>
+  <Item type="CBaseArchetypeDef">
+   <lodDist value="300.0"/><flags value="0"/><specialAttribute value="0"/>
+   <bbMin x="-30.0" y="-20.0" z="-0.1"/><bbMax x="30.0" y="20.0" z="8.0"/>
+   <bsCentre x="0.0" y="0.0" z="3.95"/><bsRadius value="52.2"/>
+   <hdTextureDist value="100.0"/><name>rox_diner_ext</name><textureDictionary/>
+   <clipDictionary/><drawableDictionary/><physicsDictionary/><assetType>ASSET_TYPE_DRAWABLE</assetType><assetName>rox_diner_ext</assetName>
+   <extensions/>
+  </Item>
+  <Item type="CBaseArchetypeDef">
+   <lodDist value="300.0"/><flags value="0"/><specialAttribute value="0"/>
+   <bbMin x="-9.8" y="-6.8" z="0.0"/><bbMax x="9.8" y="7.0" z="5.0"/>
+   <bsCentre x="0.0" y="0.10000000000000009" z="2.5"/><bsRadius value="17.052"/>
+   <hdTextureDist value="100.0"/><name>rox_diner_int</name><textureDictionary/>
+   <clipDictionary/><drawableDictionary/><physicsDictionary/><assetType>ASSET_TYPE_DRAWABLE</assetType><assetName>rox_diner_int</assetName>
+   <extensions/>
+  </Item>
+  <Item type="CBaseArchetypeDef">
+   <lodDist value="300.0"/><flags value="0"/><specialAttribute value="0"/>
+   <bbMin x="-9.15" y="5.85" z="-6.1"/><bbMax x="9.15" y="18.15" z="0.05"/>
+   <bsCentre x="0.0" y="12.0" z="-3.025"/><bsRadius value="15.921000000000001"/>
+   <hdTextureDist value="100.0"/><name>rox_diner_hq</name><textureDictionary/>
+   <clipDictionary/><drawableDictionary/><physicsDictionary/><assetType>ASSET_TYPE_DRAWABLE</assetType><assetName>rox_diner_hq</assetName>
+   <extensions/>
+  </Item>
+ </archetypes>
+ <name>rox_diner</name>
+ <dependencies/>
+ <compositeEntityTypes/>
+</CMapTypes>
