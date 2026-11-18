@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ROX Store | All rights reserved -->
+<timecycle_modifier_data version="1.000000">
+	<modifier name="rox_realistic" numMods="12" userFlags="0">
+		<postfx_exposure>0.150000 0.150000</postfx_exposure>
+		<postfx_desaturation>0.920000 0.920000</postfx_desaturation>
+		<postfx_contrast>0.120000 0.120000</postfx_contrast>
+		<postfx_intensity_bloom>0.700000 0.700000</postfx_intensity_bloom>
+		<postfx_bright_pass_thresh>1.200000 1.200000</postfx_bright_pass_thresh>
+		<postfx_vignetting_intensity>0.250000 0.250000</postfx_vignetting_intensity>
+		<postfx_vignetting_radius>0.900000 0.900000</postfx_vignetting_radius>
+		<postfx_tint_r>1.000000 1.000000</postfx_tint_r>
+		<postfx_tint_g>0.970000 0.970000</postfx_tint_g>
+		<postfx_tint_b>0.920000 0.920000</postfx_tint_b>
+		<postfx_tint_intensity>0.060000 0.060000</postfx_tint_intensity>
+		<postfx_noise>0.020000 0.020000</postfx_noise>
+	</modifier>
+	<modifier name="rox_cinematic" numMods="12" userFlags="0">
+		<postfx_exposure>-0.100000 -0.100000</postfx_exposure>
+		<postfx_desaturation>0.850000 0.850000</postfx_desaturation>
+		<postfx_contrast>0.250000 0.250000</postfx_contrast>
+		<postfx_intensity_bloom>1.100000 1.100000</postfx_intensity_bloom>
+		<postfx_vignetting_intensity>0.550000 0.550000</postfx_vignetting_intensity>
+		<postfx_vignetting_radius>0.750000 0.750000</postfx_vignetting_radius>
+		<postfx_tint_r>1.000000 1.000000</postfx_tint_r>
+		<postfx_tint_g>0.900000 0.900000</postfx_tint_g>
+		<postfx_tint_b>0.780000 0.780000</postfx_tint_b>
+		<postfx_tint_intensity>0.180000 0.180000</postfx_tint_intensity>
+		<postfx_noise>0.060000 0.060000</postfx_noise>
+		<postfx_noise_size>1.200000 1.200000</postfx_noise_size>
+	</modifier>
+	<modifier name="rox_vivid" numMods="8" userFlags="0">
+		<postfx_exposure>0.250000 0.250000</postfx_exposure>
+		<postfx_desaturation>1.250000 1.250000</postfx_desaturation>
+		<postfx_contrast>0.150000 0.150000</postfx_contrast>
+		<postfx_intensity_bloom>0.900000 0.900000</postfx_intensity_bloom>
+		<postfx_tint_r>1.000000 1.000000</postfx_tint_r>
+		<postfx_tint_g>0.980000 0.980000</postfx_tint_g>
+		<postfx_tint_b>0.900000 0.900000</postfx_tint_b>
+		<postfx_tint_intensity>0.050000 0.050000</postfx_tint_intensity>
+	</modifier>
+	<modifier name="rox_nightpro" numMods="10" userFlags="0">
+		<postfx_exposure>0.450000 0.450000</postfx_exposure>
+		<postfx_desaturation>1.050000 1.050000</postfx_desaturation>
+		<postfx_contrast>0.180000 0.180000</postfx_contrast>
+		<postfx_intensity_bloom>1.400000 1.400000</postfx_intensity_bloom>
+		<postfx_bright_pass_thresh>0.900000 0.900000</postfx_bright_pass_thresh>
+		<postfx_tint_r>0.850000 0.850000</postfx_tint_r>
+		<postfx_tint_g>0.920000 0.920000</postfx_tint_g>
+		<postfx_tint_b>1.000000 1.000000</postfx_tint_b>
+		<postfx_tint_intensity>0.120000 0.120000</postfx_tint_intensity>
+		<postfx_vignetting_intensity>0.300000 0.300000</postfx_vignetting_intensity>
+	</modifier>
+	<modifier name="rox_noir" numMods="11" userFlags="0">
+		<postfx_exposure>-0.050000 -0.050000</postfx_exposure>
+		<postfx_desaturation>0.350000 0.350000</postfx_desaturation>
+		<postfx_contrast>0.350000 0.350000</postfx_contrast>
+		<postfx_intensity_bloom>0.600000 0.600000</postfx_intensity_bloom>
+		<postfx_tint_r>0.850000 0.850000</postfx_tint_r>
+		<postfx_tint_g>0.950000 0.950000</postfx_tint_g>
+		<postfx_tint_b>1.000000 1.000000</postfx_tint_b>
+		<postfx_tint_intensity>0.200000 0.200000</postfx_tint_intensity>
+		<postfx_vignetting_intensity>0.600000 0.600000</postfx_vignetting_intensity>
+		<postfx_vignetting_radius>0.700000 0.700000</postfx_vignetting_radius>
+		<postfx_noise>0.080000 0.080000</postfx_noise>
+	</modifier>
+	<modifier name="rox_exp_up" numMods="1" userFlags="0">
+		<postfx_exposure>1.000000 1.000000</postfx_exposure>
+	</modifier>
+	<modifier name="rox_exp_down" numMods="1" userFlags="0">
+		<postfx_exposure>-1.000000 -1.000000</postfx_exposure>
+	</modifier>
+</timecycle_modifier_data>
