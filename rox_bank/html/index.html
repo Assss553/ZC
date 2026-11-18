@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!-- ROX Store | rox_bank | All rights reserved. -->
+<html lang="en"><head><meta charset="utf-8"><title>ROX Bank</title>
+<link rel="stylesheet" href="fa/css/fontawesome.min.css"><link rel="stylesheet" href="fa/css/solid.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --a: #ff5a1f; --a2: #ff8a4c; --g: #3ddc84; --r: #ff4d5e; --ln: rgba(255,255,255,.08); --card: rgba(18,18,22,.78); }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; color: #fff; background: transparent; overflow: hidden; user-select: none; height: 100vh; }
+body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) center/cover; }
+#bank { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; perspective: 1600px; background: radial-gradient(ellipse at center, rgba(0,0,0,.35), rgba(0,0,0,.8)); }
+#bank.on { display: flex; animation: fade .3s; } @keyframes fade { from { opacity: 0; } }
+/* 3D stage: tilts toward the mouse */
+.stage { position: relative; width: min(1180px, 92vw); height: min(680px, 86vh); transform-style: preserve-3d; transition: transform .25s cubic-bezier(.2,.8,.3,1); animation: rise .5s cubic-bezier(.2,1,.3,1); }
+@keyframes rise { from { transform: translateY(40px) rotateX(18deg) scale(.94); opacity: 0; } }
+.glare { position: absolute; inset: 0; border-radius: 28px; pointer-events: none; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgba(255,255,255,.10), transparent 45%); transform: translateZ(60px); z-index: 9; }
+.shell { position: absolute; inset: 0; display: grid; grid-template-columns: 230px 1fr 340px; gap: 16px; padding: 18px; border-radius: 28px; transform-style: preserve-3d;
+  background: linear-gradient(145deg, rgba(28,28,34,.92), rgba(10,10,13,.94)); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 40px 100px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.08); }
+.shell::before { content: ''; position: absolute; inset: 0; border-radius: 28px; background: radial-gradient(circle at 0% 0%, rgba(255,90,31,.18), transparent 40%); pointer-events: none; }
+.z1 { transform: translateZ(25px); } .z2 { transform: translateZ(45px); } .z3 { transform: translateZ(70px); }
+/* sidebar */
+.side { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: rgba(0,0,0,.28); border: 1px solid var(--ln); }
+.logo { display: flex; align-items: center; gap: 11px; padding: 10px 10px 18px; } .logo .lg { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 19px; background: linear-gradient(145deg, var(--a2), #b8300a); box-shadow: 0 10px 24px rgba(255,90,31,.45); }
+.logo b { display: block; font-size: 17px; font-weight: 800; letter-spacing: -.3px; } .logo small { font-size: 10px; color: rgba(255,255,255,.5); }
+.nav { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.62); cursor: pointer; transition: .18s; }
+.nav i { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; font-size: 14px; background: rgba(255,255,255,.05); transition: .18s; }
+.nav:hover { color: #fff; background: rgba(255,255,255,.04); transform: translateX(3px); } .nav.on { color: #fff; background: linear-gradient(90deg, rgba(255,90,31,.22), transparent); } .nav.on i { background: var(--a); box-shadow: 0 6px 16px rgba(255,90,31,.45); }
+.side .sp { flex: 1; } .who { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.04); }
+.who .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: linear-gradient(145deg, #3a3a44, #1a1a20); } .who b { font-size: 12.5px; display: block; } .who small { font-size: 10px; color: rgba(255,255,255,.45); }
+.exit { margin-top: 6px; height: 40px; border-radius: 12px; border: 1px solid var(--ln); background: none; color: rgba(255,255,255,.7); font: 700 12px 'Plus Jakarta Sans'; cursor: pointer; } .exit:hover { background: var(--r); border-color: transparent; color: #fff; }
+/* main */
+.main { display: flex; flex-direction: column; gap: 14px; min-width: 0; overflow: hidden; transform-style: preserve-3d; }
+.head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 0; } .head h1 { font-size: 26px; font-weight: 800; letter-spacing: -.6px; } .head p { font-size: 12px; color: rgba(255,255,255,.5); }
+.head .br { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-size: 11.5px; font-weight: 700; } .head .br i { color: var(--g); }
+.cards { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px; transform-style: preserve-3d; }
+.card { position: relative; height: 196px; border-radius: 22px; padding: 20px; overflow: hidden; transform-style: preserve-3d; transition: transform .3s cubic-bezier(.2,.8,.3,1), box-shadow .3s; cursor: default; }
+.card:hover { transform: translateZ(30px) scale(1.02); }
+.card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 85% 15%, rgba(255,255,255,.22), transparent 40%), repeating-linear-gradient(115deg, rgba(255,255,255,.035) 0 2px, transparent 2px 10px); }
+.card.main1 { background: linear-gradient(135deg, #ff7a3d, #d23e08 55%, #5c1503); box-shadow: 0 24px 50px rgba(255,90,31,.35); } .card.cash { background: linear-gradient(135deg, #2a2a33, #111116 70%); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 20px 40px rgba(0,0,0,.45); }
+.card .row { position: relative; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 800; letter-spacing: 1.3px; }
+.card .chip { position: relative; width: 44px; height: 32px; border-radius: 8px; margin: 18px 0 10px; background: linear-gradient(135deg, #ffe9a6, #c49a2c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.card small { position: relative; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; opacity: .8; } .card .bal { position: relative; font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+.card .num { position: relative; display: flex; justify-content: space-between; margin-top: 8px; font: 700 12px ui-monospace, Consolas, monospace; letter-spacing: 2px; opacity: .85; } .card .num i { cursor: pointer; }
+.card .bigi { position: absolute; right: 18px; bottom: 14px; font-size: 54px; opacity: .1; }
+.quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; transform-style: preserve-3d; }
+.q { position: relative; padding: 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--ln); cursor: pointer; transition: transform .25s cubic-bezier(.2,.8,.3,1), border-color .2s, background .2s; transform-style: preserve-3d; }
+.q:hover { transform: translateZ(28px) translateY(-3px); border-color: rgba(255,90,31,.5); background: rgba(255,90,31,.08); } .q.on { border-color: var(--a); background: rgba(255,90,31,.12); }
+.q i.ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 17px; margin-bottom: 12px; transform: translateZ(20px); }
+.q b { display: block; font-size: 13.5px; } .q small { font-size: 10.5px; color: rgba(255,255,255,.5); }
+.q.dep i.ic { background: rgba(61,220,132,.15); color: var(--g); } .q.wd i.ic { background: rgba(255,90,31,.15); color: var(--a2); } .q.tr i.ic { background: rgba(96,165,250,.15); color: #60a5fa; } .q.st i.ic { background: rgba(167,139,250,.15); color: #a78bfa; }
+.panel { flex: 1; min-height: 0; border-radius: 20px; background: var(--card); border: 1px solid var(--ln); padding: 16px 18px; display: flex; flex-direction: column; }
+.panel h3 { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; margin-bottom: 10px; } .panel h3 span { font-size: 11px; color: rgba(255,255,255,.45); font-weight: 600; }
+.chips { display: flex; gap: 6px; } .chips b { padding: 5px 11px; border-radius: 10px; font-size: 10.5px; cursor: pointer; background: rgba(255,255,255,.05); color: rgba(255,255,255,.6); } .chips b.on { background: #fff; color: #111; }
+.list { flex: 1; overflow-y: auto; margin-right: -6px; padding-right: 6px; } .list::-webkit-scrollbar { width: 4px; } .list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+.tx { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; animation: up .35s backwards; transition: .15s; } .tx:hover { background: rgba(255,255,255,.04); transform: translateX(4px); }
+@keyframes up { from { opacity: 0; transform: translateY(10px); } }
+.tx .ti { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 14px; flex: none; } .tx .t { flex: 1; min-width: 0; } .tx b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .tx small { font-size: 10.5px; color: rgba(255,255,255,.45); }
+.tx .v { text-align: right; font-weight: 800; font-size: 14px; } .tx .v small { display: block; font-weight: 600; } .tx.in .ti { background: rgba(61,220,132,.13); color: var(--g); } .tx.in .v { color: var(--g); } .tx.out .ti { background: rgba(255,90,31,.13); color: var(--a2); }
+.empty { flex: 1; display: grid; place-items: center; text-align: center; font-size: 12px; color: rgba(255,255,255,.4); } .empty i { display: block; font-size: 30px; margin-bottom: 10px; }
+/* right: action panel */
+.act { border-radius: 22px; padding: 18px; display: flex; flex-direction: column; background: linear-gradient(160deg, rgba(36,36,44,.95), rgba(16,16,20,.95)); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 30px 60px rgba(0,0,0,.5); transform-style: preserve-3d; }
+.act .ah { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; } .act .ah i { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; font-size: 18px; } .act .ah b { display: block; font-size: 17px; font-weight: 800; } .act .ah small { font-size: 11px; color: rgba(255,255,255,.5); }
+.lbl { font-size: 10px; font-weight: 800; letter-spacing: 1.4px; color: rgba(255,255,255,.45); margin: 4px 0 6px; }
+.amt { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 16px; background: rgba(0,0,0,.35); border: 1px solid var(--ln); margin-bottom: 10px; transition: .2s; } .amt:focus-within { border-color: var(--a); box-shadow: 0 0 0 4px rgba(255,90,31,.12); }
+.amt span { font-size: 26px; font-weight: 800; color: rgba(255,255,255,.4); } .amt input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: #fff; font: 800 30px 'Plus Jakarta Sans'; letter-spacing: -.5px; }
+.amt button { border: 0; border-radius: 10px; padding: 7px 10px; background: rgba(255,90,31,.18); color: var(--a2); font: 800 10px 'Plus Jakarta Sans'; cursor: pointer; }
+.qa { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; } .qa button { height: 36px; border-radius: 11px; border: 1px solid var(--ln); background: rgba(255,255,255,.04); color: #fff; font: 700 12px 'Plus Jakarta Sans'; cursor: pointer; transition: .15s; } .qa button:hover { border-color: var(--a); transform: translateY(-2px); }
+.fld { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; border-radius: 14px; background: rgba(0,0,0,.35); border: 1px solid var(--ln); margin-bottom: 10px; } .fld:focus-within { border-color: var(--a); } .fld i { color: rgba(255,255,255,.4); font-size: 13px; }
+.fld input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: #fff; font: 600 13px 'Plus Jakarta Sans'; }
+.sum { padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.035); margin-bottom: 12px; } .sum div { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,.55); padding: 3px 0; } .sum b { color: #fff; }
+.err { min-height: 16px; font-size: 11.5px; color: var(--r); margin-bottom: 6px; } .err.ok { color: var(--g); }
+.go { margin-top: auto; height: 54px; border-radius: 16px; border: 0; color: #fff; font: 800 14px 'Plus Jakarta Sans'; cursor: pointer; position: relative; overflow: hidden; transition: .2s; transform: translateZ(30px); background: linear-gradient(90deg, #ff7a3d, #e04a10); box-shadow: 0 12px 28px rgba(255,90,31,.4); }
+.go:hover { filter: brightness(1.1); transform: translateZ(40px) translateY(-2px); } .go:disabled { opacity: .45; cursor: wait; } .go i { margin-right: 8px; }
+.go .sh { position: absolute; top: 0; bottom: 0; width: 40%; left: -50%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-20deg); } .go:hover .sh { animation: shine .9s; } @keyframes shine { to { left: 120%; } }
+.done { position: absolute; inset: 0; border-radius: 22px; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgb(18,18,22); z-index: 3; transform: translateZ(50px); } .done.on { display: flex; animation: fade .25s; }
+.done .ok { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; color: #04120a; background: var(--g); box-shadow: 0 0 50px rgba(61,220,132,.5); animation: pop .5s cubic-bezier(.2,1.6,.4,1); margin-bottom: 16px; } @keyframes pop { from { transform: scale(0); } }
+.done b { font-size: 22px; } .done p { font-size: 12.5px; color: rgba(255,255,255,.55); margin: 4px 0 20px; } .done button { height: 42px; padding: 0 26px; border-radius: 12px; border: 0; background: rgba(255,255,255,.1); color: #fff; font: 700 12.5px 'Plus Jakarta Sans'; cursor: pointer; }
+/* stats */
+.stats2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; } .stats2 div { padding: 12px; border-radius: 14px; background: rgba(255,255,255,.04); font-size: 10px; font-weight: 800; letter-spacing: 1px; color: rgba(255,255,255,.45); } .stats2 b { display: block; font-size: 18px; color: #fff; letter-spacing: 0; margin-top: 3px; }
+.chart { flex: 1; display: flex; align-items: flex-end; gap: 10px; padding: 10px 4px 22px; } .chart div { flex: 1; position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; height: 100%; }
+.chart i { display: block; border-radius: 6px 6px 3px 3px; animation: grow .7s cubic-bezier(.2,.8,.3,1) backwards; transform-origin: bottom; } .chart i.in { background: linear-gradient(var(--g), #12895a); } .chart i.out { background: linear-gradient(var(--a2), #b8300a); } .chart span { position: absolute; bottom: -18px; left: 0; right: 0; text-align: center; font-size: 10px; color: rgba(255,255,255,.45); }
+@keyframes grow { from { transform: scaleY(0); } }
+.toast { position: fixed; bottom: 34px; left: 50%; transform: translateX(-50%); padding: 11px 18px; border-radius: 12px; background: #111; border-left: 3px solid var(--r); font-size: 12.5px; font-weight: 700; opacity: 0; transition: .2s; pointer-events: none; } .toast.on { opacity: 1; }
+</style></head><body>
+<div id="bank"><div class="stage" id="stage"><div class="shell">
+  <aside class="side z1"><div class="logo"><div class="lg"><i class="fa-solid fa-building-columns"></i></div><div><b>ROX Bank</b><small id="branch">Fleeca</small></div></div>
+    <div class="nav on" data-v="home"><i class="fa-solid fa-house"></i>Overview</div><div class="nav" data-v="deposit"><i class="fa-solid fa-arrow-down"></i>Deposit</div>
+    <div class="nav" data-v="withdraw"><i class="fa-solid fa-arrow-up"></i>Withdraw</div><div class="nav" data-v="transfer"><i class="fa-solid fa-right-left"></i>Transfer</div><div class="nav" data-v="stats"><i class="fa-solid fa-chart-column"></i>Statistics</div>
+    <div class="sp"></div><div class="who"><div class="av" id="av">R</div><div><b id="nm">—</b><small id="jb">—</small></div></div><button class="exit" id="exit"><i class="fa-solid fa-right-from-bracket"></i> Leave bank</button></aside>
+  <section class="main">
+    <div class="head z1"><div><h1 id="hi">Welcome back</h1><p id="dt"></p></div><div class="br"><i class="fa-solid fa-circle-check"></i>Secure session</div></div>
+    <div class="cards z2"><div class="card main1"><div class="row"><span>CHECKING ACCOUNT</span><i class="fa-solid fa-wifi" style="transform:rotate(90deg);font-size:18px"></i></div><div class="chip"></div><small>AVAILABLE BALANCE</small><div class="bal" id="bal">$0</div><div class="num"><span id="acc">•••• 0000</span><i class="fa-solid fa-copy" id="cp" title="Copy account"></i></div><i class="fa-solid fa-building-columns bigi"></i></div>
+      <div class="card cash"><div class="row"><span>CASH</span><i class="fa-solid fa-wallet" style="font-size:18px"></i></div><div class="chip" style="opacity:0"></div><small>IN YOUR POCKET</small><div class="bal" id="cash">$0</div><div class="num"><span id="cid">CID</span></div><i class="fa-solid fa-money-bill-wave bigi"></i></div></div>
+    <div class="quick z2"><div class="q dep" data-v="deposit"><i class="ic fa-solid fa-arrow-down"></i><b>Deposit</b><small>Cash to account</small></div><div class="q wd" data-v="withdraw"><i class="ic fa-solid fa-arrow-up"></i><b>Withdraw</b><small>Account to cash</small></div>
+      <div class="q tr" data-v="transfer"><i class="ic fa-solid fa-paper-plane"></i><b>Transfer</b><small>Send to someone</small></div><div class="q st" data-v="stats"><i class="ic fa-solid fa-chart-pie"></i><b>Statistics</b><small>This week</small></div></div>
+    <div class="panel z1"><h3>Transactions<div class="chips" id="flt"><b class="on" data-f="all">All</b><b data-f="in">Income</b><b data-f="out">Spending</b></div></h3><div class="list" id="list"></div></div>
+  </section>
+  <aside class="act z3" id="act"></aside>
+</div><div class="glare" id="glare"></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const PREVIEW = !window.invokeNative;
+const post = (n, d = {}) => PREVIEW ? Promise.resolve(mock(n, d)) : fetch(`https://${GetParentResourceName()}/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json()).catch(() => null);
+const m = (n) => '$' + Math.floor(n || 0).toLocaleString('en-US');
+let S = {}, view = 'home', flt = 'all', busy = false;
+const ACT = { home: ['deposit'], deposit: ['Deposit', 'arrow-down', '#3ddc84', 'Put cash into your account'], withdraw: ['Withdraw', 'arrow-up', '#ff8a4c', 'Take cash out of your account'], transfer: ['Transfer', 'paper-plane', '#60a5fa', 'Send money to another person'] };
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2400); }
+function anim(el, to) { const from = +(el.dataset.v || 0); el.dataset.v = to; const t0 = performance.now(); const f = (t) => { const p = Math.min(1, (t - t0) / 700), e = 1 - Math.pow(1 - p, 3); el.textContent = m(from + (to - from) * e); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+function fill() { $('nm').textContent = S.name; $('av').textContent = (S.name || 'R').split(' ').map(w => w[0]).join('').slice(0, 2); $('jb').textContent = S.job || 'Citizen'; $('hi').textContent = 'Welcome back, ' + (S.name || '').split(' ')[0];
+  $('dt').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); anim($('bal'), S.bank); anim($('cash'), S.cash);
+  $('acc').textContent = '•••• ' + String(S.account || '').slice(-4); $('cid').textContent = S.cid || ''; $('branch').textContent = S.branch || 'ROX Bank'; list(); }
+function list() { const L = (S.tx || []).filter(t => flt === 'all' || t.kind === flt);
+  $('list').innerHTML = L.length ? L.map((t, i) => `<div class="tx ${t.kind}" style="animation-delay:${Math.min(i, 12) * 35}ms"><div class="ti"><i class="fa-solid fa-${/deposit/i.test(t.label) ? 'arrow-down' : /withdraw/i.test(t.label) ? 'money-bill-wave' : t.kind === 'in' ? 'arrow-down-left' : 'paper-plane'}"></i></div><div class="t"><b>${t.label}</b><small>${new Date(t.at * 1000).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></div><div class="v">${t.kind === 'in' ? '+' : '-'}${m(t.amount)}<small style="color:rgba(255,255,255,.4)">${m(t.balance)}</small></div></div>`).join('')
+    : '<div class="empty"><div><i class="fa-solid fa-receipt"></i>No transactions yet</div></div>'; }
+function panel(v) { view = v; document.querySelectorAll('.nav').forEach(n => n.classList.toggle('on', n.dataset.v === v)); document.querySelectorAll('.q').forEach(n => n.classList.toggle('on', n.dataset.v === v));
+  const a = $('act');
+  if (v === 'stats') { const week = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); const k = d.toDateString(); const tx = (S.tx || []).filter(t => new Date(t.at * 1000).toDateString() === k); return { d: d.toLocaleDateString('en-US', { weekday: 'short' }), i: tx.filter(t => t.kind === 'in').reduce((s, t) => s + t.amount, 0), o: tx.filter(t => t.kind === 'out').reduce((s, t) => s + t.amount, 0) }; });
+    const mx = Math.max(1, ...week.map(w => Math.max(w.i, w.o))), ti = week.reduce((s, w) => s + w.i, 0), to = week.reduce((s, w) => s + w.o, 0);
+    a.innerHTML = `<div class="ah"><i class="fa-solid fa-chart-column" style="background:rgba(167,139,250,.15);color:#a78bfa"></i><div><b>Statistics</b><small>Last 7 days</small></div></div><div class="stats2"><div>INCOME<b style="color:#3ddc84">${m(ti)}</b></div><div>SPENT<b style="color:#ff8a4c">${m(to)}</b></div><div>NET<b>${m(ti - to)}</b></div></div>
+      <div class="chart">${week.map((w, k) => `<div><i class="in" style="height:${w.i / mx * 100}%;animation-delay:${k * 60}ms"></i><i class="out" style="height:${w.o / mx * 100}%;animation-delay:${k * 60 + 30}ms"></i><span>${w.d}</span></div>`).join('')}</div>`; return; }
+  if (v === 'home') v = 'deposit';
+  const [t, ic, col, sub] = ACT[v]; view = v; document.querySelectorAll('.nav').forEach(n => n.classList.toggle('on', n.dataset.v === v));
+  a.innerHTML = `<div class="ah"><i class="fa-solid fa-${ic}" style="background:${col}26;color:${col}"></i><div><b>${t}</b><small>${sub}</small></div></div>
+    ${v === 'transfer' ? '<div class="lbl">TO</div><div class="fld"><i class="fa-solid fa-user"></i><input id="to" placeholder="Phone number, account or citizen ID"></div>' : ''}
+    <div class="lbl">AMOUNT</div><div class="amt"><span>$</span><input id="amt" inputmode="numeric" placeholder="0"><button id="max">MAX</button></div>
+    <div class="qa">${[100, 500, 1000, 5000, 10000, 50000].map(x => `<button data-q="${x}">${m(x)}</button>`).join('')}</div>
+    ${v === 'transfer' ? '<div class="lbl">NOTE (OPTIONAL)</div><div class="fld"><i class="fa-solid fa-pen"></i><input id="note" maxlength="60" placeholder="What is it for?"></div>' : ''}
+    <div class="sum"><div>${v === 'deposit' ? 'Cash available' : 'Account balance'}<b>${m(v === 'deposit' ? S.cash : S.bank)}</b></div><div>After<b id="aft">—</b></div></div><div class="err" id="err"></div>
+    <button class="go" id="go"><span class="sh"></span><i class="fa-solid fa-${ic}"></i>${t}</button>
+    <div class="done" id="done"><div class="ok"><i class="fa-solid fa-check"></i></div><b id="dT"></b><p id="dS"></p><button id="dB">Done</button></div>`;
+  const amt = $('amt'), src = () => v === 'deposit' ? S.cash : S.bank, val = () => +(amt.value.replace(/\D/g, '') || 0);
+  const upd = () => { const n = val(); amt.value = n ? n.toLocaleString('en-US') : ''; $('aft').textContent = n ? m(v === 'deposit' ? S.bank + n : S.bank - n) : '—'; $('err').textContent = n > src() ? 'Not enough money' : ''; };
+  amt.oninput = upd; $('max').onclick = () => { amt.value = String(Math.floor(src())); upd(); };
+  a.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { amt.value = b.dataset.q; upd(); });
+  $('go').onclick = async () => { const n = val(); if (busy) return; if (!n) return $('err').textContent = 'Enter an amount'; if (n > src()) return; if (v === 'transfer' && !$('to').value.trim()) return $('err').textContent = 'Enter who to send to';
+    busy = true; $('go').disabled = true; const r = await post('action', { action: v, amount: n, to: v === 'transfer' ? $('to').value.trim() : undefined, note: v === 'transfer' ? $('note').value : undefined }); busy = false; $('go').disabled = false;
+    if (!r || !r.ok) return $('err').textContent = (r && r.msg) || 'Something went wrong';
+    Object.assign(S, r); fill(); $('dT').textContent = `${t} complete`; $('dS').textContent = `${m(n)} ${v === 'deposit' ? 'added to your account' : v === 'withdraw' ? 'is now in your pocket' : 'sent to ' + $('to').value}`; $('done').classList.add('on'); };
+  $('dB').onclick = () => panel(v); setTimeout(() => amt.focus(), 50); }
+document.querySelector('.side').addEventListener('click', (e) => { const n = e.target.closest('[data-v]'); if (n) panel(n.dataset.v); });
+document.querySelector('.quick').addEventListener('click', (e) => { const n = e.target.closest('[data-v]'); if (n) panel(n.dataset.v); });
+$('flt').onclick = (e) => { const b = e.target.closest('[data-f]'); if (!b) return; flt = b.dataset.f; [...$('flt').children].forEach(x => x.classList.toggle('on', x === b)); list(); };
+$('cp').onclick = () => toast('Account number: ' + (S.account || ''));
+/* 3D tilt: the side you point at leans toward you */
+document.addEventListener('mousemove', (e) => { if (!$('bank').classList.contains('on')) return; const x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
+  $('stage').style.transform = `rotateY(${x * 14}deg) rotateX(${-y * 10}deg)`; $('glare').style.setProperty('--gx', (x + .5) * 100 + '%'); $('glare').style.setProperty('--gy', (y + .5) * 100 + '%'); });
+document.addEventListener('mouseleave', () => $('stage').style.transform = '');
+function close() { $('bank').classList.remove('on'); post('close'); }
+$('exit').onclick = close; document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('bank').classList.contains('on')) close(); });
+window.addEventListener('message', (e) => { const d = e.data; if (d?.action !== 'open') return; S = d.data; $('bal').dataset.v = 0; $('cash').dataset.v = 0; $('bank').classList.add('on'); fill(); panel('deposit'); });
+function mock(n, d) { if (n !== 'action') return 1; const s = { ...S, tx: [...S.tx] }; const t = Math.floor(Date.now() / 1000);
+  if (d.action === 'deposit') { s.cash -= d.amount; s.bank += d.amount; s.tx.unshift({ kind: 'in', label: 'Cash deposit', amount: d.amount, balance: s.bank, at: t }); }
+  if (d.action === 'withdraw') { s.cash += d.amount; s.bank -= d.amount; s.tx.unshift({ kind: 'out', label: 'Cash withdrawal', amount: d.amount, balance: s.bank, at: t }); }
+  if (d.action === 'transfer') { s.bank -= d.amount; s.tx.unshift({ kind: 'out', label: 'To ' + d.to, amount: d.amount, balance: s.bank, at: t }); } s.ok = true; return s; }
+if (PREVIEW) { document.body.classList.add('preview'); const t = Math.floor(Date.now() / 1000);
+  window.postMessage({ action: 'open', data: { name: 'Preview Player', cid: 'ABC12345', account: 'US0ROX4821', job: 'LSPD', cash: 4250, bank: 62881, branch: 'Fleeca · Legion Square',
+    tx: [{ kind: 'in', label: 'Cash deposit', amount: 1500, balance: 62881, at: t - 3600 }, { kind: 'out', label: 'To Sara K · Rent', amount: 800, balance: 61381, at: t - 90000 }, { kind: 'in', label: 'From Abu Snow', amount: 2500, balance: 62181, at: t - 180000 }, { kind: 'out', label: 'Cash withdrawal', amount: 300, balance: 59681, at: t - 260000 }] } }, '*'); }
+</script></body></html>
