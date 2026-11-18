@@ -73,7 +73,7 @@ local function prepare(items, prefix)
         if allowed(item) then
             local id = prefix .. (#out + 1)
             lookup[id] = item
-            local entry = { id = id, label = item.label, icon = item.icon }
+            local entry = { id = id, label = item.label, icon = item.icon, sub = item.sub }
             if item.items then
                 entry.items = prepare(item.items, id .. '-')
                 if #entry.items == 0 then entry = nil end

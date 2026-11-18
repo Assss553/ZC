@@ -161,11 +161,25 @@ Config.Menu = {
     {
         label = 'Citizen', icon = 'user',
         items = {
-            cmd('Show ID',     'id-card',          'showid'),
+            ev('Drag',           'people-pulling',       'rox_radial:client:carry', { action = 'drag' }),
+            ev('Carry',          'person-falling-burst', 'rox_radial:client:carry', { action = 'carry' }),
+            ev('Put In Vehicle', 'right-to-bracket',     'rox_radial:client:carry', { action = 'putin' }),
+            ev('Take Out',       'right-from-bracket',   'rox_radial:client:carry', { action = 'takeout' }),
+            ev('Stop',           'hand',                 'rox_radial:client:carry', { action = 'stop' }),
             cmd('Give Number', 'address-book',     'givenumber'),
-            cmd('Carry',       'people-carry-box', 'carry'),
             cmd('Rob',         'mask',             'rob'),
         }
+    },
+    {
+        label = 'Radio', icon = 'walkie-talkie',
+        items = (function()
+            local t = {}
+            for ch = 1, 10 do
+                t[#t + 1] = { label = tostring(ch), sub = 'CH ' .. ch, icon = 'walkie-talkie', type = 'client', event = 'rox_radial:client:radio', args = { channel = ch } }
+            end
+            t[#t + 1] = { label = 'ON/OFF', icon = 'power-off', type = 'client', event = 'rox_radial:client:radio', args = { power = true } }
+            return t
+        end)()
     },
     {
         label = 'Emotes', icon = 'person-walking',

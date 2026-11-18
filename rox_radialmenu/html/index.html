@@ -1,26 +1,28 @@
 <!DOCTYPE html>
-<!-- ROX Store | rox_radialmenu V2 | All rights reserved. -->
+<!-- ROX Store | rox_radialmenu V3 | All rights reserved. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ROX F1 V2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ROX F1 V3</title>
     <link rel="stylesheet" href="fa/css/fontawesome.min.css">
     <link rel="stylesheet" href="fa/css/solid.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="menu" class="menu">
-        <div id="stage" class="stage3d">
-            <div id="trackO" class="track"></div><div id="trackI" class="track inner"></div>
-            <div id="beam" class="beam"></div>
-            <div id="ring" class="ring"></div>
+        <div class="wheel" id="wheel">
+            <svg id="svg" viewBox="-300 -300 600 600"></svg>
+            <div id="icons" class="icons"></div>
             <div class="core">
-                <div id="title" class="title">QUICK MENU</div>
+                <div class="crumb" id="crumb">ROX</div>
+                <div class="title" id="title">QUICK MENU</div>
+                <div class="hint" id="hint">Select an option</div>
                 <button id="coreBtn" class="core-btn"><i class="fa-solid fa-xmark"></i></button>
-                <div class="brand">ROX</div>
             </div>
         </div>
+        <div class="keys"><span><b>1-0</b> Select</span><span><b>RMB</b> Back</span><span><b>ESC</b> Close</span></div>
     </div>
     <script src="script.js"></script>
 </body>

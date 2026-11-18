@@ -7,10 +7,11 @@ lua54 'yes'
 name 'rox_radialmenu'
 author 'ROX Store'
 description 'ROX Store - F1 radial menu (dark glass + orange accent)'
-version '1.0.0'
+version '1.1.0'
 
 shared_script 'config.lua'
-client_script 'client.lua'
+client_scripts { 'client.lua', 'carry.lua' }
+server_script 'server.lua'
 
 ui_page 'html/index.html'
 
