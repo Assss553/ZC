@@ -1,135 +1,116 @@
 <!doctype html>
 <!-- ROX Store | All rights reserved -->
 <html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--a:#ff6a1a;--a2:#ffb000;--bg:#0b0d12;--card:#12151cdd;--line:#ffffff12;--t:#e9ecf2;--m:#8b93a3}
+:root{--a:#ff4b12;--bg:#16181ee8;--row:#ffffff08;--t:#fff;--m:#9aa0ab}
 *{margin:0;padding:0;box-sizing:border-box;user-select:none}
-html,body{width:100vw;height:100vh;overflow:hidden;font-family:Inter,sans-serif;color:var(--t);background:transparent}
-body.demo{background:#3d4248 url(previews/off.jpg) center/cover}
-#app{position:fixed;inset:0;display:none;background:linear-gradient(90deg,#05070bf2 0%,#05070bd9 55%,#05070b99 100%);backdrop-filter:blur(6px)}
-#app.on{display:block;animation:in .25s ease}
-@keyframes in{from{opacity:0;transform:scale(1.02)}}
-.top{position:absolute;left:4vw;right:4vw;top:4.5vh;display:flex;align-items:center;gap:22px}
-.back{width:44px;height:44px;border-radius:12px;background:#ffffff10;border:1px solid var(--line);display:grid;place-items:center;font-size:20px;cursor:pointer}
-.ttl{font:700 34px Rajdhani;letter-spacing:6px}.ttl b{color:var(--a)}
-.live{margin-left:auto;font:600 13px Rajdhani;letter-spacing:2px;color:#46e3a0;padding:8px 14px;border-radius:30px;background:#46e3a014;border:1px solid #46e3a040}
-.live::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#46e3a0;margin-right:8px;box-shadow:0 0 10px #46e3a0}
-.rail{position:absolute;left:4vw;top:15vh;bottom:6vh;width:250px;display:flex;flex-direction:column;gap:8px}
-.tab{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;font:700 17px Rajdhani;letter-spacing:3px;color:var(--m);cursor:pointer;border:1px solid transparent;position:relative;transition:.15s}
-.tab i{font-style:normal;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#ffffff0a;font-size:16px}
-.tab .n{margin-left:auto;font-size:12px;color:#ffffff40}
-.tab:hover{color:var(--t);background:#ffffff08}
-.tab.on{color:#fff;background:linear-gradient(90deg,#ff6a1a26,#ff6a1a05);border-color:#ff6a1a55}
-.tab.on i{background:linear-gradient(135deg,var(--a),var(--a2));color:#111}
-.tab.on::before{content:"";position:absolute;left:-14px;top:22%;bottom:22%;width:4px;border-radius:4px;background:var(--a);box-shadow:0 0 14px var(--a)}
-.hint{margin-top:auto;font:600 12px Rajdhani;letter-spacing:2px;color:#ffffff50;line-height:2}
-.hint b{background:#ffffff18;color:#fff;padding:1px 7px;border-radius:4px;margin-right:6px}
-.list{position:absolute;left:calc(4vw + 280px);top:15vh;bottom:6vh;right:calc(4vw + 450px);overflow:auto}
-.sec{font:700 14px Rajdhani;letter-spacing:4px;color:var(--a);margin:2px 0 14px}.sec span{color:var(--m);letter-spacing:1px;margin-left:8px;font-weight:500}
-.row{display:flex;align-items:center;min-height:66px;padding:0 22px;margin-bottom:8px;border-radius:14px;background:var(--card);border:1px solid var(--line);cursor:pointer;transition:.12s}
-.row:hover{border-color:#ffffff30}
-.row.on{background:linear-gradient(90deg,#1b1f29,#161a23);border-color:var(--a);box-shadow:0 0 0 1px #ff6a1a40,0 10px 30px #0006}
-.row .l{font:700 18px Rajdhani;letter-spacing:2px;flex:1}
-.ctl{display:flex;align-items:center;gap:12px}
-.ar{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:#ffffff0c;color:var(--m);font-size:14px}
-.row.on .ar{color:#fff;background:#ff6a1a30}
-.val{min-width:150px;text-align:center;font:700 16px Rajdhani;letter-spacing:2px}
-.bar{display:flex;gap:3px}.bar s{width:11px;height:20px;border-radius:3px;background:#ffffff14;transform:skewX(-12deg)}
-.bar s.f{background:linear-gradient(var(--a2),var(--a));box-shadow:0 0 8px #ff6a1a55}
-.num{width:56px;text-align:right;font:700 18px Rajdhani}
-.tg{width:58px;height:30px;border-radius:30px;background:#ffffff14;position:relative;transition:.2s}
-.tg::after{content:"";position:absolute;left:4px;top:4px;width:22px;height:22px;border-radius:50%;background:#9aa;transition:.2s}
-.tg.y{background:linear-gradient(90deg,var(--a),var(--a2))}.tg.y::after{left:32px;background:#fff}
-.btn{font:700 14px Rajdhani;letter-spacing:3px;padding:8px 20px;border-radius:10px;background:#ffffff10}
-.row.on .btn{background:linear-gradient(90deg,var(--a),var(--a2));color:#111}
-.side{position:absolute;right:4vw;top:15vh;bottom:6vh;width:420px;border-radius:20px;background:var(--card);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column}
-.pv{height:236px;background:#000 center/cover;position:relative}
-.pv::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#12151c,transparent 60%)}
-.pv .tag{position:absolute;left:18px;top:16px;z-index:1;font:700 12px Rajdhani;letter-spacing:3px;padding:6px 12px;border-radius:20px;background:#000a;border:1px solid #ffffff30}
-.inf{padding:6px 26px 26px}
-.inf .c{font:700 13px Rajdhani;letter-spacing:4px;color:var(--a)}
-.inf h2{font:800 30px Inter;margin:6px 0 4px;letter-spacing:-.5px}
-.inf .big{font:700 40px Rajdhani;color:var(--a)}
-.inf p{color:#b6bdca;font-size:14.5px;line-height:1.6;margin-top:10px}
-.inf .rng{margin-top:16px;font:600 12px Rajdhani;letter-spacing:2px;color:#ffffff55}
-.looks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 26px 26px;margin-top:auto}
-.looks div{aspect-ratio:16/10;border-radius:10px;background:center/cover;border:2px solid transparent;position:relative;cursor:pointer}
-.looks div.on{border-color:var(--a);box-shadow:0 0 16px #ff6a1a66}
-.looks div span{position:absolute;left:6px;bottom:4px;font:700 10px Rajdhani;letter-spacing:1px;text-shadow:0 1px 4px #000}
+html,body{width:100vw;height:100vh;overflow:hidden;font-family:Montserrat,sans-serif;color:var(--t);background:transparent}
+body.demo{background:#555 center/cover}
+#app{position:fixed;inset:0;display:none;background:#00000059}
+#app.on{display:block;animation:in .2s ease}@keyframes in{from{opacity:0}}
+body.noblur #app{backdrop-filter:none}#app{backdrop-filter:blur(2px)}
+.top{position:absolute;left:2vw;top:3.2vh;display:flex;align-items:center;gap:16px}
+.back{width:34px;height:34px;background:#000000aa;display:grid;place-items:center;font-size:18px;cursor:pointer}
+.ttl{font:800 24px Montserrat;letter-spacing:1px}
+.live{position:absolute;right:2vw;top:3.6vh;font:700 11px Montserrat;padding:9px 14px;background:#0f1a12;border:1px solid #2fe36a55;color:#7dff9f}
+.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fe36a;margin-right:8px;box-shadow:0 0 8px #2fe36a}
+.tabs{position:absolute;left:2vw;right:2vw;top:8.4vh;height:52px;background:var(--bg);display:flex;align-items:stretch}
+.qe{width:52px;display:grid;place-items:center}.qe b{font:700 10px Inter;border:1px solid #ffffff40;padding:3px 6px;color:#ccc}
+.tab{flex:1;display:flex;justify-content:center;align-items:center;font:700 14px Montserrat;letter-spacing:1.2px;color:#d8dbe0;cursor:pointer;position:relative}
+.tab sup{font-size:9px;align-self:flex-start;margin-top:15px;color:#ffffff80;margin-left:3px}
+.tab:hover{background:#ffffff0a}.tab.on{background:#fff;color:#111}.tab.on sup{color:var(--a)}
+.main{position:absolute;left:2vw;top:calc(8.4vh + 64px);bottom:2.4vh;right:calc(2vw + 512px);background:var(--bg);padding:20px 10px 10px;overflow:auto}
+.sec{font:800 15px Montserrat;color:var(--a);margin:0 8px 14px}.sec span{font:500 12px Inter;color:#c8ccd3;margin-left:6px}
+.row{display:flex;align-items:center;height:56px;padding:0 16px;margin-bottom:2px;background:var(--row);cursor:pointer}
+.row .l{flex:1;font:800 15px Montserrat;letter-spacing:.6px}
+.row.on{background:#fff;color:#111}
+.ctl{display:flex;align-items:center;gap:14px}
+.ar{width:22px;text-align:center;color:#ffffff80;font:700 16px Inter;cursor:pointer}.row.on .ar{color:#111}
+.val{min-width:200px;text-align:center;font:800 13px Montserrat;letter-spacing:.8px}
+.bar{display:flex;gap:2px}.bar s{width:11px;height:18px;background:#ffffff26}.row.on .bar s{background:#0000001f}
+.bar s.f{background:var(--a)!important}
+.num{width:58px;text-align:right;font:800 15px Montserrat}
+.tg{min-width:200px;text-align:center;font:800 13px Montserrat}.tg b{color:var(--a)}
+.side{position:absolute;right:2vw;top:calc(8.4vh + 64px);bottom:2.4vh;width:500px;background:var(--bg);padding:24px}
+.side .c{font:800 11px Montserrat;color:var(--a);letter-spacing:.8px}
+.side h2{font:900 27px Montserrat;margin:4px 0 2px;text-transform:uppercase}
+.side .big{font:900 22px Montserrat;color:var(--a);margin:4px 0}
+.side p{font:400 14px Inter;color:#dfe2e7;line-height:1.55;margin:6px 0 18px}
+.side .bb{display:flex;align-items:center;gap:14px}.side .bb .bar s{width:18px;height:28px}.side .bb .n2{font:900 26px Montserrat;color:var(--a)}
+.side .rng{font:500 11.5px Inter;color:#ffffff70;margin-top:14px}
+.pv{margin-top:18px;width:100%;aspect-ratio:16/9;background:center/cover;border:1px solid #ffffff20}
+.looks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.looks div{aspect-ratio:16/10;background:center/cover;border:2px solid transparent;cursor:pointer;position:relative}
+.looks div.on{border-color:var(--a)}.looks span{position:absolute;left:5px;bottom:3px;font:800 9px Montserrat;text-shadow:0 1px 3px #000}
+.hint{position:absolute;left:24px;bottom:20px;font:600 11px Inter;color:#ffffff60}.hint b{border:1px solid #ffffff40;padding:1px 5px;margin:0 3px;color:#ddd}
 </style></head>
 <body>
 <div id="app">
-  <div class="top"><div class="back" onclick="close_()">←</div><div class="ttl"><b>ROX</b> SETTINGS</div><div class="live">LIVE PREVIEW</div></div>
-  <div class="rail" id="rail"></div>
-  <div class="list" id="list"></div>
-  <div class="side"><div class="pv" id="pv"><div class="tag" id="pvTag"></div></div><div class="inf" id="inf"></div><div class="looks" id="looks"></div></div>
+  <div class="top"><div class="back" onclick="close_()">←</div><div class="ttl">SETTINGS</div></div>
+  <div class="live">Live from the game</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="main" id="main"></div>
+  <div class="side" id="side"></div>
 </div>
 <script>
-const LOOKS=[['off','GTA DEFAULT','The original game look, no extra grading.'],
+const LOOKS=[['off','STANDARD','The original GTA look, no extra grading.'],
  ['rox_realistic','ROX REALISTIC','Natural colours, soft filmic contrast, warm sun and subtle bloom. Our recommended everyday look.'],
  ['rox_cinematic','CINEMATIC FILM','Warm film tones, deep contrast, strong vignette and light grain. Made for clips and streams.'],
  ['rox_vivid','VIVID SUMMER','Bright, saturated colours with punchy sunlight. Los Santos at its sunniest.'],
  ['rox_nightpro','NIGHT PRO','Raises exposure and bloom with a cool blue tint so you can actually see at night.'],
  ['rox_noir','COLD NOIR','Almost black & white, hard contrast and cold shadows. Moody crime-drama look.']];
-const opt=(a)=>a.map(x=>x[0]);
+const ACC=[['#ff4b12','ROX ORANGE'],['#ff2d55','RED'],['#2f9bff','BLUE'],['#2fe36a','GREEN'],['#a855f7','PURPLE'],['#ffc400','GOLD']];
+const sel_=(k,l,opts,names,d)=>({k,l,type:'sel',opts,names,d}), tg=(k,l,d)=>({k,l,type:'tg',d}), bar=(k,l,min,max,step,d,suf)=>({k,l,type:'bar',min,max,step,d,suf});
 const TABS=[
- {id:'presets',i:'★',t:'PRESETS',rows:[
-  {k:'p_standard',l:'STANDARD',type:'btn',d:'Resets every setting to the ROX default.'},
-  {k:'p_streamer',l:'STREAMER',type:'btn',d:'Cinematic look, cinema bars off, minimap on. Looks great on stream.'},
-  {k:'p_performance',l:'PERFORMANCE',type:'btn',d:'GTA default look, FPS boost on, short shadows. Maximum frames.'},
-  {k:'p_cinema',l:'CINEMA',type:'btn',d:'Cinematic film look, cinema bars, no minimap or crosshair. For screenshots and videos.'}]},
- {id:'graphics',i:'◐',t:'GRAPHICS',rows:[
-  {k:'look',l:'VISUAL FILTER',type:'sel',opts:opt(LOOKS),names:LOOKS.map(x=>x[1]),d:'Choose one of the 5 ROX graphics looks.'},
-  {k:'strength',l:'FILTER STRENGTH',type:'bar',min:0,max:100,step:5,suf:'%',d:'How strong the visual filter is applied.'},
-  {k:'brightness',l:'BRIGHTNESS BOOST',type:'bar',min:-10,max:10,step:1,d:'Raises or lowers exposure on top of your GTA brightness. Useful at night.'}]},
- {id:'game',i:'◎',t:'GAME',rows:[
-  {k:'crosshair',l:'SHOW CROSSHAIR',type:'tg',d:'Show the GTA weapon reticle.'},
-  {k:'cinebars',l:'CINEMA BARS',type:'tg',d:'Black bars top and bottom for a movie feel.'},
-  {k:'minimap',l:'MINIMAP',type:'tg',d:'Show or hide the minimap.'}]},
- {id:'performance',i:'⚡',t:'PERFORMANCE',rows:[
-  {k:'fpsboost',l:'FPS BOOST',type:'tg',d:'Disables some lighting & reflections for more FPS. Overrides the visual filter.'},
-  {k:'shadows',l:'SHADOW DISTANCE',type:'bar',min:1,max:10,step:1,d:'Lower = more FPS, higher = shadows further away.'}]},
- {id:'keys',i:'⌨',t:'KEYBINDS',rows:[
-  {k:'kb_open',l:'OPEN SETTINGS',type:'info',v:'/settings',d:'Change it in GTA Settings › Key Bindings › FiveM.'},
-  {k:'kb_pause',l:'PAUSE MENU',type:'info',v:'ESC',d:'Game settings in the ROX pause menu also opens this menu.'}]}];
-let S={},tab=0,sel=0;
-const $=id=>document.getElementById(id);
+ {t:'PRESETS',rows:[{k:'p_standard',l:'STANDARD',type:'btn',d:'Resets every setting to its default.'},
+  {k:'p_streamer',l:'STREAMER',type:'btn',d:'Cinematic look, police scanner and wanted music muted. Clean for stream.'},
+  {k:'p_performance',l:'PERFORMANCE',type:'btn',d:'Standard look, FPS boost on, short shadows. Maximum frames.'},
+  {k:'p_cinema',l:'CINEMA',type:'btn',d:'Cinematic film look, cinema bars, no minimap or crosshair. For clips and screenshots.'}]},
+ {t:'GAME',rows:[tg('crosshair','SHOW CROSSHAIR','Show the GTA weapon reticle.'),tg('cinebars','CINEMA BARS','Black bars top and bottom for a movie feel.'),tg('idlecam','IDLE CAMERA','GTA cinematic camera when you are AFK.')]},
+ {t:'SOUND MIX',rows:[tg('radio','VEHICLE RADIO','Allow the radio in vehicles.'),tg('scanner','POLICE SCANNER','GTA police scanner voice lines.'),tg('wantedmusic','WANTED MUSIC','Music that plays while you are wanted.'),tg('sirens','DISTANT SIRENS','Random police sirens in the city ambience.'),tg('flightmusic','FLIGHT MUSIC','Music while flying aircraft.')]},
+ {t:'HUD',rows:[tg('minimap','MINIMAP','Show or hide the minimap.'),{k:'hud_open',l:'ROX HUD SETTINGS',type:'btn',btn:'OPEN',d:'Open the ROX HUD editor (speedometer, status, layout).'},tg('streetnames','STREET NAMES','Show area / street names under the minimap.')]},
+ {t:'VISUALS',rows:[sel_('look','VISUAL FILTER',LOOKS.map(x=>x[0]),LOOKS.map(x=>x[1]),''),bar('strength','FILTER STRENGTH',0,100,5,'How strong the visual filter is applied.','%'),bar('brightness','BRIGHTNESS BOOST',-10,10,1,'Raises or lowers exposure on top of your GTA brightness. Useful at night.')]},
+ {t:'PERFORMANCE',rows:[tg('fpsboost','FPS BOOST','Removes some direct lighting & reflections for more FPS. Overrides the visual filter.'),bar('shadows','SHADOW DISTANCE',1,10,1,'Lower = more FPS, higher = shadows further away.'),bar('lod','DRAW DISTANCE',5,15,1,'Detail distance of the world. Lower = more FPS.')]},
+ {t:'MENU',rows:[sel_('accent','ACCENT COLOUR',ACC.map(x=>x[0]),ACC.map(x=>x[1]),'Main colour of the ROX menus.'),tg('blur','BACKGROUND BLUR','Blur the game behind this menu.'),bar('menuscale','MENU SIZE',80,120,5,'Scale of this settings menu.','%')]},
+ {t:'KEYBINDS',rows:[{k:'kb1',l:'OPEN SETTINGS',type:'info',v:'/settings',d:'Change it in GTA Settings › Key Bindings › FiveM.'},{k:'kb2',l:'PAUSE MENU',type:'info',v:'ESC',d:'Game settings in the pause menu opens this menu.'},{k:'kb3',l:'SWITCH TABS',type:'info',v:'Q / E',d:'Use Q and E to move between tabs.'}]}];
+let S={},tab=0,sel=0;const $=id=>document.getElementById(id);
 const post=(n,d={})=>fetch(`https://${window.GetParentResourceName?GetParentResourceName():'rox_settings'}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({}));
-function bar(v,r){const n=20,f=Math.round((v-r.min)/(r.max-r.min)*n);return `<div class="bar">${Array.from({length:n},(_,i)=>`<s class="${i<f?'f':''}"></s>`).join('')}</div>`}
+const segs=(v,r,n=20)=>{const f=Math.round((v-r.min)/(r.max-r.min)*n);return `<div class="bar">${Array.from({length:n},(_,i)=>`<s class="${i<f?'f':''}"></s>`).join('')}</div>`};
 function ctl(r){const v=S[r.k];
- if(r.type==='sel')return `<div class="ctl"><div class="ar">‹</div><div class="val">${r.names[r.opts.indexOf(v)]||v}</div><div class="ar">›</div></div>`;
- if(r.type==='bar')return `<div class="ctl"><div class="ar">‹</div>${bar(v,r)}<div class="num">${v}${r.suf||''}</div><div class="ar">›</div></div>`;
- if(r.type==='tg')return `<div class="tg ${v?'y':''}"></div>`;
- if(r.type==='btn')return `<div class="btn">APPLY</div>`;
- return `<div class="val">${r.v}</div>`}
-function render(){const T=TABS[tab];
- $('rail').innerHTML=TABS.map((t,i)=>`<div class="tab ${i===tab?'on':''}" onclick="tab=${i};sel=0;render()"><i>${t.i}</i>${t.t}<span class="n">${t.rows.length}</span></div>`).join('')+'<div class="hint"><b>↑↓</b>SELECT &nbsp;<b>←→</b>CHANGE<br><b>Q</b><b>E</b>TABS &nbsp;<b>ESC</b>BACK</div>';
- $('list').innerHTML=`<div class="sec">${T.t}<span>${T.rows.length} options</span></div>`+T.rows.map((r,i)=>`<div class="row ${i===sel?'on':''}" onmouseenter="sel=${i};side()" onclick="sel=${i};act(1)"><div class="l">${r.l}</div>${ctl(r)}</div>`).join('');
- document.querySelectorAll('.row .ar').forEach(a=>a.onclick=e=>{e.stopPropagation();act(a.textContent==='‹'?-1:1)});
- side()}
+ if(r.type==='sel')return `<div class="ctl"><div class="ar" data-d="-1">‹</div><div class="val">${r.names[r.opts.indexOf(v)]||v}</div><div class="ar" data-d="1">›</div></div>`;
+ if(r.type==='bar')return `<div class="ctl"><div class="ar" data-d="-1">‹</div>${segs(v,r)}<div class="num">${v}${r.suf||''}</div><div class="ar" data-d="1">›</div></div>`;
+ if(r.type==='tg')return `<div class="ctl"><div class="ar" data-d="-1">‹</div><div class="tg">${v?'<b>ON</b>':'OFF'}</div><div class="ar" data-d="1">›</div></div>`;
+ if(r.type==='btn')return `<div class="ctl"><div class="ar">‹</div><div class="val">${r.btn||'APPLY'}</div><div class="ar">›</div></div>`;
+ return `<div class="ctl"><div class="val">${r.v}</div></div>`}
+function theme(){document.documentElement.style.setProperty('--a',S.accent||'#ff4b12');document.body.classList.toggle('noblur',!S.blur);document.body.style.zoom=(S.menuscale||100)/100}
+function render(){theme();const T=TABS[tab];
+ $('tabs').innerHTML='<div class="qe"><b>Q</b></div>'+TABS.map((t,i)=>`<div class="tab ${i===tab?'on':''}" onclick="tab=${i};sel=0;render()">${t.t}<sup>${t.t==='KEYBINDS'?'':t.rows.length}</sup></div>`).join('')+'<div class="qe"><b>E</b></div>';
+ $('main').innerHTML=`<div class="sec">${T.t}<span>${T.rows.length} options</span></div>`+T.rows.map((r,i)=>`<div class="row ${i===sel?'on':''}" data-i="${i}"><div class="l">${r.l}</div>${ctl(r)}</div>`).join('')+'<div class="hint"><b>↑</b><b>↓</b> select &nbsp; <b>←</b><b>→</b> change &nbsp; <b>Q</b><b>E</b> tabs &nbsp; <b>ESC</b> back</div>';
+ document.querySelectorAll('.row').forEach(e=>{const i=+e.dataset.i;e.onmouseenter=()=>{sel=i;side()};e.onclick=ev=>{sel=i;const d=ev.target.dataset.d;act(d?+d:1)}});side()}
 function side(){const T=TABS[tab],r=T.rows[sel];document.querySelectorAll('.row').forEach((e,i)=>e.classList.toggle('on',i===sel));
- const look=LOOKS.find(x=>x[0]===S.look)||LOOKS[0];
- $('pv').style.backgroundImage=`url(previews/${S.fpsboost?'off':look[0]}.jpg)`;$('pvTag').textContent=S.fpsboost?'FPS BOOST':look[1];
- let big='';if(r.type==='bar')big=`<div class="big">${S[r.k]}${r.suf||''}</div>${bar(S[r.k],r)}<div class="rng">${r.min} TO ${r.max} · USE ← → TO ADJUST</div>`;
- const desc=r.k==='look'?look[2]:r.d;
- $('inf').innerHTML=`<div class="c">${T.t}</div><h2>${r.k==='look'?look[1]:r.l}</h2>${big}<p>${desc}</p>`;
- $('looks').innerHTML=tab===1?LOOKS.map(x=>`<div class="${x[0]===S.look?'on':''}" style="background-image:url(previews/${x[0]}.jpg)" onclick="S.look='${x[0]}';push()"><span>${x[1]}</span></div>`).join(''):''}
-function push(){post('set',S).then(n=>{if(n&&n.look)S=n;render()});render()}
+ const look=LOOKS.find(x=>x[0]===S.look)||LOOKS[0];let h=`<div class="c">${T.t}</div>`;
+ if(r.k==='look')h+=`<h2>${look[1]}</h2><p>${look[2]}</p><div class="pv" style="background-image:url(previews/${look[0]}.jpg)"></div><div class="looks">${LOOKS.map(x=>`<div class="${x[0]===S.look?'on':''}" style="background-image:url(previews/${x[0]}.jpg)" onclick="S.look='${x[0]}';push()"><span>${x[1]}</span></div>`).join('')}</div>`;
+ else if(r.type==='bar')h+=`<h2>${r.l}</h2><div class="big">${S[r.k]}${r.suf||''}</div><p>${r.d}</p><div class="bb">${segs(S[r.k],r)}<div class="n2">${S[r.k]}</div></div><div class="rng">${r.min} to ${r.max} · use ‹ › or the arrow keys to adjust</div>`;
+ else{h+=`<h2>${r.l}</h2>`;if(r.type==='tg')h+=`<div class="big">${S[r.k]?'ON':'OFF'}</div>`;h+=`<p>${r.d}</p>`;if(tab===4||r.k==='p_streamer'||r.k==='p_cinema')h+=`<div class="pv" style="background-image:url(previews/${look[0]}.jpg)"></div>`}
+ $('side').innerHTML=h}
+function push(){post('set',S).then(n=>{if(n&&n.look){S=n;render()}});render()}
 function act(d){const r=TABS[tab].rows[sel];
  if(r.type==='sel'){const i=(r.opts.indexOf(S[r.k])+d+r.opts.length)%r.opts.length;S[r.k]=r.opts[i]}
  else if(r.type==='bar')S[r.k]=Math.max(r.min,Math.min(r.max,S[r.k]+d*r.step));
  else if(r.type==='tg')S[r.k]=!S[r.k];
+ else if(r.k==='hud_open'){post('hud');return}
  else if(r.type==='btn'){post('preset',{name:r.k.slice(2)}).then(n=>{if(n&&n.look){S=n;render()}});return}
  else return;push()}
 function close_(){$('app').classList.remove('on');post('close')}
-window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open'){S=d.settings;tab=0;sel=0;$('app').classList.add('on');render()}});
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open'){S=d.settings;tab=d.tab||0;sel=0;$('app').classList.add('on');render()}if(d.action==='close')$('app').classList.remove('on')});
 document.addEventListener('keydown',e=>{if(!$('app').classList.contains('on'))return;const T=TABS[tab];
  if(e.key==='Escape'||e.key==='Backspace')close_();
  else if(e.key==='ArrowDown'){sel=(sel+1)%T.rows.length;side()}else if(e.key==='ArrowUp'){sel=(sel-1+T.rows.length)%T.rows.length;side()}
  else if(e.key==='ArrowLeft')act(-1);else if(e.key==='ArrowRight'||e.key==='Enter')act(1);
- else if(e.key==='q'||e.key==='Q'){tab=(tab-1+TABS.length)%TABS.length;sel=0;render()}else if(e.key==='e'||e.key==='E'){tab=(tab+1)%TABS.length;sel=0;render()}});
+ else if(e.key.toLowerCase()==='q'){tab=(tab-1+TABS.length)%TABS.length;sel=0;render()}else if(e.key.toLowerCase()==='e'){tab=(tab+1)%TABS.length;sel=0;render()}});
 if(location.hash){document.body.classList.add('demo');const [t,s,l]=location.hash.slice(1).split(',');
- S={look:l||'rox_realistic',strength:100,brightness:2,crosshair:true,cinebars:false,minimap:true,fpsboost:false,shadows:6};tab=+t||0;sel=+s||0;document.body.style.backgroundImage='url(previews/'+S.look+'.jpg)';$('app').classList.add('on');render()}
+ S={look:l||'off',strength:100,brightness:0,crosshair:true,cinebars:false,idlecam:true,radio:true,scanner:true,wantedmusic:true,sirens:true,flightmusic:true,minimap:true,streetnames:true,fpsboost:false,shadows:6,lod:10,accent:'#ff4b12',blur:true,menuscale:100};
+ tab=+t||0;sel=+s||0;document.body.style.backgroundImage='url(previews/'+S.look+'.jpg)';$('app').classList.add('on');render()}
 </script>
 </body></html>
