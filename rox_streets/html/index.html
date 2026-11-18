@@ -72,7 +72,7 @@ function place(){post('place',{set:cat,model,spacing:+$('spacing').value,randomR
 window.addEventListener('message',e=>{const d=e.data||{};
  if(d.action==='open'){SETS=d.sets;if(!SETS[cat])cat=Object.keys(SETS)[0];$('app').classList.add('on');$('help').classList.remove('on');$('cross').classList.remove('on');render()}
  if(d.action==='stats'){$('sTotal').textContent=d.total;$('sNear').textContent=d.near}
- if(d.action==='aim'){$('app').classList.remove('on');$('help').classList.add('on');$('cross').classList.add('on');$('hModel').textContent='🌳 '+nice(d.model)}
+ if(d.action==='aim'){$('app').classList.remove('on');if(!d.kh)$('help').classList.add('on');$('cross').classList.add('on');$('hModel').textContent='🌳 '+nice(d.model)}
  if(d.action==='aimModel')$('hModel').textContent='🌳 '+nice(d.model);
  if(d.action==='hide'){$('app').classList.remove('on');$('help').classList.remove('on');$('cross').classList.remove('on')}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('app').classList.contains('on'))post('close')});

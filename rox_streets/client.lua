@@ -162,7 +162,14 @@ local function aimMode(set, model, spacing, randomRot)
     for i, m in ipairs(models) do if m == model then idx = i end end
     aiming = true; menuOpen = false
     SetNuiFocus(false, false)
-    SendNUIMessage({ action = 'aim', model = models[idx] })
+    local KH = GetResourceState('rox_keyhints') == 'started'
+    SendNUIMessage({ action = 'aim', model = models[idx], kh = KH })
+    local function hints(name)
+        if KH then exports.rox_keyhints:Show('streets', {
+            { keys = { 'E' }, label = 'Set up' }, { keys = { '←', '→' }, label = 'Rotate' },
+            { keys = { 'SHIFT' }, label = 'Brush (hold + E)' }, { keys = { 'G' }, label = 'Next model' },
+            { keys = { 'DEL' }, label = 'Remove' }, { keys = { 'BACKSPACE' }, label = 'Cancel' } }, name:gsub('^prop_', ''):gsub('_', ' ')) end
+    end
     local ghost, ghostModel, heading, lastPlace = nil, nil, 0.0, nil
 
     local function setGhost(name)
@@ -171,7 +178,7 @@ local function aimMode(set, model, spacing, randomRot)
         ghost = CreateObjectNoOffset(h, 0.0, 0.0, -100.0, false, false, false)
         SetEntityAlpha(ghost, 160, false); SetEntityCollision(ghost, false, false); FreezeEntityPosition(ghost, true)
         SetModelAsNoLongerNeeded(h); ghostModel = name
-        SendNUIMessage({ action = 'aimModel', model = name })
+        SendNUIMessage({ action = 'aimModel', model = name }); if hints then hints(name) end
     end
     setGhost(models[idx])
 
@@ -186,12 +193,16 @@ local function aimMode(set, model, spacing, randomRot)
                 SetEntityHeading(ghost, heading)
                 DrawMarker(25, pos.x, pos.y, pos.z + 0.05, 0, 0, 0, 0, 0, 0, 2.0, 2.0, 1.0, 47, 227, 106, 140, false, false, 2, false, nil, nil, false)
             end
+            DisableControlAction(0, 38, true); DisableControlAction(0, 174, true); DisableControlAction(0, 175, true)
             if IsDisabledControlJustPressed(0, 15) then heading = (heading + 15.0) % 360 end
             if IsDisabledControlJustPressed(0, 14) then heading = (heading - 15.0) % 360 end
+            if IsDisabledControlPressed(0, 174) then heading = (heading + 2.0) % 360 end                    -- ←
+            if IsDisabledControlPressed(0, 175) then heading = (heading - 2.0) % 360 end                    -- →
             if IsControlJustPressed(0, 47) then idx = idx % #models + 1; setGhost(models[idx]) end        -- G
             if IsControlJustPressed(0, 45) then idx = math.random(#models); setGhost(models[idx]) end     -- R
             local brush = IsControlPressed(0, 21)                                                            -- SHIFT
-            local click = brush and IsDisabledControlPressed(0, 24) or IsDisabledControlJustPressed(0, 24)
+            local click = brush and (IsDisabledControlPressed(0, 24) or IsDisabledControlPressed(0, 38))
+                or IsDisabledControlJustPressed(0, 24) or IsDisabledControlJustPressed(0, 38)            -- LMB or E
             if ok and click and (not lastPlace or #(pos - lastPlace) >= (brush and spacing or 0.5)) then
                 TriggerServerEvent('rox_streets:add', { { m = ghostModel, x = pos.x, y = pos.y, z = pos.z, h = heading } })
                 lastPlace = pos
@@ -204,6 +215,7 @@ local function aimMode(set, model, spacing, randomRot)
             Wait(0)
         end
         if ghost then DeleteEntity(ghost) end
+        if KH then exports.rox_keyhints:Hide('streets') end
         openMenu()
     end)
 end

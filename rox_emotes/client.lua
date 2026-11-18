@@ -7,12 +7,24 @@ for cat, list in pairs(Emotes) do for _, e in ipairs(list) do e.cat = cat; BY[e[
 local function notify(t, typ) TriggerEvent('ox_lib:notify', { description = t, type = typ or 'inform' }) end
 local function loadDict(d) RequestAnimDict(d); local t = GetGameTimer() + 3000; while not HasAnimDictLoaded(d) and GetGameTimer() < t do Wait(10) end return HasAnimDictLoaded(d) end
 local function clearProps() for _, p in ipairs(props) do if DoesEntityExist(p) then DeleteEntity(p) end end props = {} end
-local function stop() local ped = PlayerPedId(); clearProps(); if current then StopAnimTask(ped, current[3], current[4], 2.0); ClearPedTasks(ped) end current = nil end
+local function hint(e)
+    if GetResourceState('rox_keyhints') ~= 'started' then return end
+    if not e then return exports.rox_keyhints:Hide('emote') end
+    local d = tostring(e[3] or ''):lower()
+    local sit = d:find('sit') or d:find('chair') or d:find('seat') or d:find('bench')
+    local lay = d:find('lay') or d:find('sunbath') or d:find('sleep')
+    exports.rox_keyhints:Show('emote', { { keys = { Config.CancelKey }, label = sit and 'Stand up' or lay and 'Get up' or 'Stop emote' } },
+        sit and 'Sitting' or lay and 'Lying down' or (e[2] or e[1] or 'Emote'))
+end
+local function stop() local ped = PlayerPedId(); clearProps(); hint(nil); if current then StopAnimTask(ped, current[3], current[4], 2.0); ClearPedTasks(ped) end current = nil end
 local function play(e, animOverride)
     local ped = PlayerPedId(); if IsPedInAnyVehicle(ped, false) and not e.move then return notify('You cannot do this in a vehicle', 'error') end
     stop(); if not loadDict(e[3]) then return notify('Animation not found', 'error') end
     local flag = (e.loop and 1 or 0) + (e.move and 48 or 0)
-    TaskPlayAnim(ped, e[3], animOverride or e[4], 3.0, 3.0, -1, flag, 0, false, false, false); current = e
+    TaskPlayAnim(ped, e[3], animOverride or e[4], 3.0, 3.0, -1, flag, 0, false, false, false); current = e; hint(e)
+    CreateThread(function() Wait(1500)                       -- hide the hint when a one-shot emote ends by itself
+        while current == e and IsEntityPlayingAnim(ped, e[3], animOverride or e[4], 3) do Wait(500) end
+        if current == e then current = nil; hint(nil) end end)
     if e.prop then local p = e.prop; local h = joaat(p[1]); RequestModel(h); local t = GetGameTimer() + 3000; while not HasModelLoaded(h) and GetGameTimer() < t do Wait(10) end
         local c = GetEntityCoords(ped); local o = CreateObject(h, c.x, c.y, c.z + .2, true, true, true)
         AttachEntityToEntity(o, ped, GetPedBoneIndex(ped, p[2]), p[3], p[4], p[5], p[6], p[7], p[8], true, true, false, true, 1, true); SetModelAsNoLongerNeeded(h); props[#props + 1] = o end
