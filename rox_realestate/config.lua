@@ -29,7 +29,7 @@ Config.Tablet = {
     UseProp   = true,            -- hold a tablet prop + animation
     CitizenAccess = true,        -- false = only realtors can open the iPad at all
     -- Real Estate app for citizens too (true) or only for realtors from Config.Realtor.Apps.estate (false)
-    CitizenEstateApp = false,
+    CitizenEstateApp = true,     -- everyone can browse houses for sale and sign contracts
     -- Furniture app only shows when the player owns (or rents) a property
     FurnitureNeedsHome = true,
 }
@@ -38,6 +38,7 @@ Config.Tablet = {
 -- Realtor (العقاري)
 ---------------------------------------------------------------------
 Config.Realtor = {
+    RequireDuty = true,          -- realtor apps only while on duty
     -- job name = minimum grade that can open the realtor apps
     Jobs = {
         realestate = 0,

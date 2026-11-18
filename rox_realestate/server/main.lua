@@ -50,8 +50,9 @@ end
 
 function IsRealtor(src)
     if IsPlayerAceAllowed(src, Config.Realtor.AcePermission) then return true, 99 end
-    local job, grade = Bridge.GetJob(src)
+    local job, grade, duty = Bridge.GetJob(src)
     local min = Config.Realtor.Jobs[job]
+    if Config.Realtor.RequireDuty and duty == false then return false, 0 end
     if min and grade >= min then return true, grade end
     return false, 0
 end

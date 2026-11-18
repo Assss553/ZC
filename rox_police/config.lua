@@ -10,7 +10,7 @@ Config.PoliceJobs = { 'police', 'sheriff', 'bcso', 'sasp' }
 Config.MdtMinGrade = 0
 
 -- require the officer to be on duty (QBCore / Qbox)
-Config.RequireDuty = false
+Config.RequireDuty = true   -- police apps (MDT, management) only while on duty
 
 -- commands (also opened from the F1 radial menu)
 Config.Commands = { mdt = 'mdt', jail = 'jail', fine = 'fine', paybail = 'paybail', impound = 'impound', unmask = 'unmask', boss = 'policeboss' }

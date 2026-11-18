@@ -55,13 +55,13 @@ end
 
 function Bridge.GetJob(src)
     local p = getPlayer(src)
-    if FW == 'esx' and p then return p.job.name, tonumber(p.job.grade) or 0 end
+    if FW == 'esx' and p then return p.job.name, tonumber(p.job.grade) or 0, true end
     if FW == 'qb' and p then
         local j = p.PlayerData.job
         local grade = type(j.grade) == 'table' and j.grade.level or j.grade
-        return j.name, tonumber(grade) or 0
+        return j.name, tonumber(grade) or 0, j.onduty ~= false
     end
-    return 'unemployed', 0
+    return 'unemployed', 0, true
 end
 
 local function account()
