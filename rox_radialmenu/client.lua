@@ -131,7 +131,7 @@ local function openMenu()
     SendNUIMessage({
         action = 'open',
         title = Config.Title,
-        color = Config.Color,
+        color = Config.Color, theme = Config.Theme,
         keepInput = Config.KeepInput,
         sound = Config.Sound,
         context = ctx,
