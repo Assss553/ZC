@@ -40,6 +40,7 @@ const I18N = {
         q_sendcontract: 'اكتب ID المشتري', q_sell_piece: 'تبيع القطعة بـ {0}؟',
         cancel: 'إلغاء', confirm: 'تأكيد', yes: 'نعم', close: 'إغلاق', next: 'التالي', back: 'رجوع', save: 'حفظ',
         // shop
+        preview3d: 'معاينة 3D', show_more: 'عرض المزيد ({0})',
         shop_title: 'الأثاث', shop_sub: 'أثاث لبيتك', all_furniture: 'كل الأثاث', pieces: '{0} قطعة', cart: 'السلة', cart_empty: 'السلة فاضية', cart_hint: 'أضف قطع للبدء',
         pieces_lbl: 'القطع', order_total: 'المجموع', place_order: 'تأكيد الطلب', for_property: 'للعقار', no_property: 'لازم تملك عقار عشان تشتري أثاث',
         // contracts
@@ -102,6 +103,7 @@ const I18N = {
         q_buy: 'Buy {0} for {1}?', q_evict: 'Evict the owner from this property?', q_delete: 'Delete this property permanently?',
         q_sendcontract: 'Enter the buyer ID', q_sell_piece: 'Sell this piece for {0}?',
         cancel: 'Cancel', confirm: 'Confirm', yes: 'Yes', close: 'Close', next: 'Next', back: 'Back', save: 'Save',
+        preview3d: '3D preview', show_more: 'Show more ({0})',
         shop_title: 'Furniture', shop_sub: 'Furniture for your rooms.', all_furniture: 'All furniture', pieces: '{0} pieces', cart: 'Cart', cart_empty: 'Your cart is empty', cart_hint: 'Add items to begin',
         pieces_lbl: 'Pieces', order_total: 'Order total', place_order: 'Place Order', for_property: 'For property', no_property: 'You need a property to buy furniture',
         contracts_title: 'Contracts', contracts_sub: 'Sale and rent contracts', empty_contracts: 'No contracts',

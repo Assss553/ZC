@@ -6,6 +6,7 @@
 Locales = {
     ar = {
         no_access          = 'ليس لديك صلاحية',
+        preview_help       = 'اسحب بالماوس لتدوير · العجلة للتقريب · ENTER أضف للسلة · BACKSPACE رجوع',
         help_lock          = '~INPUT_CONTEXT~ قفل باب %s',
         help_unlock        = '~INPUT_CONTEXT~ فتح باب %s',
         help_knock         = '~INPUT_CONTEXT~ طرق باب %s',
@@ -85,6 +86,7 @@ Locales = {
     },
     en = {
         no_access          = 'You have no access',
+        preview_help       = 'Drag with the mouse to rotate · wheel to zoom · ENTER add to cart · BACKSPACE back',
         help_lock          = '~INPUT_CONTEXT~ Lock %s',
         help_unlock        = '~INPUT_CONTEXT~ Unlock %s',
         help_knock         = '~INPUT_CONTEXT~ Knock on %s',

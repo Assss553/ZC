@@ -6,17 +6,19 @@
      Change any model name here if you prefer another prop. ]]
 
 local M = {
-    washer  = { 'prop_washer_02', 'prop_washer_03', 'prop_washer_01', 'v_res_tre_washingmachine' },
-    dryer   = { 'prop_washer_03', 'prop_washer_02', 'prop_washer_01' },
+    washer  = { 'prop_washer_02', 'prop_washer_03', 'prop_washer_01', 'ch_prop_ch_laundry_machine_01a' },
+    dryer   = { 'prop_washer_03', 'bkr_prop_prtmachine_dryer', 'prop_washer_01' },
     table   = { 'prop_table_03b', 'prop_table_03', 'prop_table_04', 'prop_table_01' },
-    counter = { 'prop_ff_counter_01', 'v_corp_bk_desk', 'prop_table_04', 'prop_table_03' },
+    counter = { 'prop_ff_counter_01', 'prop_ff_counter_02', 'prop_table_04' },
     till    = { 'prop_till_01', 'prop_till_02', 'prop_till_03' },
     offchair= { 'prop_off_chair_01', 'prop_off_chair_04', 'v_corp_offchair', 'prop_chair_01a' },
-    chair   = { 'prop_chair_04a', 'prop_chair_01a', 'prop_chair_02', 'prop_chair_08' },
-    plant   = { 'prop_plant_int_01a', 'prop_plant_int_02a', 'prop_plant_int_03a', 'prop_pot_plant_01a', 'v_res_tre_plant' },
-    plant2  = { 'prop_plant_int_03a', 'prop_plant_int_02a', 'prop_plant_int_01a', 'prop_pot_plant_01a' },
+    chair   = { 'apa_mp_h_din_chair_12', 'prop_chair_04a', 'prop_chair_01a' },
+    plant   = { 'apa_mp_h_acc_plant_tall_01', 'prop_plant_int_01a', 'prop_plant_int_02a', 'prop_pot_plant_01a' },
+    plant2  = { 'apa_mp_h_acc_plant_palm_01', 'prop_plant_int_03a', 'prop_plant_int_02a', 'prop_pot_plant_01a' },
     outplant= { 'prop_pot_plant_04a', 'prop_pot_plant_01a', 'prop_plant_int_04a', 'prop_plant_int_01a' },
-    basket  = { 'prop_laundry_basket_01', 'v_res_tre_laundrybasket', 'prop_cs_clothes_box', 'prop_cardbordbox_02a' },
+    basket  = { 'v_res_tre_laundrybasket', 'v_res_fh_laundrybasket', 'prop_washing_basket_01' },
+    trolley = { 'ch_prop_ch_laundry_trolley_01a', 'ch_prop_ch_laundry_trolley_01b' },
+    shelf   = { 'ch_prop_ch_laundry_shelving_01a', 'ch_prop_ch_laundry_shelving_01b' },
     soda    = { 'prop_vend_soda_01', 'prop_vend_soda_02' },
     snack   = { 'prop_vend_snak_01' },
     coffee  = { 'prop_vend_coffe_01' },
@@ -60,6 +62,9 @@ add('vend', M.soda, 7.5, -2.0, 90.0); add('vend', M.snack, 7.5, -3.0, 90.0); add
 -- waiting chairs by the front windows (looking into the shop) + bins
 for k = 0, 5 do add('chair', M.chair, -6.9 + k * 0.75, -4.35, 0.0) end
 add('bin', M.bin, -2.0, -4.4, 0.0); add('bin', M.bin, 7.5, 0.4, 90.0)
+-- laundry trolleys + shelving (Diamond Casino laundry props)
+add('trolley', M.trolley, -5.6, 1.6, 30.0); add('trolley', M.trolley, 1.8, 1.4, -20.0); add('trolley', M.trolley, -1.0, -2.6, 75.0)
+add('shelf', M.shelf, 1.6, 4.6, 180.0); add('shelf', M.shelf, 7.5, 1.4, 90.0)
 -- plants
 add('plant', M.plant, -7.45, -4.55, 30.0); add('plant', M.plant2, 0.6, 4.5, 0.0); add('plant', M.plant, 1.8, -4.45, 60.0); add('plant', M.plant2, 7.45, 4.5, 0.0)
 add('plant', M.plant2, -7.45, 4.55, 10.0)

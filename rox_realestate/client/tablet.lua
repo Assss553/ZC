@@ -198,3 +198,59 @@ end)
 AddEventHandler('onResourceStop', function(res)
     if res == GetCurrentResourceName() then stopTabletAnim() end
 end)
+
+---------------------------------------------------------------------
+-- 3D preview of a furniture prop (real GTA model, orbit camera)
+---------------------------------------------------------------------
+local previewing = false
+local function previewText(x, y, s, txt, center)
+    SetTextFont(4); SetTextScale(s, s); SetTextColour(255, 255, 255, 235); SetTextOutline(); if center then SetTextCentre(true) end
+    BeginTextCommandDisplayText('STRING'); AddTextComponentSubstringPlayerName(txt); EndTextCommandDisplayText(x, y)
+end
+
+RegisterNUICallback('previewFurniture', function(data, cb)
+    cb(1)
+    if previewing or type(data.model) ~= 'string' then return end
+    CreateThread(function()
+        local hash = LoadModel(data.model)
+        if not hash then Notify(L('shell_missing', data.model), 'error') return end
+        previewing = true
+        SendNUIMessage({ action = 'hide' }); SetNuiFocus(false, false); stopTabletAnim()
+        local ped = PlayerPedId()
+        local pc, fw = GetEntityCoords(ped), GetEntityForwardVector(ped)
+        local base = pc + fw * 2.4
+        local found, gz = GetGroundZFor_3dCoord(base.x, base.y, pc.z + 1.0, false)
+        local mn, mx = GetModelDimensions(hash)
+        local obj = CreateObject(hash, base.x, base.y, (found and gz or pc.z - 1.0) - mn.z, false, false, false)
+        SetEntityCollision(obj, false, false); FreezeEntityPosition(obj, true); SetModelAsNoLongerNeeded(hash)
+        local size = math.max(mx.x - mn.x, mx.y - mn.y, mx.z - mn.z)
+        local center = GetEntityCoords(obj) + vector3(0, 0, (mn.z + mx.z) / 2)
+        local yaw, pitch, dist = GetEntityHeading(ped) + 180.0, 18.0, math.max(1.2, size * 1.9 + 0.6)
+        local cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
+        SetCamFov(cam, 45.0); RenderScriptCams(true, true, 500, true, true)
+        local add, spin = false, true
+        while true do
+            Wait(0)
+            DisableAllControlActions(0)
+            for _, c in ipairs({ 1, 2, 241, 242, 24, 25, 177, 200, 191, 32, 33, 34, 35, 38 }) do EnableControlAction(0, c, true) end
+            if IsControlPressed(0, 24) then
+                spin = false
+                yaw = yaw - GetControlNormal(0, 1) * 8.0; pitch = math.max(-10.0, math.min(70.0, pitch + GetControlNormal(0, 2) * 6.0))
+            elseif spin then yaw = yaw + 0.35 end
+            if IsControlJustPressed(0, 241) then dist = math.max(size * 0.8 + 0.4, dist - 0.25) end
+            if IsControlJustPressed(0, 242) then dist = math.min(size * 4 + 3.0, dist + 0.25) end
+            local ry, rp = math.rad(yaw), math.rad(pitch)
+            local cpos = center + vector3(-math.sin(ry) * math.cos(rp) * dist, math.cos(ry) * math.cos(rp) * dist, math.sin(rp) * dist)
+            SetCamCoord(cam, cpos.x, cpos.y, cpos.z); PointCamAtCoord(cam, center.x, center.y, center.z)
+            DrawLightWithRange(cpos.x, cpos.y, cpos.z + 0.5, 255, 244, 230, size * 3 + 3.0, 2.5)
+            DrawRect(0.5, 0.92, 1.0, 0.16, 0, 0, 0, 150)
+            previewText(0.5, 0.855, 0.6, ('~o~%s~w~   %s'):format(data.label or data.model, data.price or ''), true)
+            previewText(0.5, 0.905, 0.38, L('preview_help'), true)
+            if IsControlJustPressed(0, 191) or IsControlJustPressed(0, 38) then add = true break end
+            if IsControlJustPressed(0, 177) or IsControlJustPressed(0, 200) or IsControlJustPressed(0, 25) then break end
+        end
+        RenderScriptCams(false, true, 400, true, true); DestroyCam(cam, false); DeleteEntity(obj)
+        previewing = false
+        startTabletAnim(); SendNUIMessage({ action = 'previewDone', add = add and data.model or nil }); updateFocus()
+    end)
+end)

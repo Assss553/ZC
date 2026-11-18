@@ -462,8 +462,9 @@ Views.shop = () => {
         </div>
         <div class="shop-main">
             <div class="head"><h3>${curCat ? catName(curCat) : t('all_furniture')}</h3><span class="muted" style="font-size:11px">${t('pieces', items.length)}</span></div>
-            <div class="fgrid">${items.map((f) => `<div class="card fitem"><div class="thumb">${furnIcon(f.cat)}${furnImg(f.model)}</div><b>${esc(furnName(f))}</b>
-                <div class="row"><span class="price">${money(f.price)}</span><button class="add" data-act="addcart" data-model="${f.model}">${icon('plus')}</button></div></div>`).join('')}</div>
+            <div class="fgrid">${items.slice(0, S.shopLimit || 120).map((f) => `<div class="card fitem"><div class="thumb" data-act="preview" data-model="${f.model}">${furnIcon(f.cat)}${furnImg(f.model)}<span class="eye">${t('preview3d')}</span></div><b>${esc(furnName(f))}</b>
+                <div class="row"><span class="price">${money(f.price)}</span><button class="add" data-act="addcart" data-model="${f.model}">${icon('plus')}</button></div></div>`).join('')}
+                ${items.length > (S.shopLimit || 120) ? `<button class="btn ghost" style="grid-column:1/-1" data-act="shopmore">${t('show_more', items.length - (S.shopLimit || 120))}</button>` : ''}</div>
         </div>
         <div class="card cart">
             <div class="cart-head"><span>${t('cart')}</span><span class="chip">${cartCount}</span></div>
@@ -808,7 +809,9 @@ const A = {
     },
     cdecline: async (el) => { const r = await call('declineContract', Number(el.dataset.id)); if (r.ok) { closeOverlay(); if (S.open) refresh(); } },
     // shop
-    shopcat: (el) => { S.shopCat = el.dataset.cat; render(); },
+    shopcat: (el) => { S.shopCat = el.dataset.cat; S.shopLimit = 120; render(); },
+    shopmore: () => { S.shopLimit = (S.shopLimit || 120) + 120; render(); },
+    preview: (el) => { const f = S.st.furniture.find((x) => x.model === el.dataset.model); if (!f) return; post('previewFurniture', { model: f.model, label: furnName(f), price: moneyText(f.price) }); },
     addcart: (el) => {
         const f = S.st.furniture.find((x) => x.model === el.dataset.model); if (!f) return;
         const c = S.cart.find((x) => x.model === f.model);
@@ -944,6 +947,10 @@ window.addEventListener('message', (ev) => {
             S.open = false;
             $('#tablet').classList.add('hidden');
             if (S.overlay) closeOverlayKeepFocus();
+            break;
+        case 'previewDone':
+            if (S.open) $('#tablet').classList.remove('hidden');
+            if (m.add) { const b = document.createElement('button'); b.dataset.model = m.add; A.addcart(b); }
             break;
         case 'hide':
             $('#tablet').classList.add('hidden');
