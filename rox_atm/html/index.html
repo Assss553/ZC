@@ -1,83 +1,152 @@
 <!DOCTYPE html>
 <!-- ROX Store | rox_atm | All rights reserved. -->
 <html><head><meta charset="utf-8">
-<link rel="stylesheet" href="fa/css/fontawesome.min.css"><link rel="stylesheet" href="fa/css/solid.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
-:root { --a: #ff5a1f; --ln: rgba(255,255,255,.07); }
+:root { --a: #ff5a1f; --a2: #ff9a5c; --g: #2ee59d; --r: #ff4d6a; --tx2: rgba(255,255,255,.55); }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; color: #fff; user-select: none; }
-body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) center/cover; height: 100vh; }
-.h { font-family: 'Barlow Condensed'; font-style: italic; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
-#atm { position: fixed; inset: 0; display: none; background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.25) 50%, rgba(20,8,2,.75)); }
-#atm.on { display: block; animation: fade .3s ease; }
-@keyframes fade { from { opacity: 0; } }
-.panel { position: absolute; right: 4.5vw; top: 50%; transform: translateY(-50%); width: 440px; display: flex; flex-direction: column; gap: 8px; animation: slide .4s cubic-bezier(.2,1,.3,1); }
-@keyframes slide { from { transform: translate(40px, -50%); opacity: 0; } }
-.top { text-align: center; margin-bottom: 70px; } .top h1 { font-size: 32px; } .top p { font-size: 11px; color: rgba(255,255,255,.7); }
-.x { position: absolute; right: 0; top: 6px; width: 26px; height: 26px; border: 1px solid var(--ln); border-radius: 4px; background: rgba(20,20,24,.85); color: #fff; cursor: pointer; }
-.x:hover { background: var(--a); }
-.card { background: rgba(16,16,20,.88); border: 1px solid var(--ln); border-radius: 4px; padding: 12px 14px; }
-.bal { display: grid; grid-template-columns: 1fr 1fr; padding: 0; } .bal > div { padding: 12px 14px; min-width: 0; }
-.bal > div + div { text-align: right; } .bal small { font-size: 8.5px; font-weight: 800; letter-spacing: 1.4px; color: rgba(255,255,255,.6); } .bal small i { color: var(--a); margin-right: 5px; font-size: 8px; }
-.bal b { display: block; font-size: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .3s; } .bal b.flash { color: var(--a); }
-.term { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; } .term .ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,90,31,.18); color: var(--a); font-size: 13px; }
-.term b { font-size: 17px; display: block; } .term span { font-size: 9.5px; color: rgba(255,255,255,.5); }
-.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .seg button { height: 34px; border: 1px solid transparent; border-radius: 3px; background: none; color: rgba(255,255,255,.8); cursor: pointer; font-size: 13px; }
-.seg button.on { background: rgba(255,90,31,.28); border-color: rgba(255,90,31,.5); color: #fff; } .seg i { font-size: 10px; margin-right: 6px; }
-.sec { font-size: 15px; margin-bottom: 10px; } .sec i { color: var(--a); font-size: 10px; margin-right: 6px; }
-.quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; } .quick button { height: 40px; border: 1px solid var(--ln); border-radius: 3px; background: rgba(255,255,255,.035); color: #fff; cursor: pointer; font-size: 15px; transition: .15s; }
-.quick button:hover { border-color: var(--a); background: rgba(255,90,31,.15); }
-.amt { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 10px; border: 1px solid var(--ln); border-radius: 3px; background: rgba(0,0,0,.3); }
-.amt:focus-within { border-color: var(--a); } .amt span { color: rgba(255,255,255,.5); font-weight: 700; }
-.amt input { flex: 1; background: none; border: 0; outline: 0; color: #fff; font: 700 15px 'Inter'; min-width: 0; }
-.amt button { border: 0; border-radius: 3px; background: rgba(255,90,31,.25); color: var(--a); font-size: 10px; padding: 3px 9px; cursor: pointer; }
-.hint { font-size: 9.5px; color: rgba(255,255,255,.5); margin: 7px 0 9px; } .hint.err { color: #ff5a6a; }
-.go { width: 100%; height: 40px; border: 0; border-radius: 3px; background: var(--a); color: #fff; cursor: pointer; font-size: 15px; transition: .15s; } .go:hover { filter: brightness(1.12); }
-.go:disabled { opacity: .5; cursor: wait; } .go i { font-size: 11px; margin-right: 7px; }
+body { background: transparent; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; color: #fff; user-select: none; height: 100vh; -webkit-font-smoothing: antialiased; }
+body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) center/cover; }
+svg.i { width: 1em; height: 1em; display: block; }
+#atm { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; perspective: 1600px; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,.25), rgba(0,0,0,.8)); }
+#atm.on { display: flex; animation: fade .3s; } @keyframes fade { from { opacity: 0; } }
+/* machine */
+.mach { position: relative; width: 760px; height: 640px; transform-style: preserve-3d; transition: transform .3s cubic-bezier(.2,.8,.3,1); animation: rise .6s cubic-bezier(.16,1,.3,1); }
+@keyframes rise { from { transform: translateY(60px) rotateX(25deg) scale(.9); opacity: 0; } }
+.body { position: absolute; inset: 0; border-radius: 34px; padding: 26px; display: grid; grid-template-columns: 1fr 170px; grid-template-rows: auto 1fr auto; gap: 18px;
+  background: linear-gradient(160deg, #3a3a42, #1b1b20 40%, #121216); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 50px 120px rgba(0,0,0,.75), inset 0 2px 0 rgba(255,255,255,.12), inset 0 -6px 20px rgba(0,0,0,.6); transform-style: preserve-3d; }
+.body::before { content: ''; position: absolute; inset: 0; border-radius: 34px; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 1px, transparent 1px 4px); }
+.glare { position: absolute; inset: 0; border-radius: 34px; pointer-events: none; z-index: 9; background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 0%), rgba(255,255,255,.08), transparent 60%); transform: translateZ(70px); }
+.brand { grid-column: span 2; display: flex; align-items: center; gap: 12px; padding: 4px 6px; transform: translateZ(15px); } .brand .lg { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 21px; background: linear-gradient(145deg, #ff8a4c, #c43a0a); box-shadow: 0 8px 20px rgba(255,90,31,.5); }
+.brand b { font-size: 17px; font-weight: 800; letter-spacing: 1.5px; } .brand small { display: block; font-size: 10.5px; color: var(--tx2); letter-spacing: 0; font-weight: 600; } .brand .sp { flex: 1; }
+.brand .led { display: flex; align-items: center; gap: 7px; font-size: 10.5px; font-weight: 800; color: var(--g); letter-spacing: 1px; } .brand .led i { width: 8px; height: 8px; border-radius: 50%; background: var(--g); box-shadow: 0 0 10px var(--g); animation: bl 2s infinite; } @keyframes bl { 50% { opacity: .4; } }
+.x { width: 36px; height: 36px; border-radius: 11px; border: 0; background: rgba(255,255,255,.07); color: #fff; cursor: pointer; font-size: 18px; display: grid; place-items: center; } .x:hover { background: var(--r); }
+/* screen */
+.screen { position: relative; border-radius: 22px; padding: 6px; background: #050506; box-shadow: inset 0 0 0 2px #000, inset 0 0 30px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.08); transform: translateZ(10px); }
+.disp { position: relative; height: 100%; border-radius: 17px; overflow: hidden; padding: 22px; display: flex; flex-direction: column;
+  background: radial-gradient(500px 300px at 20% 0%, rgba(255,90,31,.22), transparent 60%), linear-gradient(170deg, #17171c, #0c0c10); }
+.disp::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.06), transparent 35%), repeating-linear-gradient(0deg, rgba(255,255,255,.015) 0 1px, transparent 1px 3px); }
+.pg { position: absolute; inset: 22px; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateX(30px); transition: .35s cubic-bezier(.2,.8,.3,1); } .pg.on { opacity: 1; pointer-events: auto; transform: none; }
+.pg h2 { font-size: 24px; font-weight: 800; letter-spacing: -.5px; } .pg p.s { font-size: 12.5px; color: var(--tx2); margin-top: 3px; }
+/* insert card page */
+.ins { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; }
+.ccard { width: 190px; height: 120px; border-radius: 14px; background: linear-gradient(135deg, #ff7f3f, #d23e08 55%, #6a1803); box-shadow: 0 16px 30px rgba(255,90,31,.35); position: relative; animation: insert 2.2s cubic-bezier(.6,0,.3,1) infinite; }
+.ccard::before { content: ''; position: absolute; left: 16px; top: 34px; width: 34px; height: 26px; border-radius: 6px; background: linear-gradient(135deg, #fff1b8, #c69a2e); } .ccard::after { content: 'ROX'; position: absolute; right: 14px; top: 12px; font: 800 13px 'Plus Jakarta Sans'; letter-spacing: 1px; }
+@keyframes insert { 0% { transform: translateY(40px); opacity: 0; } 30% { opacity: 1; } 70% { transform: translateY(-30px); opacity: 1; } 100% { transform: translateY(-70px) scaleY(.4); opacity: 0; } }
+.ins b { font-size: 20px; } .ins small { color: var(--tx2); font-size: 12.5px; } .ins .go { width: 220px; }
+.dots { display: flex; gap: 6px; } .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--a); animation: dt 1s infinite; } .dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; } @keyframes dt { 50% { opacity: .2; transform: scale(.6); } }
+/* menu page */
+.bal { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; margin: 16px 0 14px; } .bal div { padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); }
+.bal div:first-child { background: linear-gradient(135deg, rgba(255,90,31,.25), rgba(255,90,31,.05)); border-color: rgba(255,90,31,.3); } .bal small { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 800; letter-spacing: 1.3px; color: var(--tx2); } .bal small svg { font-size: 15px; }
+.bal b { display: block; font-size: 28px; font-weight: 800; letter-spacing: -.8px; margin-top: 4px; }
+.opts { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .opt { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; cursor: pointer; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); transition: .25s cubic-bezier(.2,.8,.3,1); overflow: hidden; }
+.opt::after { content: ''; position: absolute; right: -30px; top: -30px; width: 100px; height: 100px; border-radius: 50%; background: var(--c); opacity: .08; transition: .3s; } .opt:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--c) 55%, transparent); } .opt:hover::after { opacity: .2; transform: scale(1.4); }
+.opt .ib { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; font-size: 28px; flex: none; background: linear-gradient(145deg, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 6%, transparent)); box-shadow: 0 10px 22px color-mix(in srgb, var(--c) 25%, transparent); }
+.opt b { display: block; font-size: 15px; } .opt small { font-size: 11px; color: var(--tx2); } .opt kbd { margin-left: auto; font: 800 10px 'JetBrains Mono'; padding: 4px 7px; border-radius: 6px; background: rgba(255,255,255,.08); color: var(--tx2); }
+/* amount page */
+.back { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--tx2); cursor: pointer; width: fit-content; margin-bottom: 8px; } .back:hover { color: #fff; } .back svg { font-size: 16px; }
+.amt { margin: 14px 0 12px; padding: 16px; border-radius: 18px; background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.07); text-align: center; } .amt .v { font-size: 46px; font-weight: 800; letter-spacing: -1.5px; } .amt .v span { font-size: 26px; color: var(--tx2); vertical-align: 10px; } .amt .v.z { color: rgba(255,255,255,.25); }
+.amt .s2 { font-size: 11.5px; color: var(--tx2); } .amt .s2 b { color: #fff; } .amt.bad { border-color: var(--r); animation: shake .35s; } .amt.bad .v { color: var(--r); } @keyframes shake { 25%,75% { transform: translateX(-6px); } 50% { transform: translateX(6px); } }
+.qk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .qk b { padding: 12px 0; text-align: center; border-radius: 13px; font-size: 14px; cursor: pointer; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); transition: .15s; } .qk b:hover { border-color: var(--c); color: var(--c); }
+.err { min-height: 18px; font-size: 12px; color: var(--r); text-align: center; margin: 8px 0 2px; }
+.go { margin-top: auto; height: 54px; border-radius: 16px; border: 0; color: #fff; font: 800 15px 'Plus Jakarta Sans'; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden;
+  background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 70%, #000)); box-shadow: 0 12px 28px color-mix(in srgb, var(--c) 40%, transparent); } .go svg { font-size: 22px; } .go:disabled { opacity: .5; }
+.go::after { content: ''; position: absolute; top: 0; bottom: 0; width: 35%; left: -45%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); transform: skewX(-20deg); } .go:hover::after { animation: shine .9s; } @keyframes shine { to { left: 130%; } } .go.dark { color: #04140c; }
+/* done page */
+.ok { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; } .ok .c { width: 86px; height: 86px; border-radius: 50%; display: grid; place-items: center; font-size: 42px; color: #03140b; background: linear-gradient(145deg, #3bf0a9, #12a86c); box-shadow: 0 0 0 10px rgba(46,229,157,.1), 0 0 50px rgba(46,229,157,.5); animation: pop .55s cubic-bezier(.2,1.6,.4,1); margin-bottom: 14px; }
+@keyframes pop { from { transform: scale(0) rotate(-40deg); } } .ok b { font-size: 30px; font-weight: 800; letter-spacing: -1px; } .ok p { font-size: 13px; color: var(--tx2); margin: 4px 0 16px; } .ok .row { display: flex; gap: 8px; width: 100%; } .ok .row button { flex: 1; height: 46px; border-radius: 14px; border: 0; background: rgba(255,255,255,.08); color: #fff; font: 700 13px 'Plus Jakarta Sans'; cursor: pointer; } .ok .row button.p { background: var(--a); }
+/* side: keypad */
+.side { display: flex; flex-direction: column; gap: 12px; transform: translateZ(25px); }
+.slot { height: 74px; border-radius: 16px; background: linear-gradient(180deg, #0d0d10, #1c1c22); box-shadow: inset 0 2px 8px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.06); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; color: var(--tx2); }
+.slot i { display: block; width: 110px; height: 7px; border-radius: 4px; background: #000; box-shadow: 0 0 0 2px #2a2a32, 0 0 14px var(--a); animation: glow 1.6s infinite; } @keyframes glow { 50% { box-shadow: 0 0 0 2px #2a2a32, 0 0 4px var(--a); } } .slot.done i { box-shadow: 0 0 0 2px #2a2a32, 0 0 14px var(--g); }
+.keys { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; border-radius: 18px; background: rgba(0,0,0,.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.keys b { display: grid; place-items: center; border-radius: 11px; font: 700 18px 'JetBrains Mono', monospace; cursor: pointer; background: linear-gradient(180deg, #4a4a54, #2a2a31); box-shadow: 0 4px 0 #15151a, inset 0 1px 0 rgba(255,255,255,.2); transition: .08s; }
+.keys b:active, .keys b.press { transform: translateY(3px); box-shadow: 0 1px 0 #15151a, inset 0 1px 0 rgba(255,255,255,.2); } .keys b.c { background: linear-gradient(180deg, #ff6b7f, #c42a40); } .keys b.e { background: linear-gradient(180deg, #44f0aa, #13a46a); color: #03140b; } .keys b.d { background: linear-gradient(180deg, #ffd36b, #d9971b); color: #2a1900; }
+/* bottom: cash dispenser */
+.disp2 { grid-column: span 2; position: relative; height: 70px; border-radius: 18px; background: linear-gradient(180deg, #0b0b0e, #1b1b21); box-shadow: inset 0 3px 10px rgba(0,0,0,.9); display: flex; align-items: center; justify-content: center; transform: translateZ(20px); overflow: visible; }
+.disp2 .mouth { width: 62%; height: 14px; border-radius: 8px; background: #000; box-shadow: 0 0 0 2px #2a2a32, inset 0 2px 6px rgba(0,0,0,1); } .disp2 small { position: absolute; bottom: 8px; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: rgba(255,255,255,.3); }
+.bill { position: absolute; left: 50%; top: 18px; width: 170px; height: 78px; margin-left: -85px; border-radius: 6px; background: linear-gradient(135deg, #b6e3a8, #6fb36c); border: 2px solid #4f8f4b; box-shadow: 0 6px 14px rgba(0,0,0,.5); display: grid; place-items: center; font: 900 22px 'Plus Jakarta Sans'; color: #2f5d2c; animation: out 1.4s cubic-bezier(.2,.8,.3,1) forwards; }
+.bill::before { content: ''; position: absolute; inset: 7px; border: 1.5px dashed rgba(47,93,44,.45); border-radius: 4px; } @keyframes out { from { transform: translateY(-60px) scaleY(.2); opacity: 0; } 40% { opacity: 1; } to { transform: translateY(var(--y, 40px)) rotate(var(--r, 0deg)); opacity: 0; } }
+.toast { position: fixed; bottom: 34px; left: 50%; transform: translateX(-50%); padding: 11px 18px; border-radius: 12px; background: #111; font-size: 12.5px; font-weight: 700; opacity: 0; transition: .2s; } .toast.on { opacity: 1; }
 </style></head><body>
-<div id="atm"><div class="panel">
-  <div class="top"><h1 class="h" id="title">CASH MACHINE</h1><p id="street"></p><button class="x" id="x"><i class="fa-solid fa-xmark"></i></button></div>
-  <div class="card bal"><div><small><i class="fa-solid fa-square"></i>BANK</small><b class="h" id="bank">$0</b></div><div><small><i class="fa-solid fa-dollar-sign"></i>CASH</small><b class="h" id="cash">$0</b></div></div>
-  <div class="card"><div class="term"><div class="ic"><i class="fa-solid fa-credit-card"></i></div><div><b class="h">Self-Service Terminal</b><span id="who">Withdraw or deposit cash</span></div></div>
-    <div class="seg"><button class="h on" data-k="withdraw"><i class="fa-solid fa-arrow-up"></i>Withdraw</button><button class="h" data-k="deposit"><i class="fa-solid fa-arrow-down"></i>Deposit</button></div></div>
-  <div class="card"><div class="sec h"><i class="fa-solid fa-bolt"></i>Quick amounts</div><div class="quick" id="quick"></div></div>
-  <div class="card"><div class="sec h"><i class="fa-solid fa-money-bill-wave"></i><span id="lbl">Withdraw</span> - amount</div>
-    <div class="amt"><span>$</span><input id="amount" inputmode="numeric" placeholder="0"><button class="h" id="max">MAX</button></div>
-    <div class="hint" id="hint">Enter the amount you want to deposit or withdraw.</div>
-    <button class="go h" id="go"><i class="fa-solid fa-arrow-up"></i><span>Withdraw</span></button></div>
-</div></div>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="gO" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb07a"/><stop offset="1" stop-color="#ff5a1f"/></linearGradient>
+  <linearGradient id="gG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7dffc8"/><stop offset="1" stop-color="#16c784"/></linearGradient>
+  <linearGradient id="gB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a9d3ff"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+  <linearGradient id="gV" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9caff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+  <symbol id="i-bank" viewBox="0 0 32 32"><path d="M16 3 29 10H3z" fill="currentColor"/><rect x="6" y="13" width="3" height="10" rx="1" fill="currentColor"/><rect x="11.5" y="13" width="3" height="10" rx="1" fill="currentColor"/><rect x="17.5" y="13" width="3" height="10" rx="1" fill="currentColor"/><rect x="23" y="13" width="3" height="10" rx="1" fill="currentColor"/><rect x="3" y="25" width="26" height="4" rx="1.5" fill="currentColor" opacity=".6"/></symbol>
+  <symbol id="i-dep" viewBox="0 0 32 32"><rect x="3" y="12" width="26" height="16" rx="4" fill="url(#gG)" opacity=".35"/><rect x="3" y="12" width="26" height="16" rx="4" fill="none" stroke="url(#gG)" stroke-width="2"/><circle cx="16" cy="20" r="3.4" fill="url(#gG)"/><path d="M16 2.5v9M11.5 7.5 16 12l4.5-4.5" fill="none" stroke="url(#gG)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-wd" viewBox="0 0 32 32"><rect x="3" y="4" width="26" height="16" rx="4" fill="url(#gO)" opacity=".35"/><rect x="3" y="4" width="26" height="16" rx="4" fill="none" stroke="url(#gO)" stroke-width="2"/><circle cx="16" cy="12" r="3.4" fill="url(#gO)"/><path d="M16 20.5v9M11.5 25 16 29.5l4.5-4.5" fill="none" stroke="url(#gO)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-fast" viewBox="0 0 32 32"><path d="M18 2 6 18h9l-2 12 13-17h-9z" fill="url(#gV)"/></symbol>
+  <symbol id="i-rcpt" viewBox="0 0 32 32"><path d="M7 3h18v26l-3-2-3 2-3-2-3 2-3-2-3 2z" fill="url(#gB)" opacity=".35"/><path d="M7 3h18v26l-3-2-3 2-3-2-3 2-3-2-3 2z" fill="none" stroke="url(#gB)" stroke-width="2" stroke-linejoin="round"/><path d="M11 10h10M11 15h10M11 20h6" stroke="url(#gB)" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 32 32"><rect x="2" y="8" width="28" height="16" rx="3" fill="url(#gG)" opacity=".3"/><rect x="2" y="8" width="28" height="16" rx="3" fill="none" stroke="url(#gG)" stroke-width="2"/><circle cx="16" cy="16" r="4" fill="url(#gG)"/></symbol>
+  <symbol id="i-card" viewBox="0 0 32 32"><rect x="2" y="6" width="28" height="20" rx="4" fill="url(#gO)" opacity=".35"/><rect x="2" y="6" width="28" height="20" rx="4" fill="none" stroke="url(#gO)" stroke-width="2"/><rect x="2" y="11" width="28" height="4" fill="url(#gO)"/></symbol>
+  <symbol id="i-back" viewBox="0 0 32 32"><path d="M20 7 11 16l9 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 32 32"><path d="m7 16.5 6 6L25.5 10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 32 32"><path d="m9 9 14 14M23 9 9 23" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+</defs></svg>
+<div id="atm"><div class="mach" id="mach"><div class="body">
+  <div class="brand"><div class="lg"><svg class="i"><use href="#i-bank" color="#fff"/></svg></div><div><b id="title">ROX ATM</b><small id="street">—</small></div><span class="sp"></span><span class="led"><i></i>ONLINE</span><button class="x" id="x"><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="screen"><div class="disp">
+    <div class="pg on" id="pIns"><div class="ins"><div class="ccard"></div><b>Reading your card</b><small>Please wait</small><div class="dots"><i></i><i></i><i></i></div></div></div>
+    <div class="pg" id="pMenu"><h2 id="hello">Hello</h2><p class="s">What would you like to do today?</p>
+      <div class="bal"><div><small><svg class="i"><use href="#i-card"/></svg>BANK BALANCE</small><b id="bank">$0</b></div><div><small><svg class="i"><use href="#i-cash"/></svg>CASH</small><b id="cash">$0</b></div></div>
+      <div class="opts"><div class="opt" style="--c:#ff7a3d" data-k="withdraw"><div class="ib"><svg class="i"><use href="#i-wd"/></svg></div><div><b>Withdraw</b><small>Take out cash</small></div><kbd>1</kbd></div>
+        <div class="opt" style="--c:#2ee59d" data-k="deposit"><div class="ib"><svg class="i"><use href="#i-dep"/></svg></div><div><b>Deposit</b><small>Put cash in</small></div><kbd>2</kbd></div>
+        <div class="opt" style="--c:#a98bff" data-k="fast"><div class="ib"><svg class="i"><use href="#i-fast"/></svg></div><div><b>Fast cash</b><small id="fastS">$500 now</small></div><kbd>3</kbd></div>
+        <div class="opt" style="--c:#5aa7ff" data-k="receipt"><div class="ib"><svg class="i"><use href="#i-rcpt"/></svg></div><div><b>Balance</b><small>Print receipt</small></div><kbd>4</kbd></div></div></div>
+    <div class="pg" id="pAmt"><div class="back" data-back><svg class="i"><use href="#i-back"/></svg>Back</div><h2 id="aT">Withdraw</h2><p class="s" id="aS">Choose or type an amount</p>
+      <div class="amt" id="amtBox"><div class="v z" id="amt"><span>$</span>0</div><div class="s2" id="aAv"></div></div><div class="qk" id="quick"></div><div class="err" id="err"></div>
+      <button class="go" id="go"></button></div>
+    <div class="pg" id="pOk"><div class="ok"><div class="c"><svg class="i"><use href="#i-check"/></svg></div><b id="oV">$0</b><p id="oS"></p><div class="row"><button data-back>Another transaction</button><button class="p" id="fin">Finish</button></div></div></div>
+  </div></div>
+  <div class="side"><div class="slot" id="slot"><i></i>CARD</div><div class="keys" id="keys"></div></div>
+  <div class="disp2" id="dsp"><div class="mouth"></div><small>CASH</small></div>
+</div><div class="glare" id="glare"></div></div></div>
+<div class="toast" id="toast"></div>
 <script>
 const $ = (id) => document.getElementById(id);
 const PREVIEW = !window.invokeNative;
 const RES = window.GetParentResourceName ? GetParentResourceName() : 'rox_atm';
-const post = (n, d = {}) => PREVIEW ? Promise.resolve(n === 'tx' ? mock(d) : 1) : fetch(`https://${RES}/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json());
-const fmt = (n) => '$' + Math.floor(n || 0).toLocaleString('en-US');
-let S = { cash: 0, bank: 0 }, kind = 'withdraw', busy = false;
-function setBal(b) { for (const k of ['bank', 'cash']) { const e = $(k); if (S[k] !== b[k]) { e.classList.add('flash'); setTimeout(() => e.classList.remove('flash'), 500); } e.textContent = fmt(b[k]); e.title = fmt(b[k]); S[k] = b[k]; } }
-function setKind(k) { kind = k; document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
-  const L = k === 'withdraw' ? 'Withdraw' : 'Deposit'; $('lbl').textContent = L; $('go').innerHTML = `<i class="fa-solid fa-arrow-${k === 'withdraw' ? 'up' : 'down'}"></i><span>${L}</span>`; hint(); }
-const hint = (m, err) => { $('hint').textContent = m || 'Enter the amount you want to deposit or withdraw.'; $('hint').className = 'hint' + (err ? ' err' : ''); };
-document.querySelector('.seg').onclick = (e) => { const b = e.target.closest('button'); if (b) setKind(b.dataset.k); };
-$('amount').oninput = (e) => { const v = e.target.value.replace(/[^\d]/g, ''); e.target.value = v ? (+v).toLocaleString('en-US') : ''; };
-const amount = () => +($('amount').value.replace(/[^\d]/g, '') || 0);
-$('max').onclick = () => { $('amount').value = Math.floor(kind === 'withdraw' ? S.bank : S.cash).toLocaleString('en-US'); };
-$('quick').onclick = (e) => { const b = e.target.closest('button'); if (b) { $('amount').value = (+b.dataset.v).toLocaleString('en-US'); send(); } };
-async function send() {
-  const a = amount(); if (busy) return; if (a <= 0) return hint('Enter an amount first.', 1);
-  if (a > (kind === 'withdraw' ? S.bank : S.cash)) return hint(`Not enough ${kind === 'withdraw' ? 'money in the bank' : 'cash'}.`, 1);
-  busy = true; $('go').disabled = true;
-  const r = await post('tx', { kind, amount: a }); busy = false; $('go').disabled = false;
-  if (!r || !r.ok) return hint((r && r.msg) || 'Transaction failed.', 1);
-  setBal(r); $('amount').value = ''; hint(`${kind === 'withdraw' ? 'Withdrew' : 'Deposited'} ${fmt(a)} successfully.`);
-}
-$('go').onclick = send; $('amount').onkeydown = (e) => e.key === 'Enter' && send();
+const post = (n, d = {}) => PREVIEW ? Promise.resolve(n === 'tx' ? mock(d) : 1) : fetch(`https://${RES}/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json()).catch(() => null);
+const m = (n) => '$' + Math.floor(n || 0).toLocaleString('en-US');
+let S = {}, kind = 'withdraw', val = '', busy = false, page = 'pIns';
+function go(p) { page = p; document.querySelectorAll('.pg').forEach(x => x.classList.toggle('on', x.id === p)); }
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2200); }
+function count(el, to) { const from = +(el.dataset.v || 0); el.dataset.v = to; const t0 = performance.now(); const f = (t) => { const p = Math.min(1, (t - t0) / 700), e = 1 - Math.pow(1 - p, 4); el.textContent = m(from + (to - from) * e); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+function bal() { count($('bank'), S.bank); count($('cash'), S.cash); }
+function amtPage(k) { kind = k; val = ''; const c = k === 'withdraw' ? '#ff7a3d' : '#2ee59d'; $('pAmt').style.setProperty('--c', c);
+  $('aT').textContent = k === 'withdraw' ? 'Withdraw cash' : 'Deposit cash'; $('quick').innerHTML = (S.quick || [100, 500, 1000, 2000, 5000, 10000]).map(v => `<b data-q="${v}">${m(v)}</b>`).join('');
+  $('go').className = 'go' + (k === 'deposit' ? ' dark' : ''); $('go').innerHTML = `<svg class="i"><use href="#i-${k === 'withdraw' ? 'wd' : 'dep'}"/></svg>${k === 'withdraw' ? 'Withdraw' : 'Deposit'}`; draw(); go('pAmt'); }
+const src = () => kind === 'withdraw' ? S.bank : S.cash;
+function draw() { const n = +val || 0; $('amt').innerHTML = `<span>$</span>${n.toLocaleString('en-US')}`; $('amt').classList.toggle('z', !n); const bad = n > src();
+  $('amtBox').classList.toggle('bad', bad); $('err').textContent = bad ? (kind === 'withdraw' ? 'Not enough money in your account' : 'Not enough cash') : '';
+  $('aAv').innerHTML = `${kind === 'withdraw' ? 'Available' : 'Cash on you'} <b>${m(src())}</b>${n ? ` · after <b>${m(kind === 'withdraw' ? S.bank - n : S.bank + n)}</b>` : ''}`; }
+async function send(k, n) { if (busy) return; if (!n) return $('err').textContent = 'Enter an amount'; if (n > (k === 'withdraw' ? S.bank : S.cash)) return draw();
+  busy = true; $('go').disabled = true; const r = await post('tx', { kind: k, amount: n }); busy = false; $('go').disabled = false;
+  if (!r || !r.ok) { $('err').textContent = (r && r.msg) || 'Transaction failed'; return go(page === 'pMenu' ? 'pAmt' : page); }
+  S.cash = r.cash; S.bank = r.bank; bal(); $('oV').textContent = m(n); $('oS').textContent = k === 'withdraw' ? 'Take your cash below' : 'Deposited to your account'; go('pOk'); if (k === 'withdraw') bills(n); }
+function bills(n) { const c = Math.min(6, Math.max(2, Math.ceil(n / 1000))); for (let i = 0; i < c; i++) setTimeout(() => { const b = document.createElement('div'); b.className = 'bill'; b.textContent = '$'; b.style.setProperty('--y', 50 + i * 6 + 'px'); b.style.setProperty('--r', (Math.random() * 16 - 8) + 'deg'); $('dsp').appendChild(b); setTimeout(() => b.remove(), 1500); }, i * 140); }
+document.querySelector('.opts').onclick = (e) => { const o = e.target.closest('[data-k]'); if (!o) return; const k = o.dataset.k;
+  if (k === 'fast') return send('withdraw', Math.min(500, Math.floor(S.bank))); if (k === 'receipt') { toast(`Balance: ${m(S.bank)} · Cash: ${m(S.cash)}`); return; } amtPage(k); };
+$('quick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { val = b.dataset.q; draw(); } };
+$('go').onclick = () => send(kind, +val || 0); $('fin').onclick = close;
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => { $('err').textContent = ''; go('pMenu'); });
+// physical keypad
+const K = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'E']; $('keys').innerHTML = K.map(k => `<b data-k="${k}" class="${k === 'C' ? 'c' : k === 'E' ? 'e' : ''}">${k === 'C' ? '✕' : k === 'E' ? '✓' : k}</b>`).join('') + '<b data-k="D" class="d" style="grid-column:span 3">CLEAR</b>';
+function key(k) { const b = $('keys').querySelector(`[data-k="${k}"]`); if (b) { b.classList.add('press'); setTimeout(() => b.classList.remove('press'), 120); }
+  if (page === 'pMenu' && /[1-4]/.test(k)) return document.querySelectorAll('.opt')[+k - 1].click();
+  if (page === 'pAmt') { if (/\d/.test(k)) val = (val + k).replace(/^0+/, '').slice(0, 8); else if (k === 'D') val = val.slice(0, -1); else if (k === 'C') return go('pMenu'); else if (k === 'E') return send(kind, +val || 0); draw(); }
+  if (page === 'pOk' && k === 'E') close(); if (k === 'C' && page !== 'pAmt') close(); }
+$('keys').onclick = (e) => { const b = e.target.closest('[data-k]'); if (b) key(b.dataset.k); };
+document.addEventListener('keydown', (e) => { if (!$('atm').classList.contains('on')) return; if (e.key === 'Escape') return close(); if (/^\d$/.test(e.key)) key(e.key); if (e.key === 'Enter') key('E'); if (e.key === 'Backspace') key('D'); });
+document.addEventListener('mousemove', (e) => { if (!$('atm').classList.contains('on')) return; const x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
+  $('mach').style.transform = `rotateY(${x * 14}deg) rotateX(${-y * 10}deg)`; $('glare').style.setProperty('--gx', (x + .5) * 100 + '%'); $('glare').style.setProperty('--gy', (y + .5) * 100 + '%'); });
 function close() { $('atm').classList.remove('on'); post('close'); }
-$('x').onclick = close; document.addEventListener('keydown', (e) => e.key === 'Escape' && $('atm').classList.contains('on') && close());
-window.addEventListener('message', (e) => { const d = e.data; if (d?.action !== 'open') return; const x = d.data;
-  $('title').textContent = x.title || 'CASH MACHINE'; $('street').textContent = x.street || ''; $('who').textContent = x.name ? x.name + ' · Withdraw or deposit cash' : 'Withdraw or deposit cash';
-  $('quick').innerHTML = (x.quick || []).map(v => `<button class="h" data-v="${v}">${fmt(v)}</button>`).join('');
-  S = { cash: x.cash, bank: x.bank }; setBal(x); setKind('withdraw'); $('amount').value = ''; $('atm').classList.add('on'); setTimeout(() => $('amount').focus(), 50); });
+$('x').onclick = close;
+window.addEventListener('message', (e) => { const d = e.data; if (d?.action !== 'open') return; S = d.data; $('title').textContent = d.data.title || 'ROX ATM'; $('street').textContent = d.data.street || '';
+  $('hello').textContent = 'Hello, ' + String(S.name || '').trim().split(' ')[0]; $('bank').dataset.v = 0; $('cash').dataset.v = 0; $('slot').classList.remove('done');
+  $('atm').classList.add('on'); go('pIns'); setTimeout(() => { $('slot').classList.add('done'); bal(); go('pMenu'); }, 1500); });
 function mock(d) { const s = { ...S }; if (d.kind === 'withdraw') { s.bank -= d.amount; s.cash += d.amount; } else { s.cash -= d.amount; s.bank += d.amount; } s.ok = true; return s; }
 if (PREVIEW) { document.body.classList.add('preview'); window.postMessage({ action: 'open', data: { street: 'Meteor St', name: 'Preview Character', cash: 4250, bank: 62881, quick: [100, 500, 1000, 2000, 5000, 10000] } }, '*'); }
 </script></body></html>

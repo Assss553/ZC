@@ -9,5 +9,5 @@ shared_scripts { '@ox_lib/init.lua', 'config.lua' }
 client_script 'client.lua'
 server_script 'server.lua'
 ui_page 'html/index.html'
-files { 'html/index.html', 'html/fa/css/*.css', 'html/fa/webfonts/*' }
+files { 'html/index.html' }
 dependencies { 'qbx_core', 'ox_lib', 'ox_target' }

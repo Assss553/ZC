@@ -192,8 +192,13 @@ local function openPause()
     local ped = PlayerPedId()
     local c = GetEntityCoords(ped)
     local s1 = GetStreetNameAtCoord(c.x, c.y, c.z)
-    SendNUIMessage({ action = 'pause', open = true, info = playerInfo(), activities = Config.Activities, server = Config.ServerName,
+    local wp; local b = GetFirstBlipInfoId(8); if DoesBlipExist(b) then local w = GetBlipInfoIdCoord(b); wp = { x = w.x, y = w.y } end
+    SendNUIMessage({ action = 'pause', open = true, info = playerInfo(), activities = Config.Activities, server = Config.ServerName, blips = Config.MapBlips,
+        coords = { x = c.x, y = c.y, h = GetEntityHeading(ped) }, waypoint = wp,
         location = GetLabelText(GetNameOfZone(c.x, c.y, c.z)) .. ' - ' .. GetStreetNameFromHashKey(s1) })
+    CreateThread(function()
+        while pauseOpen do Wait(500) local p = GetEntityCoords(PlayerPedId()); SendNUIMessage({ action = 'pauseCoords', coords = { x = p.x, y = p.y, h = GetEntityHeading(PlayerPedId()) } }) end
+    end)
     SetNuiFocus(true, true)
 end
 local function closePause()
@@ -215,6 +220,8 @@ if Config.PauseMenu then
         end
     end)
 end
+
+RegisterNUICallback('waypoint', function(d, cb) if d.x and d.y then SetNewWaypoint(d.x + 0.0, d.y + 0.0) end cb(1) end)
 
 RegisterNUICallback('pause', function(d, cb)
     cb('ok')

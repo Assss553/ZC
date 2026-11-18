@@ -35,3 +35,17 @@ Config.Activities = {
     { label = 'Fleeca Bank',    icon = 'building-columns', police = 4 },
     { label = 'Jewelry Store',  icon = 'gem',           police = 5 },
 }
+
+-- Pause menu map pins (label, world x/y, colour, letter)
+Config.MapBlips = {
+    { label = 'Pillbox Medical', x = 298.6, y = -584.5, color = '#ff4d6a', icon = 'H' },
+    { label = 'Sandy Shores Medical', x = 1839.0, y = 3672.0, color = '#ff4d6a', icon = 'H' },
+    { label = 'Mission Row PD', x = 428.2, y = -984.3, color = '#5aa7ff', icon = 'P' },
+    { label = 'Sandy Shores PD', x = 1853.0, y = 3686.0, color = '#5aa7ff', icon = 'P' },
+    { label = 'Paleto Bay PD', x = -448.0, y = 6012.0, color = '#5aa7ff', icon = 'P' },
+    { label = 'Fleeca Bank', x = 149.4, y = -1040.7, color = '#ffc24a', icon = '$' },
+    { label = 'Pacific Standard', x = 247.4, y = 222.9, color = '#ffc24a', icon = '$' },
+    { label = 'Blaine County Savings', x = -113.2, y = 6470.0, color = '#ffc24a', icon = '$' },
+    { label = 'Legion Square', x = 195.2, y = -933.7, color = '#2ee59d', icon = 'L' },
+    { label = 'Del Perro Pier', x = -1600.0, y = -1040.0, color = '#2ee59d', icon = 'L' },
+}
