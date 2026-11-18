@@ -117,6 +117,14 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .pm-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .pm-act { padding: 12px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,.45); } .pm-act i { display: block; font-size: 18px; margin-bottom: 6px; }
 .pm-act small { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: .5px; margin-top: 3px; } .pm-act.on { color: #fff; border-color: rgba(46,229,157,.35); background: rgba(46,229,157,.07); } .pm-act.on i, .pm-act.on small { color: #2ee59d; }
 .pm-time { text-align: center; } .pm-time b { display: block; font: 800 46px Inter; letter-spacing: -1.5px; line-height: 1; } .pm-time small { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: rgba(255,255,255,.5); }
+.lv { position: fixed; inset: 0; display: none; cursor: grab; } .lv:active { cursor: grabbing; } #pm2.live { background: transparent; backdrop-filter: none; } #pm2.live .pm-wrap { display: none; } #pm2.live .lv { display: block; }
+.lv-top { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 18px; background: rgba(10,12,16,.82); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.08); cursor: default; }
+.lv-b { height: 38px; min-width: 38px; padding: 0 12px; border-radius: 12px; border: 0; background: rgba(255,255,255,.08); color: #fff; font: 700 12px Inter; cursor: pointer; display: flex; align-items: center; gap: 8px; } .lv-b:hover { background: #ff5a1f; }
+.lv-t { padding: 0 10px; } .lv-t b { display: block; font: italic 800 18px 'Barlow Condensed', sans-serif; letter-spacing: 1px; } .lv-t b::before { content: '●'; color: #2ee59d; margin-right: 6px; animation: bl 1.4s infinite; } .lv-t small { font-size: 10.5px; color: rgba(255,255,255,.55); }
+@keyframes bl { 50% { opacity: .3; } } .lv .pm-seg { margin: 0; }
+.lv-cross { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px; pointer-events: none; opacity: .5; background: linear-gradient(#fff, #fff) center/2px 14px no-repeat, linear-gradient(#fff, #fff) center/14px 2px no-repeat; }
+.lv-hint { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); padding: 9px 14px; border-radius: 12px; background: rgba(10,12,16,.75); font-size: 11.5px; color: rgba(255,255,255,.7); pointer-events: none; }
+.lv-wp { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 12px; background: rgba(255,211,107,.95); color: #241800; font-size: 12.5px; font-weight: 800; display: none; } .lv-wp.on { display: block; animation: pmIn .3s; }
 .pm-keys { display: flex; justify-content: center; gap: 12px; font-size: 10.5px; color: rgba(255,255,255,.5); font-weight: 700; } .pm-keys kbd { font: 800 9.5px Inter; padding: 3px 6px; border-radius: 5px; background: #fff; color: #111; margin-right: 4px; }
 </style>`);
 
@@ -127,7 +135,7 @@ document.body.insertAdjacentHTML('beforeend', `<div id="pm2"><div class="pm-wrap
     <div class="pm-sp"></div><div class="pm-me"><div class="r"><div class="av" id="pmAv">R</div><div><b id="pmN">—</b><small id="pmJ">—</small></div></div><div class="m2"><div>CASH<b id="pmC">$0</b></div><div>BANK<b id="pmB">$0</b></div><div>ID<b id="pmI">0</b></div><div>CITIZEN<b id="pqCid">—</b></div></div></div>
     <div class="pm-nav quit" data-a="quit"><i class="fa-solid fa-power-off"></i>Quit game</div></div>
   <div class="pm-map pm-3d" id="pmMap"><div class="pm-view" id="pmView"><div class="pm-plane" id="pmPlane">${mapSvg()}<div id="pmPins"></div><div class="wp" id="pmWp"></div><div class="me-dot" id="pmMe"></div></div></div>
-    <div class="pm-mh"><div class="pm-loc"><i class="fa-solid fa-location-dot"></i><div id="pqLoc">—<small>Your location</small></div></div><div class="pm-seg" id="pmSeg"><b data-m="2d">2D</b><b data-m="3d" class="on">3D</b></div></div>
+    <div class="pm-mh"><div class="pm-loc"><i class="fa-solid fa-location-dot"></i><div id="pqLoc">—<small>Your location</small></div></div><div class="pm-seg" id="pmSeg"><b data-m="2d">2D</b><b data-m="3d" class="on">3D</b><b data-m="live" style="color:#2ee59d">● LIVE</b></div></div>
     <div class="pm-zoom"><b data-z="1"><i class="fa-solid fa-plus"></i></b><b data-z="-1"><i class="fa-solid fa-minus"></i></b><b data-z="0"><i class="fa-solid fa-location-crosshairs"></i></b></div>
     <div class="pm-leg" id="pmLeg"></div><div class="pm-hint">Drag to move · Wheel to zoom · Right click to rotate (3D) · Click to set GPS</div></div>
   <div class="pm-col"><div class="pm-card pm-time"><b id="pmT">00:00</b><small id="pmD">—</small></div>
@@ -135,7 +143,10 @@ document.body.insertAdjacentHTML('beforeend', `<div id="pm2"><div class="pm-wrap
       <div class="pm-kv"><div><i class="fa-solid fa-shield-halved" style="color:#5aa7ff"></i>Police<b id="pqPol">0</b></div><div><i class="fa-solid fa-truck-medical" style="color:#ff4d6a"></i>EMS<b id="pqEms">0</b></div></div></div></div>
     <div class="pm-card" style="flex:1;min-height:0;overflow:auto"><h4><i class="fa-solid fa-bolt"></i>ACTIVITIES</h4><div class="pm-acts" id="pqActs"></div></div>
     <div class="pm-keys"><span><kbd>↑↓</kbd>Navigate</span><span><kbd>ENTER</kbd>Select</span><span><kbd>ESC</kbd>Resume</span></div></div>
-</div></div>`);
+</div>
+<div class="lv" id="pmLive"><div class="lv-top"><button class="lv-b" data-l="back"><i class="fa-solid fa-arrow-left"></i>Back</button><div class="lv-t"><b>LIVE MAP</b><small id="lvSub">Real world · drag to move</small></div>
+  <div class="pm-seg" id="lvSeg"><b data-t="0" class="on">Top</b><b data-t="1">Tilt</b></div><button class="lv-b" data-l="center"><i class="fa-solid fa-location-crosshairs"></i></button><button class="lv-b" data-l="in"><i class="fa-solid fa-plus"></i></button><button class="lv-b" data-l="out"><i class="fa-solid fa-minus"></i></button></div>
+  <div class="lv-cross"></div><div class="lv-hint">Left drag: move · Right drag: rotate · Wheel: zoom · Click: set GPS</div><div class="lv-wp" id="lvWp"></div></div></div>`);
 
 /* ---------- map interaction ---------- */
 const V = { mode: "3d", z: .75, rz: -15, px: 0, py: 0 }; let me = null, wp = null;
@@ -157,16 +168,32 @@ document.addEventListener('mouseup', (e) => { if (!drag) return; const d = drag;
   setWp(x, y); post('waypoint', { x, y }); });
 $('pmView').addEventListener('contextmenu', (e) => e.preventDefault());
 $('pmView').addEventListener('wheel', (e) => { V.z = Math.max(.45, Math.min(3, V.z * (e.deltaY < 0 ? 1.12 : .89))); apply(); });
-$('pmSeg').onclick = (e) => { const b = e.target.closest('[data-m]'); if (!b) return; V.mode = b.dataset.m; [...$('pmSeg').children].forEach(x => x.classList.toggle('on', x === b)); center(); apply(); };
+$('pmSeg').onclick = (e) => { const b = e.target.closest('[data-m]'); if (!b) return; if (b.dataset.m === 'live') return liveStart(); V.mode = b.dataset.m; [...$('pmSeg').children].forEach(x => x.classList.toggle('on', x === b)); center(); apply(); };
 document.querySelector('.pm-zoom').onclick = (e) => { const b = e.target.closest('[data-z]'); if (!b) return; const z = +b.dataset.z; if (!z) { V.z = 1.6; center(); } else V.z = Math.max(.45, Math.min(3, V.z * (z > 0 ? 1.25 : .8))); apply(); };
+
+/* ---------- LIVE map (game camera) ---------- */
+let LV = null, tilt = false;
+function liveStart() { $('pm2').classList.add('live'); tilt = false; [...$('lvSeg').children].forEach((x, i) => x.classList.toggle('on', i === 0)); $('lvWp').classList.remove('on'); post('livemap', { action: 'start', tilt }); }
+function liveStop() { $('pm2').classList.remove('live'); post('livemap', { action: 'stop' }); }
+let pend = null; const flush = () => { if (pend) { post('livemap', { action: 'move', ...pend }); pend = null; } requestAnimationFrame(flush); }; requestAnimationFrame(flush);
+const queue = (o) => { pend = pend || { dx: 0, dy: 0, rot: 0 }; pend.dx += o.dx || 0; pend.dy += o.dy || 0; pend.rot += o.rot || 0; if (o.zoom) pend.zoom = o.zoom; if (o.center) pend.center = 1; if (o.tilt !== undefined) pend.tilt = o.tilt; };
+$('pmLive').addEventListener('mousedown', (e) => { if (e.target.closest('.lv-top')) return; LV = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, b: e.button, moved: false }; });
+document.addEventListener('mousemove', (e) => { if (!LV) return; const dx = e.clientX - LV.x, dy = e.clientY - LV.y; LV.x = e.clientX; LV.y = e.clientY; if (Math.abs(e.clientX - LV.sx) + Math.abs(e.clientY - LV.sy) > 4) LV.moved = true;
+  if (LV.b === 2) queue({ rot: dx }); else queue({ dx, dy }); });
+document.addEventListener('mouseup', async (e) => { if (!LV) return; const l = LV; LV = null; if (l.moved || l.b !== 0) return;
+  const r = await post('livemap', { action: 'click', sx: e.clientX / innerWidth * 2 - 1, sy: e.clientY / innerHeight * 2 - 1 }); if (r && r.x) { const w = $('lvWp'); w.textContent = 'GPS set · ' + (r.street || 'location'); w.classList.add('on'); setWp(r.x, r.y); } });
+$('pmLive').addEventListener('wheel', (e) => queue({ zoom: e.deltaY < 0 ? 1 : -1 }));
+$('pmLive').addEventListener('contextmenu', (e) => e.preventDefault());
+document.querySelector('.lv-top').onclick = (e) => { const b = e.target.closest('[data-l],[data-t]'); if (!b) return; if (b.dataset.l === 'back') return liveStop(); if (b.dataset.l === 'center') queue({ center: 1 });
+  if (b.dataset.l === 'in') queue({ zoom: 1 }); if (b.dataset.l === 'out') queue({ zoom: -1 }); if (b.dataset.t !== undefined) { tilt = b.dataset.t === '1'; [...$('lvSeg').children].forEach(x => x.classList.toggle('on', x === b)); queue({ tilt }); } };
 
 /* ---------- menu ---------- */
 const NAV = () => [...document.querySelectorAll('#pm2 .pm-nav')]; let sel = 0;
 const money = (n) => '$' + Math.floor(n || 0).toLocaleString('en-US');
-function act(a) { if (a === 'map') { V.z = 1.6; center(); return apply(); } close(a === 'gta' ? 'map' : a); }
-function close(a) { $('pm2').classList.remove('on'); document.body.classList.remove('paused'); post('pause', { action: a || 'resume' }); }
+function act(a) { if (a === 'map') return liveStart(); close(a === 'gta' ? 'map' : a); }
+function close(a) { if ($('pm2').classList.contains('live')) post('livemap', { action: 'stop' }); $('pm2').classList.remove('on', 'live'); document.body.classList.remove('paused'); post('pause', { action: a || 'resume' }); }
 $('pm2').addEventListener('click', (e) => { const n = e.target.closest('.pm-nav'); if (n) act(n.dataset.a); });
-document.addEventListener('keydown', (e) => { if (!$('pm2').classList.contains('on')) return; const n = NAV();
+document.addEventListener('keydown', (e) => { if (!$('pm2').classList.contains('on')) return; if ($('pm2').classList.contains('live')) { if (e.key === 'Escape' || e.key === 'Backspace') liveStop(); return; } const n = NAV();
   if (e.key === 'Escape') close('resume'); else if (e.key === 'ArrowDown') sel = (sel + 1) % n.length; else if (e.key === 'ArrowUp') sel = (sel + n.length - 1) % n.length; else if (e.key === 'Enter') return act(n[sel].dataset.a); else if (e.key.toLowerCase() === 'm') return act('map'); else return;
   n.forEach((x, i) => x.classList.toggle('sel', i === sel)); });
 setInterval(() => { if (!$('pm2').classList.contains('on')) return; const d = new Date(); $('pmD').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase(); }, 1000);

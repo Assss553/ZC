@@ -235,3 +235,66 @@ end)
 
 -- other scripts can hide the HUD (cutscenes, iPads ...)
 exports('SetHidden', function(state) settings.hidden = state == true end)
+
+-- ================= LIVE MAP: a camera above the real world =================
+local live = { cam = nil, x = 0.0, y = 0.0, h = 450.0, hd = 0.0, pitch = -89.0, wp = nil }
+local function camPlace()
+    if not live.cam then return end
+    local back = (live.pitch > -85.0) and (live.h / math.tan(math.rad(-live.pitch))) or 0.0
+    local r = math.rad(live.hd)
+    local cx, cy = live.x + math.sin(r) * back, live.y - math.cos(r) * back
+    SetCamCoord(live.cam, cx, cy, live.h + 40.0)
+    SetCamRot(live.cam, live.pitch, 0.0, live.hd, 2)
+    SetFocusPosAndVel(live.x, live.y, 40.0, 0.0, 0.0, 0.0)
+end
+local function rayFrom(sx, sy)   -- sx, sy: -1..1 screen position
+    local c, rot = GetCamCoord(live.cam), GetCamRot(live.cam, 2)
+    local p, yw = math.rad(rot.x), math.rad(rot.z)
+    local fwd = vec3(-math.sin(yw) * math.cos(p), math.cos(yw) * math.cos(p), math.sin(p))
+    local right = vec3(math.cos(yw), math.sin(yw), 0.0)
+    local up = vec3(right.y * fwd.z - right.z * fwd.y, right.z * fwd.x - right.x * fwd.z, right.x * fwd.y - right.y * fwd.x)
+    local t = math.tan(math.rad(GetCamFov(live.cam)) / 2); local aspect = GetAspectRatio(false)
+    local dir = fwd + right * (sx * t * aspect) - up * (sy * t)
+    local to = c + dir * 6000.0
+    local h = StartExpensiveSynchronousShapeTestLosProbe(c.x, c.y, c.z, to.x, to.y, to.z, -1, PlayerPedId(), 0)
+    local _, hit, pos = GetShapeTestResult(h)
+    if hit == 1 then return pos end
+    if dir.z < 0 then local k = (c.z - 0.0) / -dir.z; return c + dir * k end
+end
+RegisterNUICallback('livemap', function(d, cb)
+    local a = d.action
+    if a == 'start' then
+        local p = GetEntityCoords(PlayerPedId()); live.x, live.y, live.h, live.hd = p.x, p.y, 450.0, GetGameplayCamRot(2).z
+        live.pitch = d.tilt and -55.0 or -89.0
+        live.cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true); SetCamFov(live.cam, 55.0); camPlace(); RenderScriptCams(true, true, 600, true, true)
+        SendNUIMessage({ action = 'hudHide', hide = true })
+        CreateThread(function()
+            while live.cam do
+                local pc = GetEntityCoords(PlayerPedId()); local s = math.max(4.0, live.h / 40.0)
+                DrawMarker(1, pc.x, pc.y, pc.z - 1.0, 0, 0, 0, 0, 0, 0, s, s, s * 6.0, 255, 90, 31, 170, false, false, 2, false, nil, nil, false)
+                DrawMarker(2, pc.x, pc.y, pc.z + s * 4.0, 0, 0, 0, 180.0, 0, 0, s, s, s, 255, 255, 255, 230, true, true, 2, false, nil, nil, false)
+                local b = GetFirstBlipInfoId(8)
+                if DoesBlipExist(b) then local w = GetBlipInfoIdCoord(b); local _, gz = GetGroundZFor_3dCoord(w.x, w.y, 1000.0, false)
+                    DrawMarker(1, w.x, w.y, (gz or 0.0) - 1.0, 0, 0, 0, 0, 0, 0, s, s, s * 10.0, 255, 211, 107, 170, false, false, 2, false, nil, nil, false) end
+                HideHudAndRadarThisFrame()
+                Wait(0)
+            end
+        end)
+    elseif a == 'move' and live.cam then
+        local f = live.h / 520.0; local r = math.rad(live.hd)
+        local dx, dy = -(d.dx or 0) * f, (d.dy or 0) * f
+        live.x = live.x + dx * math.cos(r) - dy * math.sin(r); live.y = live.y + dx * math.sin(r) + dy * math.cos(r)
+        if d.rot then live.hd = live.hd - d.rot * 0.3 end
+        if d.zoom then live.h = math.max(60.0, math.min(2200.0, live.h * (d.zoom > 0 and 0.85 or 1.18))) end
+        if d.tilt ~= nil then live.pitch = d.tilt and -55.0 or -89.0 end
+        if d.center then local p = GetEntityCoords(PlayerPedId()); live.x, live.y = p.x, p.y end
+        camPlace()
+    elseif a == 'click' and live.cam then
+        local pos = rayFrom(d.sx, d.sy)
+        if pos then SetNewWaypoint(pos.x, pos.y); cb({ x = pos.x, y = pos.y, street = GetStreetNameFromHashKey(GetStreetNameAtCoord(pos.x, pos.y, pos.z)) }) return end
+    elseif a == 'stop' and live.cam then
+        RenderScriptCams(false, true, 600, true, true); DestroyCam(live.cam, false); live.cam = nil; ClearFocus()
+        SendNUIMessage({ action = 'hudHide', hide = false })
+    end
+    cb(1)
+end)
