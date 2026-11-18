@@ -17,7 +17,7 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .tabs b i { display: block; font-size: 16px; margin-bottom: 4px; } .tabs b:hover { color: #fff; } .tabs b.on { color: #fff; background: rgba(255,90,31,.16); border-color: rgba(255,90,31,.5); } .tabs b.on i { color: var(--a); }
 .srch { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid var(--ln); margin-bottom: 12px; } .srch:focus-within { border-color: var(--a); }
 .srch i { color: var(--tx2); } .srch input { flex: 1; background: none; border: 0; outline: 0; color: #fff; font: 600 13px 'Plus Jakarta Sans'; } .srch kbd { font: 700 10px monospace; padding: 3px 6px; border-radius: 5px; background: rgba(255,255,255,.1); color: var(--tx2); }
-.grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; padding-right: 4px; } .grid::-webkit-scrollbar { width: 4px; } .grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+.grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: min-content; gap: 8px; align-content: start; padding-right: 4px; } .grid::-webkit-scrollbar { width: 4px; } .grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 .it { position: relative; display: flex; align-items: center; gap: 11px; padding: 12px; border-radius: 15px; cursor: pointer; background: rgba(255,255,255,.035); border: 1px solid var(--ln); transition: .18s; animation: up .3s backwards; overflow: hidden; }
 @keyframes up { from { opacity: 0; transform: translateY(8px); } } .it:hover { border-color: rgba(255,90,31,.55); background: rgba(255,90,31,.08); transform: translateY(-2px); } .it.on { border-color: var(--a); background: rgba(255,90,31,.15); }
 .it .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 16px; flex: none; background: var(--bg); color: var(--fg); }
@@ -30,26 +30,40 @@ body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) 
 .sl b em { font-style: normal; font-size: 13px; color: #fff; } .sl b.f { border-style: solid; border-color: rgba(255,90,31,.45); color: #fff; } .sl b.pick { border-color: var(--a); animation: pl 1s infinite; } @keyframes pl { 50% { background: rgba(255,90,31,.2); } }
 .foot { display: flex; justify-content: space-between; margin-top: 10px; font-size: 10.5px; color: var(--tx2); } .foot kbd { font: 800 9.5px 'Plus Jakarta Sans'; padding: 2px 6px; border-radius: 5px; background: #fff; color: #111; margin-right: 4px; }
 .toast { position: fixed; bottom: 30px; right: 500px; padding: 10px 16px; border-radius: 12px; background: #111; border-left: 3px solid var(--a); font-size: 12px; font-weight: 700; opacity: 0; transition: .2s; } .toast.on { opacity: 1; }
+.stage { position: fixed; left: 0; top: 0; bottom: 0; right: 470px; display: none; pointer-events: none; } #em.on ~ .stage { display: block; }
+.now { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); text-align: center; } .now small { font-size: 10.5px; font-weight: 800; letter-spacing: 2px; color: var(--a); } .now b { display: block; font: italic 900 46px 'Barlow Condensed'; text-shadow: 0 6px 30px rgba(0,0,0,.7); } .now span { font: 600 11px monospace; color: rgba(255,255,255,.6); }
+.ring { position: absolute; left: 50%; bottom: 140px; width: 300px; height: 70px; margin-left: -150px; border-radius: 50%; border: 2px solid var(--a); box-shadow: 0 0 40px var(--a), inset 0 0 30px rgba(255,90,31,.4); opacity: .6; transform: perspective(500px) rotateX(70deg); animation: sp 3s linear infinite; } @keyframes sp { 50% { opacity: .25; } }
+.tabs { grid-template-columns: repeat(8, 1fr); } .it .ic { background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.25), transparent 50%), var(--bg); }
+.lib { grid-column: span 2; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--tx2); padding: 2px 4px 4px; } .lib b { color: #fff; } .lib .pg2 { display: flex; gap: 6px; } .lib .pg2 button { width: 30px; height: 28px; border-radius: 8px; border: 1px solid var(--ln); background: rgba(255,255,255,.05); color: #fff; cursor: pointer; }
+.chips2 { grid-column: span 2; display: flex; gap: 6px; flex-wrap: wrap; } .chips2 b { padding: 6px 10px; border-radius: 10px; font-size: 10.5px; cursor: pointer; background: rgba(255,255,255,.05); color: var(--tx2); } .chips2 b.on { background: var(--a); color: #fff; }
 </style></head><body>
 <div id="em"><div class="hd"><h1><span>ROX</span> EMOTES</h1><button class="stop" id="stop"><i class="fa-solid fa-stop"></i>Stop</button><button id="x"><i class="fa-solid fa-xmark"></i></button></div>
   <div class="tabs" id="tabs"></div><div class="srch"><i class="fa-solid fa-magnifying-glass"></i><input id="q" placeholder="Search emotes, dances, walks…"><kbd>/e name</kbd></div>
   <div class="grid" id="grid"></div>
   <div class="slots"><h4>QUICK SLOTS<span id="slH">Right-click an emote, then a slot</span></h4><div class="sl" id="sl"></div></div>
   <div class="foot"><span><kbd>X</kbd>Stop emote</span><span><kbd>Y</kbd>Accept shared</span><span><kbd>ESC</kbd>Close</span></div></div>
+<div class="stage"><div class="ring"></div><div class="now"><small>PREVIEW</small><b id="nowN">Hover an emote</b><span id="nowD">your character shows it here</span></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const $ = (id) => document.getElementById(id);
 const PREVIEW = !window.invokeNative;
 const post = (n, d = {}) => PREVIEW ? Promise.resolve(1) : fetch(`https://${GetParentResourceName()}/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json()).catch(() => null);
-const TABS = [['fav', 'star', 'Favorites'], ['general', 'hand', 'Emotes'], ['dances', 'music', 'Dances'], ['sit', 'chair', 'Sit & lay'], ['shared', 'handshake', 'Shared'], ['walks', 'person-walking', 'Walks'], ['faces', 'face-smile', 'Moods']];
-const COL = { general: ['rgba(90,167,255,.15)', '#5aa7ff', 'hand'], dances: ['rgba(255,94,168,.15)', '#ff5ea8', 'music'], sit: ['rgba(46,229,157,.15)', '#2ee59d', 'chair'], shared: ['rgba(255,194,74,.15)', '#ffc24a', 'handshake'], walks: ['rgba(169,139,255,.15)', '#a98bff', 'person-walking'], faces: ['rgba(255,138,76,.15)', '#ff8a4c', 'face-smile'] };
+const TABS = [['fav', 'star', 'Favorites'], ['lib', 'layer-group', 'Library'], ['general', 'hand', 'Emotes'], ['dances', 'music', 'Dances'], ['sit', 'chair', 'Sit & lay'], ['shared', 'handshake', 'Shared'], ['walks', 'person-walking', 'Walks'], ['faces', 'face-smile', 'Moods']];
+const COL = { lib: ['rgba(255,90,31,.15)', '#ff7a3d', 'person-running'], dance: ['rgba(255,94,168,.15)', '#ff5ea8', 'music'], gesture: ['rgba(90,167,255,.15)', '#5aa7ff', 'hand'], idle: ['rgba(46,229,157,.15)', '#2ee59d', 'person'], other: ['rgba(255,138,76,.15)', '#ff8a4c', 'person-running'], general: ['rgba(90,167,255,.15)', '#5aa7ff', 'hand'], dances: ['rgba(255,94,168,.15)', '#ff5ea8', 'music'], sit: ['rgba(46,229,157,.15)', '#2ee59d', 'chair'], shared: ['rgba(255,194,74,.15)', '#ffc24a', 'handshake'], walks: ['rgba(169,139,255,.15)', '#a98bff', 'person-walking'], faces: ['rgba(255,138,76,.15)', '#ff8a4c', 'face-smile'] };
+let LIB = null, lcat = 'all', lpage = 0; fetch('anims.json').then(r => r.json()).then(j => { LIB = j; if (tab === 'lib') draw(); }).catch(() => {});
 let D = {}, tab = 'general', fav = [], binds = {}, pick = null, walk = '', face = '';
 const all = () => Object.entries(D.emotes || {}).flatMap(([c, l]) => l.map(e => ({ n: e[0], l: e[1], c, prop: !!e.prop })));
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 1800); }
 function save() { post('save', { fav, binds }); }
 function draw() { const q = $('q').value.trim().toLowerCase(); let L;
   $('tabs').innerHTML = TABS.map(([k, i, t]) => `<b class="${k === tab && !q ? 'on' : ''}" data-t="${k}"><i class="fa-solid fa-${i}"></i>${t}</b>`).join('');
-  if (q) L = all().filter(e => (e.n + e.l).toLowerCase().includes(q)).concat((D.walks || []).filter(w => w[1].toLowerCase().includes(q)).map(w => ({ n: w[0], l: w[1], c: 'walks', v: w[2] || '' })));
+  if (false) L = all().filter(e => (e.n + e.l).toLowerCase().includes(q)).concat((D.walks || []).filter(w => w[1].toLowerCase().includes(q)).map(w => ({ n: w[0], l: w[1], c: 'walks', v: w[2] || '' })));
+  if (tab === 'lib' || (q && LIB)) { const src = (LIB || []).filter(a => (lcat === 'all' || a[2] === lcat) && (!q || (a[0] + ' ' + a[1]).toLowerCase().includes(q)));
+    const pages = Math.max(1, Math.ceil(src.length / 60)); lpage = Math.min(lpage, pages - 1); const part = src.slice(lpage * 60, lpage * 60 + 60);
+    const head = `<div class="chips2">${['all', 'dance', 'gesture', 'sit', 'idle', 'other'].map(c => `<b class="${c === lcat ? 'on' : ''}" data-lc="${c}">${c.toUpperCase()}</b>`).join('')}</div><div class="lib"><span><b>${src.length.toLocaleString()}</b> animations ${LIB ? '' : '(loading…)'}</span><span class="pg2"><button data-lp="-1">‹</button><span style="padding:5px">${lpage + 1}/${pages}</span><button data-lp="1">›</button></span></div>`;
+    const quick = q && tab !== 'lib' ? L || [] : [];
+    $('grid').innerHTML = head + part.map((a, i) => { const [bg, fg, ic] = COL[a[2]] || COL.lib; return `<div class="it" data-d="${a[0]}" data-a="${a[1]}" style="--bg:${bg};--fg:${fg};animation-delay:${Math.min(i, 20) * 12}ms"><div class="ic"><i class="fa-solid fa-${ic}"></i></div><div class="t"><b>${a[1].replace(/_/g, ' ')}</b><small>${a[0].slice(0, 30)}</small></div></div>`; }).join('');
+    $('sl').innerHTML = [1, 2, 3, 4, 5, 6].map(i => { const n = binds[i]; const e = n && all().find(x => x.n === n); return `<b class="${n ? 'f' : ''}" data-s="${i}"><em>${i}</em>${e ? e.l.slice(0, 9) : 'empty'}</b>`; }).join(''); return; }
   else if (tab === 'fav') L = all().filter(e => fav.includes(e.n));
   else if (tab === 'walks') L = (D.walks || []).map(w => ({ n: w[0], l: w[1], c: 'walks', v: w[2] || '' }));
   else if (tab === 'faces') L = (D.faces || []).map(w => ({ n: w[0], l: w[1], c: 'faces', v: w[2] || '' }));
@@ -61,8 +75,12 @@ function draw() { const q = $('q').value.trim().toLowerCase(); let L;
   $('sl').innerHTML = [1, 2, 3, 4, 5, 6].map(i => { const n = binds[i]; const e = n && all().find(x => x.n === n); return `<b class="${n ? 'f' : ''} ${pick ? 'pick' : ''}" data-s="${i}"><em>${i}</em>${e ? e.l.slice(0, 9) : 'empty'}</b>`; }).join('');
   $('slH').textContent = pick ? 'Now click a slot (right-click to clear)' : 'Right-click an emote, then a slot'; }
 $('tabs').onclick = (e) => { const b = e.target.closest('[data-t]'); if (!b) return; tab = b.dataset.t; $('q').value = ''; draw(); };
-$('q').oninput = draw;
-$('grid').onclick = (e) => { const f = e.target.closest('[data-f]'); if (f) { const n = f.dataset.f; fav = fav.includes(n) ? fav.filter(x => x !== n) : [...fav, n]; save(); return draw(); }
+$('q').oninput = () => { lpage = 0; draw(); };
+let hovT; $('grid').addEventListener('mouseover', (e) => { const it = e.target.closest('.it'); if (!it || it._h) return; document.querySelectorAll('.it').forEach(x => x._h = 0); it._h = 1; clearTimeout(hovT);
+  hovT = setTimeout(() => { $('nowN').textContent = it.querySelector('b').textContent; $('nowD').textContent = it.dataset.d ? it.dataset.d : (it.dataset.c === 'walks' ? 'walk style' : '/e ' + it.dataset.n);
+    if (it.dataset.d) post('preview', { dict: it.dataset.d, anim: it.dataset.a }); else if (it.dataset.c === 'walks') post('preview', { walk: it.dataset.v }); else if (it.dataset.c !== 'faces') post('preview', { name: it.dataset.n }); }, 180); });
+$('grid').onclick = (e) => { const lc = e.target.closest('[data-lc]'); if (lc) { lcat = lc.dataset.lc; lpage = 0; return draw(); } const lp = e.target.closest('[data-lp]'); if (lp) { lpage = Math.max(0, lpage + +lp.dataset.lp); return draw(); }
+  const raw = e.target.closest('[data-d]'); if (raw) { post('playRaw', { dict: raw.dataset.d, anim: raw.dataset.a }); return toast('Playing: ' + raw.dataset.a); } const f = e.target.closest('[data-f]'); if (f) { const n = f.dataset.f; fav = fav.includes(n) ? fav.filter(x => x !== n) : [...fav, n]; save(); return draw(); }
   const it = e.target.closest('.it'); if (!it) return; const c = it.dataset.c;
   if (c === 'walks') { walk = it.dataset.v; post('walk', { walk }); toast('Walk style: ' + it.querySelector('b').textContent); return draw(); }
   if (c === 'faces') { face = it.dataset.v; post('face', { face }); toast('Mood: ' + it.querySelector('b').textContent); return draw(); }

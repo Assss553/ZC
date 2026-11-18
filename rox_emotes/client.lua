@@ -1,5 +1,6 @@
 -- ROX Store | rox_emotes | All rights reserved.
 local open, current, props, pending = false, nil, {}, nil
+local pvStop
 local BY = {}
 for cat, list in pairs(Emotes) do for _, e in ipairs(list) do e.cat = cat; BY[e[1]] = e end end
 
@@ -36,11 +37,11 @@ local function setWalk(w) local ped = PlayerPedId()
 local function setFace(f) local ped = PlayerPedId(); if not f then ClearFacialIdleAnimOverride(ped) else SetFacialIdleAnimOverride(ped, f, 0) end SetResourceKvp('rox_face', f or '') end
 CreateThread(function() Wait(4000); local w = GetResourceKvpString('rox_walk'); if w and w ~= '' then setWalk(w) end; local f = GetResourceKvpString('rox_face'); if f and f ~= '' then setFace(f) end end)
 
-local function toggle(s) open = s; SetNuiFocus(s, s); SetNuiFocusKeepInput(false)
+function toggle(s) open = s; SetNuiFocus(s, s); SetNuiFocusKeepInput(false)
     if s then SendNUIMessage({ action = 'open', emotes = Emotes, walks = Walks, faces = Expressions, color = Config.Color,
         fav = json.decode(GetResourceKvpString('rox_emote_fav') or '[]'), binds = json.decode(GetResourceKvpString('rox_emote_binds') or '{}'),
         walk = GetResourceKvpString('rox_walk') or '', face = GetResourceKvpString('rox_face') or '' })
-    else SendNUIMessage({ action = 'close' }) end end
+    else SendNUIMessage({ action = 'close' }); pvStop() end end
 RegisterCommand(Config.Command, function() toggle(not open) end, false)
 RegisterKeyMapping(Config.Command, 'Open emote menu', 'keyboard', Config.Key)
 RegisterCommand('e', function(_, a) if a[1] == 'c' or a[1] == 'cancel' then return stop() end run(a[1]) end, false)
@@ -68,3 +69,42 @@ RegisterNetEvent('rox_emotes:playShared', function(other, name, first)
     play(e, first and e[4] or e.other)
 end)
 CreateThread(function() while true do if current and IsControlJustPressed(0, 73) then stop() end Wait(current and 0 or 500) end end)
+
+-- ================= 3D preview: a clone of your character plays the hovered animation =================
+local pv = { ped = nil, cam = nil }
+pvStop = function()
+    if pv.ped and DoesEntityExist(pv.ped) then DeleteEntity(pv.ped) end
+    if pv.cam then RenderScriptCams(false, true, 400, true, true); DestroyCam(pv.cam, false) end
+    pv.ped, pv.cam = nil, nil
+end
+local function pvStart()
+    if pv.ped then return end
+    local me = PlayerPedId(); local h = GetEntityHeading(me)
+    local pos = GetOffsetFromEntityInWorldCoords(me, 0.0, 3.0, 0.0)
+    local _, gz = GetGroundZFor_3dCoord(pos.x, pos.y, pos.z + 1.0, false)
+    pv.ped = ClonePed(me, false, false, true); SetEntityCoords(pv.ped, pos.x, pos.y, (gz ~= 0 and gz or pos.z - 1.0)); SetEntityHeading(pv.ped, h + 180.0)
+    FreezeEntityPosition(pv.ped, true); SetEntityInvincible(pv.ped, true); SetBlockingOfNonTemporaryEvents(pv.ped, true); SetEntityCollision(pv.ped, false, false)
+    local cp = GetOffsetFromEntityInWorldCoords(me, 0.9, 0.2, 0.55)
+    pv.cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true); SetCamCoord(pv.cam, cp.x, cp.y, cp.z); SetCamFov(pv.cam, 40.0)
+    local t = GetOffsetFromEntityInWorldCoords(pv.ped, -0.9, 0.0, 0.0); PointCamAtCoord(pv.cam, t.x, t.y, (gz ~= 0 and gz or pos.z) + 0.9)
+    RenderScriptCams(true, true, 400, true, true)
+end
+local function pvPlay(dict, anim, walk)
+    if not pv.ped then return end
+    ClearPedTasksImmediately(pv.ped)
+    if walk then RequestAnimSet(walk); local t = GetGameTimer() + 2000; while not HasAnimSetLoaded(walk) and GetGameTimer() < t do Wait(10) end
+        SetPedMovementClipset(pv.ped, walk, 0.2); FreezeEntityPosition(pv.ped, false); TaskWanderStandard(pv.ped, 10.0, 10)
+        SetTimeout(2500, function() if pv.ped then FreezeEntityPosition(pv.ped, true) end end) return end
+    if dict and loadDict(dict) then TaskPlayAnim(pv.ped, dict, anim, 8.0, 8.0, -1, 1, 0, false, false, false) end
+end
+RegisterNUICallback('preview', function(d, cb) cb(1)
+    if d.stop then return pvStop() end
+    pvStart()
+    if d.name and BY[d.name] then local e = BY[d.name]; pvPlay(e[3], e[4]) elseif d.walk then pvPlay(nil, nil, d.walk) elseif d.dict then pvPlay(d.dict, d.anim) end
+end)
+RegisterNUICallback('playRaw', function(d, cb) cb(1)
+    if type(d.dict) ~= 'string' or type(d.anim) ~= 'string' or not DoesAnimDictExist(d.dict) then return notify('Animation not found', 'error') end
+    play({ 'raw', d.anim, d.dict, d.anim, loop = d.loop ~= false, move = d.move == true })
+    if d.close then toggle(false) end
+end)
+AddEventHandler('onResourceStop', function(r) if r == GetCurrentResourceName() then pvStop() end end)

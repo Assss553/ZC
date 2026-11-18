@@ -9,4 +9,4 @@ shared_scripts { 'config.lua', 'emotes.lua' }
 client_script 'client.lua'
 server_script 'server.lua'
 ui_page 'html/index.html'
-files { 'html/index.html', 'html/fa/css/*.css', 'html/fa/webfonts/*' }
+files { 'html/index.html', 'html/anims.json', 'html/fa/css/*.css', 'html/fa/webfonts/*' }
