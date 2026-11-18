@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!-- ROX Store | rox_emotes | All rights reserved. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="fa/css/fontawesome.min.css"><link rel="stylesheet" href="fa/css/solid.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,800;1,900&display=swap" rel="stylesheet">
+<style>
+:root { --a: #ff5a1f; --tx2: rgba(255,255,255,.55); --ln: rgba(255,255,255,.08); }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; color: #fff; background: transparent; overflow: hidden; user-select: none; height: 100vh; }
+body.preview { background: url(../../rox_police/html/img/wallpapers/street.jpg) center/cover; }
+#em { position: fixed; top: 0; right: 0; bottom: 0; width: 470px; display: none; flex-direction: column; padding: 30px 28px 22px; background: linear-gradient(90deg, rgba(10,8,8,0), rgba(10,8,8,.82) 18%, rgba(10,8,8,.94)); }
+#em.on { display: flex; animation: sl .45s cubic-bezier(.16,1,.3,1); } @keyframes sl { from { transform: translateX(60px); opacity: 0; } }
+.hd { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; } .hd h1 { flex: 1; font: italic 900 36px 'Barlow Condensed'; letter-spacing: .5px; } .hd h1 span { color: var(--a); }
+.hd button { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--ln); background: rgba(255,255,255,.05); color: #fff; cursor: pointer; } .hd button:hover { background: var(--a); }
+.stop { height: 38px !important; width: auto !important; padding: 0 14px; font: 700 12px 'Plus Jakarta Sans'; display: flex; align-items: center; gap: 7px; } .stop:hover { background: #ff4d6a !important; }
+.tabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 12px; } .tabs b { padding: 9px 0 7px; text-align: center; border-radius: 12px; cursor: pointer; font-size: 9.5px; font-weight: 700; color: var(--tx2); background: rgba(255,255,255,.035); border: 1px solid transparent; transition: .2s; }
+.tabs b i { display: block; font-size: 16px; margin-bottom: 4px; } .tabs b:hover { color: #fff; } .tabs b.on { color: #fff; background: rgba(255,90,31,.16); border-color: rgba(255,90,31,.5); } .tabs b.on i { color: var(--a); }
+.srch { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid var(--ln); margin-bottom: 12px; } .srch:focus-within { border-color: var(--a); }
+.srch i { color: var(--tx2); } .srch input { flex: 1; background: none; border: 0; outline: 0; color: #fff; font: 600 13px 'Plus Jakarta Sans'; } .srch kbd { font: 700 10px monospace; padding: 3px 6px; border-radius: 5px; background: rgba(255,255,255,.1); color: var(--tx2); }
+.grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; padding-right: 4px; } .grid::-webkit-scrollbar { width: 4px; } .grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+.it { position: relative; display: flex; align-items: center; gap: 11px; padding: 12px; border-radius: 15px; cursor: pointer; background: rgba(255,255,255,.035); border: 1px solid var(--ln); transition: .18s; animation: up .3s backwards; overflow: hidden; }
+@keyframes up { from { opacity: 0; transform: translateY(8px); } } .it:hover { border-color: rgba(255,90,31,.55); background: rgba(255,90,31,.08); transform: translateY(-2px); } .it.on { border-color: var(--a); background: rgba(255,90,31,.15); }
+.it .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 16px; flex: none; background: var(--bg); color: var(--fg); }
+.it b { display: block; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .it small { font: 600 10px monospace; color: var(--tx2); } .it .t { flex: 1; min-width: 0; }
+.it .st { position: absolute; top: 7px; right: 8px; font-size: 11px; color: rgba(255,255,255,.2); transition: .15s; } .it .st:hover, .it .st.on { color: #ffc24a; }
+.it .tag { position: absolute; bottom: 7px; right: 9px; font-size: 8.5px; font-weight: 800; letter-spacing: .8px; color: var(--tx2); }
+.empty { grid-column: span 2; text-align: center; padding: 40px; color: var(--tx2); font-size: 12.5px; } .empty i { display: block; font-size: 30px; margin-bottom: 10px; }
+.slots { margin-top: 12px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,.035); border: 1px solid var(--ln); } .slots h4 { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; color: var(--tx2); margin-bottom: 8px; } .slots h4 span { font-weight: 600; letter-spacing: 0; }
+.sl { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; } .sl b { height: 46px; border-radius: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9.5px; cursor: pointer; background: rgba(0,0,0,.3); border: 1px dashed rgba(255,255,255,.15); color: var(--tx2); }
+.sl b em { font-style: normal; font-size: 13px; color: #fff; } .sl b.f { border-style: solid; border-color: rgba(255,90,31,.45); color: #fff; } .sl b.pick { border-color: var(--a); animation: pl 1s infinite; } @keyframes pl { 50% { background: rgba(255,90,31,.2); } }
+.foot { display: flex; justify-content: space-between; margin-top: 10px; font-size: 10.5px; color: var(--tx2); } .foot kbd { font: 800 9.5px 'Plus Jakarta Sans'; padding: 2px 6px; border-radius: 5px; background: #fff; color: #111; margin-right: 4px; }
+.toast { position: fixed; bottom: 30px; right: 500px; padding: 10px 16px; border-radius: 12px; background: #111; border-left: 3px solid var(--a); font-size: 12px; font-weight: 700; opacity: 0; transition: .2s; } .toast.on { opacity: 1; }
+</style></head><body>
+<div id="em"><div class="hd"><h1><span>ROX</span> EMOTES</h1><button class="stop" id="stop"><i class="fa-solid fa-stop"></i>Stop</button><button id="x"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="tabs" id="tabs"></div><div class="srch"><i class="fa-solid fa-magnifying-glass"></i><input id="q" placeholder="Search emotes, dances, walks…"><kbd>/e name</kbd></div>
+  <div class="grid" id="grid"></div>
+  <div class="slots"><h4>QUICK SLOTS<span id="slH">Right-click an emote, then a slot</span></h4><div class="sl" id="sl"></div></div>
+  <div class="foot"><span><kbd>X</kbd>Stop emote</span><span><kbd>Y</kbd>Accept shared</span><span><kbd>ESC</kbd>Close</span></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const PREVIEW = !window.invokeNative;
+const post = (n, d = {}) => PREVIEW ? Promise.resolve(1) : fetch(`https://${GetParentResourceName()}/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json()).catch(() => null);
+const TABS = [['fav', 'star', 'Favorites'], ['general', 'hand', 'Emotes'], ['dances', 'music', 'Dances'], ['sit', 'chair', 'Sit & lay'], ['shared', 'handshake', 'Shared'], ['walks', 'person-walking', 'Walks'], ['faces', 'face-smile', 'Moods']];
+const COL = { general: ['rgba(90,167,255,.15)', '#5aa7ff', 'hand'], dances: ['rgba(255,94,168,.15)', '#ff5ea8', 'music'], sit: ['rgba(46,229,157,.15)', '#2ee59d', 'chair'], shared: ['rgba(255,194,74,.15)', '#ffc24a', 'handshake'], walks: ['rgba(169,139,255,.15)', '#a98bff', 'person-walking'], faces: ['rgba(255,138,76,.15)', '#ff8a4c', 'face-smile'] };
+let D = {}, tab = 'general', fav = [], binds = {}, pick = null, walk = '', face = '';
+const all = () => Object.entries(D.emotes || {}).flatMap(([c, l]) => l.map(e => ({ n: e[0], l: e[1], c, prop: !!e.prop })));
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 1800); }
+function save() { post('save', { fav, binds }); }
+function draw() { const q = $('q').value.trim().toLowerCase(); let L;
+  $('tabs').innerHTML = TABS.map(([k, i, t]) => `<b class="${k === tab && !q ? 'on' : ''}" data-t="${k}"><i class="fa-solid fa-${i}"></i>${t}</b>`).join('');
+  if (q) L = all().filter(e => (e.n + e.l).toLowerCase().includes(q)).concat((D.walks || []).filter(w => w[1].toLowerCase().includes(q)).map(w => ({ n: w[0], l: w[1], c: 'walks', v: w[2] || '' })));
+  else if (tab === 'fav') L = all().filter(e => fav.includes(e.n));
+  else if (tab === 'walks') L = (D.walks || []).map(w => ({ n: w[0], l: w[1], c: 'walks', v: w[2] || '' }));
+  else if (tab === 'faces') L = (D.faces || []).map(w => ({ n: w[0], l: w[1], c: 'faces', v: w[2] || '' }));
+  else L = all().filter(e => e.c === tab);
+  $('grid').innerHTML = L.length ? L.map((e, i) => { const [bg, fg, ic] = COL[e.c]; const isOn = (e.c === 'walks' && e.v === walk) || (e.c === 'faces' && e.v === face);
+    return `<div class="it ${isOn ? 'on' : ''}" data-n="${e.n}" data-c="${e.c}" data-v="${e.v ?? ''}" style="--bg:${bg};--fg:${fg};animation-delay:${Math.min(i, 20) * 15}ms"><div class="ic"><i class="fa-solid fa-${ic}"></i></div><div class="t"><b>${e.l}</b><small>${e.c === 'walks' || e.c === 'faces' ? (isOn ? 'active' : 'style') : '/e ' + e.n}</small></div>
+      ${e.c !== 'walks' && e.c !== 'faces' ? `<i class="st fa-solid fa-star ${fav.includes(e.n) ? 'on' : ''}" data-f="${e.n}"></i>` : ''}${e.prop ? '<span class="tag">PROP</span>' : e.c === 'shared' ? '<span class="tag">2 PLAYERS</span>' : ''}</div>`; }).join('')
+    : `<div class="empty"><i class="fa-solid fa-${tab === 'fav' ? 'star' : 'magnifying-glass'}"></i>${tab === 'fav' && !q ? 'Click the star on an emote to add it here' : 'Nothing found'}</div>`;
+  $('sl').innerHTML = [1, 2, 3, 4, 5, 6].map(i => { const n = binds[i]; const e = n && all().find(x => x.n === n); return `<b class="${n ? 'f' : ''} ${pick ? 'pick' : ''}" data-s="${i}"><em>${i}</em>${e ? e.l.slice(0, 9) : 'empty'}</b>`; }).join('');
+  $('slH').textContent = pick ? 'Now click a slot (right-click to clear)' : 'Right-click an emote, then a slot'; }
+$('tabs').onclick = (e) => { const b = e.target.closest('[data-t]'); if (!b) return; tab = b.dataset.t; $('q').value = ''; draw(); };
+$('q').oninput = draw;
+$('grid').onclick = (e) => { const f = e.target.closest('[data-f]'); if (f) { const n = f.dataset.f; fav = fav.includes(n) ? fav.filter(x => x !== n) : [...fav, n]; save(); return draw(); }
+  const it = e.target.closest('.it'); if (!it) return; const c = it.dataset.c;
+  if (c === 'walks') { walk = it.dataset.v; post('walk', { walk }); toast('Walk style: ' + it.querySelector('b').textContent); return draw(); }
+  if (c === 'faces') { face = it.dataset.v; post('face', { face }); toast('Mood: ' + it.querySelector('b').textContent); return draw(); }
+  post('play', { name: it.dataset.n }); toast((c === 'shared' ? 'Request sent: ' : 'Playing: ') + it.querySelector('b').textContent); };
+$('grid').oncontextmenu = (e) => { e.preventDefault(); const it = e.target.closest('.it'); if (!it || it.dataset.c === 'walks' || it.dataset.c === 'faces') return; pick = it.dataset.n; draw(); };
+$('sl').onclick = (e) => { const s = e.target.closest('[data-s]'); if (!s) return; if (pick) { binds[s.dataset.s] = pick; pick = null; save(); toast('Saved to slot ' + s.dataset.s + ' (set the key in GTA settings › FiveM)'); } else if (binds[s.dataset.s]) post('play', { name: binds[s.dataset.s] }); draw(); };
+$('sl').oncontextmenu = (e) => { e.preventDefault(); const s = e.target.closest('[data-s]'); if (s) { delete binds[s.dataset.s]; pick = null; save(); draw(); } };
+$('stop').onclick = () => post('stop'); const close = () => { $('em').classList.remove('on'); post('close'); }; $('x').onclick = close;
+document.addEventListener('keydown', (e) => { if (!$('em').classList.contains('on')) return; if (e.key === 'Escape') close(); else if (e.target !== $('q') && e.key.length === 1 && /\w/.test(e.key)) $('q').focus(); });
+window.addEventListener('message', (e) => { const d = e.data || {}; if (d.action === 'close') return $('em').classList.remove('on'); if (d.action !== 'open') return;
+  D = d; fav = d.fav || []; binds = d.binds || {}; walk = d.walk || ''; face = d.face || ''; document.documentElement.style.setProperty('--a', d.color || '#ff5a1f'); $('q').value = ''; $('em').classList.add('on'); draw(); });
+if (PREVIEW) { document.body.classList.add('preview'); const E = (a) => a.map(([n, l, p]) => [n, l, 'd', 'a', ...(p ? [] : [])]).map((e, i) => Object.assign(e, a[i][2] ? { prop: 1 } : {}));
+  window.postMessage({ action: 'open', fav: ['dance', 'sit'], binds: { 1: 'wave', 2: 'dance' }, walk: 'move_m@gangster@generic',
+    emotes: { general: E([['wave', 'Wave'], ['salute', 'Salute'], ['clap', 'Clap'], ['smoke', 'Smoke', 1], ['coffee', 'Coffee', 1], ['phone', 'Phone call', 1], ['crossarms', 'Cross arms'], ['think', 'Think'], ['surrender', 'Hands up'], ['pushups', 'Push-ups']]),
+      dances: E([['dance', 'Dance'], ['dance2', 'Club dance'], ['dance3', 'Groove'], ['dance8', 'Robot']]), sit: E([['sit', 'Sit on ground'], ['chair', 'Sit on chair'], ['lean', 'Lean wall'], ['lay', 'Lie down']]), shared: E([['hug', 'Hug'], ['handshake', 'Handshake']]) },
+    walks: [['default', 'Default'], ['gangster', 'Gangster', 'move_m@gangster@generic'], ['confident', 'Confident', 'move_m@confident'], ['drunk', 'Drunk', 'move_m@drunk@verydrunk']], faces: [['normal', 'Normal'], ['happy', 'Happy', 'mood_happy_1']] }, '*'); }
+</script></body></html>

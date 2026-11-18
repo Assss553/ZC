@@ -195,3 +195,6 @@ Config.Menu = {
     cmd('Phone',    'mobile-screen',    'phone'),
     cmd('Settings', 'gear',             'settings'),
 }
+
+-- Only these jobs can open the radial menu (nil = everyone)
+Config.OnlyJobs = { police = true, ambulance = true }

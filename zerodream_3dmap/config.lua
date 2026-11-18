@@ -5,8 +5,8 @@ Config = {
 	updateInterval = 100,   -- The interval time of the map refresh.
 	-- Hotkey setting
 	hotKeySettings = {
-		fivem = "F3", -- The default key to open the map (changed from F1 by ROX: F1 is the radial menu)
-		html  = 114,  -- JavaScript KeyCode, 114 = F3
+		fivem = "F1", -- The default key to open the map
+		html  = 112,  -- JavaScript KeyCode, 112 = F1
 	},
 	-- Player self position label setting
 	playerPosition = {

@@ -122,6 +122,7 @@ end
 local function openMenu()
     if isOpen or IsPauseMenuActive() or IsEntityDead(PlayerPedId()) then return end
     readContext()
+    if Config.OnlyJobs and not Config.OnlyJobs[ctx.job or ''] then return end
     lookup = {}
     local items = prepare(Config.Menu, 'i')
     if #items == 0 then return end
