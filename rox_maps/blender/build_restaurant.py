@@ -39,6 +39,8 @@ M = {
     "marble": mat("marble", "marble", 0.15, tile=2.0), "tiles": mat("tiles", "tiles", 0.25, tile=4.0),
     "fabric": mat("fabric", "fabric", 0.9, tile=1.0), "hqwall": mat("hqwall", "hqwall", 0.8, tile=5.0),
     "sign": mat("sign", "sign", 0.3, emit=None, tile=0),
+    "herringbone": mat("herringbone", "herringbone", 0.35, tile=7.0), "plant": mat("plant", "plant", 0.6, tile=0.6),
+    "epoxy": mat("epoxy", "epoxy", 0.12, tile=4.0),
 }
 sb = M["sign"].node_tree.nodes["Principled BSDF"]
 sb.inputs["Emission Strength"].default_value = 5.0
@@ -63,15 +65,21 @@ def box_uv(o, tile):
     ca = o.data.color_attributes.new("Color 1", "BYTE_COLOR", "CORNER")
     for d in ca.data: d.color = (1, 1, 1, 1)
 
+def finish(o, m, col):
+    o.data.materials.clear(); o.data.materials.append(M[m])
+    box_uv(o, TILE[M[m].name])
+    if col: col.objects.link(o); bpy.context.scene.collection.objects.unlink(o)
+    return o
+
 def box(name, loc, size, m, col=None):
     bpy.ops.mesh.primitive_cube_add(location=loc)
     o = bpy.context.object; o.name = name; o.scale = (size[0]/2, size[1]/2, size[2]/2)
     bpy.ops.object.transform_apply(scale=True)
-    o.data.materials.append(M[m])
-    o.matrix_world = o.matrix_world  # noqa
-    box_uv(o, TILE[M[m].name])
-    if col: col.objects.link(o); bpy.context.scene.collection.objects.unlink(o)
-    return o
+    return finish(o, m, col)
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import furniture as F
+F.CTX.update(M=M, finish=finish)
 
 def coll(n):
     c = bpy.data.collections.new(n); S.collection.children.link(c); return c
@@ -111,30 +119,46 @@ box("chimney", (6, 5, H + 1.5), (0.8, 0.8, 3), "brick", EXT)
 box("parapet_f", (0, -D/2, H + 0.6), (W + 0.6, 0.3, 0.9), "brick", EXT)
 
 # ---- interior ----
-box("floor", (0, 0, 0.02), (W - 0.4, D - 0.4, 0.04), "wood", INT)
+box("floor", (0, 0, 0.02), (W - 0.4, D - 0.4, 0.04), "herringbone", INT)
+F.skirting("skirting", -W/2, 4, -D/2, D/2, 0.04, INT)
+for x in range(-8, 4, 3):                                   # exposed ceiling beams
+    box(f"beam_{x}", (x, 0, H - 0.25), (0.25, D - 0.4, 0.35), "wood", INT)
 box("ceiling", (0, 0, H - 0.05), (W - 0.4, D - 0.4, 0.1), "plaster", INT)
 box("bar_counter", (-5, 4.5, 0.55), (7, 1, 1.1), "wood", INT)
 box("bar_top", (-5, 4.5, 1.12), (7.2, 1.2, 0.06), "marble", INT)
 for i in range(6):
-    box(f"stool_{i}", (-8 + i * 1.2, 3.5, 0.4), (0.45, 0.45, 0.08), "fabric", INT)
-    box(f"stool_leg_{i}", (-8 + i * 1.2, 3.5, 0.2), (0.08, 0.08, 0.4), "steel", INT)
+    F.bar_stool(f"stool_{i}", -8 + i * 1.2, 3.6, 0.04, INT)
+box("bar_footrail", (-5, 3.95, 0.25), (7, 0.05, 0.05), "steel", INT)
+for i in range(4):
+    F.pendant(f"bar_pendant_{i}", -7.6 + i * 1.75, 4.5, H - 0.1, INT, drop=1.5)
 for z in (1.6, 2.2, 2.8):
     box(f"bottle_shelf_{z}", (-5, 6.7, z), (6, 0.35, 0.05), "wood", INT)
 box("back_bar_mirror", (-5, 6.75, 2.2), (6, 0.03, 1.6), "glass", INT)
 box("kitchen_floor", (7, 3, 0.05), (5.6, 7.6, 0.02), "tiles", INT)
 box("kitchen_counter", (8.5, 1, 0.5), (2.4, 4, 1.0), "steel", INT)
 box("kitchen_hood", (8.5, 1, 3.6), (2.4, 4, 0.8), "steel", INT)
-box("menu_board", (-9.7, -2, 2.6), (0.05, 3, 1.2), "sign", INT)
+mb = box("menu_board", (0, 0, 0), (3, 0.05, 1.2), "sign", INT)
+mb.rotation_euler[2] = math.radians(90); mb.location = (-9.72, -2, 2.9)
 box("wainscot_l", (-9.75, 0, 0.6), (0.1, D - 0.6, 1.2), "wood", INT)
 box("pass_window", (4, 4.5, 1.4), (0.35, 2, 0.6), "steel", INT)
 box("kitchen_wall", (4, 3, H/2), (0.3, 8, H), "plaster", INT)
-for i, (x, y) in enumerate([(-7, -3), (-3, -3), (1, -3), (-7, 0), (-3, 0), (1, 0)]):
-    box(f"table_{i}", (x, y, 0.75), (1.2, 1.2, 0.05), "wood", INT)
-    box(f"table_leg_{i}", (x, y, 0.37), (0.1, 0.1, 0.74), "steel", INT)
-    for dx in (-0.9, 0.9):
-        box(f"booth_{i}_{dx}", (x + dx, y, 0.45), (0.5, 1.4, 0.9), "fabric", INT)
-for x in (-6, -2, 2):
-    box(f"lamp_{x}", (x, -1.5, H - 0.5), (0.4, 0.4, 0.15), "neon", INT)
+# booths along the left wall: table + two facing benches
+for i, yc in enumerate((-4.8, -2.0, 0.8)):
+    F.booth(f"booth_a_{i}", -9.0, yc - 0.78, 0.04, 90, INT, length=1.2)
+    F.booth(f"booth_b_{i}", -9.0, yc + 0.78, 0.04, -90, INT, length=1.2)
+    F.rect_table(f"booth_table_{i}", -9.0, yc, 0.04, INT, w=1.1, d=0.7, top="marble")
+    F.pendant(f"booth_pendant_{i}", -9.0, yc, H - 0.1, INT, drop=1.7)
+# round tables with 4 chairs
+for i, (x, y) in enumerate([(-5.5, -3.8), (-2.5, -3.8), (0.5, -3.8), (-5.5, -0.8), (-2.5, -0.8), (0.5, -0.8)]):
+    F.round_table(f"table_{i}", x, y, 0.04, INT)
+    for k, (dx, dy, rz) in enumerate([(0, 0.7, 0), (0, -0.7, 180), (0.7, 0, -90), (-0.7, 0, 90)]):
+        F.chair(f"chair_{i}_{k}", x + dx, y + dy, 0.04, rz, INT)
+    F.pendant(f"pendant_{i}", x, y, H - 0.1, INT, drop=1.3)
+for k, y in enumerate((-5, -1.5, 2)):
+    F.sconce(f"sconce_r_{k}", 3.82, y, 2.4, -1, INT)
+F.plant("plant_entry_l", -8.8, -6.2, 0.04, INT)
+F.plant("plant_entry_r", 2.8, -6.2, 0.04, INT)
+F.plant("plant_bar", -9.2, 5.8, 0.04, INT, h=1.6)
 
 # ---- secret wall door (back-right storage) -> stairs ----
 box("SECRET_DOOR", (7.5, D/2 - 0.25, 1.25), (1.6, 0.15, 2.5), "brick", INT)   # rotates via script
@@ -143,28 +167,37 @@ for i in range(14):                                       # staircase down
 
 # ---- underground HQ (-6m) ----
 HZ = -6.0
-box("hq_floor", (0, 12, HZ), (18, 12, 0.2), "concrete", HQ)
+box("hq_floor", (0, 12, HZ), (18, 12, 0.2), "epoxy", HQ)
 box("hq_ceiling", (0, 12, HZ + 3.6), (18, 12, 0.2), "concrete", HQ)
 for n, l, s in [("hq_wall_n", (0, 18, HZ + 1.8), (18, 0.3, 3.6)), ("hq_wall_s", (0, 6, HZ + 1.8), (18, 0.3, 3.6)),
                 ("hq_wall_w", (-9, 12, HZ + 1.8), (0.3, 12, 3.6)), ("hq_wall_e", (9, 12, HZ + 1.8), (0.3, 12, 3.6))]:
     box(n, l, s, "hqwall", HQ)
-box("hq_meeting_table", (-3, 12, HZ + 0.8), (5, 2, 0.08), "marble", HQ)
+box("hq_meeting_table", (-3, 12, HZ + 0.86), (5, 2, 0.08), "marble", HQ)
 for i in range(6):
-    box(f"hq_chair_{i}", (-5 + (i % 3) * 2, 12 + (1.6 if i < 3 else -1.6), HZ + 0.5), (0.6, 0.6, 1.0), "leather", HQ)
+    F.office_chair(f"hq_chair_{i}", -5 + (i % 3) * 2, 12 + (1.4 if i < 3 else -1.4), HZ + 0.1, 0 if i < 3 else 180, HQ)
+F.office_chair("hq_boss_chair", -6.3, 12, HZ + 0.1, -90, HQ)
+F.strip_light("hq_light_a", -3, 12, HZ + 3.45, 6, HQ, color=(1.0, 0.9, 0.8), axis="x")
+F.strip_light("hq_light_b", 4.5, 9.5, HZ + 3.45, 4, HQ, color=(0.8, 0.3, 1.0), axis="x")
+F.rect_table("hq_coffee", 4, 10.2, HZ + 0.1, HQ, w=1.4, d=0.7, top="wood", h=0.42)
+F.plant("hq_plant", 8, 6.8, HZ + 0.1, HQ)
 box("hq_rug", (4, 10, HZ + 0.11), (5, 3.5, 0.02), "fabric", HQ)
 box("hq_tv", (4, 6.25, HZ + 1.8), (3, 0.1, 1.6), "neon_hq", HQ)
 for i in range(4):
     box(f"hq_crate_{i}", (7 + (i % 2) * 1.1, 8 + (i // 2) * 1.1, HZ + 0.45), (1, 1, 0.9), "wood", HQ)
 for x in (-6, 0, 6):
     box(f"hq_pipe_{x}", (x, 12, HZ + 3.35), (0.2, 12, 0.2), "steel", HQ)
-box("hq_table_leg", (-3, 12, HZ + 0.4), (0.4, 0.4, 0.8), "steel", HQ)
+for dx in (-1.8, 1.8):
+    box(f"hq_table_leg_{dx}", (-3 + dx, 12, HZ + 0.48), (0.25, 1.4, 0.76), "steel", HQ)
 box("hq_weapon_rack", (-8.6, 12, HZ + 1.5), (0.3, 4, 2), "steel", HQ)
 box("hq_stash", (6, 16.5, HZ + 0.6), (3, 1, 1.2), "steel", HQ)
-box("hq_sofa", (4, 9, HZ + 0.45), (4, 1, 0.9), "leather", HQ)
+F.sofa("hq_sofa", 4, 8.6, HZ + 0.1, HQ, length=3.2)
 box("hq_neon_strip", (0, 17.8, HZ + 3.2), (16, 0.05, 0.1), "neon_hq", HQ)
 
 # ---- lights / camera / render ----
-for loc, e, c in [((0, -20, 15), 4, (1, .95, .9)), ((0, 0, 4), 300, (1, .8, .6)), ((0, 12, HZ + 3), 400, (.6, .8, 1))]:
+for c_, loc, col_, e, r in F.LIGHTS:
+    bpy.ops.object.light_add(type="POINT", location=loc); L = bpy.context.object
+    L.data.energy = e; L.data.color = col_; L.data.shadow_soft_size = 0.1
+for loc, e, c in [((0, -20, 15), 4, (1, .95, .9)), ((0, 0, 4), 120, (1, .8, .6)), ((0, 12, HZ + 3), 150, (.6, .8, 1))]:
     if e < 10:
         bpy.ops.object.light_add(type="SUN", location=loc); bpy.context.object.data.energy = e
         bpy.context.object.rotation_euler = (math.radians(55), 0, math.radians(20))
@@ -189,7 +222,10 @@ shot("render_exterior.png", (14, -26, 8), (0, 0, 2))
 roof = bpy.data.objects["roof"]; ceil = bpy.data.objects["ceiling"]
 roof.hide_render = ceil.hide_render = True
 shot("render_interior.png", (-2, -5, 14), (0, 2, 0))
+shot("render_interior_eye.png", (2.5, -5.8, 1.7), (-6, 0, 0.9))
+shot("render_booths.png", (-5.6, -6.2, 2.2), (-9, -1, 0.6))
 bpy.data.objects["hq_ceiling"].hide_render = True
+shot("render_hq_eye.png", (7.5, 7, HZ + 1.8), (-3, 12.5, HZ + 0.8), hide=(EXT, INT))
 shot("render_hq.png", (-6, 2, HZ + 9), (1, 13, HZ), hide=(EXT, INT))
 
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "rox_restaurant.blend"))
@@ -217,10 +253,23 @@ try:
         bpy.ops.sollumz.autoconvertmaterials()
         col = body.copy(); col.data = body.data.copy(); c.objects.link(col)
         col.data.materials.clear(); col.data.materials.append(create_collision_material_from_index(1))  # concrete
+        nv = len(col.data.vertices)
+        if nv > 28000:   # GTA bound limit 32767 verts -> simplify collision only (visual mesh untouched)
+            dm = col.modifiers.new("dec", "DECIMATE"); dm.ratio = 26000 / nv
+            bpy.ops.object.select_all(action="DESELECT"); col.select_set(True); bpy.context.view_layer.objects.active = col
+            bpy.ops.object.modifier_apply(modifier=dm.name)
+            print("collision", name, nv, "->", len(col.data.vertices))
         with bpy.context.temp_override(collection=c):
             d = convert_objs_to_single_drawable([body]); d.name = name
             comp = convert_objs_to_single_composite([col], SollumType.BOUND_GEOMETRYBVH)
         comp.parent = d; comp.name = name + ".col"
+        from sollumz.sollumz_properties import LightType
+        for c_, loc, col_, e, r in F.LIGHTS:
+            if c_ is not c: continue
+            ld = bpy.data.lights.new(name + "_light", "POINT"); ld.sollum_type = LightType.POINT
+            ld.color = col_; ld.energy = e * 4; ld.cutoff_distance = r
+            lo = bpy.data.objects.new(name + "_light", ld); lo.sollum_type = SollumType.LIGHT
+            lo.location = loc; c.objects.link(lo); lo.parent = d
         bpy.ops.object.select_all(action="DESELECT"); d.select_set(True)
         for ch in d.children_recursive: ch.select_set(True)
         bpy.ops.sollumz.export_assets(directory=xml, direct_export=True, use_custom_settings=True,

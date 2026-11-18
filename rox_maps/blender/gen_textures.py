@@ -82,6 +82,25 @@ hq = colorize(fbm(7, 4, 16), (45, 45, 50), (80, 80, 85))
 hq[..., 0] += (g > 0.7) * 70; hq[..., 2] += (g < 0.25) * 60
 save("hqwall", hq.clip(0, 255), fbm(7, 4, 16))
 
+# Herringbone parquet (main floor)
+k = 16; u = x * k; v = y * k
+blk = ((np.floor(u) + np.floor(v)) % 2).astype(int)
+along = np.where(blk == 0, (u + np.floor(v)) % 4, (v + np.floor(u)) % 4)
+plank = np.floor(np.where(blk == 0, u + np.floor(v), v + np.floor(u)) / 4)
+ptint = np.random.default_rng(20).random(200)[(plank.astype(int) * 7 + blk * 13) % 200]
+gr2 = np.sin((np.where(blk == 0, v, u) * 30 + fbm(4, 8, 21) * 5) * np.pi) * 0.5 + 0.5
+edge = ((u % 1) < 0.03) | ((v % 1) < 0.03) | (along < 0.04)
+hb = colorize(ptint * 0.45 + gr2 * 0.35 + fbm(5, 16, 22) * 0.2, (82, 46, 22), (168, 110, 62)) * (1 - 0.55 * edge[..., None])
+save("herringbone", hb, gr2 * 0.25 + (1 - edge) * 0.75)
+
+# Leaves
+lf = fbm(5, 12, 23); veins = (np.abs(np.sin((x + y) * 40 * np.pi)) < 0.06)
+save("plant", colorize(lf, (18, 55, 20), (70, 130, 45)) * (1 - 0.3 * veins[..., None]), lf * 0.5 + veins * 0.5)
+
+# Polished epoxy floor (HQ)
+ep = fbm(6, 6, 24); spk = (rng.random((N, N)) > 0.995)
+save("epoxy", colorize(ep, (28, 30, 36), (55, 58, 66)) + spk[..., None] * 90, ep * 0.1)
+
 # ROX sign
 sign = np.zeros((256, 1024, 3), np.uint8)
 from PIL import ImageDraw, ImageFont

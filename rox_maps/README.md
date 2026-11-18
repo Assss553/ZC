@@ -4,7 +4,15 @@ ROX Store | All rights reserved
 ## Contents
 - `blender/build_restaurant.py`  – builds the whole map in Blender + exports via Sollumz (CodeWalker XML)
 - `blender/gen_textures.py`      – generates all textures (original, procedural, 1024px + normal maps)
+- `blender/furniture.py`         – detailed furniture + lights: dining chairs, bar stools, booths, round/rect tables,
+                                   Chesterfield sofa, office chairs, pendant lamps, wall sconces, LED strips, plants, skirting
+- `blender/package.py`           – DDS textures + ytyp/ymap from the exported drawables
 - `blender/rox_restaurant.blend` – Blender source file
+- `renders/`                     – preview renders (overview.png)
+
+## Lights
+Pendants/sconces/LED strips are exported as real GTA drawable lights (16 in the diner, 2 in the HQ).
+Collision is auto-simplified to stay under the 32767-vertex bound limit.
 - `codewalker_xml/`              – rox_diner_ext / _int / _hq .ydr.xml (+ DDS texture folders), rox_diner.ytyp.xml, rox_diner.ymap.xml
 - `client.lua / server.lua / config.lua` – secret wall (ox_target), gang-only, fade + teleport
 
@@ -18,3 +26,4 @@ ROX Store | All rights reserved
 ## Rebuild
     python gen_textures.py textures
     python build_restaurant.py <path-to-folder-containing-sollumz> out
+    python package.py out/stream
