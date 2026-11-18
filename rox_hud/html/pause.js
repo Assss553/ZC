@@ -27,7 +27,33 @@ const PLACES = [['LOS SANTOS', 0, -1100, 22], ['Vinewood', 300, 300, 12], ['LSIA
   ['Alamo Sea', 1700, 4200, 13], ['Chumash', -3100, 1100, 11], ['Tataviam Mts', 2400, 300, 11], ['Great Chaparral', -500, 2000, 11], ['Paleto Forest', -800, 5200, 11]];
 let BLIPS = [['Pillbox Medical', 298, -584, '#ff4d6a', 'H'], ['Mission Row PD', 428, -984, '#5aa7ff', 'P'], ['Legion Square', 195, -933, '#2ee59d', 'L'], ['Sandy Shores PD', 1853, 3686, '#5aa7ff', 'P'], ['Paleto Bay PD', -448, 6012, '#5aa7ff', 'P'], ['Fleeca Bank', 149, -1040, '#ffc24a', '$'], ['Pacific Standard', 247, 222, '#ffc24a', '$']];
 
-function mapSvg() {
+
+function terrain() {
+  const W = 450, H = 620, k = .5, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  // land mask
+  g.beginPath(); COAST.forEach(([x, y], i) => g[i ? 'lineTo' : 'moveTo'](MX(x) * k, MY(y) * k)); g.closePath(); g.fillStyle = '#fff'; g.fill(); ISL.forEach(p => { g.beginPath(); p.forEach(([x, y], i) => g[i ? 'lineTo' : 'moveTo'](MX(x) * k, MY(y) * k)); g.fill(); });
+  const mask = g.getImageData(0, 0, W, H).data;
+  // distance to coast (cheap blur) for beaches + water depth
+  const bc = document.createElement('canvas'); bc.width = W; bc.height = H; const b = bc.getContext('2d'); b.filter = 'blur(14px)'; b.drawImage(cv, 0, 0); const blur = b.getImageData(0, 0, W, H).data;
+  // value noise
+  const R = (i) => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
+  const vn = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, s = (t) => t * t * (3 - 2 * t), h = (a, c) => R(a * 57 + c * 131);
+    const a = h(xi, yi), bb = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1), u = s(xf), v = s(yf); return a + (bb - a) * u + (c - a) * v + (a - bb - c + d) * u * v; };
+  const fbm = (x, y) => { let t = 0, a = .5, f = 1; for (let o = 0; o < 5; o++) { t += vn(x * f, y * f) * a; f *= 2; a *= .5; } return t; };
+  const MT = [[500, 5600, 1100, 1], [-1900, 3500, 900, .7], [2600, 5500, 700, .55], [-1000, 1500, 1000, .55], [1500, 2300, 1100, .5], [3300, 3800, 600, .5], [-300, 3200, 800, .45], [-2600, 1900, 700, .45], [2700, 900, 900, .5], [700, 900, 500, .35]];
+  const hgt = new Float32Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (!mask[i * 4]) continue; const wx = WX(x / k), wy = WY(y / k);
+    let h = .06 + fbm(x / 40, y / 40) * .12; for (const [mx, my, r, a] of MT) { const d = Math.hypot(wx - mx, wy - my) / r; h += a * Math.exp(-d * d * 2.2) * (.75 + .5 * fbm(x / 18, y / 18)); }
+    { const cd = Math.hypot(wx / 1.5, wy + 1100) / 1400; h *= .35 + .65 * Math.min(1, Math.max(0, (cd - .6) / .6)); } hgt[i] = h * Math.min(1, blur[i * 4] / 255 * 1.6); }
+  const img = g.createImageData(W, H), o = img.data, ramp = (h) => h < .03 ? [196, 182, 140] : h < .18 ? [86, 112, 64] : h < .35 ? [104, 112, 70] : h < .55 ? [122, 104, 78] : h < .8 ? [128, 118, 108] : [228, 232, 236];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, j = i * 4;
+    if (!mask[j]) { const d = blur[j] / 255; const deep = [8, 26, 42], shal = [24, 92, 112]; for (let c = 0; c < 3; c++) o[j + c] = deep[c] + (shal[c] - deep[c]) * Math.pow(d, .6); o[j + 3] = 255; continue; }
+    const h = hgt[i], hx = (hgt[i + 1] || h) - (hgt[i - 1] || h), hy = (hgt[i + W] || h) - (hgt[i - W] || h); const sh = Math.max(.6, Math.min(1.25, 1 - (hx * 7 + hy * 7) * 1.6));
+    const c = ramp(h); for (let q = 0; q < 3; q++) o[j + q] = Math.min(255, c[q] * sh * .78); o[j + 3] = 255; }
+  g.putImageData(img, 0, 0); return cv.toDataURL();
+}
+let TERR = null;
+function mapSvg() { TERR = TERR || terrain();
   const city = []; for (let i = 0; i < 260; i++) { const x = -1900 + Math.random() * 3300, y = -2500 + Math.random() * 3000; if (Math.hypot((x - 0) / 1.6, (y + 1000)) < 1300) city.push(`<rect x="${MX(x).toFixed(1)}" y="${MY(y).toFixed(1)}" width="${(2 + Math.random() * 5).toFixed(1)}" height="${(2 + Math.random() * 5).toFixed(1)}"/>`); }
   return `<svg viewBox="0 0 900 1240" class="msvg"><defs>
     <radialGradient id="sea" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#0e2130"/><stop offset="1" stop-color="#061019"/></radialGradient>
@@ -35,11 +61,11 @@ function mapSvg() {
     ${MOUNT.map(([, , c], i) => `<radialGradient id="mt${i}"><stop offset="0" stop-color="${c}" stop-opacity="1"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}
     <pattern id="grid" width="45" height="45" patternUnits="userSpaceOnUse"><path d="M45 0H0V45" fill="none" stroke="rgba(120,180,220,.06)"/></pattern>
     <filter id="sh"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".6"/></filter><clipPath id="clip"><path d="${P(COAST)}"/></clipPath></defs>
-    <rect width="900" height="1240" fill="url(#sea)"/><rect width="900" height="1240" fill="url(#grid)"/>
-    ${[1, 2, 3].map(k => `<path d="${P(COAST)}" fill="none" stroke="rgba(90,170,220,${.12 / k})" stroke-width="${k * 14}"/>`).join('')}
-    <path d="${P(COAST)}" fill="url(#land)" filter="url(#sh)"/>${ISL.map(p => `<path d="${P(p)}" fill="#3a3430"/>`).join('')}
-    <g clip-path="url(#clip)">${MOUNT.map(([[x, y], r], i) => `<ellipse cx="${MX(x)}" cy="${MY(y)}" rx="${r / 10}" ry="${r / 10 * .8}" fill="url(#mt${i})"/>${[.7, .45, .25].map(f => `<ellipse cx="${MX(x)}" cy="${MY(y)}" rx="${r / 10 * f}" ry="${r / 10 * .8 * f}" fill="none" stroke="rgba(255,255,255,.05)"/>`).join('')}`).join('')}
-      <ellipse cx="${MX(-100)}" cy="${MY(-1000)}" rx="110" ry="80" fill="rgba(70,70,80,.45)"/><g fill="rgba(255,200,140,.25)">${city.join('')}</g></g>
+    
+    
+    <image href="${TERR}" x="0" y="0" width="900" height="1240" preserveAspectRatio="none"/>
+    <g clip-path="url(#clip)">${MOUNT.map(([[x, y], r], i) => `${[.7, .45, .25].map(f => `<ellipse cx="${MX(x)}" cy="${MY(y)}" rx="${r / 10 * f}" ry="${r / 10 * .8 * f}" fill="none" stroke="rgba(255,255,255,.05)"/>`).join('')}`).join('')}
+      <ellipse cx="${MX(-100)}" cy="${MY(-1000)}" rx="110" ry="80" fill="rgba(60,60,70,.55)"/><g fill="rgba(255,200,140,.25)">${city.join('')}</g></g>
     <path d="${P(LAKE)}" fill="#0f2635" stroke="rgba(90,170,220,.35)" stroke-width="1.5"/>
     <path d="${L([[-2500, 2300], [-2100, 2600], [-1600, 2700], [-1000, 2800], [-300, 3200], [400, 3700], [800, 3950]])}" fill="none" stroke="#14303f" stroke-width="3"/>
     <g fill="none" stroke-linecap="round" stroke-linejoin="round">${ROADS.map(r => `<path d="${L(r)}" stroke="rgba(0,0,0,.5)" stroke-width="5"/><path d="${L(r)}" stroke="#d9a35a" stroke-width="2.2" opacity=".85"/>`).join('')}</g>
@@ -63,7 +89,7 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .pm-me .r { display: flex; align-items: center; gap: 12px; } .pm-me .av { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; background: linear-gradient(145deg, #ff8a4c, #c43a0a); }
 .pm-me b { display: block; font-size: 15px; } .pm-me small { font-size: 11px; color: rgba(255,255,255,.55); } .pm-me .m2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; } .pm-me .m2 div { padding: 9px 10px; border-radius: 11px; background: rgba(0,0,0,.3); font-size: 9.5px; font-weight: 800; letter-spacing: 1px; color: rgba(255,255,255,.5); } .pm-me .m2 b { font-size: 14px; color: #fff; letter-spacing: 0; margin-top: 2px; }
 /* map */
-.pm-map { position: relative; border-radius: 26px; overflow: hidden; background: #061019; border: 1px solid rgba(255,255,255,.08); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.pm-map { position: relative; border-radius: 26px; overflow: hidden; background: rgb(8,26,42); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
 .pm-mh { position: absolute; top: 14px; left: 14px; right: 14px; z-index: 5; display: flex; align-items: center; gap: 10px; pointer-events: none; } .pm-mh > * { pointer-events: auto; }
 .pm-loc { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: rgba(10,12,16,.82); backdrop-filter: blur(10px); font-size: 12.5px; font-weight: 700; } .pm-loc i { color: #ff5a1f; } .pm-loc small { display: block; font-size: 10px; color: rgba(255,255,255,.5); font-weight: 600; }
 .pm-seg { margin-left: auto; display: flex; padding: 4px; border-radius: 12px; background: rgba(10,12,16,.82); } .pm-seg b { padding: 7px 14px; border-radius: 9px; font-size: 11.5px; cursor: pointer; color: rgba(255,255,255,.6); } .pm-seg b.on { background: #ff5a1f; color: #fff; }
@@ -72,7 +98,7 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .pm-view { position: absolute; inset: 0; perspective: 1400px; overflow: hidden; cursor: grab; } .pm-view:active { cursor: grabbing; }
 .pm-plane { position: absolute; left: 50%; top: 50%; width: 900px; height: 1240px; margin: -620px 0 0 -450px; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.2,.8,.3,1); }
 .pm-plane.drag { transition: none; } .msvg { width: 100%; height: 100%; display: block; } .lbls text { fill: rgba(255,255,255,.7); text-anchor: middle; font-family: Inter; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,.6); stroke-width: 3px; }
-.pm-3d .pm-plane::after { content: ''; position: absolute; left: 0; right: 0; bottom: -40px; height: 40px; background: linear-gradient(#2a2c24, #0b0c09); transform-origin: top; transform: rotateX(-90deg); }
+.pm-3d .pm-plane::after { display: none; content: ''; position: absolute; left: 0; right: 0; bottom: -40px; height: 40px; background: linear-gradient(#2a2c24, #0b0c09); transform-origin: top; transform: rotateX(-90deg); }
 .pin { position: absolute; transform-style: preserve-3d; transform: translate(-50%, -100%); pointer-events: auto; cursor: pointer; }
 .pin .h { width: 24px; height: 24px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--c); border: 2px solid #fff; display: grid; place-items: center; box-shadow: 0 4px 10px rgba(0,0,0,.6); }
 .pin .h span { transform: rotate(45deg); font: 900 10px Inter; color: #111; } .pin .tt { position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); white-space: nowrap; padding: 4px 8px; border-radius: 7px; background: rgba(0,0,0,.85); font-size: 11px; font-weight: 700; opacity: 0; transition: .15s; pointer-events: none; } .pin:hover .tt { opacity: 1; }

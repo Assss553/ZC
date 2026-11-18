@@ -68,6 +68,39 @@ svg.i { width: 1em; height: 1em; display: block; }
 .bill { position: absolute; left: 50%; top: 18px; width: 170px; height: 78px; margin-left: -85px; border-radius: 6px; background: linear-gradient(135deg, #b6e3a8, #6fb36c); border: 2px solid #4f8f4b; box-shadow: 0 6px 14px rgba(0,0,0,.5); display: grid; place-items: center; font: 900 22px 'Plus Jakarta Sans'; color: #2f5d2c; animation: out 1.4s cubic-bezier(.2,.8,.3,1) forwards; }
 .bill::before { content: ''; position: absolute; inset: 7px; border: 1.5px dashed rgba(47,93,44,.45); border-radius: 4px; } @keyframes out { from { transform: translateY(-60px) scaleY(.2); opacity: 0; } 40% { opacity: 1; } to { transform: translateY(var(--y, 40px)) rotate(var(--r, 0deg)); opacity: 0; } }
 .toast { position: fixed; bottom: 34px; left: 50%; transform: translateX(-50%); padding: 11px 18px; border-radius: 12px; background: #111; font-size: 12.5px; font-weight: 700; opacity: 0; transition: .2s; } .toast.on { opacity: 1; }
+
+/* ===== HOLOGRAM v3 (side panel, game stays visible) ===== */
+:root { --h: #39e1ff; --h2: #ff7a3d; }
+#atm { justify-content: flex-end; padding-right: 4vw; background: linear-gradient(90deg, transparent 40%, rgba(0,8,14,.55)); perspective: 1400px; }
+.mach { width: 470px; height: min(860px, 92vh); transform: rotateY(-14deg); transform-origin: right center; }
+@keyframes rise { from { transform: rotateY(-40deg) translateX(80px) scale(.9); opacity: 0; filter: blur(8px); } }
+.body { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; gap: 12px; padding: 20px; border-radius: 22px;
+  background: linear-gradient(170deg, rgba(10,40,55,.38), rgba(4,14,22,.55)); border: 1px solid rgba(57,225,255,.45); backdrop-filter: blur(6px);
+  box-shadow: 0 0 0 1px rgba(57,225,255,.15), 0 0 40px rgba(57,225,255,.25), inset 0 0 60px rgba(57,225,255,.12); animation: flick 6s infinite; }
+@keyframes flick { 0%, 96%, 100% { opacity: 1; } 97% { opacity: .75; } 98% { opacity: 1; } 99% { opacity: .85; } }
+.body::before { border-radius: 22px; background: repeating-linear-gradient(0deg, rgba(57,225,255,.06) 0 1px, transparent 1px 4px); animation: scan 8s linear infinite; } @keyframes scan { to { background-position: 0 400px; } }
+.body::after { content: ''; position: absolute; left: 0; right: 0; height: 120px; top: -120px; pointer-events: none; background: linear-gradient(transparent, rgba(57,225,255,.18), transparent); animation: sweep 4s ease-in-out infinite; } @keyframes sweep { to { top: 100%; } }
+.mach::before, .mach::after { content: ''; position: absolute; width: 26px; height: 26px; border: 3px solid var(--h); z-index: 3; filter: drop-shadow(0 0 6px var(--h)); }
+.mach::before { left: -8px; top: -8px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; } .mach::after { right: -8px; bottom: -8px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+.glare { border-radius: 22px; background: radial-gradient(380px circle at var(--gx, 50%) var(--gy, 0%), rgba(57,225,255,.12), transparent 60%); }
+.brand { grid-column: auto; } .brand .lg { background: linear-gradient(145deg, rgba(57,225,255,.5), rgba(57,225,255,.1)); border: 1px solid var(--h); box-shadow: 0 0 18px rgba(57,225,255,.6); }
+.brand b { text-shadow: 0 0 12px rgba(57,225,255,.8); letter-spacing: 3px; } .brand .led { color: var(--h); } .brand .led i { background: var(--h); box-shadow: 0 0 10px var(--h); }
+.x { background: rgba(57,225,255,.1); border: 1px solid rgba(57,225,255,.35); }
+.screen { background: transparent; box-shadow: none; padding: 0; } .disp { border-radius: 16px; background: linear-gradient(170deg, rgba(57,225,255,.07), rgba(0,0,0,.25)); border: 1px solid rgba(57,225,255,.25); }
+.disp::after { background: repeating-linear-gradient(0deg, rgba(57,225,255,.03) 0 1px, transparent 1px 3px); }
+.pg h2 { text-shadow: 0 0 14px rgba(57,225,255,.6); } .pg p.s, .bal small, .opt small, .amt .s2 { color: rgba(170,235,255,.65); }
+.bal div { background: rgba(57,225,255,.06); border-color: rgba(57,225,255,.22); } .bal div:first-child { background: linear-gradient(135deg, rgba(255,122,61,.25), rgba(255,122,61,.05)); border-color: rgba(255,122,61,.45); }
+.bal b { font-size: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 12px rgba(57,225,255,.5); }
+.opts { grid-template-columns: 1fr; gap: 8px; } .opt { padding: 12px 14px; background: rgba(57,225,255,.05); border-color: rgba(57,225,255,.18); } .opt .ib { width: 44px; height: 44px; font-size: 24px; }
+.opt:hover { background: rgba(57,225,255,.12); box-shadow: 0 0 20px color-mix(in srgb, var(--c) 30%, transparent); } .opt kbd { background: rgba(57,225,255,.12); color: var(--h); }
+.amt { background: rgba(0,0,0,.25); border-color: rgba(57,225,255,.25); } .amt .v { text-shadow: 0 0 18px rgba(57,225,255,.6); } .qk b { background: rgba(57,225,255,.06); border-color: rgba(57,225,255,.2); }
+.ins small { color: rgba(170,235,255,.65); } .ccard { box-shadow: 0 0 30px rgba(57,225,255,.4); }
+.side { flex-direction: row; transform: none; } .slot { width: 120px; height: auto; background: rgba(57,225,255,.05); border: 1px solid rgba(57,225,255,.2); box-shadow: none; } .slot i { width: 80px; box-shadow: 0 0 0 1px var(--h), 0 0 14px var(--h); }
+.keys { grid-template-columns: repeat(6, 1fr); padding: 8px; gap: 6px; background: rgba(57,225,255,.04); border: 1px solid rgba(57,225,255,.15); } .keys b { height: 34px; font-size: 14px; background: rgba(57,225,255,.1); box-shadow: 0 0 0 1px rgba(57,225,255,.3); color: #dff8ff; }
+.keys b.c { background: rgba(255,77,106,.25); box-shadow: 0 0 0 1px #ff4d6a; } .keys b.e { background: rgba(46,229,157,.25); box-shadow: 0 0 0 1px #2ee59d; color: #fff; } .keys b.d { grid-column: span 6 !important; background: rgba(255,211,107,.18); box-shadow: 0 0 0 1px #ffd36b; color: #ffd36b; }
+.keys b.press { transform: scale(.92); background: rgba(57,225,255,.4); }
+.disp2 { grid-column: auto; height: 52px; background: rgba(57,225,255,.04); border: 1px solid rgba(57,225,255,.2); box-shadow: none; } .disp2 .mouth { box-shadow: 0 0 0 1px var(--h), 0 0 12px rgba(57,225,255,.5); }
+.go { box-shadow: 0 0 24px color-mix(in srgb, var(--c) 55%, transparent); }
 </style></head><body>
 <svg width="0" height="0" style="position:absolute"><defs>
   <linearGradient id="gO" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb07a"/><stop offset="1" stop-color="#ff5a1f"/></linearGradient>
@@ -109,7 +142,7 @@ const $ = (id) => document.getElementById(id);
 const PREVIEW = !window.invokeNative;
 const RES = window.GetParentResourceName ? GetParentResourceName() : 'rox_atm';
 const post = (n, d = {}) => PREVIEW ? Promise.resolve(n === 'tx' ? mock(d) : 1) : fetch(`https://${RES}/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json()).catch(() => null);
-const m = (n) => '$' + Math.floor(n || 0).toLocaleString('en-US');
+const m = (n) => { n = Math.floor(n || 0); const a = Math.abs(n); return a >= 1e12 ? '$' + (n / 1e12).toFixed(1) + 'T' : a >= 1e9 ? '$' + (n / 1e9).toFixed(1) + 'B' : '$' + n.toLocaleString('en-US'); };
 let S = {}, kind = 'withdraw', val = '', busy = false, page = 'pIns';
 function go(p) { page = p; document.querySelectorAll('.pg').forEach(x => x.classList.toggle('on', x.id === p)); }
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2200); }
