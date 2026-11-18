@@ -21,9 +21,10 @@ def screen(W,H,wall,portrait):
     d.rounded_rectangle([W/2-u*7,H-u*1.6,W/2+u*7,H-u*1],u*.3,fill=(255,255,255,200))
     return im
 def device(W,H,r,bez,wall,portrait):
+    shot=Image.open(wall).convert('RGBA').resize((W,H),Image.LANCZOS)
     D=Image.new('RGBA',(W+2*bez,H+2*bez),(0,0,0,0)); body=Image.new('RGBA',D.size,(12,12,14,255))
     ImageDraw.Draw(body).rounded_rectangle([2,2,D.width-3,D.height-3],r,outline=(70,70,78,255),width=6)
-    D.paste(body,(0,0),rr(D.size,r)); D.paste(screen(W,H,wall,portrait),(bez,bez),rr((W,H),max(10,r-bez)))
+    D.paste(body,(0,0),rr(D.size,r)); D.paste(shot,(bez,bez),rr((W,H),max(10,r-bez)))
     # camera
     dd=ImageDraw.Draw(D); cx=D.width//2 if not portrait else D.width//2; cy=bez//2
     dd.ellipse([cx-8,cy-8,cx+8,cy+8],fill=(30,30,36)); dd.ellipse([cx-3,cy-3,cx+3,cy+3],fill=(40,70,120))
@@ -45,9 +46,9 @@ def tilt(D,out=2048,quad=None):
 wall='/home/user/ZC/rox_phone/html/img/wall_golden.webp'
 import os
 w2=glob.glob('/home/user/ZC/rox_police/html/img/wallpapers/street.jpg'); wl=w2[0] if w2 else wall
-ip=device(2000,1400,150,90,wl,False)
-ipt=tilt(ip,2048,[(560,170),(1880,820),(1460,1880),(170,1220)])
-ph=device(800,1700,130,40,wall,True)
+ip=device(2000,1148,150,90,'/tmp/claude-0/-home-user-ZC/3eac5cd8-a0c6-5bdc-9017-57c8f915549a/scratchpad/scr_ipad.png',False)
+ipt=tilt(ip,2048,[(560,230),(1880,800),(1500,1760),(170,1190)])
+ph=device(800,1750,130,40,'/tmp/claude-0/-home-user-ZC/3eac5cd8-a0c6-5bdc-9017-57c8f915549a/scratchpad/scr_phone.png',True)
 pht=tilt(ph,2048,[(780,170),(1560,450),(1250,1880),(470,1600)])
 os.makedirs('/home/user/ZC/release/items',exist_ok=True)
 for n,im in (('ipad',ipt),('tablet',ipt),('phone',pht)):
