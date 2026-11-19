@@ -23,7 +23,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: rox-v${{ github.run_number }}
-          name: ROX v1.1.${{ github.run_number }}
+          name: ROX v1.2.${{ github.run_number }}
           make_latest: true
           target_commitish: ${{ github.sha }}
           files: out/ROX.exe

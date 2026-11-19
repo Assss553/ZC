@@ -12,6 +12,9 @@ public sealed class Settings
     public Dictionary<string, float> Values { get; set; } = new();
     public List<string?> Pads { get; set; } = Enumerable.Repeat<string?>(null, 12).ToList();
     public List<Dictionary<string, float>?> FxPresets { get; set; } = Enumerable.Repeat<Dictionary<string, float>?>(null, 6).ToList();
+    public List<string> Transitions { get; set; } = new();
+    public string StageBg { get; set; } = "green";
+    public bool TransitionSound { get; set; } = true;
     public string Language { get; set; } = "en";
     public ThemeColors Theme { get; set; } = ThemeColors.Presets[0].Clone();
     public bool Monitor { get; set; }

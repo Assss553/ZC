@@ -48,6 +48,7 @@ public sealed class AudioEngine : IDisposable
             var (cap, buf) = OpenCapture(micId);
             micCap = cap;
             ISampleProvider p = Fmt.Normalize(buf.ToSampleProvider(), 1);
+            p = new Denoiser(p, Voice);
             p = new VoiceCleaner(p, Voice);
             pitch = new SmbPitchShiftingSampleProvider(p) { PitchFactor = PitchFactor() };
             p = new VoiceEffects(pitch, Voice);
@@ -123,6 +124,22 @@ public sealed class AudioEngine : IDisposable
     {
         if (!cache.TryGetValue(path, out var data)) cache[path] = data = CachedSound.Load(path);
         sampleMix.AddMixerInput(new CachedSound(data));
+    }
+
+    /// Plays the audio track of any media file (mp3/wav/mp4/mov...) into the Samples channel.
+    public void PlayMedia(string path)
+    {
+        var r = new MediaFoundationReader(path);
+        var p = Fmt.Normalize(r.ToSampleProvider(), 2);
+        sampleMix.AddMixerInput(new DisposeAtEnd(p, r));
+    }
+
+    sealed class DisposeAtEnd : ISampleProvider
+    {
+        readonly ISampleProvider p; IDisposable? d;
+        public DisposeAtEnd(ISampleProvider p, IDisposable d) { this.p = p; this.d = d; }
+        public WaveFormat WaveFormat => p.WaveFormat;
+        public int Read(float[] b, int o, int c) { int n = p.Read(b, o, c); if (n == 0) { d?.Dispose(); d = null; } return n; }
     }
 
     public void StopSamples() => sampleMix.RemoveAllMixerInputs();

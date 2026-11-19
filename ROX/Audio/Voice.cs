@@ -12,6 +12,7 @@ public sealed class VoiceSettings
     public float Reverb, Echo;       // 0..100
     public float Pitch;              // semitones -12..12
     public bool Megaphone, Robot, Bleep, FxOn = true;
+    public bool Radio, Telephone, Alien, Distortion, Underwater, Chorus;
     public volatile bool EqDirty = true;
     public float GateOpen;           // 0..1 for UI
 }
@@ -38,7 +39,7 @@ public sealed class VoiceCleaner : ISampleProvider
             s.EqDirty = false;
         }
         float strength = s.NoiseStrength;
-        float thr = Fmt.Db(-66 + strength * 0.4f);       // -66 dB .. -26 dB
+        float thr = Fmt.Db(-70 + strength * 0.3f);       // -70 dB .. -40 dB (denoiser does the heavy lifting)
         float comp = s.Comp;
         float cThr = -10 - comp * 0.2f, ratio = 1 + comp * 0.07f, makeup = comp * 0.1f;
         float gain = s.Gain;
@@ -76,6 +77,11 @@ public sealed class VoiceEffects : ISampleProvider
     readonly BiQuadFilter megHp = BiQuadFilter.HighPassFilter(Fmt.Rate, 600, 0.7f);
     readonly BiQuadFilter megLp = BiQuadFilter.LowPassFilter(Fmt.Rate, 3200, 0.7f);
     readonly float[] echoBuf = new float[Fmt.Rate]; int echoPos;
+    readonly BiQuadFilter radHp = BiQuadFilter.HighPassFilter(Fmt.Rate, 350, 0.7f), radLp = BiQuadFilter.LowPassFilter(Fmt.Rate, 3200, 0.7f);
+    readonly BiQuadFilter telHp = BiQuadFilter.HighPassFilter(Fmt.Rate, 600, 1.2f), telLp = BiQuadFilter.LowPassFilter(Fmt.Rate, 2400, 1.2f);
+    readonly BiQuadFilter uwLp = BiQuadFilter.LowPassFilter(Fmt.Rate, 450, 1.0f);
+    readonly BiQuadFilter distLp = BiQuadFilter.LowPassFilter(Fmt.Rate, 5000, 0.7f);
+    readonly float[] mod = new float[4800]; int modPos; double lfo, lfo2; int crushN; float crushHold;
     readonly Comb[] combs; readonly AllPass[] alls;
     double robotPh, bleepPh;
 
@@ -105,6 +111,36 @@ public sealed class VoiceEffects : ISampleProvider
                 x *= (float)Math.Sin(robotPh) * 1.6f;
             }
 
+            if (fx && (s.Alien || s.Chorus || s.Underwater))
+            {
+                mod[modPos] = x;
+                if (s.Alien)
+                {
+                    lfo += 2 * Math.PI * 0.35 / Fmt.Rate;
+                    float d = Tap(48 + 240 * (float)(0.5 + 0.5 * Math.Sin(lfo)));
+                    x = 0.6f * x + 0.6f * d; mod[modPos] = x * 0.95f; // flanger with feedback
+                }
+                if (s.Chorus)
+                {
+                    lfo2 += 2 * Math.PI * 1.1 / Fmt.Rate;
+                    x = 0.7f * x + 0.35f * Tap(960 + 240 * (float)Math.Sin(lfo2)) + 0.35f * Tap(1300 + 300 * (float)Math.Cos(lfo2 * 0.8));
+                }
+                if (s.Underwater)
+                {
+                    lfo += 2 * Math.PI * 4.5 / Fmt.Rate;
+                    x = uwLp.Transform(Tap(200 + 150 * (float)Math.Sin(lfo))) * 1.8f;
+                }
+                modPos = (modPos + 1) % mod.Length;
+            }
+            if (fx && s.Radio) x = (float)Math.Tanh(radLp.Transform(radHp.Transform(x)) * 3) * 0.5f;
+            if (fx && s.Telephone)
+            {
+                x = telLp.Transform(telHp.Transform(x)) * 2;
+                if (++crushN >= 6) { crushN = 0; crushHold = MathF.Round(x * 24) / 24; } // 8 kHz-ish lo-fi
+                x = crushHold;
+            }
+            if (fx && s.Distortion) x = distLp.Transform((float)Math.Tanh(x * 12)) * 0.45f;
+
             int rp = (echoPos - echoLen + echoBuf.Length) % echoBuf.Length;
             float d = echoBuf[rp];
             echoBuf[echoPos] = x + d * echoFb * (echoMix > 0 ? 1 : 0);
@@ -127,8 +163,16 @@ public sealed class VoiceEffects : ISampleProvider
             b[o + i] = x;
         }
         if (robotPh > 1e6) robotPh = 0;
+        if (lfo > 1e6) lfo = 0; if (lfo2 > 1e6) lfo2 = 0;
         if (bleepPh > 1e6) bleepPh = 0;
         return n;
+    }
+
+    float Tap(float delay)
+    {
+        float pos = modPos - delay; while (pos < 0) pos += mod.Length;
+        int i0 = (int)pos; float f = pos - i0;
+        return mod[i0 % mod.Length] * (1 - f) + mod[(i0 + 1) % mod.Length] * f;
     }
 
     sealed class Comb

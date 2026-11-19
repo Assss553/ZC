@@ -7,11 +7,12 @@ namespace ROX;
 
 static class Draw
 {
-    public static void Text(DrawingContext dc, Visual v, string s, double size, Color c, Point center, bool bold = false)
+    public static void Text(DrawingContext dc, Visual v, string s, double size, Color c, Point center, bool bold = false, double maxWidth = 0)
     {
         var ft = new FormattedText(s, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
             new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, bold ? FontWeights.Bold : FontWeights.SemiBold, FontStretches.Normal),
             size, new SolidColorBrush(c), VisualTreeHelper.GetDpi(v).PixelsPerDip);
+        if (maxWidth > 0) { while (ft.Width > maxWidth && size > 7) { size -= 0.5; ft.SetFontSize(size); } }
         dc.DrawText(ft, new Point(center.X - ft.Width / 2, center.Y - ft.Height / 2));
     }
 
@@ -52,7 +53,7 @@ public sealed class Knob : FrameworkElement
     public Knob(bool big = false)
     {
         Big = big;
-        Width = big ? 120 : 84; Height = big ? 138 : 100;
+        Width = big ? 132 : 92; Height = big ? 140 : 102;
         Cursor = Cursors.SizeNS; FlowDirection = FlowDirection.LeftToRight;
         ThemeManager.Changed += InvalidateVisual;
         ToolTip = "Drag / scroll — double-click to reset";
@@ -82,19 +83,20 @@ public sealed class Knob : FrameworkElement
             dc.DrawEllipse(new SolidColorBrush(lit ? Draw.Lerp(a1, a2, t) : Draw.Dim(ThemeManager.Sub, 60)), null, p, 2.2 * s, 2.2 * s);
         }
         // body
-        var body = new RadialGradientBrush(Draw.Lerp(ThemeManager.Panel2, Colors.White, ThemeManager.IsLight ? 0 : 0.10), Draw.Lerp(ThemeManager.Panel, Colors.Black, 0.35));
+        var body = new RadialGradientBrush(Color.FromRgb(58, 58, 66), Color.FromRgb(14, 14, 18)) { GradientOrigin = new Point(0.35, 0.3), Center = new Point(0.45, 0.4) };
+        dc.DrawEllipse(new SolidColorBrush(Draw.Dim(a1, 35)), null, c, r + 3 * s, r + 3 * s);
         dc.DrawEllipse(body, new Pen(new SolidColorBrush(Draw.Dim(a1, 90)), 1.2), c, r, r);
         // knurl
-        var kp = new Pen(new SolidColorBrush(Draw.Dim(ThemeManager.Text, 35)), 1);
+        var kp = new Pen(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1);
         for (int i = 0; i < 24; i++) dc.DrawLine(kp, Draw.Polar(c, r - 5 * s, i * 15), Draw.Polar(c, r - 1, i * 15));
         // value arc
         if (frac > 0.002) dc.DrawGeometry(null, new Pen(new SolidColorBrush(a1), 3 * s) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, Draw.Arc(c, r - 9 * s, 135, 135 + 270 * frac));
         // pointer
         double ang = 135 + 270 * frac;
-        dc.DrawLine(new Pen(new SolidColorBrush(ThemeManager.Text), 2.4 * s) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, Draw.Polar(c, r * 0.25, ang), Draw.Polar(c, r - 6 * s, ang));
+        dc.DrawLine(new Pen(Brushes.White, 2.4 * s) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, Draw.Polar(c, r * 0.25, ang), Draw.Polar(c, r - 6 * s, ang));
         // texts
         Draw.Text(dc, this, Format(value), 11 * s, a1, new Point(Width / 2, c.Y + r + 6 * s), true);
-        Draw.Text(dc, this, Label, 11 * s, ThemeManager.Sub, new Point(Width / 2, c.Y + r + 20 * s));
+        Draw.Text(dc, this, Label, 11 * s, ThemeManager.Sub, new Point(Width / 2, c.Y + r + 20 * s), false, Width - 4);
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)

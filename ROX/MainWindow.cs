@@ -19,7 +19,8 @@ public sealed class MainWindow : Window
     LedBar? master;
     Button? startBtn, micBtn;
     TextBlock? status, statusPill, musicName;
-    int bank;
+    int bank, page;
+    StageWindow? stage;
     readonly Button[] pads = new Button[4];
     readonly Button[] banks = new Button[3];
 
@@ -40,7 +41,7 @@ public sealed class MainWindow : Window
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
         timer.Tick += (_, _) => Meters();
         timer.Start();
-        Closing += (_, _) => { cfg.Monitor = engine.MonitorMic; cfg.Save(); engine.Dispose(); };
+        Closing += (_, _) => { stage?.Close(); cfg.Monitor = engine.MonitorMic; cfg.Save(); engine.Dispose(); };
     }
 
     Channel[] AllChannels => new[] { engine.Mic, engine.Line, engine.Music, engine.Samples };
@@ -53,6 +54,7 @@ public sealed class MainWindow : Window
         faders.Clear(); knobs.Clear();
 
         var device = Card(new Thickness(22), 22);
+        device.SetResourceReference(Border.BackgroundProperty, "Panel");
         device.BorderThickness = new Thickness(1.5);
         device.SetResourceReference(Border.BorderBrushProperty, "Accent1Soft");
         device.Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 0, Opacity = 0.6, Color = Colors.Black };
@@ -62,13 +64,37 @@ public sealed class MainWindow : Window
         status = Txt(L("hint"), 12, "Sub"); status.Margin = new Thickness(4, 10, 0, 0);
         DockPanel.SetDock(status, Dock.Bottom); dock.Children.Add(status);
 
-        var body = new Grid { Margin = new Thickness(0, 16, 0, 0) };
+        var board = new Grid();
         foreach (var w in new[] { GridLength.Auto, new GridLength(1, GridUnitType.Star), GridLength.Auto })
-            body.ColumnDefinitions.Add(new ColumnDefinition { Width = w });
+            board.ColumnDefinitions.Add(new ColumnDefinition { Width = w });
         var mixer = MixerSection();
         var mid = MiddleSection(); Grid.SetColumn(mid, 1);
         var right = RightSection(); Grid.SetColumn(right, 2);
-        body.Children.Add(mixer); body.Children.Add(mid); body.Children.Add(right);
+        board.Children.Add(mixer); board.Children.Add(mid); board.Children.Add(right);
+        var pages = new UIElement[] { board, EffectsPage(), TransitionsPage() };
+
+        var body = new Grid { Margin = new Thickness(0, 16, 0, 0) };
+        body.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var host = new ContentControl { Content = pages[page] }; Grid.SetColumn(host, 1);
+        var rail = new StackPanel { Margin = new Thickness(0, 0, 14, 0) };
+        var navs = new (string icon, string key)[] { ("board", "navBoard"), ("fx", "navFx"), ("video", "navTrans") };
+        var navBtns = new List<Button>();
+        for (int i = 0; i < navs.Length; i++)
+        {
+            int idx = i;
+            var nb = Btn("", false, 84); nb.Height = 76; nb.Margin = new Thickness(0, 0, 0, 10); nb.BorderThickness = new Thickness(0);
+            var c = new StackPanel();
+            c.Children.Add(Icons.Make(navs[i].icon, 26));
+            var tl = new TextBlock { Text = L(navs[i].key), FontSize = 11, Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
+            tl.SetBinding(TextBlock.ForegroundProperty, new System.Windows.Data.Binding("Foreground") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(Control), 1) });
+            c.Children.Add(tl);
+            nb.Content = c;
+            nb.Tag = i == page ? "on" : null;
+            nb.Click += (_, _) => { page = idx; host.Content = pages[idx]; foreach (var x in navBtns) x.Tag = null; nb.Tag = "on"; };
+            navBtns.Add(nb); rail.Children.Add(nb);
+        }
+        body.Children.Add(rail); body.Children.Add(host);
         dock.Children.Add(body);
 
         device.Child = dock;
@@ -285,6 +311,143 @@ public sealed class MainWindow : Window
         return card;
     }
 
+    // ---------- Effects page ----------
+    UIElement EffectsPage()
+    {
+        var v = engine.Voice;
+        var card = Card(new Thickness(20), 16);
+        var sp = new StackPanel();
+        sp.Children.Add(TitleIcon("fx", L("fxLib")));
+        var tip = Txt(L("fxLibTip"), 12, "Sub"); tip.Margin = new Thickness(2, 0, 0, 14); sp.Children.Add(tip);
+        var grid = new WrapPanel();
+        void Toggle(string icon, string key, Action flip, Func<bool> on)
+        {
+            var b = Tile(icon, L(key), true);
+            b.Tag = on() ? "on2" : null;
+            b.Click += (_, _) => { flip(); b.Tag = on() ? "on2" : null; };
+            grid.Children.Add(b);
+        }
+        void Preset(string icon, string key, params (string k, double val)[] vals)
+        {
+            var b = Tile(icon, L(key), false);
+            b.Click += (_, _) => { foreach (var (k, val) in vals) knobs[k].Value = val; };
+            grid.Children.Add(b);
+        }
+        Toggle("megaphone", "megaphone", () => v.Megaphone = !v.Megaphone, () => v.Megaphone);
+        Toggle("robot", "robot", () => v.Robot = !v.Robot, () => v.Robot);
+        Toggle("radio", "radio", () => v.Radio = !v.Radio, () => v.Radio);
+        Toggle("phone", "telephone", () => v.Telephone = !v.Telephone, () => v.Telephone);
+        Toggle("alien", "alien", () => v.Alien = !v.Alien, () => v.Alien);
+        Toggle("flash", "distortion", () => v.Distortion = !v.Distortion, () => v.Distortion);
+        Toggle("water", "underwater", () => v.Underwater = !v.Underwater, () => v.Underwater);
+        Toggle("group", "chorus", () => v.Chorus = !v.Chorus, () => v.Chorus);
+        Preset("up", "chipmunk", ("pitch", 7), ("reverb", 0));
+        Preset("deep", "deep", ("pitch", -5), ("bass", 6), ("reverb", 15));
+        Preset("star", "monster", ("pitch", -9), ("reverb", 35), ("bass", 8));
+        Preset("cave", "cave", ("reverb", 90), ("echo", 45));
+        Preset("mic", "announcer", ("pitch", -1), ("comp", 75), ("bass", 5), ("treble", 3), ("reverb", 8));
+        var reset = Tile("close", L("reset"), true);
+        reset.Click += (_, _) =>
+        {
+            foreach (var k in new[] { "pitch", "reverb", "echo", "bass", "mid", "treble" }) knobs[k].Value = 0;
+            knobs["comp"].Value = 30;
+            v.Megaphone = v.Robot = v.Radio = v.Telephone = v.Alien = v.Distortion = v.Underwater = v.Chorus = false;
+            Build();
+        };
+        grid.Children.Add(reset);
+        sp.Children.Add(grid);
+        card.Child = new ScrollViewer { Content = sp, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        return card;
+    }
+
+    static Button Tile(string icon, string text, bool second)
+    {
+        var b = Btn("", second, 168); b.Height = 118; b.Margin = new Thickness(6);
+        var c = new StackPanel();
+        c.Children.Add(Icons.Make(icon, 38));
+        var t = new TextBlock { Text = text, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
+        t.SetBinding(TextBlock.ForegroundProperty, new System.Windows.Data.Binding("Foreground") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(Control), 1) });
+        c.Children.Add(t);
+        b.Content = c;
+        return b;
+    }
+
+    // ---------- Transitions page ----------
+    UIElement TransitionsPage()
+    {
+        var card = Card(new Thickness(20), 16);
+        var dp = new DockPanel();
+        var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top);
+        top.Children.Add(TitleIcon("video", L("trans")));
+        var tip = Txt(L("transTip"), 12, "Sub"); tip.TextWrapping = TextWrapping.Wrap; tip.Margin = new Thickness(2, 0, 0, 10); top.Children.Add(tip);
+
+        var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 10) };
+        var add = Btn("", false); add.Content = Icons.With("plus", L("addClip"), 16); add.Height = 40;
+        add.Click += (_, _) =>
+        {
+            var dlg = new OpenFileDialog { Filter = "Video|*.mp4;*.webm;*.mov;*.wmv;*.avi;*.mkv|*.*|*.*", Multiselect = true };
+            if (dlg.ShowDialog() != true) return;
+            cfg.Transitions.AddRange(dlg.FileNames); cfg.Save(); Build();
+        };
+        var open = Btn("", true); open.Content = Icons.With("window", L("openStage"), 16); open.Height = 40;
+        open.Click += (_, _) => Stage().Show();
+        var stop = Btn("", true); stop.Content = Icons.With("stop", L("stopAll"), 16); stop.Height = 40;
+        stop.Click += (_, _) => { stage?.StopVideo(); engine.StopSamples(); };
+        bar.Children.Add(add); bar.Children.Add(open); bar.Children.Add(stop);
+
+        var bgLbl = Txt(L("stageBg") + ":", 12, "Sub"); bgLbl.VerticalAlignment = VerticalAlignment.Center; bgLbl.Margin = new Thickness(14, 0, 6, 0);
+        bar.Children.Add(bgLbl);
+        foreach (var key in new[] { "green", "black", "magenta" })
+        {
+            var rb = new RadioButton { Content = L(key), GroupName = "stagebg", IsChecked = cfg.StageBg == key, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 6, 0) };
+            rb.Checked += (_, _) => { cfg.StageBg = key; stage?.SetBackground(key); cfg.Save(); };
+            bar.Children.Add(rb);
+        }
+        var snd = new CheckBox { Content = L("withSound"), IsChecked = cfg.TransitionSound, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(14, 0, 0, 0) };
+        snd.Checked += (_, _) => cfg.TransitionSound = true; snd.Unchecked += (_, _) => cfg.TransitionSound = false;
+        bar.Children.Add(snd);
+        top.Children.Add(bar);
+        dp.Children.Add(top);
+
+        var obs = Txt(L("obsTip"), 12, "Sub"); obs.TextWrapping = TextWrapping.Wrap; obs.Margin = new Thickness(2, 10, 0, 0);
+        DockPanel.SetDock(obs, Dock.Bottom); dp.Children.Add(obs);
+
+        var grid = new WrapPanel();
+        for (int i = 0; i < cfg.Transitions.Count; i++)
+        {
+            int idx = i; var path = cfg.Transitions[i];
+            var b = Tile("video", System.IO.Path.GetFileNameWithoutExtension(path), false);
+            b.Width = 200; b.Height = 130;
+            b.ToolTip = path + "\nRight-click: " + L("remove");
+            b.Click += (_, _) => PlayTransition(path);
+            b.MouseRightButtonUp += (_, _) => { cfg.Transitions.RemoveAt(idx); cfg.Save(); Build(); };
+            grid.Children.Add(b);
+        }
+        var addTile = Tile("plus", L("addClip"), true); addTile.Width = 200; addTile.Height = 130;
+        addTile.Click += (_, _) => add.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        grid.Children.Add(addTile);
+        dp.Children.Add(new ScrollViewer { Content = grid, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
+        card.Child = dp;
+        return card;
+    }
+
+    StageWindow Stage()
+    {
+        if (stage == null) { stage = new StageWindow(); stage.Closed += (_, _) => stage = null; }
+        stage.SetBackground(cfg.StageBg);
+        return stage;
+    }
+
+    void PlayTransition(string path)
+    {
+        try
+        {
+            Stage().Play(path);
+            if (cfg.TransitionSound && engine.Running) engine.PlayMedia(path);
+        }
+        catch (Exception ex) { Status(L("error") + ex.Message); }
+    }
+
     // ================= Behaviour =================
     void PaintMic()
     {
@@ -401,8 +564,9 @@ public sealed class MainWindow : Window
     // ================= Helpers =================
     static Border Card(Thickness pad, double radius)
     {
-        var b = new Border { Padding = pad, CornerRadius = new CornerRadius(radius) };
-        b.SetResourceReference(Border.BackgroundProperty, "Panel");
+        var b = new Border { Padding = pad, CornerRadius = new CornerRadius(radius), BorderThickness = new Thickness(1) };
+        b.SetResourceReference(Border.BackgroundProperty, "Panel2");
+        b.SetResourceReference(Border.BorderBrushProperty, "Accent1Soft");
         return b;
     }
 
