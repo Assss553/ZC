@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- ROX Store | ROX Mechanic | All rights reserved -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff5fa8;--teal:#3ee0c5}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-family:Inter,sans-serif;color:#fff}
+body.preview{background:#2d3034 url(demo.jpg) center/cover}
+#app{position:fixed;inset:0;display:none}#app.on{display:block}
+.side{position:absolute;left:0;top:0;bottom:0;width:32vw;background:linear-gradient(90deg,rgba(18,18,26,.75),transparent)}
+.title{position:absolute;left:1.8vw;top:2.6vh;font:700 clamp(24px,3.3vh,34px) Rajdhani;letter-spacing:1px;text-transform:uppercase}
+.money{position:absolute;right:2vw;top:2.4vh;display:flex;gap:14px;align-items:center;font:700 clamp(20px,2.8vh,30px) Rajdhani}.money .b{color:rgba(255,255,255,.55);font-size:.8em}
+.list{position:absolute;left:1.8vw;top:12vh;width:clamp(300px,25vw,440px)}
+.p{display:flex;align-items:center;gap:12px;height:clamp(40px,5.2vh,54px);padding:0 14px;border-bottom:1px solid rgba(255,255,255,.1);font:500 clamp(15px,2vh,21px) Inter;color:rgba(255,255,255,.85);cursor:pointer}
+.p .dot{width:1.6vh;height:1.6vh;border-radius:50%;background:var(--pink);flex:0 0 auto;display:none}
+.p.on{color:#15151f;background:linear-gradient(90deg,#fff,#eeeef2 45%,rgba(255,255,255,.35) 90%);border-color:transparent}.p.on .dot{display:block}
+.p .lv{margin-left:auto;display:flex;gap:3px}.p .lv i{width:1vh;height:1vh;border-radius:2px;background:rgba(255,255,255,.2)}.p .lv i.f{background:var(--teal)}.p.on .lv i{background:rgba(0,0,0,.15)}.p.on .lv i.f{background:#15151f}
+.p .lock{margin-left:auto;width:1.8vh;height:1.8vh;opacity:.7}
+.p.max .pr,.p .pr{font:700 .85em Rajdhani;color:var(--teal);margin-left:10px;min-width:58px;text-align:right}.p.on .pr{color:#15151f}
+.desc{position:absolute;left:1.8vw;bottom:5vh;width:clamp(320px,34vw,620px);font:500 clamp(15px,2vh,21px)/1.5 Inter;text-shadow:0 2px 6px rgba(0,0,0,.8)}
+.keys{margin-top:1.2vh;display:flex;gap:16px;font:600 13px Inter;color:rgba(255,255,255,.8)}
+.k{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 5px;border-radius:5px;border:1.5px solid rgba(255,255,255,.8);font:800 10px Inter;margin-right:6px}
+.stats{position:absolute;right:2vw;bottom:5vh;width:clamp(280px,22vw,380px);background:rgba(36,37,46,.9)}
+.stats .h{padding:12px 16px;background:rgba(255,255,255,.06)}.stats .h b{display:block;font:700 clamp(16px,2.1vh,21px) Rajdhani;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.stats .h span{font:700 clamp(17px,2.3vh,23px) Rajdhani;letter-spacing:1px;text-transform:uppercase}
+.r{padding:9px 16px 10px}.r div{display:flex;justify-content:space-between;font:700 clamp(15px,2vh,20px) Rajdhani;letter-spacing:1.5px}
+.r i{display:block;position:relative;height:5px;margin-top:6px;background:rgba(255,255,255,.15)}.r i b{position:absolute;left:0;top:0;bottom:0;background:#fff}
+.r i em{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--teal)}
+.msg{position:absolute;left:50%;bottom:4vh;transform:translateX(-50%);padding:10px 20px;background:rgba(0,0,0,.75);border-top:2px solid var(--pink);font:600 14px Inter;opacity:0;transition:.25s}.msg.on{opacity:1}
+</style></head><body>
+<div id="app"><div class="side"></div><div class="title" id="title"></div>
+ <div class="money"><span id="cash"></span><span class="b" id="bank"></span></div>
+ <div class="list" id="list"></div><div class="desc" id="desc"></div><div class="stats" id="stats"></div><div class="msg" id="msg"></div></div>
+<script>
+const RES=typeof GetParentResourceName==='function'?GetParentResourceName():null;
+const post=(n,d={})=>RES?fetch(`https://${RES}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({})):Promise.resolve(null);
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>'$'+Math.round(n||0).toLocaleString('en-US');
+const LOCK='<svg class="lock" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1v11H6V10zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>';
+let D=null,sel=0,prev=null;
+function render(){$('title').textContent=D.name;$('cash').textContent=money(D.wallet.cash);$('bank').textContent='BANK '+money(D.wallet.bank);
+ $('list').innerHTML=D.parts.map((p,i)=>{let right;
+  if(p.locked)right=LOCK;else if(p.repair)right=`<span class="lv"></span><span class="pr">${p.done?'OK':'$'+p.price}</span>`;
+  else right=`<span class="lv">${Array.from({length:p.max},(_,k)=>`<i class="${k<p.level?'f':''}"></i>`).join('')}</span><span class="pr">${p.price?'$'+p.price.toLocaleString('en-US'):'MAX'}</span>`;
+  return `<div class="p ${i===sel?'on':''}" data-i="${i}"><span class="dot"></span>${esc(p.label)}${right}</div>`}).join('');
+ document.querySelectorAll('.p').forEach(e=>{e.onmouseenter=()=>{if(sel!==+e.dataset.i){sel=+e.dataset.i;render();post('nav')}};e.onclick=buy});
+ const p=D.parts[sel];$('desc').innerHTML=`${esc(p.desc)}<div class="keys"><span><span class="k">ENTER</span>${p.repair?'Repair':'Install'}</span><span><span class="k">↑↓</span>Select</span><span><span class="k">ESC</span>Leave</span></div>`;
+ const S=D.stats,R=(k,v,o)=>`<div class="r"><div>${k}<span>${v.toFixed(1)}</span></div><i><b style="width:${v*10}%"></b>${o!=null&&o!==v?`<em style="left:${o*10}%"></em>`:''}</i></div>`,P=prev||S;
+ $('stats').innerHTML=`<div class="h"><b>${esc(D.make)}</b><span>${esc(D.model)}</span></div>${R('SPEED',S.speed,P.speed)}${R('ACCELERATION',S.accel,P.accel)}${R('ASPHALT HANDLING',S.asphalt,P.asphalt)}${R('OFF-ROAD HANDLING',S.offroad,P.offroad)}${R('STRENGTH',S.strength,P.strength)}${R('RATING',S.rating,P.rating)}`}
+function msg(t){const m=$('msg');m.textContent=t;m.classList.add('on');clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('on'),2200)}
+function buy(){const p=D.parts[sel];if(p.locked)return msg('Not available for this vehicle');if(!p.repair&&!p.price)return msg('Already maxed');if(p.repair&&p.done)return msg('Nothing to repair');
+ const before=D.stats;post('buy',{part:sel+1}).then(r=>{if(!r){msg('Installed');return}if(r.ok){prev=before;D=Object.assign(D,r);msg(p.repair?'Repaired':'Installed '+p.label)}else msg(r.err||'Failed');render()})}
+function close(){$('app').classList.remove('on');post('close')}
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open'){D=d;sel=0;prev=null;$('app').classList.add('on');render()}});
+document.addEventListener('keydown',e=>{if(!D||!$('app').classList.contains('on'))return;
+ if(e.key==='Escape'||e.key==='Backspace')close();else if(e.key==='ArrowDown'){sel=(sel+1)%D.parts.length;render();post('nav')}else if(e.key==='ArrowUp'){sel=(sel-1+D.parts.length)%D.parts.length;render();post('nav')}else if(e.key==='Enter')buy()});
+if(!RES){document.body.classList.add('preview');window.postMessage({action:'open',name:'ROX AUTO CARE',make:'Vapid',model:"Jason's '70 Ganado",wallet:{cash:337,bank:2480},
+ stats:{speed:4.7,accel:5.3,asphalt:4.1,offroad:3.2,strength:6.1,rating:5.0},
+ parts:[{label:'Full Engine',level:1,max:4,price:1800,desc:'Adjust the torque and top speed. Pair with transmission upgrades to optimize performance.'},{label:'Intakes',locked:true,desc:''},{label:'Transmission',level:0,max:3,price:800,desc:'Faster gear changes.'},{label:'Boost',level:0,max:1,price:4500,desc:'Turbo.'},{label:'Repair',repair:true,price:250,desc:'Fix the engine and body.'}]},'*')}
+</script></body></html>
