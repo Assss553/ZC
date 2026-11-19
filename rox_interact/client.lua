@@ -42,7 +42,7 @@ exports('Keypad', function(opts)
     padP = promise.new()
     local check = opts.check
     SetNuiFocus(true, false)
-    SendNUIMessage({ action = 'keypad', length = opts.length or 4 })
+    SendNUIMessage({ action = 'keypad', length = opts.length or 4, mask = opts.mask, tries = opts.tries })
     RegisterNUICallback('code', function(d, cb)
         if d.cancel then cb({}); SetNuiFocus(false, false); padP:resolve(false); return end
         local ok = (check and check(d.code)) or (opts.code and d.code == tostring(opts.code)) or false
