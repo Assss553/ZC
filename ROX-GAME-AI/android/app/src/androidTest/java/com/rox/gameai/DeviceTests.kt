@@ -80,15 +80,33 @@ class DeviceTests {
         assertTrue(st.isTestSource)
         assertNotNull(frame)
         assertEquals("en", st.gameLanguage)
-        assertTrue("Safe Vision did not track the moving test object", regions.isNotEmpty())
-        // Pixel at the tracked object centre must be masked in the DISPLAYED (processed) frame
-        val r = regions.first().rect
-        val px = frame!!.bitmap.getPixel(r.centerX.coerceIn(0, frame.bitmap.width - 1), r.centerY.coerceIn(0, frame.bitmap.height - 1))
-        assertEquals("displayed frame not masked", 0xFF000000.toInt(), px)
+        if (e.modelInstalled) {
+            // Trained detector: the test video contains no nudity, so nothing may be blurred (no false positive)
+            assertTrue("false positive on a clean test scene: $regions", regions.isEmpty())
+        } else {
+            assertTrue("Safe Vision did not track the moving test object", regions.isNotEmpty())
+            val r = regions.first().rect
+            val px = frame!!.bitmap.getPixel(r.centerX.coerceIn(0, frame.bitmap.width - 1), r.centerY.coerceIn(0, frame.bitmap.height - 1))
+            assertEquals("displayed frame not masked", 0xFF000000.toInt(), px)
+        }
         assertTrue("no Arabic translation overlay produced", e.overlays.value.any { it.translated.any { c -> c in '؀'..'ۿ' } })
         assertTrue(app.store.history.value.isNotEmpty())
         e.stop()
         assertEquals(AutoStep.IDLE, e.status.value.step)
+    }
+
+    @Test fun trainedNudityDetectorRunsOnDevice() {
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+        val d = com.rox.gameai.vision.NudeNetDetector.load(ctx)
+        assertNotNull("trained detector failed to load on device", d)
+        val bmp = TestPatternSource().render(0)
+        val px = IntArray(bmp.width * bmp.height)
+        bmp.getPixels(px, 0, bmp.width, 0, 0, bmp.width, bmp.height)
+        d!!.detect(px, bmp.width, bmp.height, 0.5f) // warm-up
+        val t0 = System.currentTimeMillis()
+        val dets = d.detect(px, bmp.width, bmp.height, 0.5f)
+        report("NudeNet on device: ${System.currentTimeMillis() - t0} ms, detections on clean frame = ${dets.size}")
+        assertTrue("false positive on clean frame: $dets", dets.isEmpty())
     }
 
     @Test fun speechRecognitionAvailability() {
