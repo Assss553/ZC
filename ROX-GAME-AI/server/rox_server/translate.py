@@ -13,6 +13,21 @@ from .textlogic import TranslationCache
 
 log = logging.getLogger("rox.translate")
 INDEX_URL = "https://raw.githubusercontent.com/argosopentech/argospm-index/main/index.json"
+# Honest client identification (the server rejects the anonymous default "Python-urllib" agent)
+UA = {"User-Agent": "ROX-Server/1.0 (Argos Translate model client)"}
+
+
+def _download(url, dest=None, timeout=120):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        if dest is None:
+            return r.read()
+        with open(dest, "wb") as f:
+            while True:
+                chunk = r.read(1 << 20)
+                if not chunk:
+                    break
+                f.write(chunk)
 
 
 def models_dir() -> Path:
@@ -66,8 +81,7 @@ class Translator:
         if self._index is None:
             cache = models_dir() / "index.json"
             try:
-                with urllib.request.urlopen(INDEX_URL, timeout=20) as r:
-                    data = r.read()
+                data = _download(INDEX_URL, timeout=20)
                 cache.write_bytes(data)
             except Exception as e:
                 log.warning("index download failed (%s), using cached index", e)
@@ -91,7 +105,7 @@ class Translator:
                 self.status[key] = "downloading"
                 log.info("Downloading model %s from %s", key, url)
                 tmp = models_dir() / f"{key}.zip"
-                urllib.request.urlretrieve(url, tmp)
+                _download(url, tmp)
                 with zipfile.ZipFile(tmp) as z:
                     z.extractall(path)
                 tmp.unlink()
