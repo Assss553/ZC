@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ROX Store | All rights reserved -->
+<timecycle_modifier_data version="1.000000">
+	<modifier name="rox_rain" numMods="7" userFlags="0">
+		<postfx_exposure>-0.250000 -0.250000</postfx_exposure>
+		<postfx_desaturation>0.800000 0.800000</postfx_desaturation>
+		<postfx_contrast>0.180000 0.180000</postfx_contrast>
+		<postfx_tint_r>0.850000 0.850000</postfx_tint_r>
+		<postfx_tint_g>0.920000 0.920000</postfx_tint_g>
+		<postfx_tint_b>1.000000 1.000000</postfx_tint_b>
+		<postfx_tint_intensity>0.180000 0.180000</postfx_tint_intensity>
+	</modifier>
+	<modifier name="rox_fog" numMods="4" userFlags="0">
+		<postfx_desaturation>0.850000 0.850000</postfx_desaturation>
+		<postfx_contrast>-0.080000 -0.080000</postfx_contrast>
+		<postfx_vignetting_intensity>0.300000 0.300000</postfx_vignetting_intensity>
+		<postfx_intensity_bloom>1.200000 1.200000</postfx_intensity_bloom>
+	</modifier>
+</timecycle_modifier_data>
