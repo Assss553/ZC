@@ -2,6 +2,7 @@
 -- Minimal weapon HUD (top right): clip  reserve  + weapon image. Shows while aiming / shooting / reloading.
 local Config = {
     ImagePath = 'nui://ox_inventory/web/images/',
+    IconPath  = 'icons/',          -- ROX side-view icons (rox_weaponhud/html/icons), falls back to ImagePath
     ShowFor   = 4000,     -- ms the HUD stays after the last shot / aim
     HideGTA   = true,     -- hide GTA's own weapon icon + ammo
 }
@@ -32,7 +33,7 @@ CreateThread(function()
             local name = weaponName(hash)
             local d = { action = 'weapon', show = show, clip = clip, reserve = math.max(0, total - clip), maxClip = maxClip,
                         melee = melee, infinite = total > 9000, reloading = IsPedReloading(ped),
-                        image = name and (Config.ImagePath .. name .. '.png') or nil }
+                        image = name and (Config.IconPath .. name .. '.png') or nil, fallback = name and (Config.ImagePath .. name .. '.png') or nil }
             if d.show ~= last.show or d.clip ~= last.clip or d.reserve ~= last.reserve or d.reloading ~= last.reloading or d.image ~= last.image then
                 SendNUIMessage(d); last = d
             end

@@ -2871,7 +2871,8 @@ RegisterNetEvent('ox_inventory:roxPickup', function(dropId)
 	if #(GetEntityCoords(GetPlayerPed(src)) - drop.coords) > 3.0 then return end
 	local took = 0
 	for slot, it in pairs(drop.items) do
-		if it and Inventory.CanCarryItem(player, it.name, it.count, it.metadata) then
+		local roxOk = GetResourceState('rox_weaponrules') ~= 'started' or exports.rox_weaponrules:canCarry(src, it.name)
+		if it and roxOk and Inventory.CanCarryItem(player, it.name, it.count, it.metadata) then
 			if Inventory.RemoveItem(drop, it.name, it.count, it.metadata, slot) then
 				Inventory.AddItem(player, it.name, it.count, it.metadata)
 				took = took + 1

@@ -98,7 +98,7 @@ index 7cae016..2a3a538 100644
  	client.drops[dropId] = point
  end
 diff --git a/modules/inventory/server.lua b/modules/inventory/server.lua
-index 90876e1..2e96be4 100644
+index 90876e1..e224201 100644
 --- a/modules/inventory/server.lua
 +++ b/modules/inventory/server.lua
 @@ -1682,7 +1682,10 @@ local function dropItem(source, playerInventory, fromData, data)
@@ -113,7 +113,7 @@ index 90876e1..2e96be4 100644
  	playerInventory.changed = true
  
  	TriggerClientEvent('ox_inventory:createDrop', -1, dropId, Inventory.Drops[dropId], playerInventory.open and source, slot)
-@@ -2857,3 +2860,27 @@ end
+@@ -2857,3 +2860,28 @@ end
  exports('InspectInventory', Inventory.InspectInventory)
  
  return Inventory
@@ -128,7 +128,8 @@ index 90876e1..2e96be4 100644
 +	if #(GetEntityCoords(GetPlayerPed(src)) - drop.coords) > 3.0 then return end
 +	local took = 0
 +	for slot, it in pairs(drop.items) do
-+		if it and Inventory.CanCarryItem(player, it.name, it.count, it.metadata) then
++		local roxOk = GetResourceState('rox_weaponrules') ~= 'started' or exports.rox_weaponrules:canCarry(src, it.name)
++		if it and roxOk and Inventory.CanCarryItem(player, it.name, it.count, it.metadata) then
 +			if Inventory.RemoveItem(drop, it.name, it.count, it.metadata, slot) then
 +				Inventory.AddItem(player, it.name, it.count, it.metadata)
 +				took = took + 1
