@@ -1,0 +1,80 @@
+<!doctype html>
+<!-- ROX Store | ROX Interact | All rights reserved -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff5fa8;--teal:#3ee0c5}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-family:Inter,sans-serif;color:#fff}
+body.preview{background:#4a4f55 url(demo.jpg) center/cover}
+.k{display:inline-grid;place-items:center;min-width:3.2vh;height:3.2vh;padding:0 .8vh;border-radius:50%;background:#f2f3f5;color:#111;font:800 1.5vh Inter;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+/* prompt (single) */
+#prompt{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);display:none;align-items:center;gap:1vh;font:700 2.6vh Rajdhani;letter-spacing:.15vh;text-transform:uppercase;text-shadow:0 2px 6px rgba(0,0,0,.8)}
+#prompt.on{display:flex}
+/* choice list */
+#choice{position:fixed;left:58%;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:1.6vh}
+#choice.on{display:flex}
+#choice .o{display:flex;align-items:center;gap:1.4vh;font:700 3vh/1 Rajdhani;letter-spacing:.15vh;text-transform:uppercase;color:rgba(255,255,255,.85);text-shadow:0 2px 6px rgba(0,0,0,.85);position:relative}
+#choice .o .dot{width:3.2vh;display:grid;place-items:center}
+#choice .o .dot::after{content:"";width:1.1vh;height:1.1vh;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+#choice .o.on{color:#fff}#choice .o.on .dot::after{display:none}
+#choice .o:not(:last-child) .dot::before{content:"";position:absolute;left:1.55vh;top:2.4vh;width:2px;height:3vh;background:rgba(255,255,255,.6)}
+#choice .o .price{font-size:.7em;color:var(--teal);margin-left:.6vh}
+/* quick heal */
+#heal{position:fixed;left:50%;bottom:16vh;transform:translateX(-50%);display:none;gap:1.6vh}
+#heal.on{display:flex}
+#heal .s{display:flex;flex-direction:column;align-items:center;gap:1.4vh}
+#heal .c{width:11vh;height:11vh;background:linear-gradient(180deg,rgba(90,94,102,.45),rgba(50,54,62,.5));display:grid;place-items:center;position:relative;backdrop-filter:blur(4px)}
+#heal .c img{max-width:60%;max-height:62%;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}
+#heal .c.empty img{opacity:.35;filter:grayscale(1)}
+#heal .n{position:absolute;left:0;right:0;bottom:-.1vh;height:3.2vh;background:rgba(30,32,38,.85);display:flex;align-items:center;justify-content:center;gap:.6vh;font:700 2.1vh Rajdhani}
+#heal .n i{width:2vh;height:2vh;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:1.2vh}
+#heal .hp i{background:var(--pink)}#heal .ad i{background:#ffc23d;color:#111}
+/* keypad */
+#pad{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.35)}
+#pad.on{display:grid}
+.dev{width:30vh;padding:2.4vh 2.2vh 2.6vh;border-radius:2vh;background:linear-gradient(160deg,#5a5d62,#2d2f33);box-shadow:0 2vh 5vh rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.15),inset 0 -3px 0 rgba(0,0,0,.4)}
+.scr{height:7vh;border-radius:.8vh;background:linear-gradient(#1e3b29,#2f6b45);box-shadow:inset 0 3px 8px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font:700 4.6vh 'Courier New',monospace;letter-spacing:1vh;color:#8dffb0;text-shadow:0 0 8px rgba(141,255,176,.7)}
+.scr.ok{color:#c9ffd9}.scr.bad{background:linear-gradient(#3b1e1e,#6b2f2f);color:#ff9d9d;text-shadow:0 0 8px #ff6b6b}
+.brand{text-align:center;font:700 1.3vh Inter;letter-spacing:.4vh;color:rgba(255,255,255,.4);margin:1.2vh 0}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1vh}
+.keys b{height:5vh;border-radius:.7vh;background:linear-gradient(#e9eaec,#b9bcc2);color:#222;display:grid;place-items:center;font:800 2.4vh Inter;cursor:pointer;box-shadow:0 .5vh 0 #6c6f75,0 .7vh 1vh rgba(0,0,0,.4);transition:transform .05s,box-shadow .05s}
+.keys b:active,.keys b.p{transform:translateY(.4vh);box-shadow:0 .1vh 0 #6c6f75}
+.keys b.c{background:linear-gradient(#ff6b6b,#d63c3c);color:#fff}.keys b.e{background:linear-gradient(#4be37f,#22a957);color:#fff}
+.keys b.y{background:linear-gradient(#ffd34d,#e0a81c)}.keys b.bl{background:linear-gradient(#5aa8ff,#2c6fd6);color:#fff}
+.hint{text-align:center;margin-top:1.6vh;font:600 1.4vh Inter;color:rgba(255,255,255,.6)}
+</style></head><body>
+<div id="prompt"><span class="k" id="pk">E</span><span id="pt"></span></div>
+<div id="choice"></div>
+<div id="heal"><div class="s"><div class="c hp" id="h1"><img id="h1i"><div class="n hp"><span id="h1n">0</span><i>♥</i></div></div><span class="k" id="h1k">1</span></div>
+ <div class="s"><div class="c ad" id="h2"><img id="h2i"><div class="n ad"><span id="h2n">0</span><i>♥</i></div></div><span class="k" id="h2k">2</span></div></div>
+<div id="pad"><div class="dev"><div class="scr" id="scr">----</div><div class="brand">ROX SECURE</div><div class="keys" id="keys"></div><div class="hint">Type the code · ENTER confirm · ESC cancel</div></div></div>
+<script>
+const RES=typeof GetParentResourceName==='function'?GetParentResourceName():null;
+const post=(n,d={})=>RES?fetch(`https://${RES}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({})):Promise.resolve({});
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* choice */
+let C=null;
+function choice(d){C=d;C.sel=d.sel||0;drawC()}
+function drawC(){const el=$('choice');if(!C){el.classList.remove('on');return}el.classList.add('on');
+ el.innerHTML=C.options.map((o,i)=>`<div class="o ${i===C.sel?'on':''}"><span class="dot">${i===C.sel?`<span class="k">${esc(C.key||'E')}</span>`:''}</span>${esc(o.label)}${o.price?`<span class="price">$${o.price}</span>`:''}</div>`).join('')}
+/* keypad */
+let P=null;const KEYS=['1','2','3','C','4','5','6','Y','7','8','9','B','*','0','#','E'];
+function pad(d){P={code:'',len:d.length||4};$('pad').classList.add('on');$('scr').className='scr';$('scr').textContent='-'.repeat(P.len);
+ $('keys').innerHTML=KEYS.map(k=>`<b class="${k==='C'?'c':k==='E'?'e':k==='Y'?'y':k==='B'?'bl':''}" data-k="${k}">${k==='E'?'↵':k==='Y'||k==='B'?'':k}</b>`).join('');
+ document.querySelectorAll('.keys b').forEach(b=>b.onclick=()=>press(b.dataset.k))}
+function press(k){if(!P)return;const b=document.querySelector(`.keys b[data-k="${k}"]`);if(b){b.classList.add('p');setTimeout(()=>b.classList.remove('p'),90)}post('beep');
+ if(k==='C'){P.code='';}else if(k==='E'){post('code',{code:P.code}).then(r=>{const s=$('scr');s.className='scr '+(r&&r.ok?'ok':'bad');s.textContent=r&&r.ok?'OPEN':'ERROR';setTimeout(()=>{if(r&&r.ok)closePad(true);else{P.code='';s.className='scr';s.textContent='-'.repeat(P.len)}},900)});return}
+ else if(/^\d$/.test(k)&&P.code.length<P.len)P.code+=k;$('scr').textContent=(P.code+'-'.repeat(P.len)).slice(0,P.len)}
+function closePad(done){$('pad').classList.remove('on');P=null;if(!done)post('code',{cancel:true})}
+document.addEventListener('keydown',e=>{if(!P)return;if(/^\d$/.test(e.key))press(e.key);else if(e.key==='Enter')press('E');else if(e.key==='Backspace'){P.code=P.code.slice(0,-1);$('scr').textContent=(P.code+'-'.repeat(P.len)).slice(0,P.len)}else if(e.key==='Escape')closePad(false)});
+window.addEventListener('message',e=>{const d=e.data||{};
+ if(d.action==='prompt'){$('prompt').classList.toggle('on',!!d.text);$('pt').textContent=d.text||'';$('pk').textContent=d.key||'E'}
+ if(d.action==='choice')choice(d);if(d.action==='choiceSel'&&C){C.sel=d.sel;drawC()}if(d.action==='choiceClose'){C=null;drawC()}
+ if(d.action==='heal'){const h=$('heal');h.classList.toggle('on',!!d.show);if(d.slots)d.slots.forEach((s,i)=>{const n=i+1;$('h'+n+'i').src=s.image;$('h'+n+'n').textContent=s.count;$('h'+n).classList.toggle('empty',!s.count);$('h'+n+'k').textContent=s.key})}
+ if(d.action==='keypad')pad(d)});
+if(!RES){document.body.classList.add('preview');const q=new URLSearchParams(location.search).get('v')||'choice';
+ if(q==='choice')choice({options:[{label:'Tropical Green Paint'},{label:'Stormy Blue Paint'},{label:'Pastel Peach Paint',price:40}],key:'E'});
+ if(q==='heal'){window.postMessage({action:'heal',show:true,slots:[{image:'pills.png',count:3,key:'1'},{image:'syringe.png',count:0,key:'2'}]},'*')}
+ if(q==='pad')pad({length:4})}
+</script></body></html>
