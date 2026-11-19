@@ -120,7 +120,9 @@ local function open()
     if LocalPlayer.state.invBusy then return end
     isOpen = true
     SetNuiFocus(true, true); SetNuiFocusKeepInput(true)
-    SendNUIMessage({ action = 'open', data = buildData(), imagepath = Config.ImagePath, equipped = currentWeaponName() })
+    local cash = 0
+    for _, it in pairs(exports.ox_inventory:GetPlayerItems() or {}) do if it.name == 'money' then cash = cash + it.count end end
+    SendNUIMessage({ action = 'open', data = buildData(), imagepath = Config.ImagePath, equipped = currentWeaponName(), cash = cash })
     PlaySoundFrontend(-1, 'NAV_UP_DOWN', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
     CreateThread(function()
         while isOpen do
