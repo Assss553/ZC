@@ -131,6 +131,7 @@ $script:Strings = @{
         M_network_t = 'تحسين الشبكة';    M_network_s = 'بنق أقل ولاق أقل في الأونلاين'
         M_input_t = 'الكيبورد والماوس';  M_input_s = 'تصويب 1:1، أزرار أسرع، بدون نافذة Sticky Keys'
         M_startup_t = 'برامج بدء التشغيل'; M_startup_s = 'البرامج الثقيلة ما تشتغل مع الويندوز'
+        M_fivem_t = 'إصلاح FiveM';       M_fivem_s = 'يصلّح كراش امتلاء الرام: يمسح كاش FiveM، ذاكرة افتراضية تلقائية، يفضّي الرام (قفّل FiveM قبل)'
         M_ram_t = 'الرامات والعمليات';   M_ram_s = 'عمليات أقل، و Widgets و Edge ما يشتغلون بالخلفية'
 
         T_Applied     = 'تم التطبيق ✓'
@@ -387,6 +388,7 @@ $script:Strings = @{
         M_network_t = 'Network';         M_network_s = 'Lower ping and less lag online'
         M_input_t = 'Keyboard & mouse';  M_input_s = 'Raw 1:1 aim, faster keys, no Sticky Keys pop-up'
         M_startup_t = 'Startup apps';    M_startup_s = 'Heavy apps no longer start with Windows'
+        M_fivem_t = 'FiveM fix';         M_fivem_s = 'Fixes out-of-RAM crashes: clears the FiveM cache, automatic page file, frees RAM (close FiveM first)'
         M_ram_t = 'RAM & processes';     M_ram_s = 'Fewer processes, Widgets and Edge stop running in the background'
 
         T_Applied     = 'Applied ✓'

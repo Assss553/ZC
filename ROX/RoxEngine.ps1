@@ -1036,6 +1036,22 @@ function Invoke-IntelTune {
 
 # ================================================================= MODULES (what the ROX cards run)
 
+# FiveM: clears its caches (they grow and eat RAM), lets Windows size the page file, frees RAM.
+function Invoke-FiveMFix {
+    Write-Step 'FiveM: memory crash fix'
+    $app = Join-Path $env:LOCALAPPDATA 'FiveM\FiveM.app'
+    if (-not (Test-Path -LiteralPath $app)) { Write-Skip 'FiveM not found on this PC'; return }
+    if (Get-Process -Name 'FiveM*' -ErrorAction SilentlyContinue) { Write-Attention 'Close FiveM first, then run this again'; return }
+    $freed = [int64]0
+    foreach ($d in 'data\cache', 'data\server-cache', 'data\server-cache-priv', 'crashes', 'logs') {
+        $freed += Remove-FolderContents (Join-Path $app $d)
+    }
+    Write-Ok ('FiveM cache cleared: {0:N0} MB' -f ($freed / 1MB))
+    Set-PagefileAuto
+    $null = Invoke-CleanRam
+    Write-Ok 'Done - restart the PC once so the page file change takes effect'
+}
+
 function Invoke-RoxModule([string]$Id) {
     Import-Backup
     switch ($Id) {
@@ -1047,6 +1063,7 @@ function Invoke-RoxModule([string]$Id) {
         'network' { Invoke-Safe 'Network' { Set-NetworkLatency } }
         'input'   { Invoke-Safe 'Input' { Set-InputTweaks } }
         'startup' { Invoke-Safe 'Startup' { Disable-StartupApps } }
+        'fivem'   { Invoke-Safe 'FiveM' { Import-Backup; Invoke-FiveMFix; Export-Backup } }
         'ram'     { Invoke-Safe 'Processes' { Optimize-Processes }; Invoke-Safe 'Bloat' { Disable-BackgroundBloat } }
         default   { Write-Attention "Unknown module: $Id" }
     }

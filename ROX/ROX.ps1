@@ -175,7 +175,8 @@ $script:ModuleDefs = @(
     @{ Key = 'network'; Icon = 0xE701; Accent = '#FF22D3EE'; Check = 'network' },
     @{ Key = 'input';   Icon = 0xE765; Accent = '#FFF472B6'; Check = 'input' },
     @{ Key = 'startup'; Icon = 0xE7E8; Accent = '#FFFB923C'; Check = 'startup' },
-    @{ Key = 'ram';     Icon = 0xE9D9; Accent = '#FF4ADE80'; Check = 'svchost' }
+    @{ Key = 'ram';     Icon = 0xE9D9; Accent = '#FF4ADE80'; Check = 'svchost' },
+    @{ Key = 'fivem';   Icon = 0xE7FC; Accent = '#FFF97316'; Check = 'none' }
 )
 $script:CatColor = @{ app = '#FF2D3A8C'; launcher = '#FF5B2A9E'; chat = '#FF0F6A8A'; browser = '#FF7A4A12'; tool = '#FF7A1F4A' }
 $script:Palette  = @('#FF3B2A7A', '#FF1E4D7A', '#FF6B2A4D', '#FF22604A', '#FF6B4D2A', '#FF2A4D6B', '#FF4A2A6B', '#FF6B2A2A')
