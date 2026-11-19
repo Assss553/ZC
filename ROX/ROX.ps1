@@ -1552,6 +1552,13 @@ if ($RenderTest) {
 }
 
 # ----------------------------------------------------------------- run
+# Fit the window to the screen (small laptops / 125-150% display scaling).
+$wa = [System.Windows.SystemParameters]::WorkArea
+if ($window.Width -gt $wa.Width - 20 -or $window.Height -gt $wa.Height - 20) {
+    $window.Width  = [math]::Max($window.MinWidth, $wa.Width - 20)
+    $window.Height = [math]::Max($window.MinHeight, $wa.Height - 20)
+    if ($wa.Width -lt 1200 -or $wa.Height -lt 700) { $window.WindowState = 'Maximized' }
+}
 Install-RoxCopy
 $script:TrayIcon = New-TrayIcon
 Update-TrayTexts
