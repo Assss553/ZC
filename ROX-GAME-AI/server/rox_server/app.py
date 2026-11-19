@@ -56,9 +56,37 @@ def main():
     label(root, "", 10, GREY).pack()
     tk.Label(root, textvariable=status_var, bg=BLACK, fg=GREY, font=("Segoe UI", 10)).pack(fill="x", padx=12)
 
-    c1 = card("1) الربط مع PlayStation")
-    label(c1, "ثبّت عميل Remote Play الرسمي مفتوح المصدر chiaki-ng. تسجيل الدخول يتم في صفحة Sony الرسمية داخله، ثم أدخل رمز الاقتران من: الإعدادات ← إعدادات الاتصال بالتشغيل عن بُعد ← إضافة جهاز. ROX لا يرى بريدك أو كلمة مرورك.", 10, GREY).pack(fill="x")
-    button(c1, "تنزيل chiaki-ng (الموقع الرسمي)", lambda: webbrowser.open(CHIAKI_URL), False).pack(anchor="e", pady=4)
+    c1 = card("1) ربط السوني واللعب على الكمبيوتر")
+    label(c1, "اضغط الزر: يثبّت ROX عميل Remote Play الرسمي مفتوح المصدر (chiaki-ng) ويشغّله. سجّل الدخول في صفحة Sony الرسمية التي تظهر، ثم أدخل رمز الاقتران من البلايستيشن: الإعدادات ← إعدادات الاتصال بالتشغيل عن بُعد ← إضافة جهاز. ROX لا يرى بريدك أو كلمة مرورك. بعد ظهور اللعبة يبدأ ROX تلقائيًا.", 10, GREY).pack(fill="x")
+    rp_var = tk.StringVar(value="")
+    tk.Label(c1, textvariable=rp_var, bg=PANEL, fg=ORANGE, font=("Segoe UI", 10), anchor="e").pack(fill="x")
+
+    def connect_sony():
+        from . import remoteplay
+
+        def work():
+            try:
+                exe = remoteplay.install(lambda m: root.after(0, rp_var.set, m))
+                root.after(0, rp_var.set, "تم التشغيل — سجّل الدخول واقترن بجهازك، ثم ابدأ البث")
+                remoteplay.launch(exe)
+                root.after(0, wait_for_stream)
+            except Exception as e:
+                log.exception("Remote Play setup failed")
+                root.after(0, rp_var.set, f"خطأ: {e}")
+        threading.Thread(target=work, daemon=True).start()
+
+    def wait_for_stream(tries=[0]):
+        """Auto-detect the stream window and AUTO START (checks every 3 s for 10 min)."""
+        from .capture import find_client_window
+        found = find_client_window()
+        if found and "engine" not in engine_box or (found and not engine_box["engine"].running):
+            refresh(); win_var.set(found[1]); rp_var.set("تم اكتشاف نافذة اللعبة — بدء ROX تلقائيًا"); start(); return
+        tries[0] += 1
+        if tries[0] < 200:
+            root.after(3000, wait_for_stream)
+
+    button(c1, "ربط السوني والعب على الكمبيوتر", connect_sony).pack(anchor="e", pady=4)
+    button(c1, "الموقع الرسمي لـ chiaki-ng", lambda: webbrowser.open(CHIAKI_URL), False).pack(anchor="e")
 
     c2 = card("2) نافذة اللعبة")
     win_var = tk.StringVar()
@@ -133,11 +161,26 @@ def main():
     logs = tk.Text(root, height=8, bg=PANEL, fg=GREY, relief="flat", font=("Consolas", 9))
     logs.pack(fill="both", expand=True, padx=12, pady=(0, 12))
 
+    follow = {"n": 0}
+
+    def follow_stream_window(eng):
+        """Every ~3 s: if a bigger Remote Play window appeared (the stream), capture that one."""
+        follow["n"] += 1
+        if follow["n"] % 10 or not eng.running or sys.platform != "win32":
+            return
+        from .capture import Capture, find_client_window
+        found = find_client_window()
+        if found and windows.get(win_var.get()) != found[0]:
+            windows[found[1]] = found[0]; win_var.set(found[1])
+            eng.capture_factory = lambda h=found[0]: Capture(h); eng.capture_version += 1
+            log.info("Switched capture to window: %s", found[1])
+
     def tick():
         while not log_q.empty():
             logs.insert("end", log_q.get() + "\n"); logs.see("end")
         eng = engine_box.get("engine")
         if eng and eng.running:
+            follow_stream_window(eng)
             subs_var.set("\n".join(((s["speaker"] + ": ") if s["speaker"] else "") + s["translated"] for s in eng.subtitles[:6]) or "—")
             o = overlay_box.get("o")
             if o and overlay_var.get():

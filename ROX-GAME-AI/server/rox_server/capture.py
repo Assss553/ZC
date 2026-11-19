@@ -24,10 +24,18 @@ def list_windows():
 
 
 def find_client_window():
+    """The Remote Play client window; when several exist, the largest one is the stream."""
+    best, best_area = None, 0
     for h, t in list_windows():
         if any(k in t.lower() for k in CLIENT_TITLES) and "rox" not in t.lower():
-            return h, t
-    return None
+            try:
+                l, tp, r, b = window_rect(h)
+                area = (r - l) * (b - tp)
+            except Exception:
+                area = 1
+            if area > best_area:
+                best, best_area = (h, t), area
+    return best
 
 
 def window_rect(hwnd):

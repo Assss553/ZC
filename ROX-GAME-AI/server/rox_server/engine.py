@@ -25,6 +25,7 @@ class Engine:
         self.listeners = []  # callables(engine) called after each cycle
         self.history = []
         self.region = None
+        self.capture_version = 0  # bump to force re-creating the capture (window switched)
 
     def start(self):
         if self.running:
@@ -80,12 +81,13 @@ class Engine:
 
     def _loop(self):
         cap = None
+        cap_ver = self.capture_version
         last = 0.0
         frames, t_fps = 0, time.time()
         while self.running:
             try:
-                if cap is None:
-                    cap = self.capture_factory()
+                if cap is None or cap_ver != self.capture_version:
+                    cap = self.capture_factory(); cap_ver = self.capture_version
                 rgb, self.region = cap.grab()
                 self.process_frame(rgb)
                 self.state["error"] = ""
