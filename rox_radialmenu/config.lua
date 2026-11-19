@@ -6,7 +6,7 @@ Config.Key = 'F1'
 
 -- Accent colour (any CSS hex colour)
 Config.Color = '#ff5a1f'
-Config.Theme = 'neon'          -- 'neon' | 'gold' | 'white' | '' (V3 dark)
+Config.Theme = 'd3'            -- 'd3' (3D) | 'neon' | 'gold' | 'white' | '' (flat dark)
 
 -- Title shown in the middle
 Config.Title = 'ROX MENU'

@@ -1,11 +1,13 @@
 -- ROX Store | All rights reserved
 -- exports.rox_keyhints:Show(id, { { keys = {'E'}, label = 'Set up' }, { keys = {'←','→'}, label = 'Rotate' } }, title?)
+-- exports.rox_keyhints:Show(id, items, title, { info = '75g / 300g', progress = 25, pos = 'right' })
 -- exports.rox_keyhints:Hide(id)
 local stack = {}          -- newest on top
 
 local function refresh()
     local top = stack[#stack]
-    SendNUIMessage(top and { action = 'show', title = top.title, items = top.items } or { action = 'hide' })
+    SendNUIMessage(top and { action = 'show', title = top.title, items = top.items, info = top.opts.info,
+        progress = top.opts.progress, pos = top.opts.pos } or { action = 'hide' })
 end
 
 local function Hide(id)
@@ -13,9 +15,10 @@ local function Hide(id)
     refresh()
 end
 
-local function Show(id, items, title)
+-- opts (optional): { info = '75g / 300g', progress = 0-100, pos = 'right' }
+local function Show(id, items, title, opts)
     for i = #stack, 1, -1 do if stack[i].id == id then table.remove(stack, i) end end
-    stack[#stack + 1] = { id = id, items = items, title = title }
+    stack[#stack + 1] = { id = id, items = items, title = title, opts = type(opts) == 'table' and opts or {} }
     refresh()
 end
 exports('Show', Show)

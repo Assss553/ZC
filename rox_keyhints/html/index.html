@@ -6,27 +6,32 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100vw;height:100vh;overflow:hidden;background:transparent;font-family:Inter,sans-serif}
 body.demo{background:#565b60 url(demo.jpg) center/cover}
-#box{position:fixed;right:2.2vw;top:50%;transform:translate(16px,-50%);opacity:0;transition:.22s ease;
- background:rgba(18,19,22,.82);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07);border-radius:14px;
- padding:14px 18px 14px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-#box.on{opacity:1;transform:translate(0,-50%)}
-.t{grid-column:span 2;font:800 11px Inter;letter-spacing:1.6px;color:rgba(255,255,255,.45);margin:0 0 1px 2px;text-transform:uppercase}
-.g{display:grid;grid-template-columns:auto auto;column-gap:16px;row-gap:9px;align-items:center}
-.it{display:contents}
-.ks{display:flex;gap:6px}
-.k{min-width:30px;height:28px;padding:0 9px;display:grid;place-items:center;border-radius:6px;background:#2a2c31;
- border:1px solid rgba(255,255,255,.08);border-bottom-width:3px;color:#fff;font:800 12px Inter;letter-spacing:.5px}
-.k.w{font-size:10.5px;letter-spacing:1px}
-.l{font:600 15px Inter;color:#f1f2f4;white-space:nowrap}
+#box{position:fixed;left:58%;top:55%;transform:translateY(8px);opacity:0;transition:.2s ease;
+ background:rgba(14,15,18,.78);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 14px}
+#box.on{opacity:1;transform:none}
+body.right #box{left:auto;right:2.2vw;top:50%}
+.t{font:700 10.5px Inter;letter-spacing:1.4px;color:rgba(255,255,255,.45);margin-bottom:7px;text-transform:uppercase}
+.g{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;max-width:520px}
+.it{display:flex;align-items:center;gap:8px}
+.ks{display:flex;gap:4px}
+.k{min-width:24px;height:24px;padding:0 7px;display:grid;place-items:center;border-radius:5px;background:#3a3c42;
+ border:1px solid rgba(255,255,255,.1);color:#fff;font:700 11.5px Inter}
+.k.w{font-size:10px;letter-spacing:.8px}
+.l{font:600 14.5px Inter;color:#f1f2f4;white-space:nowrap}
+.info{margin-top:8px;font:600 14px Inter;color:#e6e7ea}
+.bar{margin-top:7px;height:4px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}
+.bar i{display:block;height:100%;background:#fff;border-radius:4px;transition:width .3s}
 </style></head><body>
 <div id="box"></div>
 <script>
 const box=document.getElementById('box');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function show(d){box.innerHTML='<div class="g">'+(d.title?`<div class="t">${esc(d.title)}</div>`:'')+(d.items||[]).map(i=>`<div class="it"><div class="ks">${(i.keys||[]).map(k=>`<div class="k ${String(k).length>3?'w':''}">${esc(k)}</div>`).join('')}</div><div class="l">${esc(i.label)}</div></div>`).join('')+'</div>';box.classList.add('on')}
+function show(d){document.body.classList.toggle('right',d.pos==='right');
+ box.innerHTML=(d.title?`<div class="t">${esc(d.title)}</div>`:'')+'<div class="g">'+(d.items||[]).map(i=>`<div class="it"><div class="ks">${(i.keys||[]).map(k=>`<div class="k ${String(k).length>3?'w':''}">${esc(k)}</div>`).join('')}</div><div class="l">${esc(i.label)}</div></div>`).join('')+'</div>'
+  +(d.info?`<div class="info">${esc(d.info)}</div>`:'')+(typeof d.progress==='number'?`<div class="bar"><i style="width:${Math.max(0,Math.min(100,d.progress))}%"></i></div>`:'');box.classList.add('on')}
 window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='show')show(d);if(d.action==='hide')box.classList.remove('on')});
 if(location.hash){document.body.classList.add('demo');const D={
  place:{title:'Place tree',items:[{keys:['E'],label:'Set up'},{keys:['←','→'],label:'Rotate'},{keys:['SHIFT'],label:'Brush (hold + E)'},{keys:['G'],label:'Next model'},{keys:['DEL'],label:'Remove'},{keys:['BACKSPACE'],label:'Cancel'}]},
  sit:{title:'Sitting',items:[{keys:['X'],label:'Stand up'},{keys:['F3'],label:'Emotes'}]},
- eat:{items:[{keys:['X'],label:'Cancel'}]}};show(D[location.hash.slice(1)]||D.place)}
+ eat:{items:[{keys:['E'],label:'Eat'},{keys:['X'],label:'Drop'}],info:'75g / 300g',progress:25}};show(D[location.hash.slice(1)]||D.place)}
 </script></body></html>

@@ -102,3 +102,29 @@ body.preview .themes { display: flex; }
 .themes button { font: 700 13px Inter; padding: 10px 16px; border-radius: 10px; border: 1px solid #ffffff22; background: #ffffff10; color: #fff; cursor: pointer; }
 .themes button.on { background: var(--accent); color: #111; border-color: transparent; }
 .rim { display: none; } body.t-gold .rim { display: block; }
+
+/* ================= 4. ROX 3D (default) ================= */
+body.t-d3 .menu { perspective: 1500px; }
+body.t-d3 .wheel { transform-style: preserve-3d; transform: rotateX(calc(30deg + var(--rx, 0deg))) rotateY(var(--ry, 0deg)) scale(.86); transition: transform .35s cubic-bezier(.2,1.2,.4,1); }
+body.t-d3 .menu.open .wheel { transform: rotateX(calc(30deg + var(--rx, 0deg))) rotateY(var(--ry, 0deg)) scale(1); }
+body.t-d3 .seg path.bg { fill: url(#topGrad); stroke: rgba(255,255,255,.10); stroke-width: 1.2; transform: none !important; }
+body.t-d3 .seg path.depth { fill: #07080b; stroke: #000; stroke-width: .6; }
+body.t-d3 .seg path.depth.lit { fill: #0d0f14; }
+body.t-d3 .seg { transition: opacity .25s, transform .22s cubic-bezier(.2,1.4,.4,1); }
+body.t-d3 .seg.on { transform: translateY(-16px); }
+body.t-d3 .seg.on path.bg { fill: url(#accGrad); stroke: rgba(255,255,255,.35); }
+body.t-d3 .seg.on path.depth { fill: rgba(var(--accent-rgb), .55); }
+body.t-d3 .seg.on path.depth.lit { fill: rgba(var(--accent-rgb), .8); }
+body.t-d3 .seg.on path.edge { stroke: rgba(255,255,255,.9); }
+body.t-d3 .ic { transition: opacity .25s, transform .22s cubic-bezier(.2,1.4,.4,1); }
+body.t-d3 .ic.on { transform: translate(-50%, calc(-50% - var(--size) * .027)); }
+body.t-d3 .ic .badge { background: linear-gradient(180deg, #2b2f38, #14161b); box-shadow: 0 3px 0 #050608, 0 6px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12); }
+body.t-d3 .ic.on .badge { background: linear-gradient(180deg, #fff, #ffd9c4); box-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 22px rgba(255,255,255,.5); }
+body.t-d3 .ic.on i { color: var(--accent); filter: none; }
+body.t-d3 .ic.on .num { color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.35); }
+body.t-d3 .ic.on .lb { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+body.t-d3 .core { transform: translate(-50%, -50%) translateZ(30px); background: radial-gradient(circle at 50% 28%, #2e333e, #0d0f13 72%);
+    border: 1px solid rgba(255,255,255,.12); box-shadow: 0 14px 0 -2px #050608, 0 30px 50px rgba(0,0,0,.7), 0 0 0 7px rgba(var(--accent-rgb), .18), inset 0 2px 0 rgba(255,255,255,.08); }
+body.t-d3 .ring-glow { stroke-width: 3; }
+body.t-d3 .shadow3d { fill: rgba(0,0,0,.55); filter: blur(18px); }
+.shadow3d { display: none; } body.t-d3 .shadow3d { display: block; }

@@ -32,13 +32,15 @@ function edgePath(a0, a1, r) {
 function render() {
     const lvl = cur(), n = Math.max(1, lvl.items.length), step = Math.PI * 2 / n, start = -Math.PI / 2 - step / 2;
     let s = `<defs><pattern id="carbon" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#15161a"/><path d="M0 0h4v4H0zM4 4h4v4H4z" fill="#1d1f24"/></pattern>
-      <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3a1"/><stop offset=".5" stop-color="#e7b14b"/><stop offset="1" stop-color="#9c6a1c"/></linearGradient></defs>
-      <circle class="ring-outer" r="${R_OUT + 8}"/><circle class="rim" r="${R_OUT + 3}"/><circle class="ring-glow" r="${R_IN - 6}"/><g class="ticks">`, h = '';
+      <linearGradient id="topGrad" x1="0" y1="-1" x2="0" y2="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#2a2e37"/><stop offset="1" stop-color="#15171c"/></linearGradient><linearGradient id="accGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a5c"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient><linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3a1"/><stop offset=".5" stop-color="#e7b14b"/><stop offset="1" stop-color="#9c6a1c"/></linearGradient></defs>
+      <ellipse class="shadow3d" cx="0" cy="40" rx="${R_OUT + 10}" ry="${R_OUT - 10}"/><circle class="ring-outer" r="${R_OUT + 8}"/><circle class="rim" r="${R_OUT + 3}"/><circle class="ring-glow" r="${R_IN - 6}"/><g class="ticks">`, h = '';
     for (let t = 0; t < 72; t++) { const a = t / 72 * Math.PI * 2, big = t % 6 === 0, [x0, y0] = pt(R_OUT + 14, a), [x1, y1] = pt(R_OUT + (big ? 26 : 20), a); s += `<line class="${big ? 'big' : ''}" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}"/>`; }
     s += `</g><path id="pointer" class="pointer" d="M0,${-(R_IN - 14)} l-9,16 h18z"/>`;
     lvl.items.forEach((it, i) => {
         const a0 = start + i * step, a1 = a0 + step, am = (a0 + a1) / 2, d = `${i * 22}ms`;
-        s += `<g class="seg" data-i="${i}" style="--d:${d}"><path class="bg" d="${slicePath(a0, a1, R_OUT, R_IN)}"/><path class="edge" d="${edgePath(a0, a1, R_OUT - 3)}"/></g>`;
+        const sp = slicePath(a0, a1, R_OUT, R_IN), d3 = document.body.classList.contains('t-d3');
+        let dp = ''; if (d3) for (let k = 7; k >= 1; k--) dp += `<path class="depth ${k < 3 ? 'lit' : ''}" transform="translate(0 ${k * 2.2})" d="${sp}"/>`;
+        s += `<g class="seg" data-i="${i}" style="--d:${d}">${dp}<path class="bg" d="${sp}"/><path class="edge" d="${edgePath(a0, a1, R_OUT - 3)}"/></g>`;
         const [x, y] = pt(R_MID, am), big = isNum(it.label);
         h += `<div class="ic" data-i="${i}" style="left:${50 + x / 6}%;top:${50 + y / 6}%;--d:${d}">
             ${i < 10 ? `<span class="k">${(i + 1) % 10}</span>` : ''}
@@ -57,6 +59,7 @@ function setTitle(t) { title.textContent = t; title.classList.remove('pop'); voi
 function hover(i) {
     if (i === S.hov) return; S.hov = i;
     document.querySelectorAll('.seg,.ic').forEach(e => e.classList.toggle('on', +e.dataset.i === i));
+    const sg = document.querySelector(`.seg[data-i="${i}"]`); if (sg) sg.parentNode.appendChild(sg);
     const pn = $('pointer'); if (pn) { if (i < 0) pn.classList.remove('show'); else { pn.style.transform = `rotate(${i * 360 / cur().items.length}deg)`; pn.classList.add('show'); } }
     const lvl = cur();
     if (i < 0) { setTitle(S.stack.length > 1 ? lvl.title : S.title); hint.textContent = `${lvl.items.length} options`; return; }
@@ -76,7 +79,8 @@ function indexAt(e) {
     let a = Math.atan2(y, x) + Math.PI / 2 + step / 2; a = (a % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
     return Math.floor(a / step) % n;
 }
-document.addEventListener('mousemove', (e) => { if (S.open) hover(indexAt(e)); });
+document.addEventListener('mousemove', (e) => { if (!S.open) return; hover(indexAt(e));
+    const w = $('wheel'); w.style.setProperty('--ry', ((e.clientX / innerWidth - .5) * 12).toFixed(2) + 'deg'); w.style.setProperty('--rx', ((.5 - e.clientY / innerHeight) * 8).toFixed(2) + 'deg'); });
 document.addEventListener('click', (e) => { if (!S.open || e.target.closest('.core-btn') || e.target.closest('.themes')) return; const i = indexAt(e); if (i >= 0) select(i); });
 coreBtn.addEventListener('click', back);
 document.addEventListener('contextmenu', (e) => { e.preventDefault(); if (S.open) back(); });
@@ -88,7 +92,7 @@ document.addEventListener('keydown', (e) => {
     else if (e.key === 'F1' && !S.keepInput) close();
 });
 
-function setTheme(t) { document.body.classList.remove('t-neon', 't-gold', 't-white'); if (t) document.body.classList.add('t-' + t); document.querySelectorAll('.themes button').forEach(b => b.classList.toggle('on', b.dataset.t === (t || ''))); }
+function setTheme(t) { document.body.classList.remove('t-neon', 't-gold', 't-white', 't-d3'); if (t) document.body.classList.add('t-' + t); document.querySelectorAll('.themes button').forEach(b => b.classList.toggle('on', b.dataset.t === (t || ''))); if (S.open) render(); }
 function open(d) {
     setColor(d.color); setTheme(d.theme); S.title = (d.title || 'QUICK MENU'); S.sound = d.sound !== false; S.keepInput = !!d.keepInput;
     S.stack = [{ title: S.title, items: d.items || [] }]; S.open = true;
@@ -116,7 +120,7 @@ if (!RES) {
     const items = [citizen, radio, I('Emotes', 'person-walking', [I('Emote Menu', 'face-smile'), I('Hands Up', 'hand')]), I('Clothing', 'shirt', [I('Hat', 'hat-cowboy')]),
         I('Police', 'shield-halved', [I('MDT', 'shield-halved'), I('Prison', 'building-shield')]), I('GPS', 'map-location-dot'), I('Phone', 'mobile-screen'), I('Settings', 'gear')];
     const q = new URLSearchParams(location.search);
-    let TH = q.get('theme') ?? 'neon';
+    let TH = q.get('theme') ?? 'd3';
     document.querySelectorAll('.themes button').forEach(b => b.onclick = (e) => { e.stopPropagation(); TH = b.dataset.t; setTheme(TH); });
     setTimeout(() => { open({ title: 'QUICK MENU', items, keepInput: false, theme: TH });
         const sub = q.get('sub'); if (sub) setTimeout(() => select(+sub), 300); const hv = q.get('hover'); if (hv) setTimeout(() => hover(+hv), 700); }, 100);
