@@ -12,6 +12,8 @@ Only the web UI was changed; all Lua is untouched. Full diff: `ROX_THEME.patch`.
 | Quick use | 3, 4, 5 (still the normal hotbar keys 3-5) |
 | Gear | 6, 7 |
 | Pockets (left grid) | 8+ |
+
+Use / Give / Drop: right-click an item (the old buttons are hidden like the reference layout). Amount: type under Gear.
 | Drop Inventory (right) | ground / drop inventory (any other right inventory keeps its own label) |
 
 ## Item look
