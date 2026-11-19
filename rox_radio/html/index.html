@@ -42,7 +42,7 @@ function tile(st,sel){if(st.off)return `<div class="st off ${sel?'sel':''}">⏻<
 function draw(d){const n=d.list.length,i=d.index,win=7;let h='';
  for(let k=-Math.floor(win/2);k<=Math.floor(win/2);k++){const j=(i+k+n)%n;h+=tile(d.list[j],k===0)}
  $('strip').innerHTML=h;const cur=d.list[i];$('nm').textContent=cur.off?'Radio Off':cur.label;$('sub').textContent=cur.off?'':(d.track||'');
- $('vol').style.width=Math.round((d.volume??1)*100)+'%';$('tV').classList.toggle('on',d.source!=='phone');$('tP').classList.toggle('on',d.source==='phone')}
+ $('tV').classList.toggle('on',d.source!=='phone');$('tP').classList.toggle('on',d.source==='phone')}
 window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open'){$('r').classList.add('on');draw(d)}if(d.action==='update')draw(d);if(d.action==='close')$('r').classList.remove('on')});
 if(!window.GetParentResourceName){document.body.classList.add('preview');$('r').classList.add('on');
  draw({index:3,volume:.7,track:'Now playing',list:[{off:true,id:'off'},{id:'a',label:'Los Santos Rock'},{id:'b',label:'Non-Stop Pop'},{id:'c',label:'Radio Los Santos'},{id:'d',label:'Channel X'},{id:'e',label:'West Coast Talk'},{id:'f',label:'Rebel Radio'},{id:'g',label:'Soulwax FM'}]})}
