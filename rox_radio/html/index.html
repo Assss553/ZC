@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- ROX Store | ROX Radio | All rights reserved -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-family:Inter,sans-serif;color:#fff}
+body.preview{background:#1d2228 url(demo.jpg) center/cover}
+#r{position:fixed;left:0;right:0;top:2.4vh;display:none;flex-direction:column;align-items:center;gap:1.1vh}
+#r.on{display:flex;animation:in .18s}@keyframes in{from{opacity:0;transform:translateY(-8px)}}
+.head{display:flex;align-items:center;gap:1.6vh}
+.side{display:flex;flex-direction:column;gap:.6vh;font:700 1.35vh Rajdhani;letter-spacing:.15vh;color:rgba(255,255,255,.85);text-align:right}
+.side span.on{color:#fff}.side span:not(.on){opacity:.5}
+.strip{display:flex;align-items:center;gap:.6vh;position:relative}
+.st{width:6vh;height:6vh;border-radius:.4vh;display:grid;place-items:center;text-align:center;font:800 1.05vh/1.05 Rajdhani;letter-spacing:.05vh;padding:.4vh;
+ text-transform:uppercase;box-shadow:0 2px 6px rgba(0,0,0,.45);opacity:.8;transition:transform .15s,opacity .15s}
+.st.sel{width:8.4vh;height:8.4vh;opacity:1;font-size:1.4vh;outline:3px solid #fff;outline-offset:2px}
+.st.off{background:rgba(30,32,38,.85)!important;font-size:1.6vh}
+.ar{font:700 2vh Inter;opacity:.8}
+.key{display:inline-grid;place-items:center;min-width:2.4vh;height:2.2vh;padding:0 .5vh;border-radius:.4vh;border:1.5px solid rgba(255,255,255,.8);font:800 1vh Inter}
+.vol{display:flex;align-items:center;gap:1vh;font:600 1.2vh Inter;color:rgba(255,255,255,.8)}
+.vol i{display:block;width:12vh;height:.4vh;border-radius:.4vh;background:rgba(255,255,255,.2);position:relative}
+.vol i b{position:absolute;left:0;top:0;bottom:0;background:#fff;border-radius:.4vh}
+.now{text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.8)}
+.now b{display:block;font:700 2vh Rajdhani;letter-spacing:.2vh;text-transform:uppercase}
+.now span{display:block;font:600 1.35vh Rajdhani;letter-spacing:.15vh;color:rgba(255,255,255,.75);text-transform:uppercase}
+.turn{display:flex;align-items:center;gap:.6vh;font:700 1.3vh Rajdhani;letter-spacing:.15vh}
+</style></head><body>
+<div id="r">
+ <div class="head"><div class="side"><span id="tV" class="on">VEHICLE</span><span id="tP">PHONE</span></div>
+  <span class="ar">‹</span><div class="strip" id="strip"></div><span class="ar">›</span>
+  <div class="turn"><span class="key">X</span>TURN OFF</div></div>
+
+ <div class="now"><b id="nm"></b><span id="sub"></span></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const PAL=['#ff5fa8','#7b5cff','#3ee0c5','#ffb33d','#ff5a4a','#4aa8ff','#9be15d','#c86bff','#ff8fd0','#2fd3a5','#ffd34d','#6b8cff'];
+function hash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)}
+function tile(st,sel){if(st.off)return `<div class="st off ${sel?'sel':''}">⏻</div>`;const c=PAL[hash(st.id)%PAL.length];
+ return `<div class="st ${sel?'sel':''}" style="background:linear-gradient(150deg,${c},${c}99 60%,#111a)">${st.label}</div>`}
+function draw(d){const n=d.list.length,i=d.index,win=7;let h='';
+ for(let k=-Math.floor(win/2);k<=Math.floor(win/2);k++){const j=(i+k+n)%n;h+=tile(d.list[j],k===0)}
+ $('strip').innerHTML=h;const cur=d.list[i];$('nm').textContent=cur.off?'Radio Off':cur.label;$('sub').textContent=cur.off?'':(d.track||'');
+ $('vol').style.width=Math.round((d.volume??1)*100)+'%';$('tV').classList.toggle('on',d.source!=='phone');$('tP').classList.toggle('on',d.source==='phone')}
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open'){$('r').classList.add('on');draw(d)}if(d.action==='update')draw(d);if(d.action==='close')$('r').classList.remove('on')});
+if(!window.GetParentResourceName){document.body.classList.add('preview');$('r').classList.add('on');
+ draw({index:3,volume:.7,track:'Now playing',list:[{off:true,id:'off'},{id:'a',label:'Los Santos Rock'},{id:'b',label:'Non-Stop Pop'},{id:'c',label:'Radio Los Santos'},{id:'d',label:'Channel X'},{id:'e',label:'West Coast Talk'},{id:'f',label:'Rebel Radio'},{id:'g',label:'Soulwax FM'}]})}
+</script></body></html>
