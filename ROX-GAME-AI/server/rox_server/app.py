@@ -133,7 +133,14 @@ def main():
         if "engine" not in engine_box:
             status_var.set("جارٍ تحميل محركات الذكاء الاصطناعي…"); root.update()
             tr = Translator("ar")
-            engine_box["engine"] = Engine(lambda: Capture(hwnd), OCR(), tr, hub)
+            try:
+                from .safevision import NudityDetector
+                nud = NudityDetector()
+                log.info("Safe Vision: trained nudity detector loaded")
+            except Exception as e:
+                nud = None
+                log.warning("Safe Vision: trained detector unavailable (%s) — using colour heuristic", e)
+            engine_box["engine"] = Engine(lambda: Capture(hwnd), OCR(), tr, hub, nudity=nud)
             overlay_box["o"] = Overlay(root)
             threading.Thread(target=lambda: tr.prepare(lang if lang != "auto" else "en"), daemon=True).start()
         eng = engine_box["engine"]

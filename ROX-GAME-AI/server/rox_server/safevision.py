@@ -90,3 +90,31 @@ def apply_mask(rgb: np.ndarray, box, mode="blur", strength=18, pad=0.15):
         up = np.repeat(np.repeat(small, k, axis=0), k, axis=1)[: roi.shape[0], : roi.shape[1]]
         roi[:] = up
     return rgb
+
+
+# ───────────── Trained detector (NudeNet, AGPL-3.0, model bundled in the PyPI package) ─────────────
+NUDITY_CLASSES = {
+    "FEMALE_BREAST_EXPOSED": "nudity", "FEMALE_GENITALIA_EXPOSED": "nudity", "MALE_GENITALIA_EXPOSED": "nudity",
+    "BUTTOCKS_EXPOSED": "nudity", "ANUS_EXPOSED": "nudity",
+}
+SUGGESTIVE_CLASSES = {"BELLY_EXPOSED": "exposed", "MALE_BREAST_EXPOSED": "exposed", "ARMPITS_EXPOSED": "exposed"}
+
+
+class NudityDetector:
+    """Region detector trained on real images: returns boxes of exposed body parts so only they are blurred."""
+
+    def __init__(self):
+        from nudenet import NudeDetector
+        self.model = NudeDetector()
+
+    def detect(self, rgb: np.ndarray, sensitivity=0.5, include_suggestive=False):
+        h, w = rgb.shape[:2]
+        rgba = np.dstack([rgb, np.full((h, w), 255, np.uint8)])
+        threshold = 0.65 - 0.4 * sensitivity  # sensitivity 0..1 → score 0.65..0.25
+        out = []
+        for d in self.model.detect(rgba):
+            cat = NUDITY_CLASSES.get(d["class"]) or (SUGGESTIVE_CLASSES.get(d["class"]) if include_suggestive else None)
+            if cat and d["score"] >= threshold:
+                x, y, bw, bh = d["box"]
+                out.append({"box": (int(x), int(y), int(x + bw), int(y + bh)), "score": float(d["score"]), "category": cat, "label": d["class"]})
+        return out

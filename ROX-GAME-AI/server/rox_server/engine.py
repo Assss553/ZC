@@ -10,12 +10,14 @@ log = logging.getLogger("rox.engine")
 
 
 class Engine:
-    def __init__(self, capture_factory, ocr, translator, hub, settings=None):
+    def __init__(self, capture_factory, ocr, translator, hub, settings=None, nudity=None):
         self.capture_factory = capture_factory
         self.ocr, self.translator, self.hub = ocr, translator, hub
         self.settings = {"interval": 0.7, "ocr_scale": 1.0, "safe": True, "sensitivity": 0.5, "lang": "auto", "translate": True}
         self.settings.update(settings or {})
         self.tracker = Tracker()
+        self.nudity = nudity  # trained detector (NudityDetector) or None → heuristic only
+        self.blocked_log = []
         self.running = False
         self.thread = None
         self.state = {"fps": 0.0, "ocr_ms": 0, "lang": "", "frames": 0, "error": ""}
@@ -51,10 +53,16 @@ class Engine:
         s = self.settings
         masks = []
         if s["safe"]:
-            dets = detect(rgb[::2, ::2], s["sensitivity"])
-            for d in dets:
-                d["box"] = tuple(v * 2 for v in d["box"])
-            tracks, _ = self.tracker.update(dets, now)
+            if self.nudity is not None:
+                dets = self.nudity.detect(rgb, s["sensitivity"], s.get("suggestive", False))
+            else:
+                dets = detect(rgb[::2, ::2], s["sensitivity"])
+                for d in dets:
+                    d["box"] = tuple(v * 2 for v in d["box"])
+            tracks, fresh = self.tracker.update(dets, now)
+            for t in fresh:
+                self.blocked_log.append({"time": now, "category": t["category"]})
+            self.blocked_log = self.blocked_log[-1000:]
             masks = [{"box": list(t["box"]), "category": t["category"], "id": t["id"]} for t in tracks]
         subs = []
         if s["translate"] and self.ocr is not None:

@@ -6,3 +6,5 @@ ctranslate2>=4.0
 sentencepiece>=0.2
 aiohttp>=3.9
 pywin32>=306; sys_platform == "win32"
+nudenet==3.4.2
+opencv-python-headless>=4.8

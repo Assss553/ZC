@@ -32,7 +32,7 @@ jobs:
         env: { ROX_NET_TESTS: "1" }
         run: python -m pytest -q -s tests
       - name: Build ROX-Server.exe
-        run: pyinstaller --noconfirm --onefile --windowed --name ROX-Server --collect-all rapidocr_onnxruntime --collect-all onnxruntime --collect-all ctranslate2 --collect-all sentencepiece --hidden-import win32gui run_server.py
+        run: pyinstaller --noconfirm --onefile --windowed --name ROX-Server --collect-all rapidocr_onnxruntime --collect-all onnxruntime --collect-all ctranslate2 --collect-all sentencepiece --collect-all nudenet --collect-all cv2 --hidden-import win32gui run_server.py
       - name: Self-test the packaged exe
         shell: pwsh
         run: |
