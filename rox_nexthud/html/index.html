@@ -1,0 +1,83 @@
+<!doctype html>
+<!-- ROX Store | ROX NextHUD | All rights reserved -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff5fa8;--teal:#3ee0c5}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-family:Inter,sans-serif;color:#fff}
+body.preview{background:#3b4652 url(demo.jpg) center/cover}
+.hide{opacity:0!important}
+/* ---- compass ---- */
+#compass{position:fixed;left:50%;top:2.2vh;width:30vw;height:5vh;transform:translateX(-50%);transition:opacity .3s;
+ -webkit-mask:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);mask:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)}
+#compass .line{position:absolute;left:0;right:0;top:1.1vh;height:2px;background:rgba(255,255,255,.55);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+#compass .tape{position:absolute;top:0;left:50%;height:100%}
+#compass .lbl{position:absolute;top:2vh;transform:translateX(-50%);font:600 1.25vh Inter;color:rgba(255,255,255,.85);text-shadow:0 1px 3px rgba(0,0,0,.7)}
+#compass .tick{position:absolute;top:.6vh;width:1px;height:1vh;background:rgba(255,255,255,.4)}
+#compass .wp{position:absolute;top:2.2vh;width:1.5vh;height:1.5vh;margin-left:-.75vh;border-radius:50%;background:var(--pink);box-shadow:0 0 6px rgba(0,0,0,.5)}
+#compass .me{position:absolute;left:50%;top:0;width:2.2vh;height:2.2vh;margin-left:-1.1vh;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+#compass .me::after{content:"";border:.45vh solid transparent;border-bottom:.8vh solid #111;margin-top:-.4vh}
+/* ---- money ---- */
+#money{position:fixed;right:1.6vw;top:1.8vh;display:flex;flex-direction:column;align-items:flex-end;gap:.4vh;transition:opacity .4s}
+.m{display:flex;align-items:center;gap:.8vh;font:700 3.2vh/1 Rajdhani;letter-spacing:.3px;text-shadow:0 2px 0 rgba(0,0,0,.45),0 0 10px rgba(0,0,0,.4)}
+.m i{width:2.8vh;height:2.8vh;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
+.m i::after{content:"";width:1.4vh;height:.9vh;border-radius:.2vh;background:#3ddc84}
+.m.bank i::after{width:1.1vh;height:1.1vh;border-radius:.2vh .2vh .1vh .1vh;background:none;border:2px solid #3ee0c5;border-top-width:4px}
+.m.bank{font-size:2.8vh}
+#toast{position:fixed;right:22vw;top:52vh;display:flex;align-items:center;gap:1vh;font:600 2.6vh Inter;text-shadow:0 2px 6px rgba(0,0,0,.7);opacity:0;transform:translateY(10px);transition:.35s}
+#toast.on{opacity:1;transform:none}#toast i{width:2.6vh;height:2.6vh;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
+#toast i::after{content:"";width:1.3vh;height:.8vh;border-radius:.2vh;background:#3ddc84}
+#toast.minus{color:#ff8a8a}
+/* ---- minimap frame + vehicle ---- */
+#mm{position:fixed;border-radius:1.4vh;border:2px solid rgba(255,255,255,.35);box-shadow:0 0 0 1px rgba(0,0,0,.25),inset 0 0 18px rgba(0,0,0,.25);pointer-events:none;transition:opacity .3s}
+#alt{position:absolute;left:1vh;bottom:.8vh;font:600 2.2vh Inter;text-shadow:0 1px 3px rgba(0,0,0,.8);display:none}
+#veh{position:absolute;left:50%;top:-4.2vh;transform:translateX(-50%);display:none;gap:1vh}
+#veh .ic{width:3.4vh;height:3.4vh;border-radius:50%;background:rgba(20,22,28,.75);display:grid;place-items:center;position:relative}
+#veh .ic svg{width:1.9vh;height:1.9vh;fill:currentColor}
+#veh .ic::before{content:"";position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--v)*1%),rgba(255,255,255,.12) 0);-webkit-mask:radial-gradient(closest-side,transparent 80%,#000 82%);mask:radial-gradient(closest-side,transparent 80%,#000 82%)}
+#veh .eng{color:#ffc23d;--c:#ffc23d}#veh .fuel{color:#3ee0c5;--c:#3ee0c5}
+#dist{position:absolute;left:1vh;top:.8vh;font:600 2.4vh Inter;text-shadow:0 1px 3px rgba(0,0,0,.8);display:none}
+/* ---- GPS card ---- */
+#gps{position:fixed;display:none;align-items:stretch;background:rgba(24,26,34,.92);border-radius:.8vh;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+#gps .t{padding:1vh 1.6vh;min-width:20vh}
+#gps b{display:block;font:700 2.7vh/1.1 Inter}#gps span{font:600 2.4vh Inter;color:#fff}
+#gps .arr{width:7.2vh;background:var(--pink);display:grid;place-items:center}
+#gps .arr svg{width:4.2vh;height:4.2vh;stroke:#fff;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+#gps.teal .arr{background:var(--teal)}
+</style></head><body>
+<div id="compass"><div class="line"></div><div class="tape" id="tape"></div><div class="me"></div></div>
+<div id="money"><div class="m cash" id="cash"><span>$0</span><i></i></div><div class="m bank" id="bank"><span>$0</span><i></i></div></div>
+<div id="toast"><span id="toastT"></span><i></i></div>
+<div id="gps"><div class="t"><b id="gpsT">Turn Right</b><span id="gpsD">465 ft</span></div><div class="arr" id="gpsA"></div></div>
+<div id="mm"><div id="dist"></div><div id="alt"></div><div id="veh"><div class="ic eng" style="--v:100"><svg viewBox="0 0 24 24"><path d="M4 9h3l1-2h6l1 2h2v3h2v-2h2v7h-2v-2h-2v3h-5l-2 2H7v-4H4z"/></svg></div><div class="ic fuel" style="--v:100"><svg viewBox="0 0 24 24"><path d="M5 3h9v18H5zM7 5v5h5V5zM15 8l3 2v8a1 1 0 0 0 2 0v-7l-3-3z"/></svg></div></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const ARROWS={left:'<path d="M16 20v-8a3 3 0 0 0-3-3H6M10 5 6 9l4 4"/>',right:'<path d="M8 20v-8a3 3 0 0 1 3-3h7M14 5l4 4-4 4"/>',
+ straight:'<path d="M12 20V5M7 10l5-5 5 5"/>',keepleft:'<path d="M15 20v-6l-6-6V4M5 8l4-4 4 4"/>',keepright:'<path d="M9 20v-6l6-6V4M11 8l4-4 4 4"/>',
+ uturn:'<path d="M8 20V9a4 4 0 0 1 8 0v4M13 10l3 3 3-3"/>',arrive:'<circle cx="12" cy="10" r="3"/><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/>'};
+const money=n=>'$'+Math.round(n||0).toLocaleString('en-US');
+let hideMoneyT=null;
+function compass(h,wp){ // h = camera heading (0 = north, clockwise)
+ const W=$('compass').clientWidth,px=W/180;let s='';
+ for(let d=-180;d<=540;d+=15){const rel=((d-h+540)%360)-180;if(Math.abs(rel)>95)continue;const x=rel*px,deg=((d%360)+360)%360;
+  const L={0:'N',90:'E',180:'S',270:'W',45:'NE',135:'SE',225:'SW',315:'NW'}[deg];
+  s+=L?`<div class="lbl" style="left:${x}px;${L.length>1?'font-size:1vh;opacity:.7':''}">${L}</div>`:`<div class="tick" style="left:${x}px"></div>`}
+ if(wp!=null){let rel=((wp-h+540)%360)-180;rel=Math.max(-88,Math.min(88,rel));s+=`<div class="wp" style="left:${rel*px}px"></div>`}
+ $('tape').innerHTML=s}
+function upd(d){
+ if(d.mm){const m=$('mm');Object.assign(m.style,{left:d.mm.x+'px',top:d.mm.y+'px',width:d.mm.w+'px',height:d.mm.h+'px'});m.classList.toggle('hide',!d.mm.show)}
+ $('compass').classList.toggle('hide',!d.compass);if(d.compass)compass(d.heading,d.wpHeading);
+ $('alt').style.display=d.alt!=null?'block':'none';if(d.alt!=null)$('alt').textContent='▲'+d.alt;
+ $('dist').style.display=d.dist?'block':'none';if(d.dist)$('dist').textContent=d.dist;
+ const v=$('veh');v.style.display=d.veh?'flex':'none';if(d.veh){v.children[0].style.setProperty('--v',d.veh.engine);v.children[1].style.setProperty('--v',d.veh.fuel)}
+ const g=$('gps');if(d.gps){g.style.display='flex';$('gpsT').textContent=d.gps.text;$('gpsD').textContent=d.gps.dist;$('gpsA').innerHTML=`<svg viewBox="0 0 24 24">${ARROWS[d.gps.icon]||ARROWS.straight}</svg>`;
+  const mm=$('mm').getBoundingClientRect();g.style.left=mm.left+'px';g.style.top=(mm.top-g.offsetHeight-(d.veh?5.2*innerHeight/100:1.2*innerHeight/100))+'px'}else g.style.display='none'}
+function showMoney(d){$('cash').querySelector('span').textContent=money(d.cash);$('bank').querySelector('span').textContent=money(d.bank);
+ $('bank').style.display=d.showBank?'flex':'none';const m=$('money');m.classList.remove('hide');clearTimeout(hideMoneyT);if(!d.always)hideMoneyT=setTimeout(()=>m.classList.add('hide'),d.time||5000)}
+function toast(d){const t=$('toast');$('toastT').textContent=(d.amount>=0?'+ ':'- ')+money(Math.abs(d.amount))+(d.from?' from '+d.from:'');t.classList.toggle('minus',d.amount<0);t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3500)}
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='tick')upd(d);if(d.action==='money')showMoney(d);if(d.action==='toast')toast(d)});
+if(!window.GetParentResourceName){document.body.classList.add('preview');
+ upd({mm:{x:26,y:innerHeight-300,w:300,h:200,show:true},compass:true,heading:72,wpHeading:40,dist:'0.69 mi',veh:{engine:62,fuel:85},gps:{text:'Turn Right',dist:'465 ft',icon:'right'}});
+ showMoney({cash:407,bank:2480,showBank:true,always:true});toast({amount:100,from:'Donnie'})}
+</script></body></html>
