@@ -76,12 +76,21 @@ CreateThread(function()
 
         if veh ~= 0 then
             local fuel = Entity(veh).state.fuel or GetVehicleFuelLevel(veh)
-            d.veh = { engine = math.max(0, math.min(100, GetVehicleEngineHealth(veh) / 10)), fuel = math.max(0, math.min(100, fuel)) }
+            local gear = GetVehicleCurrentGear(veh)
+            local sp = GetEntitySpeed(veh) * (Config.Imperial and 2.236936 or 3.6)
+            local _, lightsOn, high = GetVehicleLightsState(veh)
+            d.veh = { engine = math.max(0, math.min(100, GetVehicleEngineHealth(veh) / 10)), fuel = math.max(0, math.min(100, fuel)),
+                      speed = sp, unit = Config.Imperial and 'MPH' or 'KMH', rpm = GetVehicleCurrentRpm(veh),
+                      gear = (GetEntitySpeedVector(veh, true).y < -0.5 and 'R') or (gear == 0 and 'N') or gear,
+                      lights = lightsOn == 1 or high == 1, locked = GetVehicleDoorLockStatus(veh) >= 2,
+                      belt = LocalPlayer.state.seatbelt or LocalPlayer.state.seatBelt or LocalPlayer.state.harness or false }
+            local cls = GetVehicleClass(veh)
+            if cls == 13 then d.veh.speed = nil end   -- bicycles
             local cls = GetVehicleClass(veh)
             if cls == 15 or cls == 16 then d.alt = fmt(GetEntityHeightAboveGround(veh), true) end
         end
         SendNUIMessage(d)
-        Wait(veh ~= 0 and 150 or 250)
+        Wait(veh ~= 0 and 60 or 250)
     end
 end)
 
