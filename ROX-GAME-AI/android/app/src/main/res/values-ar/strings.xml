@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ROX GAME AI</string>
+    <string name="capture_channel">التقاط ROX</string>
+    <string name="capture_running">يقوم ROX بتحليل بث اللعبة</string>
+</resources>

@@ -1,0 +1,142 @@
+name: ROX GAME AI — Android build
+
+on:
+  push:
+    branches: [ "ccr-dcf102d9-fn7ygb", "main" ]
+    paths: [ "ROX-GAME-AI/**", ".github/workflows/rox-android.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rox-android-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ROX-GAME-AI/android
+
+jobs:
+  build:
+    name: Unit tests + APK (debug & release)
+    runs-on: ubuntu-latest
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare release keystore (from GitHub Secrets only)
+        id: sign
+        env:
+          KS_B64: ${{ secrets.ROX_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/rox-release.jks"
+            echo "ROX_KEYSTORE_PATH=$RUNNER_TEMP/rox-release.jks" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::ROX_KEYSTORE_BASE64 secret not set — release APK will be UNSIGNED; the installable APK is the debug build."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Unit tests (JVM)
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Build debug + release APK
+        env:
+          ROX_KEYSTORE_PASSWORD: ${{ secrets.ROX_KEYSTORE_PASSWORD }}
+          ROX_KEY_ALIAS: ${{ secrets.ROX_KEY_ALIAS }}
+          ROX_KEY_PASSWORD: ${{ secrets.ROX_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleDebug assembleRelease
+
+      - name: Collect APKs into ROX-GAME-AI/release
+        run: |
+          mkdir -p ../release
+          cp app/build/outputs/apk/debug/app-debug.apk ../release/ROX-GAME-AI-debug.apk
+          if [ "${{ steps.sign.outputs.signed }}" = "true" ]; then
+            cp app/build/outputs/apk/release/app-release.apk ../release/ROX-GAME-AI.apk
+          else
+            cp app/build/outputs/apk/release/app-release-unsigned.apk ../release/ROX-GAME-AI-release-unsigned.apk
+            cp ../release/ROX-GAME-AI-debug.apk ../release/ROX-GAME-AI.apk
+          fi
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          for f in ../release/*.apk; do echo "== $f"; ls -la "$f"; "$BT/apksigner" verify --print-certs "$f" 2>&1 | head -3 || true; done
+          (cd ../release && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ROX-GAME-AI-apk
+          path: ROX-GAME-AI/release/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-reports
+          path: ROX-GAME-AI/android/app/build/reports/tests/
+
+  device-tests:
+    name: Instrumented tests (Android emulator, TEST VIDEO)
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable KVM
+        working-directory: .
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          ram-size: 4096M
+          disable-animations: true
+          working-directory: ROX-GAME-AI/android
+          script: |
+            adb logcat -c
+            ./gradlew --no-daemon connectedDebugAndroidTest || (adb logcat -d -s ROX_TEST_REPORT ROX/* AndroidRuntime > device-report.txt; exit 1)
+            adb logcat -d -s ROX_TEST_REPORT ROX/* AndroidRuntime > device-report.txt
+      - name: Show device test report
+        if: always()
+        run: cat device-report.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: device-test-reports
+          path: |
+            ROX-GAME-AI/android/app/build/reports/androidTests/
+            ROX-GAME-AI/android/device-report.txt
+
+  publish:
+    name: Publish GitHub Release (direct APK link)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: ROX-GAME-AI-apk, path: release }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rox-build-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: ROX GAME AI build ${{ github.run_number }}
+          make_latest: "true"
+          body: |
+            Automatic build of `${{ github.sha }}` (branch `${{ github.ref_name }}`).
+
+            **Install:** download `ROX-GAME-AI.apk` and open it on your Android 10+ phone.
+            Release signing: ${{ needs.build.outputs.signed == 'true' && 'signed with the ROX release key (from GitHub Secrets).' || 'NOT configured yet — ROX-GAME-AI.apk is the debug-signed build (installable; uninstall before installing a build from a different key).' }}
+
+            Device tests use a built-in TEST VIDEO; no real PS4/PS5 stream was tested by CI.
+          files: |
+            release/*.apk
+            release/SHA256SUMS.txt

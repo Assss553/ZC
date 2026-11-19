@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rox.gameai.ImageOpsTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-19T18:58:03.284Z" hostname="vm" time="0.004">
+  <properties/>
+  <testcase name="gaussianBlurReducesContrastInsideRectOnly" classname="com.rox.gameai.ImageOpsTest" time="0.0"/>
+  <testcase name="iou" classname="com.rox.gameai.ImageOpsTest" time="0.0"/>
+  <testcase name="downsampleKeepsAspect" classname="com.rox.gameai.ImageOpsTest" time="0.002"/>
+  <testcase name="blackMaskOnlyInsideRect" classname="com.rox.gameai.ImageOpsTest" time="0.0"/>
+  <testcase name="pixelateMakesUniformBlocks" classname="com.rox.gameai.ImageOpsTest" time="0.001"/>
+  <testcase name="rectsAreClampedSafely" classname="com.rox.gameai.ImageOpsTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

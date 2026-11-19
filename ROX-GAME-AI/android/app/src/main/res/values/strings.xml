@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ROX GAME AI</string>
+    <string name="capture_channel">ROX capture</string>
+    <string name="capture_running">ROX is analysing the game stream</string>
+</resources>

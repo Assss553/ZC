@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rox.gameai.SafeVisionTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-19T18:58:03.079Z" hostname="vm" time="0.164">
+  <properties/>
+  <testcase name="masksPixelsBeforeDisplayForEveryMode" classname="com.rox.gameai.SafeVisionTest" time="0.059"/>
+  <testcase name="modelCategoryTriggersFullSceneAndAutoUnblur" classname="com.rox.gameai.SafeVisionTest" time="0.044"/>
+  <testcase name="noDetectionOnCleanScene" classname="com.rox.gameai.SafeVisionTest" time="0.003"/>
+  <testcase name="trackerIgnoresOtherCategories" classname="com.rox.gameai.SafeVisionTest" time="0.0"/>
+  <testcase name="detectsSkinRegionAtRightPlace" classname="com.rox.gameai.SafeVisionTest" time="0.012"/>
+  <testcase name="skinColourClassifier" classname="com.rox.gameai.SafeVisionTest" time="0.0"/>
+  <testcase name="customRegionAlwaysMasked" classname="com.rox.gameai.SafeVisionTest" time="0.004"/>
+  <testcase name="disabledLeavesFrameUntouched" classname="com.rox.gameai.SafeVisionTest" time="0.009"/>
+  <testcase name="tracksMovingObjectAndReleasesAfterSceneEnds" classname="com.rox.gameai.SafeVisionTest" time="0.031"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
