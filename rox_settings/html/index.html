@@ -3,7 +3,7 @@
 <html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--a:#ff4b12;--bg:#16181ee8;--row:#ffffff08;--t:#fff;--m:#9aa0ab}
+:root{--a:#ff5fa8;--bg:#16181ee8;--row:#ffffff08;--t:#fff;--m:#9aa0ab}
 *{margin:0;padding:0;box-sizing:border-box;user-select:none}
 html,body{width:100vw;height:100vh;overflow:hidden;font-family:Montserrat,sans-serif;color:var(--t);background:transparent}
 body.demo{background:#555 center/cover}
@@ -61,7 +61,7 @@ const LOOKS=[['off','STANDARD','The original GTA look, no extra grading.'],
  ['rox_nightpro','NIGHT PRO','Raises exposure and bloom with a cool blue tint so you can actually see at night.'],
  ['rox_nextgen','ROX NEXTGEN','Next-gen look: deep shadows, rich greens, warm sun, soft filmic contrast and a light haze. Our new default.'],
  ['rox_noir','COLD NOIR','Almost black & white, hard contrast and cold shadows. Moody crime-drama look.']];
-const ACC=[['#ff4b12','ROX ORANGE'],['#ff2d55','RED'],['#2f9bff','BLUE'],['#2fe36a','GREEN'],['#a855f7','PURPLE'],['#ffc400','GOLD']];
+const ACC=[['#ff5fa8','ROX PINK'],['#ff4b12','ORANGE'],['#ff2d55','RED'],['#2f9bff','BLUE'],['#2fe36a','GREEN'],['#a855f7','PURPLE'],['#ffc400','GOLD']];
 const sel_=(k,l,opts,names,d)=>({k,l,type:'sel',opts,names,d}), tg=(k,l,d)=>({k,l,type:'tg',d}), bar=(k,l,min,max,step,d,suf)=>({k,l,type:'bar',min,max,step,d,suf});
 const TABS=[
  {t:'PRESETS',rows:[{k:'p_standard',l:'STANDARD',type:'btn',d:'Resets every setting to its default.'},

@@ -9,7 +9,7 @@ const pockets = (slot: number) => slot > LOADOUT_SLOTS;
 const LeftInventory: React.FC = () => {
   const leftInventory = useAppSelector(selectLeftInventory);
 
-  return <InventoryGrid inventory={leftInventory} filter={pockets} title="" className="rox-left" />;
+  return <InventoryGrid inventory={leftInventory} filter={pockets} title="Inventory" className="rox-left" />;
 };
 
 export default LeftInventory;

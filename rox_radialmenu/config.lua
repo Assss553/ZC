@@ -5,7 +5,7 @@ Config = {}
 Config.Key = 'F1'
 
 -- Accent colour (any CSS hex colour)
-Config.Color = '#ff5a1f'
+Config.Color = '#ff5fa8'
 Config.Theme = 'aaa'           -- 'aaa' | 'orbit' | 'hex' | 'd3' | 'neon' | 'gold' | 'white'
 
 -- Title shown in the middle

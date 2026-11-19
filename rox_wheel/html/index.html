@@ -4,7 +4,7 @@
 <title>ROX Wheel</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--a:#ff6a1a;--a-rgb:255,106,26;--card:clamp(104px,15vh,170px);--cardh:clamp(70px,10vh,112px);--R:clamp(170px,26vh,290px)}
+:root{--a:#3ee0c5;--a-rgb:62,224,197;--card:clamp(104px,15vh,170px);--cardh:clamp(70px,10vh,112px);--R:clamp(170px,26vh,290px)}
 *{margin:0;padding:0;box-sizing:border-box;user-select:none}
 html,body{width:100%;height:100%;overflow:hidden;font-family:Inter,sans-serif;color:#fff;background:transparent}
 body.preview{background:#59626b url(demo.jpg) center/cover}
@@ -18,7 +18,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 .tabs{position:absolute;left:50%;top:0;transform:translate(-50%,-10px);display:flex;align-items:center;gap:10px}
 .tabs .t{display:flex;background:rgba(14,15,18,.72);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:4px;gap:4px}
 .tabs button{border:0;background:none;color:rgba(255,255,255,.55);font:700 15px Rajdhani;letter-spacing:2px;padding:7px 18px;border-radius:9px;cursor:pointer}
-.tabs button.on{background:var(--a);color:#111;box-shadow:0 0 18px rgba(var(--a-rgb),.5)}
+.tabs button.on{background:#fff;color:#111;box-shadow:none}
 .key{display:inline-grid;place-items:center;min-width:26px;height:24px;padding:0 6px;border-radius:7px;background:#f1f2f4;color:#111;font:800 11px Inter;box-shadow:0 3px 0 #9097a1}
 /* cards */
 .card{position:absolute;left:50%;top:50%;width:var(--card);height:var(--cardh);overflow:hidden;transform:translate(-50%,-50%) translate(var(--x),var(--y));border-radius:16px;cursor:pointer;
@@ -31,7 +31,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 .card .dots{position:absolute;left:0;right:0;bottom:7px;display:flex;justify-content:center;gap:4px}
 .card .dots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25)}.card .dots i.on{background:var(--a)}
 .card.eq::before{content:"";position:absolute;left:14px;right:14px;top:-1px;height:3px;border-radius:0 0 4px 4px;background:var(--a);box-shadow:0 0 14px var(--a)}
-.card.sel{transform:translate(-50%,-50%) translate(var(--x),var(--y)) scale(1.12);background:linear-gradient(165deg,rgba(255,255,255,.96),rgba(225,228,234,.94));border-color:#fff;box-shadow:0 18px 36px rgba(0,0,0,.45),0 0 0 3px rgba(var(--a-rgb),.9)}
+.card.sel{transform:translate(-50%,-50%) translate(var(--x),var(--y)) scale(1.12);background:linear-gradient(165deg,rgba(255,255,255,.96),rgba(225,228,234,.94));border-color:#fff;box-shadow:0 18px 36px rgba(0,0,0,.45),0 0 0 3px #fff}
 .card .glow{position:absolute;left:12%;right:12%;bottom:-6%;height:60%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.22),transparent);pointer-events:none}
 .card.eq .glow{background:radial-gradient(closest-side,rgba(var(--a-rgb),.75),transparent)}
 
@@ -43,7 +43,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 .card .bar.tg{font-size:clamp(14px,2vh,19px);letter-spacing:2px}
 .card .bar.tg.on b{color:var(--a)}
 .card .chk{position:absolute;right:8px;bottom:7px;width:22px;height:22px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;font:900 13px Inter}
-.stats{position:fixed;right:3vw;bottom:6vh;width:clamp(260px,24vw,380px);padding:18px 20px;border-radius:16px;background:rgba(14,15,18,.82);border:1px solid rgba(255,255,255,.08);
+.stats{position:fixed;right:3vw;bottom:6vh;width:clamp(260px,24vw,380px);padding:18px 20px;border-radius:4px;background:rgba(27,27,41,.9);border:1px solid rgba(255,255,255,.08);
   backdrop-filter:blur(10px);opacity:0;transform:translateX(16px);transition:.2s;pointer-events:none}
 .stats.on{opacity:1;transform:none}
 .stats h4{font:700 clamp(20px,2.7vh,27px)/1 Rajdhani;letter-spacing:1px;text-transform:uppercase}
@@ -51,7 +51,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 .stats .r{margin-top:10px}.stats .r div{display:flex;justify-content:space-between;font:700 clamp(13px,1.8vh,17px) Rajdhani;letter-spacing:2px}
 .stats .r div span{color:rgba(255,255,255,.6)}
 .stats .r i{display:block;height:5px;margin-top:5px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}
-.stats .r i b{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#fff,#ffd2b5)}
+.stats .r i b{display:block;height:100%;border-radius:5px;background:#fff}
 .stats .mods{margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;font:700 clamp(13px,1.8vh,17px) Rajdhani;letter-spacing:2px}
 .stats .mods span{color:rgba(255,255,255,.6)}
 .eqtoast{position:fixed;left:50%;bottom:16vh;transform:translate(-50%,10px);display:flex;align-items:center;gap:12px;opacity:0;transition:.25s;pointer-events:none;

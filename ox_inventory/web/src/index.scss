@@ -721,3 +721,54 @@ $rox-big: 11.6vh;
 .rox-right .inventory-grid-container { grid-template-columns: repeat(5, 12.4vh) !important; grid-auto-rows: 12.4vh !important; }
 .rox-left .inventory-grid-header-wrapper .rox-weight, .rox-right .inventory-grid-header-wrapper .rox-weight { font-size: 1.55vh !important; }
 .inventory-control-input[value='0']:not(:focus) { color: transparent !important; }
+
+/* =====================================================================
+   ROX v4 – next-gen palette (navy panels, pink accent, white highlight, teal glow). No orange.
+   ===================================================================== */
+$nav: rgba(27, 27, 41, 0.9);
+$nav2: rgba(36, 36, 54, 0.85);
+$pink: #ff5fa8;
+$teal: #3ee0c5;
+body { font-family: Inter, sans-serif; }
+.app-wrapper::before { background: radial-gradient(ellipse at 40% 45%, rgba(14, 14, 24, .45), rgba(10, 10, 18, .82)) !important; backdrop-filter: blur(6px) saturate(.8); }
+.inventory-wrapper { transform: perspective(1800px) rotateY(5deg) rotateZ(-.8deg) !important; }
+
+/* column panels */
+.inventory-grid-wrapper.rox-left, .inventory-grid-wrapper.rox-right, .rox-mid {
+  background: linear-gradient(180deg, $nav, rgba(22, 22, 34, .92)); padding: 2.2vh 1.6vh 2.6vh; border-radius: .4vh;
+  box-shadow: 0 2vh 5vh rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+.rox-mid { padding-top: 2.2vh !important; }
+.inventory-grid-header-wrapper p, .rox-h { font-family: Rajdhani, Inter, sans-serif !important; font-weight: 700 !important; letter-spacing: .15vh; text-transform: uppercase; font-size: 1.75vh !important; }
+.inventory-grid-header-wrapper p:not(.rox-weight) { color: #fff; }
+.inventory-grid-header-wrapper .rox-weight { color: $pink !important; }
+.rox-left .weight-bar, .rox-right .weight-bar { display: block !important; height: .45vh !important; margin: -.4vh 0 1.4vh; border-radius: .4vh; background: rgba(255, 255, 255, .08) !important; overflow: hidden; }
+.weight-bar div { background: $pink !important; }
+
+/* slots */
+.rox-slot { background: linear-gradient(180deg, $nav2, rgba(24, 24, 36, .9)) !important; border: 1px solid rgba(255, 255, 255, .06) !important; border-radius: .35vh; transition: transform .12s, box-shadow .12s, border-color .12s; }
+.rox-slot.rarity-empty { background: rgba(32, 32, 48, .55) !important; }
+.rox-slot:not(.rarity-empty) .rox-slot-bg { background: linear-gradient(180deg, rgba(48, 48, 70, .9), rgba(30, 30, 46, .95)) !important; }
+.rox-slot:not(.rarity-empty) .rox-slot-bg::before { background: radial-gradient(60% 45% at 50% 108%, rgba(62, 224, 197, .55), transparent 70%) !important; }
+.rox-slot:not(.rarity-empty) .rox-slot-bg::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: .3vh; background: var(--rc, transparent); opacity: .9; }
+.rarity-uncommon { --rc: #3ee0c5; } .rarity-rare { --rc: #6aa8ff; } .rarity-epic { --rc: #b98bff; } .rarity-legendary { --rc: #ff5fa8; } .rarity-common { --rc: transparent; }
+.rox-slot:not(.rarity-empty):hover { transform: translateY(-.3vh); border-color: rgba(255, 255, 255, .5) !important; box-shadow: 0 0 0 1px rgba(255, 255, 255, .5), 0 1vh 2vh rgba(0, 0, 0, .4); }
+.rox-over { outline: 2px solid #fff !important; box-shadow: 0 0 2vh rgba(255, 255, 255, .25); }
+.rox-slot-count { font-family: Rajdhani, Inter, sans-serif; font-weight: 700; font-size: 1.35vh !important; color: #fff; }
+.rox-slot-number { background: #fff !important; color: #1b1b29 !important; border-radius: .25vh !important; font-family: Rajdhani, Inter, sans-serif; }
+.rox-slot-ring { border-color: $teal !important; } .rox-slot-ring.mid { border-color: rgba(255, 255, 255, .55) !important; } .rox-slot-ring.low { border-color: $pink !important; }
+.rox-ok { border-color: $teal !important; }
+
+/* controls */
+.inventory-control-input { color: #fff !important; border-bottom: 1px solid rgba(255, 255, 255, .15) !important; font-family: Rajdhani, Inter, sans-serif; font-weight: 700; }
+.rox-amount-label { color: rgba(255, 255, 255, .55) !important; font-family: Rajdhani, Inter, sans-serif; letter-spacing: .15vh; text-transform: uppercase; }
+
+/* tooltip + context menu */
+.tooltip-wrapper { background: rgba(27, 27, 41, .97) !important; border: 0 !important; border-top: .3vh solid $pink !important; border-radius: .2vh !important; box-shadow: 0 1.5vh 4vh rgba(0, 0, 0, .55); }
+.rox-tip-head b { font-family: Rajdhani, Inter, sans-serif; font-size: 1.75vh !important; letter-spacing: .1vh; text-transform: uppercase; }
+.rox-tip-img .rox-slot-bg { background: linear-gradient(180deg, rgba(48, 48, 70, .9), rgba(30, 30, 46, .95)) !important; }
+.context-menu-list { background: rgba(27, 27, 41, .97) !important; border-radius: .2vh !important; border-top: .3vh solid $pink; }
+.context-menu-item:hover { background: linear-gradient(90deg, #fff, rgba(255, 255, 255, .3)) !important; color: #1b1b29 !important; }
+.inventory-wrapper { gap: 3.2vw !important; padding-left: 3.5vw !important; }
+.rox-right .inventory-grid-container { grid-template-columns: repeat(4, 10vh) !important; grid-auto-rows: 10vh !important; }
+.rox-right { margin-left: 0 !important; margin-top: 0 !important; }

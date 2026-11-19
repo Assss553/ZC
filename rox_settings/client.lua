@@ -2,8 +2,8 @@
 local DEFAULT = { look = 'rox_nextgen', strength = 100, brightness = 0, crosshair = true, cinebars = false, idlecam = true,
                   radio = true, scanner = true, wantedmusic = true, sirens = true, flightmusic = true,
                   minimap = true, streetnames = true, fpsboost = false, shadows = 6, lod = 10,
-                  accent = '#ff4b12', blur = true, menuscale = 100 }
-local ACCENTS = { ['#ff4b12'] = true, ['#ff2d55'] = true, ['#2f9bff'] = true, ['#2fe36a'] = true, ['#a855f7'] = true, ['#ffc400'] = true }
+                  accent = '#ff5fa8', blur = true, menuscale = 100 }
+local ACCENTS = { ['#ff4b12'] = true, ['#ff5fa8'] = true, ['#ff2d55'] = true, ['#2f9bff'] = true, ['#2fe36a'] = true, ['#a855f7'] = true, ['#ffc400'] = true }
 local LOOKS = { off = true, rox_realistic = true, rox_cinematic = true, rox_vivid = true, rox_nightpro = true, rox_noir = true, rox_nextgen = true }
 local PRESETS = {
     standard    = {},
