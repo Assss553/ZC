@@ -99,7 +99,7 @@ class SafeVisionTest {
 
     @Test fun modelCategoryTriggersFullSceneAndAutoUnblur() {
         var score = 0.99f
-        val sv = SafeVision { _, _, _ -> score to 0f }
+        val sv = SafeVision(classifier = { _, _, _ -> score to 0f })
         val s = AiSettings(categories = setOf(Categories.NUDITY), blurMode = BlurMode.GAUSSIAN)
         val res = sv.process(IntArray(w * h) { bg }, w, h, s, now = 0)
         assertTrue(res.fullScene); assertEquals(Categories.NUDITY, res.newEvents.first().category)
@@ -113,5 +113,59 @@ class SafeVisionTest {
         t.update(listOf(Detection(IRect(0, 0, 10, 10), 1f, "a")), 0)
         val r = t.update(listOf(Detection(IRect(0, 0, 10, 10), 1f, "b")), 10)
         assertEquals(2, r.size)
+    }
+}
+
+class NudeNetPortTest {
+    private fun output(n: Int, rows: List<Triple<FloatArray, Int, Float>>): FloatArray {
+        val o = FloatArray(22 * n)
+        rows.forEachIndexed { i, (box, cls, score) ->
+            for (k in 0 until 4) o[k * n + i] = box[k]
+            o[(4 + cls) * n + i] = score
+        }
+        return o
+    }
+
+    @org.junit.Test fun postprocessScalesBoxesAndAppliesNms() {
+        val breast = com.rox.gameai.vision.NudeNet.LABELS.indexOf("FEMALE_BREAST_EXPOSED")
+        val face = com.rox.gameai.vision.NudeNet.LABELS.indexOf("FACE_FEMALE")
+        // 640x360 frame -> padded side 640, model space 320 => scale 2
+        val out = output(4, listOf(
+            Triple(floatArrayOf(100f, 50f, 40f, 20f), breast, 0.9f),
+            Triple(floatArrayOf(101f, 50f, 40f, 20f), breast, 0.8f), // duplicate -> removed by NMS
+            Triple(floatArrayOf(200f, 100f, 20f, 20f), face, 0.95f),
+            Triple(floatArrayOf(10f, 10f, 4f, 4f), breast, 0.1f),   // below score
+        ))
+        val raw = com.rox.gameai.vision.NudeNet.postprocess(out, 4, 640, 360, 640)
+        org.junit.Assert.assertEquals(2, raw.size)
+        val dets = com.rox.gameai.vision.NudeNet.toDetections(raw, 0.5f)
+        org.junit.Assert.assertEquals(1, dets.size) // face is not nudity
+        val r = dets[0].rect
+        org.junit.Assert.assertEquals(com.rox.gameai.core.IRect(160, 80, 240, 120), r)
+        org.junit.Assert.assertEquals(com.rox.gameai.core.Categories.NUDITY, dets[0].category)
+    }
+
+    @org.junit.Test fun preprocessIsNchwRgbNormalisedAndPadded() {
+        val w = 64; val h = 32
+        val px = IntArray(w * h) { 0xFFFF0000.toInt() } // pure red
+        val (t, side) = com.rox.gameai.vision.NudeNet.preprocess(px, w, h)
+        org.junit.Assert.assertEquals(64, side)
+        org.junit.Assert.assertEquals(3 * 320 * 320, t.size)
+        org.junit.Assert.assertEquals(1f, t[10 * 320 + 10], 1e-3f)              // R plane, top area = image
+        org.junit.Assert.assertEquals(0f, t[320 * 320 + 10 * 320 + 10], 1e-3f)  // G plane
+        org.junit.Assert.assertEquals(0f, t[300 * 320 + 10], 1e-3f)             // bottom = black padding
+    }
+
+    @org.junit.Test fun trainedDetectorBoxesAreMaskedAndHeuristicDisabled() {
+        val w = 320; val h = 180
+        val px = IntArray(w * h) { 0xFFE0AC8C.toInt() } // whole frame skin-coloured: heuristic would fire
+        val sv = com.rox.gameai.vision.SafeVision(regionDetector = { _, _, _, _ ->
+            listOf(com.rox.gameai.core.Detection(com.rox.gameai.core.IRect(10, 10, 50, 50), 0.9f, com.rox.gameai.core.Categories.NUDITY))
+        })
+        val res = sv.process(px, w, h, com.rox.gameai.core.AiSettings(blurMode = com.rox.gameai.core.BlurMode.BLACK), now = 0)
+        org.junit.Assert.assertEquals(1, res.regions.size)
+        org.junit.Assert.assertEquals(com.rox.gameai.core.Categories.NUDITY, res.regions[0].category)
+        org.junit.Assert.assertEquals(0xFF000000.toInt(), px[30 * w + 30])
+        org.junit.Assert.assertEquals(0xFFE0AC8C.toInt(), px[150 * w + 300])
     }
 }

@@ -54,6 +54,7 @@ class VoiceTranslator(
     private var projection: MediaProjection? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    @Volatile private var forceService = false
 
     fun isRecognitionAvailable() = SpeechRecognizer.isRecognitionAvailable(context)
 
@@ -126,14 +127,14 @@ class VoiceTranslator(
     private fun listen() {
         if (!running) return
         recognizer?.destroy()
-        val rec = if (Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(context) && settings.value.localProcessing)
+        val rec = if (!forceService && Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(context) && settings.value.localProcessing)
             SpeechRecognizer.createOnDeviceSpeechRecognizer(context) else SpeechRecognizer.createSpeechRecognizer(context)
         recognizer = rec
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, settings.value.voiceLanguage)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, settings.value.localProcessing)
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, settings.value.localProcessing && !forceService)
         }
         if (record != null && Build.VERSION.SDK_INT >= 33) {
             val pipe = ParcelFileDescriptor.createPipe()
@@ -159,7 +160,11 @@ class VoiceTranslator(
                 main.postDelayed({ listen() }, 100)
             }
             override fun onError(error: Int) {
-                if (error != SpeechRecognizer.ERROR_NO_MATCH && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) RoxLog.w("Voice", "Recognizer error $error")
+                // 12/13 = language not supported/unavailable on-device, 11 = on-device service disconnected
+                if (!forceService && (error == 11 || error == 12 || error == 13)) {
+                    forceService = true
+                    RoxLog.w("Voice", "On-device speech pack for ${settings.value.voiceLanguage} is missing (error $error) — switching to the phone's speech service")
+                } else if (error != SpeechRecognizer.ERROR_NO_MATCH && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT && error != SpeechRecognizer.ERROR_RECOGNIZER_BUSY) RoxLog.w("Voice", "Recognizer error $error")
                 main.postDelayed({ listen() }, if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) 800 else 250)
             }
         })

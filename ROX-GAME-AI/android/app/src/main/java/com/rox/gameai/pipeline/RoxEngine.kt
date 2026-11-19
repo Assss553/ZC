@@ -104,6 +104,20 @@ class RoxEngine(
     private var seq = 0L
     private var autoScriptIndex = 0
     private var restarts = 0
+    // Language voting: a language becomes "the game language" after 3 consistent detections and only
+    // changes after 8 consistent different ones (stops en/zh flip-flopping on noisy OCR).
+    @Volatile private var stickyLang = ""
+    private var candLang = ""; private var candVotes = 0
+    private val voteLangs = setOf("en", "ja", "zh", "ko", "fr", "de", "es", "it", "pt", "ru", "tr")
+
+    private fun vote(id: String): String {
+        if (id !in voteLangs) return stickyLang
+        if (id == stickyLang) { candVotes = 0; return stickyLang }
+        if (id == candLang) candVotes++ else { candLang = id; candVotes = 1 }
+        val need = if (stickyLang.isEmpty()) 3 else 8
+        if (candVotes >= need) { stickyLang = id; candVotes = 0; RoxLog.i("Language", "Game language set to: $id") }
+        return stickyLang
+    }
     @Volatile private var blackSince = 0L
     @Volatile private var blackWarned = false
 
@@ -117,8 +131,12 @@ class RoxEngine(
 
     init {
         val model = TfliteContentClassifier.load(context)
-        modelInstalled = model != null
-        safeVision = SafeVision(model?.let { m -> { px: IntArray, w: Int, h: Int -> m.classify(px, w, h).let { it.nudity to it.sexual } } })
+        val nude = com.rox.gameai.vision.NudeNetDetector.load(context)
+        safeVision = SafeVision(
+            model?.let { m -> { px: IntArray, w: Int, h: Int -> m.classify(px, w, h).let { it.nudity to it.sexual } } },
+            nude?.let { d -> { px: IntArray, w: Int, h: Int, sens: Float -> d.detect(px, w, h, sens) } },
+        )
+        modelInstalled = safeVision.modelAvailable
         voiceTranslator = VoiceTranslator(context, settings,
             onFinal = { text, lang -> scope.launch { onVoiceFinal(text, lang) } },
             onPartial = { text -> _voice.value = (_voice.value.filter { !it.partial } + VoiceLine(System.currentTimeMillis(), "", text, "", true)).takeLast(60) })
@@ -253,10 +271,10 @@ class RoxEngine(
         val t0 = SystemClock.elapsedRealtime()
         try {
             val st = _status.value
-            var lang = recognizer.state.value.profile?.language.orEmpty()
-            val script = if (lang.isNotEmpty()) OcrEngine.scriptFor(lang) else if (st.gameLanguage.isNotEmpty()) st.ocrScript else Script.LATIN
+            var lang = recognizer.state.value.profile?.language.orEmpty().ifEmpty { stickyLang }
+            val script = if (lang.isNotEmpty()) OcrEngine.scriptFor(lang) else Script.LATIN
             var blocks = ocr.recognize(bmp, script, scaleBack)
-            if (blocks.isEmpty() && lang.isEmpty()) {
+            if (blocks.isEmpty() && lang.isEmpty() && autoScriptIndex < 30) {
                 // Unknown language: probe CJK recognisers in turn
                 val probe = listOf(Script.JAPANESE, Script.CHINESE, Script.KOREAN)[autoScriptIndex++ % 3]
                 blocks = ocr.recognize(bmp, probe, scaleBack)
@@ -265,14 +283,13 @@ class RoxEngine(
             if (blocks.isEmpty()) { _overlays.value = emptyList(); return }
             val all = blocks.joinToString(" ") { it.text }
             recognizer.fromScreenText(all)
-            if (lang.isEmpty()) {
-                val id = ocr.identifyLanguage(all)
-                if (id != "und") {
-                    lang = id
-                    recognizer.setLanguage(id)
-                    _status.value = _status.value.copy(gameLanguage = id, ocrScript = OcrEngine.scriptFor(id))
-                    RoxLog.i("Language", "Detected game language: $id")
+            if (recognizer.state.value.profile?.language.isNullOrEmpty() && all.length >= 12) {
+                val voted = vote(ocr.identifyLanguage(all))
+                if (voted.isNotEmpty() && voted != _status.value.gameLanguage) {
+                    recognizer.setLanguage(voted)
+                    _status.value = _status.value.copy(gameLanguage = voted, ocrScript = OcrEngine.scriptFor(voted))
                 }
+                lang = voted
             }
             if (lang.isEmpty() || lang == "und") return
             val now = System.currentTimeMillis()
@@ -325,5 +342,6 @@ class RoxEngine(
         _status.value = PipelineStatus()
         _frame.value = null; _overlays.value = emptyList(); _regions.value = emptyList()
         recognizer.reset()
+        stickyLang = ""; candLang = ""; candVotes = 0; autoScriptIndex = 0
     }
 }

@@ -73,7 +73,7 @@ android {
         buildConfig = true
     }
     androidResources {
-        noCompress += "tflite"
+        noCompress += listOf("tflite", "onnx")
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
@@ -112,6 +112,8 @@ dependencies {
     implementation("com.google.mlkit:language-id:17.0.6")
     // Optional pluggable content-classification model (loaded only if assets/safevision/model.tflite exists)
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    // Trained Safe Vision detector (NudeNet ONNX model, AGPL-3.0) on-device
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2")
 
     testImplementation("junit:junit:4.13.2")
 

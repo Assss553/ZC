@@ -11,7 +11,12 @@ import com.rox.gameai.core.IRect
  * detect → track → apply the mask on the pixels → only then the frame is shown.
  * Pure pixel logic (no Android types) so the full chain is unit-tested on the JVM.
  */
-class SafeVision(private val classifier: ((IntArray, Int, Int) -> Pair<Float, Float>)? = null) {
+class SafeVision(
+    private val classifier: ((IntArray, Int, Int) -> Pair<Float, Float>)? = null,
+    /** Trained region detector (NudeNet): returns boxes of exposed body parts in frame coordinates. */
+    private val regionDetector: ((IntArray, Int, Int, Float) -> List<Detection>)? = null,
+) {
+    private var lastRegionDets: List<Detection> = emptyList()
     private val skin = SkinDetector()
     val tracker = RegionTracker()
     private var frameNo = 0L
@@ -19,7 +24,7 @@ class SafeVision(private val classifier: ((IntArray, Int, Int) -> Pair<Float, Fl
     @Volatile var fullSceneUntil = 0L; private set
     private var inModelScene = false
 
-    val modelAvailable: Boolean get() = classifier != null
+    val modelAvailable: Boolean get() = classifier != null || regionDetector != null
 
     data class Result(val regions: List<RegionTracker.Track>, val fullScene: Boolean, val newEvents: List<Detection>, val analysisMs: Long)
 
@@ -30,8 +35,14 @@ class SafeVision(private val classifier: ((IntArray, Int, Int) -> Pair<Float, Fl
         val (small, sw, sh) = ImageOps.downsample(px, w, h, s.analysisWidth.coerceIn(160, 960))
         val sx = w.toFloat() / sw; val sy = h.toFloat() / sh
         val dets = ArrayList<Detection>()
-        if (Categories.EXPOSED in s.categories) {
+        // Colour heuristic only when no trained detector is available (it misfires on game skin tones)
+        if (Categories.EXPOSED in s.categories && regionDetector == null) {
             skin.detect(small, sw, sh, s.sensitivity).forEach { dets += it.copy(rect = it.rect.scale(sx, sy)) }
+        }
+        if (regionDetector != null && Categories.NUDITY in s.categories) {
+            // Trained detector every 2nd frame; the tracker keeps masks in place between runs
+            if (frameNo % 2 == 0L) lastRegionDets = regionDetector.invoke(px, w, h, s.sensitivity)
+            dets += lastRegionDets
         }
         val events = ArrayList<Detection>()
         // Whole-scene model (if installed): every 3rd frame
