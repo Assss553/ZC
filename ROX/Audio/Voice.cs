@@ -117,8 +117,8 @@ public sealed class VoiceEffects : ISampleProvider
                 if (s.Alien)
                 {
                     lfo += 2 * Math.PI * 0.35 / Fmt.Rate;
-                    float d = Tap(48 + 240 * (float)(0.5 + 0.5 * Math.Sin(lfo)));
-                    x = 0.6f * x + 0.6f * d; mod[modPos] = x * 0.95f; // flanger with feedback
+                    float fl = Tap(48 + 240 * (float)(0.5 + 0.5 * Math.Sin(lfo)));
+                    x = 0.6f * x + 0.6f * fl; mod[modPos] = x * 0.95f; // flanger with feedback
                 }
                 if (s.Chorus)
                 {
