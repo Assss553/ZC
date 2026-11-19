@@ -78,3 +78,33 @@ for i, f in enumerate(files):
     sheet.paste(t, (20 + (i % 3)*340, 20 + (i // 3)*340))
 sheet.save(f"{OUT}/_preview.png")
 print("done:", os.listdir(OUT))
+
+# ---- weapon sling (shoulder strap) : 256x1024 webbing + buckle/QD swivel ----
+def sling(name, cols):
+    w, h = 256, 1024
+    img = Image.new("RGB", (w, h), cols[0]); d = ImageDraw.Draw(img)
+    for x in range(0, w, 6):  # webbing weave
+        d.line((x, 0, x, h), fill=cols[1], width=2)
+    d.rectangle((0, 0, 14, h), fill=cols[1]); d.rectangle((w-15, 0, w, h), fill=cols[1])  # stitched edges
+    for y in range(0, h, 18):
+        d.line((20, y, 20, y+9), fill=cols[2], width=2); d.line((w-21, y, w-21, y+9), fill=cols[2], width=2)
+    metal = (45, 45, 48)
+    # adjuster buckle
+    d.rounded_rectangle((10, 300, w-10, 400), 10, fill=metal, outline=(90, 90, 95), width=4)
+    d.rectangle((40, 330, w-40, 370), fill=cols[0])
+    # QD swivel
+    d.ellipse((78, 820, 178, 920), fill=metal, outline=(110, 110, 115), width=6)
+    d.ellipse((113, 855, 143, 885), fill=(20, 20, 20))
+    # reinforced box-X stitch
+    d.rectangle((30, 560, w-30, 700), outline=cols[2], width=3)
+    d.line((30, 560, w-30, 700), fill=cols[2], width=3); d.line((w-30, 560, 30, 700), fill=cols[2], width=3)
+    return img
+
+slings = []
+for name, cols in VARIANTS.items():
+    c = cols if name != "desert" else [cols[0], cols[1], (70, 55, 40)]
+    s = sling(name, c); s.save(f"{OUT}/swat_sling_{name}_diff.png"); slings.append(s)
+pv = Image.new("RGB", (3*150+40, 560), (90, 100, 115))
+for i, s in enumerate(slings):
+    pv.paste(s.resize((128, 512)), (20 + i*150, 24))
+pv.save(f"{OUT}/_preview_sling.png")

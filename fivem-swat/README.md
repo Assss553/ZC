@@ -16,3 +16,7 @@
 3. ضع ملفات `.ydd/.ytd/.ymt` في `stream/mp_m_freemode_01_swat/` (استخدم Durty Cloth Tool لبناء الـ ymt و meta تلقائياً).
 4. في `server.cfg`:  `ensure swat_uniform`
 5. داخل اللعبة اختر الملابس من EUP / qb-clothing / illenium-appearance.
+
+## حمالة السلاح على الكتف (Weapon Sling)
+- `textures/swat_sling_{olive,black,desert}_diff.png` (256x1024): حزام مع إبزيم تعديل، خياطة X، ومشبك QD.
+- الموديل: حزام مائل من الكتف الأيمن للخصر الأيسر، يوضع في سلوت `accs` (ID 8) أو `decl`؛ اربط الـUV بطول الحزام عمودياً.
