@@ -114,6 +114,8 @@ fun HomeScreen(app: RoxApp, actions: RoxActions, go: (Section) -> Unit) {
     val pc by app.server.state.collectAsState()
     ScrollPage {
         if (pc.connected) RoxServerCard(app)
+        val tvs by app.tv.state.collectAsState()
+        if (tvs.paired) StatusTile(t("TV", "التلفزيون"), "${tvs.tv?.name} · ${t("subtitles sent", "ترجمات مرسلة")}: ${tvs.sent}", true)
         ProcessedVideo(app)
         Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             PrimaryButton("AUTO START", Modifier.weight(1f).height(54.dp)) { actions.autoStart() }
@@ -169,6 +171,7 @@ fun ConnectScreen(app: RoxApp) {
     var ip by remember { mutableStateOf("") }
     var manualType by remember { mutableStateOf(ConsoleType.PS5) }
     ScrollPage {
+        TvCard(app)
         RoxServerCard(app)
         RoxCard(t("Status", "الحالة")) {
             StatusTile(linkText(conn.status), conn.console?.let { "${it.type} · ${it.name} · ${it.ip}" + (conn.runningApp?.let { a -> "\n▶ $a" } ?: "") } ?: "—", conn.status == LinkStatus.CONNECTED)
@@ -511,5 +514,38 @@ fun RoxServerCard(app: RoxApp) {
                 }
             }
         }
+    }
+}
+
+
+// ───────────────────────────── ROX TV ─────────────────────────────
+@Composable
+fun TvCard(app: RoxApp) {
+    val st by app.tv.state.collectAsState()
+    val found by app.tv.found.collectAsState()
+    var code by remember { mutableStateOf("") }
+    var host by remember { mutableStateOf("") }
+    RoxCard(t("ROX TV (show translation on the TV)", "ROX TV (عرض الترجمة على التلفزيون)")) {
+        StatusTile(
+            when { st.paired -> t("Paired with TV", "مقترن بالتلفزيون"); st.connected -> t("Connected — waiting for code", "متصل — بانتظار الرمز"); st.message.isNotBlank() -> st.message; else -> t("Not connected", "غير متصل") },
+            st.tv?.let { "${it.name} · ${it.host}" + if (st.paired) " · Mode ${st.mode} · ${t("sent", "مرسل")} ${st.sent}" else "" } ?: "—", st.paired)
+        Note(t("Open ROX TV on the Android TV (same Wi-Fi). Enter the 6-digit code shown on the TV.", "افتح تطبيق ROX TV على تلفزيون Android (نفس الشبكة)، ثم اكتب الرمز المكوّن من 6 أرقام الظاهر على التلفزيون."))
+        RoxField(code, t("TV code (6 digits)", "رمز التلفزيون (6 أرقام)"), { code = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth())
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PrimaryButton(t("Find TV", "البحث عن التلفزيون")) { app.tv.discover() }
+            if (st.tv != null) SecondaryButton(t("Disconnect", "قطع")) { app.tv.disconnect() }
+        }
+        found.forEach { tv ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("${tv.name}\n${tv.host}", color = RoxWhite, modifier = Modifier.weight(1f))
+                PrimaryButton(t("Pair", "اقتران")) { if (code.length == 6) app.tv.connect(tv, code) }
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RoxField(host, t("TV IP (if not found)", "عنوان التلفزيون (إن لم يظهر)"), { host = it }, Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
+            SecondaryButton(t("Pair", "اقتران")) { if (host.isNotBlank() && code.length == 6) app.tv.connect(com.rox.gameai.connection.TvLink.Tv("ROX TV", host.trim(), 9770), code) }
+        }
+        if (st.paired) SecondaryButton(t("Send test subtitle", "إرسال ترجمة تجريبية")) { app.tv.sendSubtitle("هذه ترجمة تجريبية من الجوال إلى التلفزيون ✓", "ROX") }
     }
 }

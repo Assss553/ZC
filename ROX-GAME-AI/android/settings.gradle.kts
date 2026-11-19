@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ROX-GAME-AI"
 include(":app")
+include(":tv")

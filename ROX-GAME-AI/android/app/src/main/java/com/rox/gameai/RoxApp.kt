@@ -22,6 +22,7 @@ class RoxApp : Application() {
     lateinit var engine: RoxEngine; private set
     lateinit var overlay: OverlayWindow; private set
     lateinit var server: com.rox.gameai.connection.RoxServerClient; private set
+    lateinit var tv: com.rox.gameai.connection.TvLink; private set
 
     override fun onCreate() {
         super.onCreate()
@@ -36,6 +37,9 @@ class RoxApp : Application() {
         engine = RoxEngine(this, settings, store, conn, perf, scope)
         overlay = OverlayWindow(this)
         server = com.rox.gameai.connection.RoxServerClient(store, scope)
+        tv = com.rox.gameai.connection.TvLink(this, scope)
+        scope.launch { engine.overlays.collect { tv.onOverlays(it) } }
+        scope.launch { server.subtitles.collect { tv.onOverlays(it) } }
         RoxLog.i("App", "ROX GAME AI ${BuildConfig.VERSION_NAME} started (Android ${android.os.Build.VERSION.RELEASE}, ${android.os.Build.MODEL})")
         // Floating translation window above PS Remote Play
         scope.launch(Dispatchers.Main) {

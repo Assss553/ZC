@@ -69,6 +69,8 @@ jobs:
             f=$(ls $SRC/*-$abi-*.apk | grep -v unsigned | head -1)
             cp "$f" ../release/ROX-GAME-AI-$abi.apk
           done
+          # ROX TV (Android TV app)
+          cp tv/build/outputs/apk/release/tv-release.apk ../release/ROX-TV.apk
           # Main download = arm64-v8a (almost every phone from 2017 on)
           cp ../release/ROX-GAME-AI-arm64-v8a.apk ../release/ROX-GAME-AI.apk
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
