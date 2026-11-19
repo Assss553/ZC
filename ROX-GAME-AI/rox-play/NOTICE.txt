@@ -1,0 +1,11 @@
+ROX Play
+========
+ROX Play is a modified version of chiaki-ng (https://github.com/streetpea/chiaki-ng),
+the open-source PlayStation Remote Play client, licensed under the GNU Affero General
+Public License v3.0 (see COPYING). The complete corresponding source code of ROX Play
+(the unmodified chiaki-ng commit plus the ROX changes in apply-rox-branding.ps1) is public at:
+https://github.com/Assss553/ZC/tree/ccr-dcf102d9-fn7ygb/ROX-GAME-AI/rox-play
+
+ROX Play is not affiliated with or endorsed by Sony Interactive Entertainment.
+"PlayStation", "PS4" and "PS5" are trademarks of Sony Interactive Entertainment Inc.
+Sign-in happens on Sony's official login page; ROX never receives your password.
