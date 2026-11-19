@@ -31,7 +31,8 @@ jobs:
       - name: Install NDK + CMake used by chiaki-ng
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;28.2.13676358" "cmake;3.22.1" > /dev/null
-          pip install --user protobuf
+          sudo apt-get update -qq && sudo apt-get install -y -qq protobuf-compiler python3-protobuf > /dev/null
+          protoc --version
       - name: Apply ROX Play branding
         working-directory: chiaki
         run: bash ../rox-src/ROX-GAME-AI/rox-play-android/apply-rox-android.sh
