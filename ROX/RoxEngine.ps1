@@ -60,6 +60,10 @@ public static class RoxNative
     [DllImport("psapi.dll", SetLastError = true)]
     public static extern bool EmptyWorkingSet(IntPtr process);
 
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+    public static int ForegroundPid() { uint p; GetWindowThreadProcessId(GetForegroundWindow(), out p); return (int)p; }
+
     [DllImport("powrprof.dll")]
     public static extern uint PowerSetActiveOverlayScheme(Guid overlay);
 
@@ -209,6 +213,7 @@ function Get-RoxSettings {
     $d = [ordered]@{
         GpuVendor        = ''
         FirstRunDone     = $false
+        RamGuard         = $true
         AutoBoost        = $true
         CloseOnGameStart = $true
         StartWithWindows = $false
@@ -1242,6 +1247,31 @@ function Invoke-CleanRam([int]$SkipPid = 0) {
 }
 
 # Runs when a game starts (or right before ROX launches one).
+# RAM Guard: shrinks the RAM every background app holds (not the window you are using),
+# and when RAM is almost full closes heavy windowless background apps (tray apps, never ones with a window).
+function Invoke-RamGuard([int]$Percent = 0) {
+    if (-not (Initialize-Native)) { return }
+    $fg = [RoxNative]::ForegroundPid()
+    $skip = @('system', 'idle', 'registry', 'memory compression', 'memcompression', 'smss', 'csrss', 'wininit',
+              'winlogon', 'services', 'lsass', 'dwm', 'audiodg', 'explorer', 'fontdrvhost', 'msmpeng', 'ctfmon', 'textinputhost')
+    $n = 0
+    foreach ($p in [System.Diagnostics.Process]::GetProcesses()) {
+        if ($p.Id -le 4 -or $p.Id -eq $PID -or $p.Id -eq $fg -or $skip -contains $p.ProcessName.ToLower()) { continue }
+        if ($p.WorkingSet64 -lt 150MB) { continue }
+        $h = [RoxNative]::OpenProcess(0x1100, $false, $p.Id)
+        if ($h -ne [IntPtr]::Zero) { if ([RoxNative]::EmptyWorkingSet($h)) { $n++ }; [void][RoxNative]::CloseHandle($h) }
+    }
+    $closed = 0
+    if ($Percent -ge 88) {
+        foreach ($a in @(Get-BackgroundApps | Where-Object { $_.DefaultClose -and -not $_.HasWindow -and $_.RamMB -ge 300 })) {
+            Get-Process -Name $a.ProcessName -ErrorAction SilentlyContinue | ForEach-Object { try { $_.Kill() } catch { } }
+            $closed++
+        }
+    }
+    [void][RoxNative]::PurgeStandbyList()
+    return [pscustomobject]@{ Trimmed = $n; Closed = $closed }
+}
+
 function Invoke-GameBoost([int]$ProcessId = 0, [bool]$CloseApps = $true) {
     $closed = 0
     $freedApps = 0
