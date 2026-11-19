@@ -3,6 +3,8 @@ on:
   push:
     paths: ['ROX/**', '.github/workflows/rox-build.yml']
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: windows-latest
@@ -17,3 +19,12 @@ jobs:
         with:
           name: ROX-windows
           path: out/ROX.exe
+      - name: Publish release (direct download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rox-v${{ github.run_number }}
+          name: ROX v1.1.${{ github.run_number }}
+          make_latest: true
+          target_commitish: ${{ github.sha }}
+          files: out/ROX.exe
+          body: "Download ROX.exe and run it (Windows 10/11, x64). No install needed."
