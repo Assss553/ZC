@@ -21,6 +21,7 @@ class RoxApp : Application() {
     lateinit var store: Store; private set
     lateinit var engine: RoxEngine; private set
     lateinit var overlay: OverlayWindow; private set
+    lateinit var server: com.rox.gameai.connection.RoxServerClient; private set
 
     override fun onCreate() {
         super.onCreate()
@@ -34,6 +35,7 @@ class RoxApp : Application() {
         val conn = ConnectionManager(this, store, settings, scope)
         engine = RoxEngine(this, settings, store, conn, perf, scope)
         overlay = OverlayWindow(this)
+        server = com.rox.gameai.connection.RoxServerClient(store, scope)
         RoxLog.i("App", "ROX GAME AI ${BuildConfig.VERSION_NAME} started (Android ${android.os.Build.VERSION.RELEASE}, ${android.os.Build.MODEL})")
         // Floating translation window above PS Remote Play
         scope.launch(Dispatchers.Main) {

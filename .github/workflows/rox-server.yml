@@ -1,0 +1,49 @@
+name: ROX Server — Windows build
+
+on:
+  push:
+    branches: [ "ccr-dcf102d9-fn7ygb", "main" ]
+    paths: [ "ROX-GAME-AI/server/**", ".github/workflows/rox-server.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: ROX-GAME-AI/server
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Install dependencies (official PyPI packages)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest pyinstaller
+      - name: Tests (incl. real en→ar model download + translation)
+        env: { ROX_NET_TESTS: "1" }
+        run: python -m pytest -q -s tests
+      - name: Build ROX-Server.exe
+        run: pyinstaller --noconfirm --onefile --windowed --name ROX-Server --collect-all rapidocr_onnxruntime --collect-all onnxruntime --collect-all ctranslate2 --collect-all sentencepiece --hidden-import win32gui run_server.py
+      - name: Self-test the packaged exe
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\ROX-Server.exe -ArgumentList "--selftest" -Wait -PassThru
+          Get-Content rox-selftest.txt
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - uses: actions/upload-artifact@v4
+        with: { name: ROX-Server-windows, path: ROX-GAME-AI/server/dist/ROX-Server.exe }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rox-server-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: ROX Server (Windows) build ${{ github.run_number }}
+          make_latest: "false"
+          body: |
+            ROX Server for Windows 10/11. Download `ROX-Server.exe` and run it.
+            Pair with your PlayStation inside the official chiaki-ng client (Sony sign-in page + PIN), then press AUTO START in ROX Server.
+          files: ROX-GAME-AI/server/dist/ROX-Server.exe

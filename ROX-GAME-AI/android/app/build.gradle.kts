@@ -98,6 +98,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // WebSocket link to ROX Server on the PC
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     // On-device OCR (bundled models: work offline, no Google Play Services needed)

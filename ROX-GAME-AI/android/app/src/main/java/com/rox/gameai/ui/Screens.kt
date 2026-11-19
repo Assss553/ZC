@@ -111,7 +111,9 @@ fun HomeScreen(app: RoxApp, actions: RoxActions, go: (Section) -> Unit) {
     val st by app.engine.status.collectAsState()
     val perf by app.engine.perf.stats.collectAsState()
     val game by app.engine.recognizer.state.collectAsState()
+    val pc by app.server.state.collectAsState()
     ScrollPage {
+        if (pc.connected) RoxServerCard(app)
         ProcessedVideo(app)
         Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             PrimaryButton("AUTO START", Modifier.weight(1f).height(54.dp)) { actions.autoStart() }
@@ -155,6 +157,7 @@ fun ConnectScreen(app: RoxApp) {
     var ip by remember { mutableStateOf("") }
     var manualType by remember { mutableStateOf(ConsoleType.PS5) }
     ScrollPage {
+        RoxServerCard(app)
         RoxCard(t("Status", "الحالة")) {
             StatusTile(linkText(conn.status), conn.console?.let { "${it.type} · ${it.name} · ${it.ip}" + (conn.runningApp?.let { a -> "\n▶ $a" } ?: "") } ?: "—", conn.status == LinkStatus.CONNECTED)
             Note(t("How it works: ROX finds the console on your Wi-Fi and monitors its state and running game. The video itself comes from Sony's official PS Remote Play app (sign-in and pairing with your PSN account are done there) or from an HDMI capture card.",
@@ -449,6 +452,51 @@ fun LogsScreen(actions: RoxActions) {
             items(logs.asReversed()) { e ->
                 Text("${timeFmt.format(Date(e.time))} ${e.level}/${e.tag}: ${e.message}", fontSize = 12.sp,
                     color = when (e.level) { 'E' -> RoxRed; 'W' -> RoxOrange; else -> RoxGrey }, modifier = Modifier.padding(vertical = 2.dp))
+            }
+        }
+    }
+}
+
+
+// ───────────────────────────── ROX SERVER (PC) ─────────────────────────────
+@Composable
+fun RoxServerCard(app: RoxApp) {
+    val st by app.server.state.collectAsState()
+    val found by app.server.found.collectAsState()
+    val subs by app.server.subtitles.collectAsState()
+    var host by remember { mutableStateOf("") }
+    var searching by remember { mutableStateOf(false) }
+    LaunchedEffect(searching) { if (searching) { app.server.discover(); searching = false } }
+    RoxCard("ROX Server (PC)") {
+        StatusTile(
+            if (st.connected) t("Connected to PC", "متصل بالكمبيوتر") else t("Not connected", "غير متصل"),
+            st.server?.let { "${it.name} · ${it.host}:${it.port}" + if (st.connected) " · ${st.fps} fps · OCR ${st.ocrMs} ms · ${st.lang}" else "" } ?: "—",
+            st.connected,
+        )
+        Note(t("Run ROX Server on your PC (same Wi-Fi). The PC receives the PlayStation through the official chiaki-ng client (Sony sign-in + PIN there) and does the AI; the phone shows the translation.",
+            "شغّل ROX Server على الكمبيوتر (نفس الشبكة). الكمبيوتر يستقبل البلايستيشن عبر عميل chiaki-ng الرسمي (تسجيل الدخول برمز Sony هناك) ويشغّل الذكاء الاصطناعي، والجوال يعرض الترجمة."))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PrimaryButton(if (searching) t("Searching…", "جارٍ البحث…") else t("Find ROX Server", "البحث عن ROX Server")) { searching = true }
+            if (st.server != null) SecondaryButton(t("Disconnect", "قطع الاتصال")) { app.server.disconnect() }
+        }
+        found.forEach { s ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("${s.name}\n${s.host}:${s.port}", color = RoxWhite, modifier = Modifier.weight(1f))
+                PrimaryButton(t("Connect", "اتصال")) { app.server.connect(s) }
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RoxField(host, t("PC IP (optional)", "عنوان الكمبيوتر (اختياري)"), { host = it }, Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
+            SecondaryButton(t("Connect", "اتصال")) { if (host.isNotBlank()) app.server.connectManual(host) }
+        }
+        if (st.connected) {
+            subs.take(4).forEach { o ->
+                Column(Modifier.padding(vertical = 4.dp)) {
+                    Text("${o.kind}${if (o.speaker.isNotBlank()) " · ${o.speaker}" else ""}", color = RoxOrange, fontSize = 11.sp)
+                    Text(o.translated, color = RoxWhite, fontSize = 16.sp)
+                    Text(o.original, color = RoxGrey, fontSize = 12.sp)
+                }
             }
         }
     }

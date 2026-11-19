@@ -1,0 +1,8 @@
+numpy>=1.26
+pillow>=10.0
+mss>=9.0
+rapidocr-onnxruntime>=1.2.3
+ctranslate2>=4.0
+sentencepiece>=0.2
+aiohttp>=3.9
+pywin32>=306; sys_platform == "win32"
