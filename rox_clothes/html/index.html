@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- ROX Store | ROX Clothes | All rights reserved -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff5fa8;--teal:#3ee0c5}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-family:Inter,sans-serif;color:#fff}
+body.preview{background:#3a3f46 url(demo.jpg) center/cover}
+#app{position:fixed;inset:0;display:none}#app.on{display:block}
+.side{position:absolute;left:0;top:0;bottom:0;width:clamp(280px,24vw,420px);background:linear-gradient(90deg,rgba(20,20,30,.82),rgba(20,20,30,.0))}
+.crumb{position:absolute;left:2.2vw;top:2.6vh;font:700 clamp(14px,1.9vh,19px) Rajdhani;letter-spacing:1px;color:rgba(255,255,255,.6);text-transform:uppercase}
+.title{position:absolute;left:2.2vw;top:4.8vh;font:700 clamp(24px,3.4vh,36px) Rajdhani;letter-spacing:1px;text-transform:uppercase}
+.cats{position:absolute;left:2.2vw;top:11vh;width:clamp(240px,20vw,360px)}
+.c{height:clamp(34px,4.2vh,44px);display:flex;align-items:center;padding:0 14px;font:500 clamp(14px,1.75vh,18px) Inter;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer;color:rgba(255,255,255,.85)}
+.c.on{color:#15151f;background:linear-gradient(90deg,#fff,#eeeef2 45%,rgba(255,255,255,.3) 90%);border-color:transparent}
+.c span{margin-left:auto;font-size:.8em;color:var(--teal)}.c.on span{color:#15151f}
+.money{position:absolute;right:2.2vw;top:2.6vh;display:flex;gap:16px;font:700 clamp(18px,2.5vh,26px) Rajdhani}.money .b{color:rgba(255,255,255,.55);font-size:.8em}
+.info{position:absolute;left:2.2vw;bottom:5vh}
+.price{display:flex;align-items:center;gap:8px;font:700 clamp(22px,3vh,32px) Rajdhani}
+.price i{display:inline-grid;place-items:center;width:24px;height:16px;border-radius:3px;background:#3ddc84;color:#0c2a18;font:800 10px Inter;font-style:normal}
+.nm{font:700 clamp(15px,2vh,21px) Rajdhani;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.sub{font:600 clamp(12px,1.6vh,16px) Rajdhani;letter-spacing:1px;color:rgba(255,255,255,.6);text-transform:uppercase}
+.sw{display:flex;gap:8px;margin-top:1.4vh;flex-wrap:wrap;max-width:44vw}
+.sw div{width:clamp(36px,4.6vh,50px);height:clamp(36px,4.6vh,50px);border-radius:3px;border:2px solid transparent;cursor:pointer;display:grid;place-items:center;font:700 11px Rajdhani;color:#111}
+.sw div.on{border-color:#fff}
+.pager{font:700 13px Rajdhani;letter-spacing:2px;color:rgba(255,255,255,.75);margin-top:1vh}
+.keys{margin-top:1.4vh;display:flex;gap:14px;font:600 13px Inter;color:rgba(255,255,255,.8);flex-wrap:wrap}
+.keys span{display:flex;align-items:center;gap:7px;cursor:pointer}
+.k{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 5px;border-radius:5px;border:1.5px solid rgba(255,255,255,.8);font:800 10px Inter}
+.msg{position:absolute;left:50%;bottom:4vh;transform:translateX(-50%);padding:10px 20px;background:rgba(0,0,0,.75);border-top:2px solid var(--pink);font:600 14px Inter;opacity:0;transition:.25s}.msg.on{opacity:1}
+.own{font:600 12px Inter;color:rgba(255,255,255,.55);margin-top:.6vh}
+</style></head><body>
+<div id="app"><div class="side"></div>
+ <div class="crumb" id="crumb"></div><div class="title" id="title"></div>
+ <div class="cats" id="cats"></div>
+ <div class="money"><span id="cash"></span><span class="b" id="bank"></span></div>
+ <div class="info" id="info"></div><div class="msg" id="msg"></div>
+</div>
+<script>
+const RES=typeof GetParentResourceName==='function'?GetParentResourceName():null;
+const post=(n,d={})=>RES?fetch(`https://${RES}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({})):Promise.resolve(null);
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>'$'+Math.round(n||0).toLocaleString('en-US');
+const SW=['#2a2b2e','#e9e6df','#6b4f3a','#3d5a3a','#2c3a52','#7a2f35','#a8916a','#8c9196','#c9a24a','#4b3a5a','#d27a2c','#3a6b6b'];
+let C=null,I=null;
+function render(){$('crumb').textContent=C.name;$('title').textContent=C.cats[I.cat-1].label;
+ $('cats').innerHTML=C.cats.map((c,i)=>`<div class="c ${i===I.cat-1?'on':''}" data-i="${i+1}">${esc(c.label)}<span>$${c.price}</span></div>`).join('');
+ document.querySelectorAll('.c').forEach(e=>e.onclick=()=>cat(+e.dataset.i));
+ $('cash').textContent=money(C.wallet.cash);$('bank').textContent='BANK '+money(C.wallet.bank);
+ const n=Math.min(I.textures,12),none=I.drawable<0;
+ $('info').innerHTML=`<div class="price"><i>$</i>${I.price}</div><div class="nm">${esc(I.label)} ${none?'· None':'#'+(I.drawable+1)}</div>
+  <div class="sub">${none?'Remove item':(I.textures>1?I.textures+' colours':'1 colour')}</div>
+  ${n>1?`<div class="sw">${Array.from({length:n},(_,i)=>`<div class="${i===I.texture?'on':''}" data-t="${i}" style="background:${SW[i%SW.length]}">${i+1}</div>`).join('')}</div>`:''}
+  <div class="pager">${I.drawable+1-I.min} / ${I.total-I.min}</div>
+  <div class="keys"><span id="kb"><span class="k">ENTER</span>Purchase</span><span><span class="k">◀ ▶</span>Style</span><span><span class="k">↑ ↓</span>Colour</span><span><span class="k">Q</span><span class="k">E</span>Rotate</span><span id="kd"><span class="k">ESC</span>Done</span></div>`;
+ document.querySelectorAll('.sw div').forEach(e=>e.onclick=()=>set(I.drawable,+e.dataset.t));$('kb').onclick=buy;$('kd').onclick=()=>close()}
+function cat(i){post('nav');post('cat',{cat:i}).then(r=>{I=r||Object.assign({},I,{cat:i,label:C.cats[i-1].label,price:C.cats[i-1].price});render()})}
+function set(d,t){post('nav');post('set',{cat:I.cat,drawable:d,texture:t}).then(r=>{I=r||Object.assign(I,{drawable:d,texture:t});render()})}
+function msg(t){const m=$('msg');m.textContent=t;m.classList.add('on');clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('on'),2200)}
+function buy(){post('buy',{cat:I.cat}).then(r=>{if(!r){msg('Purchased');return}if(r.ok){msg('Purchased '+I.label);if(r.wallet){C.wallet=r.wallet;render()}}else msg(r.err||'Failed')})}
+function close(){$('app').classList.remove('on');post('close',{keep:true})}
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open'){C=d;I=d.item;$('app').classList.add('on');render()}});
+document.addEventListener('keydown',e=>{if(!C||!$('app').classList.contains('on'))return;const k=e.key;
+ if(k==='Escape'||k==='Backspace')close();
+ else if(k==='ArrowRight')set(I.drawable+1>=I.total?I.min:I.drawable+1,0);else if(k==='ArrowLeft')set(I.drawable-1<I.min?I.total-1:I.drawable-1,0);
+ else if(k==='ArrowDown'&&I.textures>1)set(I.drawable,(I.texture+1)%I.textures);else if(k==='ArrowUp'&&I.textures>1)set(I.drawable,(I.texture-1+I.textures)%I.textures);
+ else if(k==='Tab'){e.preventDefault();cat(I.cat%C.cats.length+1)}
+ else if(k==='q'||k==='Q')post('rotate',{dir:-1});else if(k==='e'||k==='E')post('rotate',{dir:1});else if(k==='Enter')buy()});
+if(!RES){document.body.classList.add('preview');const cats=[['Hats',45],['Glasses',60],['Neckwear',35],['Tops',90],['Undershirts',40],['Body Armor',275],['Pants',70],['Shoes',80],['Watches',150],['Bags',120]].map(([l,p])=>({label:l,price:p}));
+ window.postMessage({action:'open',name:'ROX OUTFITTERS',cats,wallet:{cash:627,bank:12400},item:{cat:6,drawable:3,texture:2,total:18,textures:4,price:275,label:'Body Armor',min:0}},'*')}
+</script></body></html>
