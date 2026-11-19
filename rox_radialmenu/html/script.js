@@ -29,7 +29,34 @@ function edgePath(a0, a1, r) {
     return `M${x0},${y0} A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1},${y1}`;
 }
 
+const PRO = ['aaa', 'orbit', 'hex'];
+function renderPro() {
+    const lvl = cur(), n = Math.max(1, lvl.items.length), step = Math.PI * 2 / n, T = S.theme;
+    const R = T === 'aaa' ? 214 : T === 'orbit' ? 222 : 212;
+    let s = `<circle class="p-ring" r="${R}"/><circle class="p-ring2" r="${R + 62}"/>`, h = '';
+    if (T === 'aaa') for (let i = 0; i < n; i++) {                     // thin arc per option
+        const a0 = -Math.PI / 2 - step / 2 + i * step, a1 = a0 + step;
+        s += `<g class="seg" data-i="${i}"><path class="arc" d="${edgePath(a0, a1, 286)}"/><path class="arc2" d="${edgePath(a0, a1, 276)}"/></g>`;
+    }
+    s += `<line id="link" class="p-link" x1="0" y1="0" x2="0" y2="0"/>`;
+    lvl.items.forEach((it, i) => {
+        const a = -Math.PI / 2 + i * step, [x, y] = pt(R, a), big = isNum(it.label), d = `${i * 25}ms`;
+        h += `<div class="ic p-${T}" data-i="${i}" style="left:${50 + x / 6}%;top:${50 + y / 6}%;--d:${d}">
+            <div class="card">${i < 10 ? `<span class="k">${(i + 1) % 10}</span>` : ''}
+            ${big ? `<span class="num">${esc(it.label)}</span>` : `<i class="fa-solid fa-${esc(it.icon || 'circle')}"></i>`}
+            ${it.items ? '<span class="dot"></span>' : ''}</div>
+            <span class="lb">${esc(big && it.sub ? it.sub : it.label)}</span></div>`;
+    });
+    svg.innerHTML = s; icons.innerHTML = h; S.hov = -1;
+    const deep = S.stack.length > 1;
+    crumb.textContent = deep ? S.stack.slice(0, -1).map(l => l.title).join(' › ') : 'ROX';
+    setTitle(deep ? lvl.title : S.title); hint.textContent = `${lvl.items.length} options`;
+    $('bigic').innerHTML = '';
+    coreBtn.innerHTML = deep ? '<i class="fa-solid fa-arrow-left"></i>' : '<i class="fa-solid fa-xmark"></i>';
+    requestAnimationFrame(() => document.querySelectorAll('.seg,.ic').forEach(t => t.classList.add('in')));
+}
 function render() {
+    if (PRO.includes(S.theme)) return renderPro();
     const lvl = cur(), n = Math.max(1, lvl.items.length), step = Math.PI * 2 / n, start = -Math.PI / 2 - step / 2;
     let s = `<defs><pattern id="carbon" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#15161a"/><path d="M0 0h4v4H0zM4 4h4v4H4z" fill="#1d1f24"/></pattern>
       <linearGradient id="topGrad" x1="0" y1="-1" x2="0" y2="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#2a2e37"/><stop offset="1" stop-color="#15171c"/></linearGradient><linearGradient id="accGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a5c"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient><linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3a1"/><stop offset=".5" stop-color="#e7b14b"/><stop offset="1" stop-color="#9c6a1c"/></linearGradient></defs>
@@ -60,6 +87,12 @@ function hover(i) {
     if (i === S.hov) return; S.hov = i;
     document.querySelectorAll('.seg,.ic').forEach(e => e.classList.toggle('on', +e.dataset.i === i));
     const sg = document.querySelector(`.seg[data-i="${i}"]`); if (sg) sg.parentNode.appendChild(sg);
+    if (PRO.includes(S.theme)) {
+        const ln = $('link'), bi = $('bigic');
+        if (i >= 0 && ln) { const n = cur().items.length, [x, y] = pt(S.theme === 'orbit' ? 222 : 212, -Math.PI / 2 + i * Math.PI * 2 / n); const L = Math.hypot(x, y), ux = x / L, uy = y / L; ln.setAttribute('x1', ux * 108); ln.setAttribute('y1', uy * 108); ln.setAttribute('x2', ux * (L - 52)); ln.setAttribute('y2', uy * (L - 52)); ln.classList.add('show'); }
+        else if (ln) ln.classList.remove('show');
+        if (bi) { const it = i >= 0 ? cur().items[i] : null; bi.innerHTML = it ? (isNum(it.label) ? `<span class="bnum">${esc(it.label)}</span>` : `<i class="fa-solid fa-${esc(it.icon || 'circle')}"></i>`) : ''; bi.classList.toggle('show', !!it); }
+    }
     const pn = $('pointer'); if (pn) { if (i < 0) pn.classList.remove('show'); else { pn.style.transform = `rotate(${i * 360 / cur().items.length}deg)`; pn.classList.add('show'); } }
     const lvl = cur();
     if (i < 0) { setTitle(S.stack.length > 1 ? lvl.title : S.title); hint.textContent = `${lvl.items.length} options`; return; }
@@ -92,7 +125,7 @@ document.addEventListener('keydown', (e) => {
     else if (e.key === 'F1' && !S.keepInput) close();
 });
 
-function setTheme(t) { document.body.classList.remove('t-neon', 't-gold', 't-white', 't-d3'); if (t) document.body.classList.add('t-' + t); document.querySelectorAll('.themes button').forEach(b => b.classList.toggle('on', b.dataset.t === (t || ''))); if (S.open) render(); }
+function setTheme(t) { S.theme = t || ''; document.body.classList.remove('t-neon', 't-gold', 't-white', 't-d3', 't-aaa', 't-orbit', 't-hex'); if (t) document.body.classList.add('t-' + t); document.querySelectorAll('.themes button').forEach(b => b.classList.toggle('on', b.dataset.t === (t || ''))); if (S.open) render(); }
 function open(d) {
     setColor(d.color); setTheme(d.theme); S.title = (d.title || 'QUICK MENU'); S.sound = d.sound !== false; S.keepInput = !!d.keepInput;
     S.stack = [{ title: S.title, items: d.items || [] }]; S.open = true;
@@ -120,7 +153,7 @@ if (!RES) {
     const items = [citizen, radio, I('Emotes', 'person-walking', [I('Emote Menu', 'face-smile'), I('Hands Up', 'hand')]), I('Clothing', 'shirt', [I('Hat', 'hat-cowboy')]),
         I('Police', 'shield-halved', [I('MDT', 'shield-halved'), I('Prison', 'building-shield')]), I('GPS', 'map-location-dot'), I('Phone', 'mobile-screen'), I('Settings', 'gear')];
     const q = new URLSearchParams(location.search);
-    let TH = q.get('theme') ?? 'd3';
+    let TH = q.get('theme') ?? 'aaa';
     document.querySelectorAll('.themes button').forEach(b => b.onclick = (e) => { e.stopPropagation(); TH = b.dataset.t; setTheme(TH); });
     setTimeout(() => { open({ title: 'QUICK MENU', items, keepInput: false, theme: TH });
         const sub = q.get('sub'); if (sub) setTimeout(() => select(+sub), 300); const hv = q.get('hover'); if (hv) setTimeout(() => hover(+hv), 700); }, 100);

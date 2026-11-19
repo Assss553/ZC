@@ -128,3 +128,64 @@ body.t-d3 .core { transform: translate(-50%, -50%) translateZ(30px); background:
 body.t-d3 .ring-glow { stroke-width: 3; }
 body.t-d3 .shadow3d { fill: rgba(0,0,0,.55); filter: blur(18px); }
 .shadow3d { display: none; } body.t-d3 .shadow3d { display: block; }
+
+/* ================= PRO LAYOUTS: AAA / ORBIT / HEX ================= */
+.bigic { display: none; }
+body.t-aaa .menu, body.t-orbit .menu, body.t-hex .menu { background: radial-gradient(circle at 50% 50%, rgba(5,6,9,.78), rgba(5,6,9,.55) 45%, rgba(5,6,9,.25) 75%); }
+.p-ring, .p-ring2, .p-link { display: none; }
+body.t-aaa .p-ring, body.t-orbit .p-ring, body.t-hex .p-ring { display: block; fill: none; stroke: rgba(255,255,255,.06); stroke-width: 1; }
+body.t-aaa .p-ring2 { display: block; fill: none; stroke: rgba(255,255,255,.05); stroke-width: 1; stroke-dasharray: 1 5; }
+.p-link { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; opacity: 0; transition: opacity .2s; filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), .9)); }
+body.t-orbit .p-link, body.t-hex .p-link { display: block; } .p-link.show { opacity: 1; }
+body.t-aaa .ring-glow, body.t-orbit .ring-glow, body.t-hex .ring-glow, body.t-aaa .ticks, body.t-orbit .ticks, body.t-hex .ticks, body.t-aaa .pointer, body.t-orbit .pointer, body.t-hex .pointer { display: none; }
+
+/* items (shared) */
+.ic .card { position: relative; display: grid; place-items: center; transition: transform .2s cubic-bezier(.2,1.4,.4,1), background .2s, box-shadow .2s, border-color .2s; }
+.ic .card .k { top: 6px; left: 8px; position: absolute; font: 700 10px Inter; background: none; padding: 0; color: rgba(255,255,255,.35); }
+.ic .card .dot { position: absolute; bottom: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.ic.p-aaa, .ic.p-orbit, .ic.p-hex { gap: 10px; }
+.ic.p-aaa .k, .ic.p-orbit .k, .ic.p-hex .k { top: 6px; }
+
+/* A. AAA wheel */
+body.t-aaa .seg .arc { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 7; stroke-linecap: butt; transition: stroke .15s; }
+body.t-aaa .seg .arc2 { fill: none; stroke: rgba(255,255,255,.04); stroke-width: 2; }
+body.t-aaa .seg { opacity: 0; transition: opacity .3s; transition-delay: var(--d); } body.t-aaa .seg.in { opacity: 1; }
+body.t-aaa .seg.on .arc { stroke: var(--accent); filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), .9)); }
+body.t-aaa .seg.on .arc2 { stroke: rgba(var(--accent-rgb), .5); }
+.ic.p-aaa .card { width: calc(var(--size) * .118); height: calc(var(--size) * .118); border-radius: 50%; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+.ic.p-aaa .card i { font-size: calc(var(--size) * .04); color: rgba(255,255,255,.85); }
+.ic.p-aaa .lb { font: 700 calc(var(--size) * .0175) Inter; letter-spacing: 1.5px; color: rgba(255,255,255,.55); }
+.ic.p-aaa.on .card { background: #fff; border-color: #fff; transform: scale(1.12); box-shadow: 0 0 30px rgba(255,255,255,.35); }
+.ic.p-aaa.on .card i, .ic.p-aaa.on .num { color: #0d0f13; }
+.ic.p-aaa.on .lb { color: #fff; }
+body.t-aaa .core { width: 40%; height: 40%; background: radial-gradient(circle, rgba(14,16,21,.92), rgba(8,9,12,.96)); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 0 0 10px rgba(255,255,255,.02), 0 30px 80px rgba(0,0,0,.6); }
+body.t-aaa .bigic, body.t-orbit .bigic, body.t-hex .bigic { display: grid; place-items: center; height: 0; opacity: 0; transition: .2s; overflow: hidden; }
+body.t-aaa .bigic.show, body.t-orbit .bigic.show, body.t-hex .bigic.show { height: calc(var(--size) * .085); opacity: 1; margin-bottom: 4px; }
+.bigic i { font-size: calc(var(--size) * .07); color: var(--accent); filter: drop-shadow(0 0 16px rgba(var(--accent-rgb), .6)); }
+.bigic .bnum { font: 700 calc(var(--size) * .08) Rajdhani; color: var(--accent); line-height: 1; }
+body.t-aaa .title { color: #fff; text-shadow: none; font-size: calc(var(--size) * .034); letter-spacing: 1px; }
+body.t-aaa .crumb { color: var(--accent); }
+body.t-aaa .core-btn { width: 38px; height: 38px; margin-top: 10px; }
+
+/* B. Orbit glass cards */
+.ic.p-orbit .card { width: calc(var(--size) * .14); height: calc(var(--size) * .14); border-radius: 26%; background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
+    border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(10px); box-shadow: 0 12px 30px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.15); }
+.ic.p-orbit .card i { font-size: calc(var(--size) * .045); color: #fff; }
+.ic.p-orbit .lb { font: 700 calc(var(--size) * .018) Inter; color: rgba(255,255,255,.7); padding: 4px 10px; border-radius: 20px; transition: .2s; }
+.ic.p-orbit.on .card { transform: scale(1.14); background: linear-gradient(160deg, rgba(var(--accent-rgb), 1), rgba(var(--accent-rgb), .7)); border-color: rgba(255,255,255,.4); box-shadow: 0 16px 40px rgba(var(--accent-rgb), .45); }
+.ic.p-orbit.on .lb { background: #fff; color: #111; }
+body.t-orbit .core { width: 34%; height: 34%; background: rgba(12,14,18,.75); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,.12); }
+body.t-orbit .title { text-shadow: none; }
+
+/* C. Hex tiles */
+.ic.p-hex .card { width: calc(var(--size) * .15); height: calc(var(--size) * .13); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    background: linear-gradient(180deg, #2a2e37, #15171c); }
+.ic.p-hex .card::before { content: ""; position: absolute; inset: 2px; clip-path: inherit; background: linear-gradient(180deg, #1f2229, #111317); z-index: -1; }
+.ic.p-hex .card i { font-size: calc(var(--size) * .042); color: #dfe3ea; }
+.ic.p-hex .lb { font: 800 calc(var(--size) * .0175) Rajdhani; letter-spacing: 2px; color: rgba(255,255,255,.6); text-transform: uppercase; }
+.ic.p-hex.on .card { background: var(--accent); transform: scale(1.12); }
+.ic.p-hex.on .card::before { background: linear-gradient(180deg, rgba(var(--accent-rgb), 1), rgba(var(--accent-rgb), .75)); }
+.ic.p-hex.on .card i, .ic.p-hex.on .num { color: #111; }
+.ic.p-hex.on .lb { color: #fff; }
+body.t-hex .core { width: 34%; height: 34%; clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); border-radius: 0; background: linear-gradient(180deg, #1c1f26, #0b0c10); box-shadow: none; border: 0; }
+body.t-hex .title { font-family: Rajdhani; font-size: calc(var(--size) * .042); letter-spacing: 2px; }
