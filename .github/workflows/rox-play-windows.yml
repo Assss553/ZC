@@ -22,6 +22,8 @@ jobs:
       vcpkg_baseline: 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
       dep_folder: deps
       CHIAKI_COMMIT: 43728af2e639fecb8a7af1cd68c29820a40de973
+      # CMake 4 on the runners rejects old cmake_minimum_required (json-c etc.)
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
       libplacebo_tag: v7.387.0
       sdl2_compat_tag: 2.32.74
 
