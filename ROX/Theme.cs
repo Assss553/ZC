@@ -5,17 +5,19 @@ namespace ROX;
 
 public sealed class ThemeColors
 {
-    public string Name { get; set; } = "Neon";
-    public string A1 { get; set; } = "#19E6E6";
-    public string A2 { get; set; } = "#E040FB";
-    public string Bg { get; set; } = "#0E0E13";
-    public string Panel { get; set; } = "#1A1A22";
-    public string Text { get; set; } = "#ECECF4";
+    public string Name { get; set; } = "Mint Dark";
+    public string A1 { get; set; } = "#5CFFA0";
+    public string A2 { get; set; } = "#C8FFE0";
+    public string Bg { get; set; } = "#000000";
+    public string Panel { get; set; } = "#0E1210";
+    public string Text { get; set; } = "#EFFFF5";
 
     public ThemeColors Clone() => (ThemeColors)MemberwiseClone();
 
     public static readonly ThemeColors[] Presets =
     {
+        new() { Name = "Mint Dark", A1 = "#5CFFA0", A2 = "#C8FFE0", Bg = "#000000", Panel = "#0E1210", Text = "#EFFFF5" },
+        new() { Name = "Mint Light", A1 = "#14B866", A2 = "#2EE88A", Bg = "#EEF5F0", Panel = "#FFFFFF", Text = "#0B0B0B" },
         new() { Name = "Neon", A1 = "#19E6E6", A2 = "#E040FB", Bg = "#0E0E13", Panel = "#1A1A22", Text = "#ECECF4" },
         new() { Name = "Toxic Green", A1 = "#39FF14", A2 = "#00C853", Bg = "#000000", Panel = "#0D120D", Text = "#E8FFE8" },
         new() { Name = "White Purple", A1 = "#8E24AA", A2 = "#5E35B1", Bg = "#EDEAF3", Panel = "#FFFFFF", Text = "#1E1730" },

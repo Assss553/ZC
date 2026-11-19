@@ -27,7 +27,8 @@ public sealed class MainWindow : Window
     {
         Lang.Code = cfg.Language;
         ThemeManager.Apply(cfg.Theme);
-        Title = "ROX"; Width = 1440; Height = 860; MinWidth = 1280; MinHeight = 800;
+        Title = "ROX";
+        Icon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/rox-dark.png")); Width = 1440; Height = 860; MinWidth = 1280; MinHeight = 800;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         SetResourceReference(BackgroundProperty, "Bg");
         engine.MonitorMic = cfg.Monitor;
