@@ -66,7 +66,7 @@ class TvLink(private val context: Context, private val scope: CoroutineScope) {
     }
 
     fun connect(tv: Tv, pairingCode: String) {
-        code = pairingCode.trim(); wanted = tv
+        code = pairingCode.trim().map { if (Character.isDigit(it)) ('0' + Character.getNumericValue(it)) else it }.joinToString(""); wanted = tv
         open(tv)
         keepAlive?.cancel()
         keepAlive = scope.launch {

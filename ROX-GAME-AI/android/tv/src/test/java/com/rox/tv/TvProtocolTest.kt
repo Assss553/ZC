@@ -15,6 +15,12 @@ class TvProtocolTest {
         assertTrue(TvProtocol.parse("garbage") is TvProtocol.Msg.Unknown)
     }
 
+    @Test fun arabicDigitsMatchAscii() {
+        assertEquals("531757", TvProtocol.asciiDigits("٥٣١٧٥٧"))
+        val st = SubtitleState("٥٣١٧٥٧")
+        assertTrue(st.onHello(Any(), TvProtocol.Msg.Hello("531757", "phone")))
+    }
+
     @Test fun codeIsSixDigits() { repeat(50) { assertTrue(TvProtocol.newCode().matches(Regex("\\d{6}"))) } }
 
     @Test fun onlyPairedPhonesCanShowText() {

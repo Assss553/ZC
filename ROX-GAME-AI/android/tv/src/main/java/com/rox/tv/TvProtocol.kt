@@ -38,7 +38,10 @@ object TvProtocol {
     fun error(reason: String) = JSONObject().put("type", "error").put("reason", reason).toString()
 
     /** 6-digit pairing code. */
-    fun newCode(rnd: java.util.Random = java.security.SecureRandom()): String = String.format("%06d", rnd.nextInt(1_000_000))
+    fun newCode(rnd: java.util.Random = java.security.SecureRandom()): String = String.format(java.util.Locale.US, "%06d", rnd.nextInt(1_000_000))
+
+    /** Converts Arabic-Indic / Eastern Arabic digits to ASCII so "٥٣١٧٥٧" == "531757". */
+    fun asciiDigits(s: String): String = buildString { s.trim().forEach { c -> append(if (Character.isDigit(c)) ('0' + Character.getNumericValue(c)) else c) } }
 
     /** What the TV should show: speaker label + text, trimmed to a readable length. */
     fun display(s: Msg.Subtitle): String {
@@ -55,7 +58,7 @@ class SubtitleState(private val code: String) {
     var lastId: Long = -1; private set
 
     fun onHello(client: Any, msg: TvProtocol.Msg.Hello): Boolean {
-        val ok = msg.code == code
+        val ok = TvProtocol.asciiDigits(msg.code) == TvProtocol.asciiDigits(code)
         if (ok) paired.add(client)
         return ok
     }

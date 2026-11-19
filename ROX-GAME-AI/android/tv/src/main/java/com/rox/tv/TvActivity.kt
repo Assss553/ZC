@@ -60,7 +60,7 @@ class TvActivity : Activity() {
         setContentView(root)
 
         multicast = getSystemService(WifiManager::class.java)?.createMulticastLock("roxtv")?.apply { setReferenceCounted(false); acquire() }
-        val code = getPreferences(MODE_PRIVATE).getString("code", null) ?: TvProtocol.newCode().also { getPreferences(MODE_PRIVATE).edit().putString("code", it).apply() }
+        val code = getPreferences(MODE_PRIVATE).getString("code", null)?.let { TvProtocol.asciiDigits(it) } ?: TvProtocol.newCode().also { getPreferences(MODE_PRIVATE).edit().putString("code", it).apply() }
         server = SubtitleServer(this, code, { mode }, onChange = ::show, onStatus = { phoneStatus = it; render() })
         server.start()
         if (checkSelfPermission("android.permission.READ_TV_LISTINGS") != android.content.pm.PackageManager.PERMISSION_GRANTED)
