@@ -8,7 +8,8 @@ export const ITEM_RARITY: Record<string, Rarity> = {
   armour: 'rare', phone: 'uncommon', radio: 'uncommon', card_id: 'rare', card_bank: 'rare', usb_black: 'rare',
   WEAPON_HANDCUFFS: 'rare', medikit: 'uncommon', advancedkit: 'rare', lockpick: 'uncommon', parachute: 'uncommon',
   black_money: 'epic', cocaine: 'epic', meth: 'epic', WEAPON_ASSAULTRIFLE: 'epic', WEAPON_CARBINERIFLE: 'epic',
-  WEAPON_SPECIALCARBINE: 'epic', WEAPON_HEAVYSNIPER: 'legendary', WEAPON_RPG: 'legendary',
+  WEAPON_SPECIALCARBINE: 'epic',
+  rox_vest: 'rare', rox_radio: 'uncommon', rox_idcard: 'rare', rox_cuffs: 'rare', rox_transparency_red: 'rare', rox_transparency_blue: 'rare', rox_transparency_amber: 'rare', WEAPON_HEAVYSNIPER: 'legendary', WEAPON_RPG: 'legendary',
 };
 
 export const RARITY_INFO: Record<Rarity, { color: string; label: string }> = {

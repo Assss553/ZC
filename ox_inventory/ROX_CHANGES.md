@@ -27,3 +27,8 @@ Use / Give / Drop: right-click an item (the old buttons are hidden like the refe
     npm install --legacy-peer-deps
     npx vite build
 Item images: the official ones in `web/images` (free-use for ox_inventory, see web/images/readme.md). Add your own PNGs there.
+
+## ROX item images (original, made in Blender)
+`web/images/rox_*.png` — plate carrier, oxygen tank, radio, baton, taser, handcuffs, ammo, ID card, package, painkillers,
+transparency red / blue / amber. Source: `tools/render_items.py` (edit the models / colours and re-render with `pip install bpy`).
+Use them in data/items.lua, e.g. `['rox_vest'] = { label = 'Plate Carrier', weight = 3500 },`
