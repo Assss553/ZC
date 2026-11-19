@@ -79,32 +79,65 @@ for i, f in enumerate(files):
 sheet.save(f"{OUT}/_preview.png")
 print("done:", os.listdir(OUT))
 
-# ---- weapon sling (shoulder strap) : 256x1024 webbing + buckle/QD swivel ----
+# ---- weapon sling v2 : smooth padded shoulder strap, 512x2048 ----
+def _shade(c, k): return tuple(max(0, min(255, int(v*k))) for v in c)
+
 def sling(name, cols):
-    w, h = 256, 1024
-    img = Image.new("RGB", (w, h), cols[0]); d = ImageDraw.Draw(img)
-    for x in range(0, w, 6):  # webbing weave
-        d.line((x, 0, x, h), fill=cols[1], width=2)
-    d.rectangle((0, 0, 14, h), fill=cols[1]); d.rectangle((w-15, 0, w, h), fill=cols[1])  # stitched edges
-    for y in range(0, h, 18):
-        d.line((20, y, 20, y+9), fill=cols[2], width=2); d.line((w-21, y, w-21, y+9), fill=cols[2], width=2)
-    metal = (45, 45, 48)
-    # adjuster buckle
-    d.rounded_rectangle((10, 300, w-10, 400), 10, fill=metal, outline=(90, 90, 95), width=4)
-    d.rectangle((40, 330, w-40, 370), fill=cols[0])
-    # QD swivel
-    d.ellipse((78, 820, 178, 920), fill=metal, outline=(110, 110, 115), width=6)
-    d.ellipse((113, 855, 143, 885), fill=(20, 20, 20))
-    # reinforced box-X stitch
-    d.rectangle((30, 560, w-30, 700), outline=cols[2], width=3)
-    d.line((30, 560, w-30, 700), fill=cols[2], width=3); d.line((w-30, 560, 30, 700), fill=cols[2], width=3)
-    return img
+    W, H = 512, 2048
+    base, dark, thread = cols
+    img = Image.new("RGB", (W, H), base); px = img.load()
+    rnd = random.Random(name + "sling")
+    # cylindrical shading across width + fine twill weave + soft noise
+    for y in range(H):
+        for x in range(W):
+            u = (x / (W - 1)) * 2 - 1
+            k = 0.72 + 0.38 * math.cos(u * math.pi / 2) ** 0.8
+            k += 0.05 * math.sin((x + y) * 0.9) + rnd.uniform(-0.025, 0.025)
+            px[x, y] = _shade(base, k)
+    d = ImageDraw.Draw(img, "RGBA")
+    # padded shoulder section with raised quilting
+    pad = (60, 520, W - 60, 1180)
+    d.rounded_rectangle(pad, 70, fill=_shade(dark, 1.05) + (255,))
+    for y in range(pad[1] + 40, pad[3] - 30, 60):
+        d.rounded_rectangle((pad[0] + 30, y, pad[2] - 30, y + 40), 20, fill=_shade(base, 1.1) + (110,))
+    d.rounded_rectangle(pad, 70, outline=thread + (255,), width=3)
+    # rolled edges + double stitch lines
+    for e in (0, W):
+        for t in range(26):
+            a = int(120 * (1 - t / 26))
+            x = t if e == 0 else W - 1 - t
+            d.line((x, 0, x, H), fill=(0, 0, 0, a // 3))
+    for off in (34, 46):
+        for x in (off, W - off):
+            for y in range(0, H, 22):
+                d.line((x, y, x, y + 12), fill=thread + (230,), width=2)
+    # metal hardware with gradient
+    def metal(box, r):
+        x0, y0, x1, y1 = box
+        for i in range(y1 - y0):
+            k = 0.55 + 0.6 * math.sin(math.pi * i / (y1 - y0))
+            d.line((x0 + r // 3, y0 + i, x1 - r // 3, y0 + i), fill=_shade((70, 72, 76), k))
+        d.rounded_rectangle(box, r, outline=(30, 30, 32), width=5)
+    metal((24, 200, W - 24, 330), 30); d.rounded_rectangle((90, 240, W - 90, 290), 16, fill=_shade(base, .6))
+    # box-X reinforcement (smooth)
+    bx = (90, 1350, W - 90, 1560)
+    d.rectangle(bx, outline=thread, width=4)
+    d.line((bx[0], bx[1], bx[2], bx[3]), fill=thread, width=4); d.line((bx[2], bx[1], bx[0], bx[3]), fill=thread, width=4)
+    # QD swivel ring
+    cx, cy = W // 2, 1800
+    for r in range(110, 60, -1):
+        k = 0.5 + 0.7 * (1 - abs(r - 85) / 25)
+        d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=_shade((80, 82, 86), k), width=2)
+    d.ellipse((cx - 30, cy - 30, cx + 30, cy + 30), fill=(18, 18, 20))
+    return img.filter(ImageFilter.SMOOTH)
 
 slings = []
 for name, cols in VARIANTS.items():
-    c = cols if name != "desert" else [cols[0], cols[1], (70, 55, 40)]
+    c = {"olive": [(68, 74, 50), (50, 55, 36), (95, 100, 72)],
+         "black": [(30, 30, 33), (18, 18, 20), (70, 70, 74)],
+         "desert": [(160, 130, 92), (128, 102, 70), (90, 72, 50)]}[name]
     s = sling(name, c); s.save(f"{OUT}/swat_sling_{name}_diff.png"); slings.append(s)
-pv = Image.new("RGB", (3*150+40, 560), (90, 100, 115))
+pv = Image.new("RGB", (3 * 170 + 30, 700), (90, 100, 115))
 for i, s in enumerate(slings):
-    pv.paste(s.resize((128, 512)), (20 + i*150, 24))
+    pv.paste(s.resize((160, 640), Image.LANCZOS), (20 + i * 170, 30))
 pv.save(f"{OUT}/_preview_sling.png")
