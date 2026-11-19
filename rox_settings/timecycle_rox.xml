@@ -70,4 +70,19 @@
 	<modifier name="rox_exp_down" numMods="1" userFlags="0">
 		<postfx_exposure>-1.000000 -1.000000</postfx_exposure>
 	</modifier>
+	<modifier name="rox_nextgen" numMods="13" userFlags="0">
+		<postfx_exposure>-0.150000 -0.150000</postfx_exposure>
+		<postfx_desaturation>1.120000 1.120000</postfx_desaturation>
+		<postfx_contrast>0.300000 0.300000</postfx_contrast>
+		<postfx_intensity_bloom>0.850000 0.850000</postfx_intensity_bloom>
+		<postfx_bright_pass_thresh>1.100000 1.100000</postfx_bright_pass_thresh>
+		<postfx_tint_r>1.000000 1.000000</postfx_tint_r>
+		<postfx_tint_g>0.960000 0.960000</postfx_tint_g>
+		<postfx_tint_b>0.880000 0.880000</postfx_tint_b>
+		<postfx_tint_intensity>0.100000 0.100000</postfx_tint_intensity>
+		<postfx_vignetting_intensity>0.450000 0.450000</postfx_vignetting_intensity>
+		<postfx_vignetting_radius>0.850000 0.850000</postfx_vignetting_radius>
+		<postfx_noise>0.025000 0.025000</postfx_noise>
+		<postfx_noise_size>1.100000 1.100000</postfx_noise_size>
+	</modifier>
 </timecycle_modifier_data>

@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- ROX Store | ROX Weapon HUD | All rights reserved -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent}
+body.preview{background:#4b5157 url(demo.jpg) center/cover}
+#w{position:fixed;right:2.2vw;top:2.4vh;display:flex;flex-direction:column;align-items:flex-end;opacity:0;transform:translateY(-6px);transition:opacity .35s,transform .35s}
+#w.on{opacity:1;transform:none}
+.ammo{display:flex;gap:1.3vh;font:700 4.4vh/1 Rajdhani;color:#fff;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.55),0 0 12px rgba(0,0,0,.45)}
+.ammo .clip.low{color:#ff5a4a}.ammo .res{color:rgba(255,255,255,.78)}
+.ammo .inf{font-size:3.6vh}
+img{height:8vh;max-width:22vh;object-fit:contain;margin-top:-.4vh;margin-right:-1vh;filter:drop-shadow(0 2px 2px rgba(0,0,0,.7)) saturate(.9);transition:transform .15s}
+#w.fire img{transform:translateX(-4px)}
+.reload{height:2px;width:100%;margin-top:.5vh;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;opacity:0;transition:opacity .2s}
+.reload i{display:block;height:100%;width:0;background:#fff}
+#w.rl .reload{opacity:1}#w.rl .reload i{animation:rl var(--t,1.6s) linear forwards}
+@keyframes rl{to{width:100%}}
+</style></head><body>
+<div id="w"><div class="ammo"><span class="clip" id="clip">0</span><span class="res" id="res">0</span></div><img id="img" alt=""><div class="reload"><i></i></div></div>
+<script>
+const $=id=>document.getElementById(id);let hideT,lastClip=-1,img='';
+function upd(d){const w=$('w');
+ if(!d.show){w.classList.remove('on');return}
+ w.classList.add('on');
+ if(d.image&&d.image!==img){img=d.image;$('img').src=img}
+ const c=$('clip');if(d.melee){c.textContent='';$('res').textContent='';}else{c.textContent=d.clip;$('res').textContent=d.infinite?'∞':d.reserve;c.classList.toggle('low',d.maxClip>0&&d.clip<=Math.ceil(d.maxClip*.25))}
+ if(lastClip>=0&&d.clip<lastClip){w.classList.add('fire');setTimeout(()=>w.classList.remove('fire'),90)}lastClip=d.clip;
+ w.classList.toggle('rl',!!d.reloading)}
+window.addEventListener('message',e=>{if(e.data&&e.data.action==='weapon')upd(e.data)});
+if(!window.GetParentResourceName){document.body.classList.add('preview');upd({show:true,clip:10,reserve:10,maxClip:20,image:'rifle.png'})}
+</script></body></html>
