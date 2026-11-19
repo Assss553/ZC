@@ -32,3 +32,9 @@ Item images: the official ones in `web/images` (free-use for ox_inventory, see w
 `web/images/rox_*.png` — plate carrier, oxygen tank, radio, baton, taser, handcuffs, ammo, ID card, package, painkillers,
 transparency red / blue / amber. Source: `tools/render_items.py` (edit the models / colours and re-render with `pip install bpy`).
 Use them in data/items.lua, e.g. `['rox_vest'] = { label = 'Plate Carrier', weight = 3500 },`
+
+## Ground items (Lua changes: client.lua createDrop + modules/inventory/server.lua)
+- A dropped item shows its real model on the ground: weapons lie flat (GTA weapon model), known items use a prop
+  (`ROX_DROP_MODELS` in client.lua), anything else uses the normal drop bag.
+- Walk close: a floating `[E] ITEM NAME xCOUNT` prompt appears; press E to pick the whole drop up
+  (server checks distance + weight: event `ox_inventory:roxPickup`).

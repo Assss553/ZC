@@ -77,8 +77,11 @@ RegisterNUICallback('close', function(d, cb)
     if slot == nil then return end
     if slot == 0 then                                                   -- fist: holster
         TriggerEvent('ox_inventory:disarm', false)
+        SendNUIMessage({ action = 'equipToast', label = 'Unarmed', key = Config.Key })
     else
+        local it = exports.ox_inventory:GetSlot(slot)
         exports.ox_inventory:useSlot(slot)
+        if it then SendNUIMessage({ action = 'equipToast', label = (it.metadata and it.metadata.label) or it.label or it.name, key = Config.Key }) end
     end
     PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
 end)

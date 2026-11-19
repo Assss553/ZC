@@ -21,7 +21,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 .tabs button.on{background:var(--a);color:#111;box-shadow:0 0 18px rgba(var(--a-rgb),.5)}
 .key{display:inline-grid;place-items:center;min-width:26px;height:24px;padding:0 6px;border-radius:7px;background:#f1f2f4;color:#111;font:800 11px Inter;box-shadow:0 3px 0 #9097a1}
 /* cards */
-.card{position:absolute;left:50%;top:50%;width:var(--card);height:var(--cardh);transform:translate(-50%,-50%) translate(var(--x),var(--y));border-radius:16px;cursor:pointer;
+.card{position:absolute;left:50%;top:50%;width:var(--card);height:var(--cardh);overflow:hidden;transform:translate(-50%,-50%) translate(var(--x),var(--y));border-radius:16px;cursor:pointer;
   background:linear-gradient(165deg,rgba(40,43,50,.62),rgba(16,17,20,.7));border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 24px rgba(0,0,0,.35);
   display:grid;place-items:center;transition:transform .18s cubic-bezier(.2,1.4,.4,1),background .15s,border-color .15s,box-shadow .15s}
 .card.empty{opacity:.55;cursor:default}
@@ -32,10 +32,21 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 .card .dots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25)}.card .dots i.on{background:var(--a)}
 .card.eq::before{content:"";position:absolute;left:14px;right:14px;top:-1px;height:3px;border-radius:0 0 4px 4px;background:var(--a);box-shadow:0 0 14px var(--a)}
 .card.sel{transform:translate(-50%,-50%) translate(var(--x),var(--y)) scale(1.12);background:linear-gradient(165deg,rgba(255,255,255,.96),rgba(225,228,234,.94));border-color:#fff;box-shadow:0 18px 36px rgba(0,0,0,.45),0 0 0 3px rgba(var(--a-rgb),.9)}
-.card.sel .cat{color:rgba(0,0,0,.45)}.card.sel .cnt{color:#111}.card.sel img{transform:scale(1.08)}
+.card .glow{position:absolute;left:12%;right:12%;bottom:-6%;height:60%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.22),transparent);pointer-events:none}
+.card.eq .glow{background:radial-gradient(closest-side,rgba(var(--a-rgb),.75),transparent)}
+
+.card .bar{position:absolute;left:0;right:0;bottom:0;height:24%;border-radius:0 0 15px 15px;background:rgba(10,11,13,.82);display:flex;align-items:center;justify-content:center;gap:9px;font:700 clamp(13px,1.9vh,18px) Rajdhani;letter-spacing:1px}
+.card .bar b{color:#fff}.card .bar span{color:rgba(255,255,255,.5)}
+.card.hasbar img{max-height:52%;transform:translateY(-12%)}
+.card.sel .bar{background:rgba(20,21,24,.92)}
+.card.sel .cat{color:rgba(0,0,0,.45)}
+.eqtoast{position:fixed;left:50%;bottom:16vh;transform:translate(-50%,10px);display:flex;align-items:center;gap:12px;opacity:0;transition:.25s;pointer-events:none;
+  font:700 clamp(18px,2.6vh,26px) Rajdhani;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.eqtoast.on{opacity:1;transform:translate(-50%,0)}
+.eqtoast .key{font-size:12px}.card.sel .cnt{color:#111}.card.sel img{transform:scale(1.08)}
 .cyc{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(var(--x),var(--y));display:none;align-items:center;gap:calc(var(--card)*1.12 + 26px);pointer-events:none;z-index:2}
 .cyc.on{display:flex}
-.pager{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(var(--x),calc(var(--y) + var(--cardh)*.72));font:700 16px Rajdhani;letter-spacing:2px;display:none}
+.pager{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(var(--x),calc(var(--y) + var(--cardh)*.82));font:700 16px Rajdhani;letter-spacing:2px;display:none}
 .pager.on{display:block}
 /* center */
 .center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:calc(var(--R)*1.1)}
@@ -56,6 +67,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
   <div class="center"><div class="nm" id="nm">—</div><div class="ct" id="ct"></div><div class="ammo" id="ammo"></div><div class="meta" id="meta"></div></div>
   <div class="foot"><span><span class="key">MOUSE</span>Select</span><span><span class="key">WHEEL</span>Cycle</span><span><span class="key">Q</span><span class="key">E</span>Tab</span><span><span class="key">TAB</span>Release to equip</span></div>
 </div></div>
+<div class="eqtoast" id="eqt"><span class="key" id="eqk">TAB</span><span id="eql"></span></div>
 <script>
 const RES=typeof GetParentResourceName==='function'?GetParentResourceName():null;
 const post=(n,d={})=>RES?fetch(`https://${RES}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({})):Promise.resolve({});
@@ -70,8 +82,10 @@ function render(){
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
  const L=S.data[S.tab];let h='';
  for(let i=0;i<8;i++){const list=L[i]||[],k=S.idx[S.tab][i]%Math.max(1,list.length),it=list[k],[x,y]=pos(i);
-  h+=`<div class="card ${it?'':'empty'} ${i===S.sel?'sel':''} ${it&&S.equipped===it.name?'eq':''}" data-i="${i}" style="--x:${x}px;--y:${y}px">
-   <span class="cat">${CATS[S.tab][i]}</span>${it?`<img src="${img(it)}" onerror="this.style.display='none'">`:''}
+  const bar=it&&it.ammo!=null;
+  h+=`<div class="card ${it?'':'empty'} ${i===S.sel?'sel':''} ${it&&S.equipped===it.name?'eq':''} ${bar?'hasbar':''}" data-i="${i}" style="--x:${x}px;--y:${y}px">
+   ${it?'<div class="glow"></div>':''}<span class="cat">${CATS[S.tab][i]}</span>${it?`<img src="${img(it)}" onerror="this.style.display='none'">`:''}
+   ${bar?`<div class="bar"><b>${it.ammo}</b><span>${it.ammoTotal??0}</span></div>`:''}
    ${it&&it.count>1?`<span class="cnt">x${it.count.toLocaleString('en-US')}</span>`:''}
    ${list.length>1&&i!==S.sel?`<div class="dots">${list.map((_,j)=>`<i class="${j===k?'on':''}"></i>`).join('')}</div>`:''}</div>`}
  $('cards').innerHTML=h;info()}
@@ -98,7 +112,7 @@ document.addEventListener('contextmenu',e=>{e.preventDefault();if($('wheel').cla
 document.addEventListener('keydown',e=>{if(!$('wheel').classList.contains('on'))return;const k=e.key.toLowerCase();
  if(k==='q'||k==='e')tab();else if(k==='arrowleft'||k==='a')cycle(-1);else if(k==='arrowright'||k==='d')cycle(1);else if(k==='escape')close(false)});
 document.addEventListener('keyup',e=>{if(e.key==='Tab'&&$('wheel').classList.contains('on'))close(true)});
-window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open')open(d);if(d.action==='close')close(!!d.confirm);if(d.action==='cycle')cycle(d.dir);if(d.action==='tab')tab()});
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open')open(d);if(d.action==='close')close(!!d.confirm);if(d.action==='cycle')cycle(d.dir);if(d.action==='tab')tab();if(d.action==='equipToast'){$('eql').textContent=d.label||'';$('eqk').textContent=d.key||'TAB';const t=$('eqt');t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2200)}});
 addEventListener('resize',()=>{if($('wheel').classList.contains('on'))render()});
 /* browser preview */
 if(!RES){document.body.classList.add('preview');S.img='images/';const W=(name,label,o={})=>({name,label,slot:1,count:1,...o});

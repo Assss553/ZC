@@ -1073,22 +1073,90 @@ local function onExitDrop(point)
 	end
 end
 
+-- ROX Store: real models for dropped items + "[E] LABEL" pickup prompt
+local ROX_DROP_MODELS = {
+	burger = 'prop_cs_burger_01', sandwich = 'prop_sandwich_01', donut = 'prop_amb_donut', water = 'prop_ld_flow_bottle',
+	cola = 'prop_ecola_can', coffee = 'p_amb_coffeecup_01', phone = 'prop_npc_phone_02', radio = 'prop_cs_hand_radio',
+	rox_radio = 'prop_cs_hand_radio', money = 'prop_cash_pile_01', black_money = 'prop_cash_pile_01', armour = 'prop_bodyarmour_03',
+	rox_vest = 'prop_bodyarmour_03', bandage = 'prop_ld_health_pack', medikit = 'prop_ld_health_pack', lockpick = 'prop_tool_screwdvr01',
+	rox_box = 'prop_cs_cardbox_01', parachute = 'p_parachute_s', rox_cuffs = 'p_cs_cuffs_02_s', WEAPON_HANDCUFFS = 'p_cs_cuffs_02_s',
+}
+
+local function roxDropModel(item)
+	if not item then return end
+	if item:sub(1, 7) == 'WEAPON_' then
+		local m = GetWeapontypeModel(joaat(item))
+		if m ~= 0 then return m, true end
+	end
+	local name = ROX_DROP_MODELS[item]
+	if name then return joaat(name), false end
+end
+
+local function roxDrawPrompt(coords, label)
+	local on, x, y = World3dToScreen2d(coords.x, coords.y, coords.z + 0.35)
+	if not on then return end
+	local text = ('%s'):format(label):upper()
+	local w = 0.03 + #text * 0.0068
+	DrawRect(x + 0.006, y + 0.012, w, 0.032, 12, 13, 16, 200)
+	DrawRect(x - w / 2 + 0.018, y + 0.012, 0.018, 0.024, 241, 242, 244, 255)
+	SetTextFont(4); SetTextScale(0.0, 0.36); SetTextColour(17, 17, 17, 255); SetTextCentre(true)
+	BeginTextCommandDisplayText('STRING'); AddTextComponentSubstringPlayerName('E'); EndTextCommandDisplayText(x - w / 2 + 0.018, y - 0.001)
+	SetTextFont(4); SetTextScale(0.0, 0.38); SetTextColour(255, 255, 255, 255); SetTextCentre(true); SetTextDropshadow(1, 0, 0, 0, 200)
+	BeginTextCommandDisplayText('STRING'); AddTextComponentSubstringPlayerName(text); EndTextCommandDisplayText(x + 0.016, y - 0.002)
+end
+
+local roxPickupCooldown = 0
+local function roxNearby(point)
+	if point.instance and point.instance ~= currentInstance then return end
+	if not point.entity and not (point.model or client.dropprops) then nearbyDrop(point) end
+	if point.currentDistance < 2.2 and not invOpen and not cache.vehicle then
+		roxDrawPrompt(point.entity and GetEntityCoords(point.entity) or point.coords, (point.label or 'Items') .. ((point.count or 1) > 1 and (' x' .. point.count) or ''))
+		if IsControlJustReleased(0, 38) and GetGameTimer() > roxPickupCooldown then
+			roxPickupCooldown = GetGameTimer() + 1200
+			lib.requestAnimDict('pickup_object')
+			TaskPlayAnim(cache.ped, 'pickup_object', 'pickup_low', 8.0, -8.0, 1000, 48, 0, false, false, false)
+			SetTimeout(450, function() TriggerServerEvent('ox_inventory:roxPickup', point.invId) end)
+		end
+	end
+end
+
+local function roxOnEnter(point)
+	if point.isWeapon == nil then return onEnterDrop(point) end
+	if point.instance and point.instance ~= currentInstance or point.entity then return end
+	lib.requestModel(point.model)
+	local entity = CreateObject(point.model, point.coords.x, point.coords.y, point.coords.z, false, true, true)
+	SetModelAsNoLongerNeeded(point.model)
+	if point.isWeapon then
+		local _, gz = GetGroundZFor_3dCoord(point.coords.x, point.coords.y, point.coords.z + 0.5, false)
+		SetEntityCoordsNoOffset(entity, point.coords.x, point.coords.y, (gz ~= 0 and gz or point.coords.z) + 0.05, false, false, false)
+		SetEntityRotation(entity, 90.0, 0.0, math.random(0, 359) + 0.0, 2, true)
+	else
+		PlaceObjectOnGroundProperly(entity)
+	end
+	FreezeEntityPosition(entity, true)
+	SetEntityCollision(entity, false, true)
+	point.entity = entity
+end
+
 local function createDrop(dropId, data)
+	local rModel, isWeapon = roxDropModel(data.item)
 	local point = lib.points.new({
 		coords = data.coords,
 		distance = 16,
 		invId = dropId,
 		instance = data.instance,
-		model = data.model
+		model = data.model or rModel,
+		label = data.label,
+		count = data.count,
 	})
+	if rModel and not data.model then point.isWeapon = isWeapon == true end
 
 	if point.model or client.dropprops then
 		point.distance = 30
-		point.onEnter = onEnterDrop
+		point.onEnter = roxOnEnter
 		point.onExit = onExitDrop
-	else
-		point.nearby = nearbyDrop
 	end
+	point.nearby = roxNearby
 
 	client.drops[dropId] = point
 end

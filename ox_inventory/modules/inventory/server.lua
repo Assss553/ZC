@@ -1682,7 +1682,10 @@ local function dropItem(source, playerInventory, fromData, data)
 	if not inventory then hooks.success = false return end
 
 	inventory.coords = data.coords
-	Inventory.Drops[dropId] = {coords = inventory.coords, instance = data.instance}
+	-- ROX: remember what was dropped so clients can show the real model + "[E] label"
+	local roxItem = Items(toData.name)
+	Inventory.Drops[dropId] = {coords = inventory.coords, instance = data.instance, item = toData.name,
+		label = (toData.metadata and toData.metadata.label) or (roxItem and roxItem.label) or toData.name, count = toData.count}
 	playerInventory.changed = true
 
 	TriggerClientEvent('ox_inventory:createDrop', -1, dropId, Inventory.Drops[dropId], playerInventory.open and source, slot)
@@ -2857,3 +2860,27 @@ end
 exports('InspectInventory', Inventory.InspectInventory)
 
 return Inventory
+
+
+-- ROX Store: pick up a whole drop with E (server validated)
+RegisterNetEvent('ox_inventory:roxPickup', function(dropId)
+	local src = source
+	local drop = type(dropId) == 'string' and Inventory(dropId)
+	local player = Inventory(src)
+	if not drop or drop.type ~= 'drop' or not player or not drop.coords then return end
+	if #(GetEntityCoords(GetPlayerPed(src)) - drop.coords) > 3.0 then return end
+	local took = 0
+	for slot, it in pairs(drop.items) do
+		if it and Inventory.CanCarryItem(player, it.name, it.count, it.metadata) then
+			if Inventory.RemoveItem(drop, it.name, it.count, it.metadata, slot) then
+				Inventory.AddItem(player, it.name, it.count, it.metadata)
+				took = took + 1
+			end
+		end
+	end
+	if took == 0 then
+		TriggerClientEvent('ox_lib:notify', src, { type = 'error', description = locale('cannot_carry') or 'You cannot carry that' })
+	end
+	local d = Inventory(dropId)
+	if d and not next(d.items) then Inventory.Remove(d) end
+end)
