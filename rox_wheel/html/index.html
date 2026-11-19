@@ -107,6 +107,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 #wheel.on~.wtop{display:flex}
 .wtop i{width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
 .wtop i::after{content:"";width:14px;height:9px;border-radius:2px;background:#3ddc84}
+.sw3d{cursor:pointer;pointer-events:auto}.foot{pointer-events:auto}
 </style></head><body>
 <div id="wheel"><div class="stage" id="stage">
   <div class="orbit" id="orbit"></div>
@@ -115,7 +116,7 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
   <div class="cyc" id="cyc"><span class="key">◀</span><span class="key">▶</span></div>
   <div class="pager" id="pager"></div>
   <div class="center"><div class="nm" id="nm">—</div><div class="ct" id="ct"></div><div class="ammo" id="ammo"></div><div class="meta" id="meta"></div></div>
-  <div class="foot"><span><span class="key">MOUSE</span>Select</span><span><span class="key">WHEEL</span>Cycle</span><span><span class="key">Q</span><span class="key">E</span>Tab</span><span><span class="key">TAB</span>Release to equip</span></div>
+  <div class="foot"><span><span class="key">MOUSE</span>Select</span><span><span class="key">WHEEL</span>Cycle</span><span><span class="key">Q</span><span class="key">E</span>Tab</span><span><span class="key">TAB</span>Release to equip</span><span class="sw3d" id="sw3d"><span class="key">C</span>3D Inventory</span></div>
 </div></div>
 <div class="stats" id="stats"></div>
 <div class="wtop" id="wtop"></div>
@@ -163,10 +164,10 @@ function open(d){if(d.cash!=null)document.getElementById('wtop').innerHTML='$'+M
 function close(confirm){if(!$('wheel').classList.contains('on'))return;const it=confirm?current():null;$('wheel').classList.remove('on');post('close',{slot:it?it.slot:null,tab:S.tab})}
 document.addEventListener('mousemove',e=>{if($('wheel').classList.contains('on'))hover(pick(e))});
 document.addEventListener('wheel',e=>{if($('wheel').classList.contains('on'))cycle(e.deltaY>0?1:-1)});
-document.addEventListener('click',e=>{if(!$('wheel').classList.contains('on'))return;const b=e.target.closest('.tabs button');if(b)return tab(b.dataset.t);if(S.sel>=0)close(true)});
+document.addEventListener('click',e=>{if(!$('wheel').classList.contains('on'))return;if(e.target.closest('#sw3d')){$('wheel').classList.remove('on');post('switch');return}const b=e.target.closest('.tabs button');if(b)return tab(b.dataset.t);if(S.sel>=0)close(true)});
 document.addEventListener('contextmenu',e=>{e.preventDefault();if($('wheel').classList.contains('on'))tab()});
 document.addEventListener('keydown',e=>{if(!$('wheel').classList.contains('on'))return;const k=e.key.toLowerCase();
- if(k==='q'||k==='e')tab();else if(k==='arrowleft'||k==='a')cycle(-1);else if(k==='arrowright'||k==='d')cycle(1);else if(k==='escape')close(false)});
+ if(k==='c'){$('wheel').classList.remove('on');post('switch');return}if(k==='q'||k==='e')tab();else if(k==='arrowleft'||k==='a')cycle(-1);else if(k==='arrowright'||k==='d')cycle(1);else if(k==='escape')close(false)});
 document.addEventListener('keyup',e=>{if(e.key==='Tab'&&$('wheel').classList.contains('on'))close(true)});
 window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open')open(d);if(d.action==='close')close(!!d.confirm);if(d.action==='cycle')cycle(d.dir);if(d.action==='tab')tab();if(d.action==='equipToast'){$('eql').textContent=d.label||'';$('eqk').textContent=d.key||'TAB';const t=$('eqt');t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2200)}});
 addEventListener('resize',()=>{if($('wheel').classList.contains('on'))render()});

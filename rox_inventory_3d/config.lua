@@ -1,6 +1,7 @@
 -- ROX Store | All rights reserved
 Config = {}
 Config.Key = 'F2'                -- opens the 3D inventory (ox_inventory keeps its own TAB/F2 bind: change one of them)
+Config.Default = '3d'           -- '3d' or 'wheel' when rox_settings is not running
 Config.MaxWeight = 60            -- shown on the weight bar (kg). Real limit = ox_inventory player weight
 -- player slot layout (ox_inventory slot numbers)
 Config.Layout = { hot = { 1, 2, 3, 4, 5 }, primary = 6, secondary = 7, vest = 8, bag = 9, head = 10, pockets = { 11, 35 } }

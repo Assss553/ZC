@@ -26,5 +26,20 @@ RegisterNUICallback('use', function(d, cb)
 end)
 RegisterNUICallback('close', function(_, cb) cb('ok'); open = false; SetNuiFocus(false, false) end)
 
-RegisterCommand('inventory3d', openInv, false)
+local function style()
+    if GetResourceState('rox_settings') == 'started' then
+        local ok, st = pcall(function() return exports.rox_settings:get() end)
+        if ok and st and st.invstyle then return st.invstyle end
+    end
+    return Config.Default or '3d'
+end
+local function openPreferred()
+    if style() == 'wheel' and GetResourceState('rox_wheel') == 'started' then exports.rox_wheel:Open() else openInv() end
+end
+exports('Open', openInv)
+RegisterNUICallback('switch', function(_, cb)
+    cb('ok'); open = false; SetNuiFocus(false, false); SendNUIMessage({ action = 'close' })
+    if GetResourceState('rox_wheel') == 'started' then exports.rox_wheel:Open() end
+end)
+RegisterCommand('inventory3d', openPreferred, false)
 RegisterKeyMapping('inventory3d', 'ROX 3D inventory', 'keyboard', Config.Key)

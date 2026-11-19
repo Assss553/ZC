@@ -69,5 +69,6 @@
     if (d.action === 'state') { load(d.state); if (d.msg) toast(d.msg) }
     if (d.action === 'close') document.body.style.display = 'none';
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.style.display !== 'none') { document.body.style.display = 'none'; post('close') } });
+  document.addEventListener('keydown', (e) => { if ((e.key === 'c' || e.key === 'C') && document.body.style.display !== 'none' && !(document.activeElement && document.activeElement.tagName === 'INPUT')) { document.body.style.display = 'none'; post('switch'); return }
+    if (e.key === 'Escape' && document.body.style.display !== 'none') { document.body.style.display = 'none'; post('close') } });
 })();

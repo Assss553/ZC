@@ -73,7 +73,7 @@ const TABS=[
  {t:'HUD',rows:[tg('minimap','MINIMAP','Show or hide the minimap.'),{k:'hud_open',l:'ROX HUD SETTINGS',type:'btn',btn:'OPEN',d:'Open the ROX HUD editor (speedometer, status, layout).'},tg('streetnames','STREET NAMES','Show area / street names under the minimap.')]},
  {t:'VISUALS',rows:[sel_('look','VISUAL FILTER',LOOKS.map(x=>x[0]),LOOKS.map(x=>x[1]),''),bar('strength','FILTER STRENGTH',0,100,5,'How strong the visual filter is applied.','%'),bar('brightness','BRIGHTNESS BOOST',-10,10,1,'Raises or lowers exposure on top of your GTA brightness. Useful at night.')]},
  {t:'PERFORMANCE',rows:[tg('fpsboost','FPS BOOST','Removes some direct lighting & reflections for more FPS. Overrides the visual filter.'),bar('shadows','SHADOW DISTANCE',1,10,1,'Lower = more FPS, higher = shadows further away.'),bar('lod','DRAW DISTANCE',5,15,1,'Detail distance of the world. Lower = more FPS.')]},
- {t:'MENU',rows:[sel_('accent','ACCENT COLOUR',ACC.map(x=>x[0]),ACC.map(x=>x[1]),'Main colour of the ROX menus.'),tg('blur','BACKGROUND BLUR','Blur the game behind this menu.'),bar('menuscale','MENU SIZE',80,120,5,'Scale of this settings menu.','%')]},
+ {t:'MENU',rows:[sel_('invstyle','INVENTORY STYLE',['3d','wheel'],['3D CHARACTER','GTA WHEEL'],'Which inventory opens on F2. Press C inside an inventory to switch.'),sel_('accent','ACCENT COLOUR',ACC.map(x=>x[0]),ACC.map(x=>x[1]),'Main colour of the ROX menus.'),tg('blur','BACKGROUND BLUR','Blur the game behind this menu.'),bar('menuscale','MENU SIZE',80,120,5,'Scale of this settings menu.','%')]},
  {t:'KEYBINDS',rows:[{k:'kb1',l:'OPEN SETTINGS',type:'info',v:'/settings',d:'Change it in GTA Settings › Key Bindings › FiveM.'},{k:'kb2',l:'PAUSE MENU',type:'info',v:'ESC',d:'Game settings in the pause menu opens this menu.'},{k:'kb3',l:'SWITCH TABS',type:'info',v:'Q / E',d:'Use Q and E to move between tabs.'}]}];
 let S={},tab=0,sel=0;const $=id=>document.getElementById(id);
 const post=(n,d={})=>fetch(`https://${window.GetParentResourceName?GetParentResourceName():'rox_settings'}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({}));
@@ -111,7 +111,7 @@ document.addEventListener('keydown',e=>{if(!$('app').classList.contains('on'))re
  else if(e.key==='ArrowLeft')act(-1);else if(e.key==='ArrowRight'||e.key==='Enter')act(1);
  else if(e.key.toLowerCase()==='q'){tab=(tab-1+TABS.length)%TABS.length;sel=0;render()}else if(e.key.toLowerCase()==='e'){tab=(tab+1)%TABS.length;sel=0;render()}});
 if(location.hash){document.body.classList.add('demo');const [t,s,l]=location.hash.slice(1).split(',');
- S={look:l||'off',strength:100,brightness:0,crosshair:true,cinebars:false,idlecam:true,radio:true,scanner:true,wantedmusic:true,sirens:true,flightmusic:true,minimap:true,streetnames:true,fpsboost:false,shadows:6,lod:10,accent:'#ff4b12',blur:true,menuscale:100};
+ S={look:l||'off',strength:100,brightness:0,crosshair:true,cinebars:false,idlecam:true,radio:true,scanner:true,wantedmusic:true,sirens:true,flightmusic:true,minimap:true,streetnames:true,fpsboost:false,shadows:6,lod:10,accent:'#ff5fa8',blur:true,menuscale:100,invstyle:'3d'};
  tab=+t||0;sel=+s||0;document.body.style.backgroundImage='url(previews/'+S.look+'.jpg)';$('app').classList.add('on');render()}
 </script>
 </body></html>

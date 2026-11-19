@@ -6,6 +6,8 @@ local Config = {
     Clouds    = true,
     RainBoost = 1.35,       -- multiplier on rain intensity while raining
     Grade     = true,       -- timecycle grading for rain & fog (rox_rain / rox_fog in timecycle_world.xml)
+    TimeOfDay = true,       -- golden hour (06-08 / 18-20) and cleaner night (21-05) when the weather is dry
+    Shadows   = true,       -- sharper, longer shadows + shadows from more entities
 }
 
 local W = { clear = { 'EXTRASUNNY', 'CLEAR', 'NEUTRAL' }, cloud = { 'CLOUDS', 'SMOG', 'OVERCAST' }, rain = { 'RAIN', 'CLEARING' }, storm = { 'THUNDER' }, fog = { 'FOGGY' }, snow = { 'SNOW', 'SNOWLIGHT', 'BLIZZARD', 'XMAS' } }
@@ -60,6 +62,10 @@ CreateThread(function()
         -- grading
         if Config.Grade then
             local want = (g == 'rain' or g == 'storm') and 'rox_rain' or (g == 'fog' and 'rox_fog') or nil
+            if not want and Config.TimeOfDay then
+                local h = GetClockHours()
+                if (h >= 6 and h < 8) or (h >= 18 and h < 20) then want = 'rox_golden' elseif h >= 21 or h < 5 then want = 'rox_night' end
+            end
             -- rox_settings uses the extra modifier for its brightness boost: don't fight it
             if GetResourceState('rox_settings') == 'started' then
                 local ok, st = pcall(function() return exports.rox_settings:get() end)
@@ -75,6 +81,19 @@ CreateThread(function()
         Wait(100)
     end
 end)
+
+-- shadows
+if Config.Shadows then
+    CreateThread(function()
+        while true do
+            CascadeShadowsEnableEntityTracker(true)
+            CascadeShadowsSetDynamicDepthMode(true)
+            CascadeShadowsSetEntityTrackerScale(1.6)
+            CascadeShadowsSetDynamicDepthValue(0.6)
+            Wait(5000)
+        end
+    end)
+end
 
 -- lightning flashes feel stronger in storms
 CreateThread(function()

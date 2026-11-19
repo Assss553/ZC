@@ -170,3 +170,10 @@ RegisterKeyMapping('+roxwheel', 'ROX weapon / item wheel (hold)', 'keyboard', Co
 AddEventHandler('onResourceStop', function(r)
     if r == GetCurrentResourceName() and isOpen then SetNuiFocusKeepInput(false); SetNuiFocus(false, false) end
 end)
+
+-- opened from F2 / switch: stays open until click / ESC (no hold needed)
+exports('Open', function() open() end)
+RegisterNUICallback('switch', function(_, cb)
+    cb('ok'); isOpen = false; SetNuiFocusKeepInput(false); SetNuiFocus(false, false)
+    if GetResourceState('rox_inventory_3d') == 'started' then exports.rox_inventory_3d:Open() end
+end)
