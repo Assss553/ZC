@@ -1,0 +1,264 @@
+<!doctype html>
+<!-- ROX Store | ROX Inventory 3D | All rights reserved -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROX Inventory 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/*FA*/
+:root{--a:#ff6a1a;--a-rgb:255,106,26;--s:clamp(54px,7.4vh,86px);--ink:#e9ebef;--mut:#8a909b;--line:rgba(255,255,255,.07)}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:Inter,sans-serif;color:var(--ink)}
+body{background:radial-gradient(ellipse at 50% 30%,#2b2f37 0%,#121418 55%,#07080a 100%)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,.55));z-index:0}
+
+/* ---------- 3D scene ---------- */
+.scene{position:fixed;inset:0;perspective:1700px;perspective-origin:50% 42%;z-index:1}
+.world{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out}
+.floor{position:absolute;left:10%;right:10%;bottom:-6vh;height:44vh;transform:rotateX(78deg) translateZ(-40px);transform-origin:50% 100%;
+  background:radial-gradient(ellipse at 50% 40%,rgba(var(--a-rgb),.12),transparent 60%),repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 60px),repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 60px);
+  -webkit-mask:radial-gradient(ellipse at 50% 40%,#000 25%,transparent 70%);mask:radial-gradient(ellipse at 50% 40%,#000 25%,transparent 70%)}
+
+.panel{position:absolute;top:11vh;transform-style:preserve-3d;padding:22px 22px 20px;border-radius:18px;
+  background:linear-gradient(160deg,rgba(32,35,41,.78),rgba(14,15,18,.86));border:1px solid var(--line);
+  box-shadow:0 40px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(14px)}
+.panel::before{content:"";position:absolute;inset:-1px;border-radius:18px;pointer-events:none;background:linear-gradient(140deg,rgba(var(--a-rgb),.35),transparent 30%,transparent 70%,rgba(255,255,255,.08));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:1px}
+.left{left:4vw;transform:rotateY(16deg) translateZ(-30px);transform-origin:100% 50%}
+.right{right:4vw;transform:rotateY(-16deg) translateZ(-30px);transform-origin:0% 50%;width:calc(var(--s)*5 + 4*10px + 44px)}
+.ph{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ph .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(var(--a-rgb),.14);color:var(--a);font-size:15px;box-shadow:inset 0 0 0 1px rgba(var(--a-rgb),.3)}
+.ph h3{font:800 15px Inter;letter-spacing:2.5px}.ph small{display:block;font:600 11px Inter;color:var(--mut);letter-spacing:.5px;margin-top:2px}
+.wt{margin-left:auto;text-align:right}.wt b{font:700 20px Rajdhani;letter-spacing:.5px}.wt span{font:600 12px Inter;color:var(--mut)}
+.wbar{height:5px;border-radius:5px;background:rgba(255,255,255,.07);margin:-6px 0 16px;overflow:hidden}
+.wbar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--a),#ffb36b);box-shadow:0 0 12px rgba(var(--a-rgb),.7);transition:width .4s}
+
+/* ---------- slots ---------- */
+.grid{display:grid;grid-template-columns:repeat(5,var(--s));gap:10px;transform-style:preserve-3d}
+.slot{position:relative;width:var(--s);height:var(--s);border-radius:12px;transform-style:preserve-3d;cursor:grab;
+  background:linear-gradient(165deg,#262930,#15171b);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -2px 6px rgba(0,0,0,.4),0 5px 0 #0a0b0d,0 10px 16px rgba(0,0,0,.45);
+  transition:transform .22s cubic-bezier(.2,1.4,.4,1),box-shadow .22s}
+.slot.empty{cursor:default;background:linear-gradient(165deg,rgba(38,41,48,.55),rgba(18,19,22,.55));box-shadow:inset 0 1px 0 rgba(255,255,255,.04),inset 0 2px 8px rgba(0,0,0,.5)}
+.slot .pool{position:absolute;inset:0;border-radius:12px;overflow:hidden;pointer-events:none}
+.slot .pool::before{content:"";position:absolute;left:10%;right:10%;bottom:-30%;height:80%;border-radius:50%;background:radial-gradient(closest-side,var(--rc),transparent);opacity:.55;filter:blur(4px)}
+.slot .pool::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.16) 50%,transparent 65%);transform:translateX(-120%);transition:transform .7s}
+.slot .edge{position:absolute;left:12%;right:12%;bottom:0;height:2px;border-radius:2px;background:var(--rc);box-shadow:0 0 10px var(--rc);opacity:.9}
+.slot img{position:absolute;inset:14%;width:72%;height:72%;object-fit:contain;transform:translateZ(18px);filter:drop-shadow(0 8px 6px rgba(0,0,0,.55));pointer-events:none;transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+.slot .cnt{position:absolute;right:7px;top:5px;font:800 11px Inter;color:#fff;text-shadow:0 1px 3px #000;transform:translateZ(22px)}
+.slot .dur{position:absolute;left:7px;top:6px;width:13px;height:13px;border-radius:50%;transform:translateZ(22px);background:conic-gradient(var(--dc) calc(var(--d)*1%),rgba(255,255,255,.12) 0)}
+.slot .dur::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#15171b}
+.slot:not(.empty):hover{transform:translateZ(26px) translateY(-4px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 5px 0 #0a0b0d,0 22px 30px rgba(0,0,0,.6),0 0 0 1px rgba(var(--a-rgb),.55)}
+.slot:not(.empty):hover img{transform:translateZ(34px) scale(1.06)}
+.slot:not(.empty):hover .pool::after{transform:translateX(120%)}
+.slot.sel{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 5px 0 #0a0b0d,0 0 0 2px var(--a),0 0 24px rgba(var(--a-rgb),.45)}
+.slot.over{box-shadow:0 0 0 2px #fff,0 0 30px rgba(255,255,255,.3)}
+.slot.ghost{opacity:.35}
+.r-common{--rc:#9aa0aa}.r-uncommon{--rc:#3ddc84}.r-rare{--rc:#3f8cff}.r-epic{--rc:#b26bff}.r-legendary{--rc:#ffb02e}
+
+/* ---------- center: character + equipment ---------- */
+.center{position:absolute;left:50%;top:9vh;width:46vh;height:78vh;transform:translateX(-50%) translateZ(40px);transform-style:preserve-3d}
+.halo{position:absolute;left:50%;top:44%;width:42vh;height:42vh;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(closest-side,rgba(var(--a-rgb),.28),rgba(var(--a-rgb),.06) 60%,transparent);filter:blur(6px)}
+.ring3d{position:absolute;left:50%;bottom:9vh;width:30vh;height:30vh;transform:translateX(-50%) rotateX(78deg);border-radius:50%;
+  border:2px solid rgba(var(--a-rgb),.55);box-shadow:0 0 30px rgba(var(--a-rgb),.5),inset 0 0 30px rgba(var(--a-rgb),.3);animation:spin 14s linear infinite}
+.ring3d::after{content:"";position:absolute;inset:14%;border-radius:50%;border:1px dashed rgba(255,255,255,.18)}
+@keyframes spin{to{transform:translateX(-50%) rotateX(78deg) rotateZ(360deg)}}
+.man{position:absolute;left:50%;top:4vh;height:60vh;transform:translateX(-50%) translateZ(10px);filter:brightness(.62) contrast(1.25) drop-shadow(0 30px 30px rgba(0,0,0,.7)) drop-shadow(0 0 22px rgba(var(--a-rgb),.25));animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{50%{transform:translateX(-50%) translateZ(10px) translateY(-6px)}}
+svg.links{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+svg.links path{fill:none;stroke:rgba(var(--a-rgb),.55);stroke-width:1.4;stroke-dasharray:4 4;animation:dash 1.4s linear infinite}
+svg.links circle{fill:var(--a);filter:drop-shadow(0 0 6px var(--a))}
+@keyframes dash{to{stroke-dashoffset:-16}}
+.eq{position:absolute;transform-style:preserve-3d;transform:translateZ(30px)}
+.eq .slot{--s:clamp(58px,8.4vh,92px)}
+.eq label{position:absolute;left:0;right:0;top:-20px;text-align:center;font:800 10.5px Inter;letter-spacing:2px;color:var(--mut)}
+.eq.wide .slot{width:calc(var(--s)*1.9)}
+.name{position:absolute;left:0;right:0;bottom:7.5vh;text-align:center;transform:translateZ(40px)}
+.name b{font:900 22px Inter;letter-spacing:1px}.name span{display:block;font:600 12px Inter;color:var(--mut);letter-spacing:3px;margin-top:3px}
+
+/* ---------- hotbar keycaps ---------- */
+.hotbar{position:absolute;left:50%;bottom:4.5vh;transform:translateX(-50%) translateZ(60px) rotateX(18deg);display:flex;gap:12px;transform-style:preserve-3d}
+.key{position:relative;width:calc(var(--s)*1.02);height:calc(var(--s)*1.02);transform-style:preserve-3d}
+.key .slot{width:100%;height:100%;border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 8px 0 #08090b,0 14px 20px rgba(0,0,0,.55)}
+.key .k{position:absolute;left:-7px;top:-9px;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font:800 12px Inter;color:#111;
+  background:linear-gradient(#fff,#cfd2d8);box-shadow:0 3px 0 #8a8f98;transform:translateZ(40px);z-index:3}
+.hotbar-l{position:absolute;left:50%;bottom:calc(4.5vh + var(--s) + 22px);transform:translateX(-50%) translateZ(60px);font:800 10.5px Inter;letter-spacing:3px;color:var(--mut)}
+
+/* ---------- inspector ---------- */
+.insp{margin-bottom:18px;border-radius:14px;padding:16px;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);min-height:300px;position:relative;overflow:hidden}
+.insp .stage{height:150px;display:grid;place-items:center;perspective:600px;position:relative}
+.insp .stage::after{content:"";position:absolute;bottom:6px;left:25%;right:25%;height:16px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),transparent)}
+.insp .stage img{height:120px;max-width:80%;object-fit:contain;filter:drop-shadow(0 14px 10px rgba(0,0,0,.6));animation:turn 6s ease-in-out infinite;transform-style:preserve-3d}
+@keyframes turn{0%,100%{transform:rotateY(-28deg) translateY(0)}50%{transform:rotateY(28deg) translateY(-6px)}}
+.insp .glow{position:absolute;left:50%;top:70px;width:200px;height:200px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,var(--rc),transparent);opacity:.25;filter:blur(10px)}
+.insp h2{font:900 19px Inter;margin-top:6px}
+.insp .tags{display:flex;gap:6px;margin:8px 0 10px;flex-wrap:wrap}
+.tag{font:700 10.5px Inter;letter-spacing:1px;padding:4px 9px;border-radius:20px;background:rgba(255,255,255,.06);color:#cfd3da}
+.tag.r{background:color-mix(in srgb,var(--rc) 22%,transparent);color:var(--rc)}
+.insp p{font:500 12.5px Inter;color:#b9bfc9;line-height:1.55}
+.stat{display:flex;align-items:center;gap:10px;margin-top:9px;font:600 11.5px Inter;color:var(--mut)}
+.stat .bar{flex:1;height:5px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}.stat .bar i{display:block;height:100%;border-radius:5px;background:var(--rc)}
+.stat b{color:var(--ink);font-weight:700;min-width:42px;text-align:right}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.btn{position:relative;padding:11px 6px;border-radius:10px;text-align:center;font:800 11.5px Inter;letter-spacing:1px;cursor:pointer;
+  background:linear-gradient(#2a2d34,#1b1d22);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 4px 0 #0a0b0d;transition:transform .1s,box-shadow .1s}
+.btn:hover{background:linear-gradient(#ff7d33,#e85a10);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 0 #8f3507,0 0 20px rgba(var(--a-rgb),.4)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0a0b0d}
+.btn i{margin-right:6px}
+.amt{display:flex;align-items:center;gap:8px;margin-top:12px;font:600 11.5px Inter;color:var(--mut)}
+.amt input{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:#fff;font:700 13px Inter;outline:none;text-align:center}
+.amt input:focus{border-color:var(--a)}
+.empty-insp{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--mut);font:600 13px Inter}
+
+/* ---------- misc ---------- */
+.top{position:fixed;top:3vh;left:0;right:0;display:flex;justify-content:center;gap:10px;z-index:3}
+.chip{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:30px;background:rgba(16,17,20,.75);border:1px solid var(--line);font:700 13px Inter;backdrop-filter:blur(10px)}
+.chip i{color:var(--a)}.chip.money i{color:#3ddc84}
+.brand{position:fixed;left:3vw;top:3vh;z-index:3;font:900 20px Inter;letter-spacing:1px}.brand span{color:var(--a)}
+.keys{position:fixed;right:3vw;top:3.4vh;z-index:3;display:flex;gap:14px;font:600 11.5px Inter;color:var(--mut)}
+.keys b{background:rgba(255,255,255,.1);color:#fff;padding:2px 7px;border-radius:5px;margin-right:5px}
+.tip{position:fixed;z-index:20;pointer-events:none;padding:8px 12px;border-radius:9px;background:rgba(12,13,15,.95);border:1px solid var(--line);font:700 12px Inter;display:none}
+.drag{position:fixed;z-index:30;pointer-events:none;width:80px;height:80px;display:none;filter:drop-shadow(0 18px 14px rgba(0,0,0,.6));transform:translate(-50%,-50%) rotate(-6deg) scale(1.1)}
+.toast{position:fixed;left:50%;bottom:2vh;transform:translateX(-50%) translateY(20px);opacity:0;z-index:30;padding:10px 18px;border-radius:30px;background:rgba(14,15,18,.9);border:1px solid rgba(var(--a-rgb),.4);font:700 12.5px Inter;transition:.25s}
+.toast.on{opacity:1;transform:translateX(-50%)}
+</style></head>
+<body>
+<div class="brand">ROX<span>.</span> INVENTORY</div>
+<div class="top"><div class="chip money"><i class="fa-solid fa-sack-dollar"></i><span>$ 24,850</span></div><div class="chip"><i class="fa-solid fa-id-badge"></i>ID 127</div><div class="chip"><i class="fa-solid fa-briefcase"></i>LSPD · Sergeant</div></div>
+<div class="keys"><span><b>LMB</b>Drag</span><span><b>SHIFT</b>Split</span><span><b>RMB</b>Use</span><span><b>1-5</b>Quick</span></div>
+
+<div class="scene"><div class="world" id="world">
+  <div class="floor"></div>
+
+  <section class="panel left">
+    <div class="ph"><div class="ic"><i class="fa-solid fa-suitcase"></i></div><div><h3>POCKETS</h3><small>25 slots</small></div>
+      <div class="wt"><b id="wNow">0.0</b><span> / 60 kg</span></div></div>
+    <div class="wbar"><i id="wBar"></i></div>
+    <div class="grid" id="pockets"></div>
+  </section>
+
+  <div class="center">
+    <div class="halo"></div><div class="ring3d"></div>
+    <img class="man" src="__MANN__" alt="">
+    <svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+    <div class="eq" style="left:84%;top:5%" data-eq="head"><label>HEAD</label><div class="slotwrap"></div></div>
+    <div class="eq" style="left:-12%;top:20%" data-eq="vest"><label>VEST</label><div class="slotwrap"></div></div>
+    <div class="eq" style="left:84%;top:27%" data-eq="bag"><label>BAG</label><div class="slotwrap"></div></div>
+    <div class="eq wide" style="left:-30%;top:50%" data-eq="primary"><label>PRIMARY</label><div class="slotwrap"></div></div>
+    <div class="eq wide" style="left:84%;top:50%" data-eq="secondary"><label>SECONDARY</label><div class="slotwrap"></div></div>
+    <div class="name"><b>JOHN CARTER</b><span>CITIZEN · RX1234</span></div>
+  </div>
+
+  <div class="hotbar-l">QUICK USE</div>
+  <div class="hotbar" id="hotbar"></div>
+
+  <section class="panel right">
+    <div class="insp" id="insp"></div>
+    <div class="ph"><div class="ic"><i class="fa-solid fa-box-open"></i></div><div><h3>GROUND</h3><small>Drop items here</small></div>
+      <div class="wt"><b id="gNow">0.0</b><span> / 100 kg</span></div></div>
+    <div class="grid" id="ground"></div>
+  </section>
+</div></div>
+
+<div class="tip" id="tip"></div><img class="drag" id="drag" alt=""><div class="toast" id="toast"></div>
+<script>
+const IMGS="__IMGS__";
+const RAR={common:'Common',uncommon:'Uncommon',rare:'Rare',epic:'Epic',legendary:'Legendary'};
+const D={
+ rox_vest:{l:'Plate Carrier',r:'rare',w:3.5,eq:'vest',d:'Level IIIA plate carrier with three magazine pouches. Absorbs most pistol rounds.'},
+ rox_oxygen:{l:'Oxygen Tank',r:'uncommon',w:6,eq:'bag',d:'Compact scuba tank. 10 minutes of air under water.'},
+ rox_radio:{l:'Police Radio',r:'uncommon',w:.4,d:'Encrypted handheld radio. Channels 1-10.'},
+ rox_baton:{l:'Telescopic Baton',r:'common',w:.6,d:'Collapsible steel baton.'},
+ rox_taser:{l:'Taser X2',r:'rare',w:.3,d:'Less-lethal conducted energy device. 2 cartridges.'},
+ rox_cuffs:{l:'Handcuffs',r:'rare',w:.3,d:'Steel chain handcuffs with double lock.'},
+ rox_ammo:{l:'5.56 Rounds',r:'common',w:.012,d:'Rifle ammunition.'},
+ rox_idcard:{l:'ID Card',r:'rare',w:.01,d:'San Andreas citizen identification.'},
+ rox_box:{l:'Package',r:'common',w:1.2,d:'A sealed cardboard package. Contents unknown.'},
+ rox_pills:{l:'Painkillers',r:'uncommon',w:.02,d:'Restores 10 HP over time.'},
+ rox_transparency_red:{l:'Transparency (Red)',r:'rare',w:.03,d:'A clear plastic sheet for an overhead projector. Marks in the corners line it up.'},
+ rox_transparency_blue:{l:'Transparency (Blue)',r:'rare',w:.03,d:'A clear plastic sheet for an overhead projector. Marks in the corners line it up.'},
+ rox_transparency_amber:{l:'Transparency (Amber)',r:'epic',w:.03,d:'A clear plastic sheet for an overhead projector. Marks in the corners line it up.'},
+ WEAPON_PISTOL:{l:'Combat Pistol',r:'rare',w:1.2,eq:'secondary',d:'Standard issue 9mm sidearm.'},
+ WEAPON_CARBINERIFLE:{l:'Carbine Rifle',r:'epic',w:3.4,eq:'primary',d:'Select-fire 5.56 carbine. Optic rail.'},
+ parachute:{l:'Parachute',r:'uncommon',w:2,eq:'bag',d:'Deploys at altitude.'},
+ phone:{l:'Phone',r:'legendary',w:.18,d:'ROX smartphone.'},
+ burger:{l:'Burger',r:'common',w:.3,d:'300g · restores hunger.'},
+ water:{l:'Water',r:'common',w:.5,d:'500ml · restores thirst.'},
+ money:{l:'Cash',r:'uncommon',w:0,d:'Clean money.'},
+ lockpick:{l:'Lockpick',r:'uncommon',w:.05,d:'Opens basic locks. Might break.'},
+ bandage:{l:'Bandage',r:'common',w:.05,d:'Stops bleeding.'}};
+// [name, count, durability]
+const S={
+ pockets:[['rox_vest',1,100],['rox_vest',1,64],['parachute',1],['rox_box',1,90],['rox_radio',3],
+  null,['rox_oxygen',1,100],['rox_baton',1,100],['rox_taser',1,70],['rox_pills',8],
+  ['burger',3],['water',2],['money',2450],['lockpick',5],['bandage',6],
+  null,['rox_transparency_red',1],['rox_transparency_blue',1],['rox_transparency_amber',1],null,
+  null,null,null,null,null],
+ ground:[null,null,null,null,null,null,null,null,null,null],
+ head:[['rox_box',0]].map(()=>null),vest:[['rox_vest',1,100]],bag:[['rox_oxygen',1,85]],primary:[['WEAPON_CARBINERIFLE',1,92]],secondary:[['WEAPON_PISTOL',1,100]],
+ hot:[['phone',1],['rox_idcard',1],['rox_cuffs',1],['rox_ammo',398],['rox_radio',1]]};
+let sel=null;const $=id=>document.getElementById(id);
+
+function slot(list,i){const it=S[list][i],d=it&&D[it[0]];
+ if(!d)return `<div class="slot empty" data-l="${list}" data-i="${i}"></div>`;
+ const dur=it[2]!=null?`<span class="dur" style="--d:${it[2]};--dc:${it[2]<35?'#ff5a4a':it[2]<75?'#ffc23d':'#3ddc84'}"></span>`:'';
+ const s=sel&&sel.l===list&&sel.i===i?' sel':'';
+ return `<div class="slot r-${d.r}${s}" draggable="true" data-l="${list}" data-i="${i}"><div class="pool"></div><div class="edge"></div><img src="${IMGS[it[0]]}" alt="">${it[1]>1?`<span class="cnt">x${it[1].toLocaleString('en-US')}</span>`:''}${dur}</div>`}
+const wt=l=>S[l].reduce((a,it)=>a+(it?D[it[0]].w*it[1]:0),0);
+function render(){
+ $('pockets').innerHTML=S.pockets.map((_,i)=>slot('pockets',i)).join('');
+ $('ground').innerHTML=S.ground.map((_,i)=>slot('ground',i)).join('');
+ document.querySelectorAll('.eq').forEach(e=>e.querySelector('.slotwrap').innerHTML=slot(e.dataset.eq,0));
+ $('hotbar').innerHTML=S.hot.map((_,i)=>`<div class="key"><span class="k">${i+1}</span>${slot('hot',i)}</div>`).join('');
+ const w=['pockets','head','vest','bag','primary','secondary','hot'].reduce((a,l)=>a+wt(l),0);
+ $('wNow').textContent=w.toFixed(1);$('wBar').style.width=Math.min(100,w/60*100)+'%';$('gNow').textContent=wt('ground').toFixed(1);
+ inspector();bind();links()}
+function inspector(){const it=sel&&S[sel.l][sel.i];
+ if(!it){$('insp').innerHTML=`<div class="empty-insp"><div><i class="fa-solid fa-hand-pointer" style="font-size:26px;color:var(--a);margin-bottom:10px;display:block"></i>Select an item to inspect it</div></div>`;return}
+ const d=D[it[0]];
+ $('insp').className='insp r-'+d.r;
+ $('insp').innerHTML=`<div class="glow"></div><div class="stage"><img src="${IMGS[it[0]]}" alt=""></div><h2>${d.l}</h2>
+ <div class="tags"><span class="tag r">● ${RAR[d.r].toUpperCase()}</span><span class="tag">${(d.w*it[1]).toFixed(2)} kg</span>${it[1]>1?`<span class="tag">x${it[1].toLocaleString('en-US')}</span>`:''}${d.eq?`<span class="tag">${d.eq.toUpperCase()}</span>`:''}</div>
+ <p>${d.d}</p>${it[2]!=null?`<div class="stat">Durability<div class="bar"><i style="width:${it[2]}%"></i></div><b>${it[2]}%</b></div>`:''}
+ <div class="amt">Amount<input id="amt" type="number" min="1" max="${it[1]}" value="${it[1]}"></div>
+ <div class="acts"><div class="btn" data-a="use"><i class="fa-solid fa-hand"></i>USE</div><div class="btn" data-a="give"><i class="fa-solid fa-handshake"></i>GIVE</div><div class="btn" data-a="drop"><i class="fa-solid fa-arrow-down"></i>DROP</div></div>`;
+ document.querySelectorAll('.btn').forEach(b=>b.onclick=()=>act(b.dataset.a))}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1600)}
+function act(a){const it=S[sel.l][sel.i];if(!it)return;const n=Math.max(1,Math.min(it[1],+$('amt').value||1)),d=D[it[0]];
+ if(a==='drop'){const j=S.ground.findIndex(x=>!x);if(j<0)return toast('Ground is full');S.ground[j]=[it[0],n,it[2]];take(sel.l,sel.i,n);toast(`Dropped ${n}x ${d.l}`)}
+ else if(a==='use'){take(sel.l,sel.i,1);toast(`Used ${d.l}`)}else toast(`Give ${n}x ${d.l} → nearest player`);render()}
+function take(l,i,n){const it=S[l][i];it[1]-=n;if(it[1]<=0){S[l][i]=null;sel=null}}
+/* drag & drop (equip slots only accept matching items) */
+let drag=null;
+function canPut(l,it){if(!it)return true;if(['head','vest','bag','primary','secondary'].includes(l))return D[it[0]].eq===l;return true}
+function bind(){document.querySelectorAll('.slot').forEach(s=>{
+ const l=s.dataset.l,i=+s.dataset.i;
+ s.onclick=()=>{if(!S[l][i])return;sel={l,i};render()};
+ s.oncontextmenu=e=>{e.preventDefault();if(S[l][i]){sel={l,i};act('use')}};
+ s.ondragstart=e=>{if(!S[l][i])return e.preventDefault();drag={l,i,split:e.shiftKey};s.classList.add('ghost');const im=new Image();e.dataTransfer.setDragImage(im,0,0);$('drag').src=IMGS[S[l][i][0]];$('drag').style.display='block'};
+ s.ondragend=()=>{s.classList.remove('ghost');$('drag').style.display='none';drag=null};
+ s.ondragover=e=>{e.preventDefault();s.classList.add('over')};s.ondragleave=()=>s.classList.remove('over');
+ s.ondrop=e=>{e.preventDefault();s.classList.remove('over');if(!drag)return;const A=S[drag.l][drag.i],B=S[l][i];if(!A||(drag.l===l&&drag.i===i))return;
+  if(!canPut(l,A)||!canPut(drag.l,B))return toast('That item does not fit there');
+  if(B&&B[0]===A[0]&&!D[A[0]].eq){B[1]+=A[1];S[drag.l][drag.i]=null}
+  else if(drag.split&&A[1]>1&&!B){const h=Math.floor(A[1]/2);S[l][i]=[A[0],h,A[2]];A[1]-=h}
+  else{S[l][i]=A;S[drag.l][drag.i]=B}
+  sel={l,i};render()};
+ s.onmousemove=e=>{const it=S[l][i],t=$('tip');if(!it||drag){t.style.display='none';return}t.textContent=D[it[0]].l;t.style.display='block';t.style.left=e.clientX+14+'px';t.style.top=e.clientY+14+'px'};
+ s.onmouseleave=()=>$('tip').style.display='none'})}
+document.addEventListener('dragover',e=>{const g=$('drag');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'});
+/* links from equipment slots to the body */
+function links(){const c=document.querySelector('.center').getBoundingClientRect();if(!c.width)return;
+ const pts={head:[53,10],vest:[47,30],bag:[55,27],primary:[40,45],secondary:[60,45]};let h='';
+ document.querySelectorAll('.eq').forEach(e=>{const r=e.querySelector('.slot').getBoundingClientRect(),k=e.dataset.eq;
+  const x1=((r.left+r.width/2)-c.left)/c.width*100,y1=((r.top+r.height/2)-c.top)/c.height*100,[x2,y2]=pts[k];
+  const sx=x1<50?((r.right-c.left)/c.width*100):((r.left-c.left)/c.width*100);
+  h+=`<path d="M${sx},${y1} C${(sx+x2)/2},${y1} ${(sx+x2)/2},${y2} ${x2},${y2}"/><circle cx="${x2}" cy="${y2}" r=".7"/>`});
+ $('links').innerHTML=h}
+/* parallax */
+document.addEventListener('mousemove',e=>{if(drag)return;const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;
+ $('world').style.setProperty('--ry',(x*7).toFixed(2)+'deg');$('world').style.setProperty('--rx',(4-y*5).toFixed(2)+'deg')});
+document.addEventListener('keydown',e=>{if(/^[1-5]$/.test(e.key)){const i=+e.key-1;if(S.hot[i]){sel={l:'hot',i};act('use')}}});
+addEventListener('resize',links);
+sel={l:'pockets',i:0};render();setTimeout(links,300);
+</script></body></html>
