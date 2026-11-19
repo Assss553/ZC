@@ -554,6 +554,8 @@ while (-not $Sync.Stop) {
             foreach ($k in @($Sync.Boosted.Keys)) { if (-not $alive.ContainsKey($k)) { $Sync.Boosted.Remove($k) } }
         }
         foreach ($p in $procs) { $p.Dispose() }
+        $os2 = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
+        if ($os2) { $Sync.RamTotal = [math]::Round($os2.TotalVisibleMemorySize / 1KB); $Sync.RamUsed = [math]::Round(($os2.TotalVisibleMemorySize - $os2.FreePhysicalMemory) / 1KB) }
         if ($Sync.Visible) {
             $cpu = Get-CimInstance -ClassName Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'" -ErrorAction SilentlyContinue
             if ($cpu) { $Sync.Cpu = [int]$cpu.PercentProcessorTime }
@@ -1348,6 +1350,10 @@ $script:Timer.Add_Tick({
         if ($null -ne $script:Job -and $script:Job.Handle.IsCompleted) { Complete-RoxJob }
         $script:TickCount++
         if ($script:TickCount % 12 -eq 1 -and $script:Sync.Visible) { Update-Stats }
+        if ($script:TickCount % 170 -eq 0 -and $script:Settings.RamGuard -and $null -eq $script:Job -and $script:Sync.RamTotal -gt 0) {
+            $pct = [int](100 * $script:Sync.RamUsed / $script:Sync.RamTotal)
+            if ($pct -ge 70) { Start-RoxJob 'RAM Guard' 'Invoke-RamGuard -Percent $P.Pct' @{ Pct = $pct } -Quiet }
+        }
         Update-ScoreAnim
         $g = $null
         while ($script:Sync.GameEvents.TryDequeue([ref]$g)) { Invoke-GameDetected $g }
@@ -1370,6 +1376,8 @@ $ui.ChkHomeAuto.IsChecked     = [bool]$script:Settings.AutoBoost
 $ui.ChkCloseOnStart.IsChecked = [bool]$script:Settings.CloseOnGameStart
 $ui.ChkSetClose.IsChecked     = [bool]$script:Settings.CloseOnGameStart
 $ui.ChkSetStartup.IsChecked   = [bool]$script:Settings.StartWithWindows
+$ui.ChkSetRamGuard.IsChecked  = [bool]$script:Settings.RamGuard
+$ui.ChkSetRamGuard.Add_Click({ $script:Settings.RamGuard = [bool]$ui.ChkSetRamGuard.IsChecked; Save-RoxSettings $script:Settings; Show-Toast (T 'T_Done') })
 foreach ($g in @(Get-RoxGames)) { if ($g -and $g.Id) { [void]$script:GameData.Add($g) } }
 Show-Games
 Set-ScoreRing 0

@@ -1186,6 +1186,12 @@
                     <TextBlock Text="{DynamicResource S_SetCloseSub}" FontSize="12" Foreground="{StaticResource Muted}"/>
                   </StackPanel>
                 </CheckBox>
+                <CheckBox x:Name="ChkSetRamGuard" Style="{StaticResource Switch}" Margin="0,8">
+                  <StackPanel>
+                    <TextBlock Text="{DynamicResource S_SetRamGuard}" FontWeight="SemiBold" FontSize="14"/>
+                    <TextBlock Text="{DynamicResource S_SetRamGuardSub}" FontSize="12" Foreground="{StaticResource Muted}"/>
+                  </StackPanel>
+                </CheckBox>
                 <CheckBox x:Name="ChkSetStartup" Style="{StaticResource Switch}" Margin="0,8">
                   <StackPanel>
                     <TextBlock Text="{DynamicResource S_SetStartup}" FontWeight="SemiBold" FontSize="14"/>
