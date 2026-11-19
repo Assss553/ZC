@@ -1,0 +1,91 @@
+<!doctype html>
+<!-- ROX Store | ROX Pause Menu | All rights reserved -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROX Pause Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--a:#ff5fa8;--a-rgb:255,95,168;--panel:#1c1c2a}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:Inter,sans-serif;color:#fff;background:transparent}
+body.preview{background:#3a3f46 url(demo.jpg) center/cover}
+#pm{position:fixed;inset:0;display:none}
+#pm.on{display:block;animation:fade .18s ease-out}@keyframes fade{from{opacity:0}}
+.blur{position:absolute;inset:0;backdrop-filter:blur(14px) saturate(.75) brightness(.55);background:rgba(10,10,18,.35)}
+.blur::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 70% 40%,transparent 30%,rgba(0,0,0,.45))}
+/* left panel */
+.side{position:absolute;left:0;top:0;bottom:0;width:clamp(300px,28vw,520px);background:linear-gradient(90deg,rgba(28,28,42,.97),rgba(28,28,42,.9));padding:4vh 1.6vw;display:flex;flex-direction:column;animation:slide .25s cubic-bezier(.2,1,.4,1)}
+@keyframes slide{from{transform:translateX(-30px);opacity:0}}
+.logo{font:700 clamp(46px,7vh,78px)/1 Rajdhani;letter-spacing:4px;color:transparent;-webkit-text-stroke:2px var(--a);margin:0 0 6.5vh .3vw}
+.logo b{color:var(--a);-webkit-text-stroke:0}
+.nav{display:flex;flex-direction:column;gap:.6vh;flex:1}
+.it{display:flex;align-items:center;gap:14px;height:clamp(40px,5vh,52px);padding:0 14px;font:500 clamp(16px,2.1vh,21px) Inter;color:rgba(255,255,255,.92);cursor:pointer;position:relative;border-radius:2px}
+.it svg{width:22px;height:22px;flex:0 0 22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.it.on{color:#15151f;background:linear-gradient(90deg,#fff 0%,#f2f2f6 45%,rgba(255,255,255,.35) 85%,rgba(255,255,255,.18) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+.it.quit{margin-top:auto;color:rgba(255,255,255,.6)}
+.it.quit.on{color:#15151f}
+.foot{display:flex;gap:16px;margin-top:2vh;font:600 12px Inter;color:rgba(255,255,255,.5)}
+.foot b{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 5px;border-radius:5px;background:#fff;color:#111;font:800 10.5px Inter;margin-right:6px}
+/* right content */
+.right{position:absolute;right:2.6vw;top:11vh;width:clamp(320px,30vw,560px);text-align:right}
+.right .k{font:500 clamp(16px,2.1vh,22px) Inter;letter-spacing:.5px;color:rgba(255,255,255,.92)}
+.right .t{font:700 clamp(26px,3.6vh,38px)/1.1 Rajdhani;letter-spacing:1px;color:var(--a);text-transform:uppercase;margin-top:.4vh}
+.right .rows{margin-top:3vh;border-top:1px solid rgba(255,255,255,.12)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:1.5vh 1vw 1.5vh 0;border-bottom:1px solid rgba(255,255,255,.12);font:500 clamp(15px,2vh,21px) Inter}
+.row span{color:rgba(255,255,255,.55);font-size:.85em}
+.row.btn{cursor:pointer;justify-content:flex-end;padding-right:1vw}
+.row.btn:hover{background:linear-gradient(270deg,rgba(255,255,255,.14),transparent)}
+.row.btn:hover::after{content:"";width:4px;align-self:stretch;margin-left:12px;background:var(--a)}
+.right p{font:400 clamp(13px,1.75vh,17px)/1.6 Inter;color:rgba(255,255,255,.75);margin-top:2.4vh}
+.keys{display:grid;grid-template-columns:1fr auto;gap:1.1vh 18px;margin-top:2.4vh;text-align:left}
+.keys div{font:500 clamp(14px,1.8vh,18px) Inter;color:rgba(255,255,255,.85)}
+.keys b{justify-self:end;display:inline-grid;place-items:center;min-width:34px;height:28px;padding:0 9px;border-radius:7px;background:#fff;color:#111;font:800 12px Inter}
+.top{position:absolute;right:2.6vw;top:2.4vh;display:flex;gap:20px;align-items:center;font:700 clamp(18px,2.6vh,28px) Rajdhani;letter-spacing:1px}
+.top .cash{color:#fff}.top .bank{color:rgba(255,255,255,.55);font-size:.8em}
+.top .time{font:500 clamp(15px,2vh,20px) Inter;color:rgba(255,255,255,.8)}
+</style></head><body>
+<div id="pm"><div class="blur"></div>
+ <div class="top"><span class="time" id="time"></span><span class="cash" id="cash">$0</span><span class="bank" id="bank"></span></div>
+ <aside class="side">
+  <div class="logo" id="logo">ROX</div>
+  <nav class="nav" id="nav"></nav>
+  <div class="foot"><span><b>↑↓</b>Select</span><span><b>ENTER</b>Open</span><span><b>ESC</b>Resume</span></div>
+ </aside>
+ <section class="right" id="right"></section>
+</div>
+<script>
+const RES=typeof GetParentResourceName==='function'?GetParentResourceName():null;
+const post=(n,d={})=>RES?fetch(`https://${RES}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({})):Promise.resolve({});
+const I={map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
+ game:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 17v-3M12 17v-6M16 17v-4"/>',
+ store:'<path d="M3 12V4h8l9 9-8 8-9-9z"/><circle cx="7.5" cy="7.5" r="1.4"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.8.4-1.1.9-1.1 1.8M12 17h.01"/>',
+ photo:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+ settings:'<path d="M5 4v6M5 14v6M12 4v3M12 11v9M19 4v9M19 17v3"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="9" r="2"/><circle cx="19" cy="15" r="2"/>',
+ quit:'<path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>'};
+const MENU=[['map','Map'],['game','Game'],['store','Store'],['help','Help'],['photo','Photo Studio'],['settings','Settings'],['quit','Quit Game']];
+let D={},sel=0;const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>'$'+Math.round(n||0).toLocaleString('en-US');
+function nav(){$('nav').innerHTML=MENU.map(([k,l],i)=>`<div class="it ${k==='quit'?'quit':''} ${i===sel?'on':''}" data-i="${i}"><svg viewBox="0 0 24 24">${I[k]}</svg>${l}</div>`).join('');
+ document.querySelectorAll('.it').forEach(e=>{e.onmouseenter=()=>{if(sel!==+e.dataset.i){sel=+e.dataset.i;nav();post('hover')}};e.onclick=()=>go()});right()}
+const btn=(a,l)=>`<div class="row btn" data-a="${a}">${l}</div>`, info=(l,v)=>`<div class="row">${l}<span>${esc(v)}</span></div>`;
+function right(){const k=MENU[sel][0];let h='';
+ if(k==='map')h=`<div class="k">${esc(D.zone||'Los Santos')}</div><div class="t">${esc(D.street||'Unknown street')}</div><div class="rows">${btn('map','Open Map')}${D.waypoint?btn('clearwp','Clear Waypoint'):''}${btn('map3d','3D Map')}</div>`;
+ else if(k==='game')h=`<div class="k">${esc(D.job||'Citizen')}</div><div class="t">${esc(D.name||'Player')}</div><div class="rows">${info('Cash',money(D.cash))}${info('Bank',money(D.bank))}${info('Citizen ID',D.cid||'-')}${info('Server ID','#'+(D.id??'-'))}${info('Players online',(D.players??0)+' / '+(D.maxPlayers??0))}${btn('resume','Resume')}</div>`;
+ else if(k==='store')h=`<div class="k">${esc(D.server||'ROX')}</div><div class="t">Store</div><p>${esc(D.storeText||'Support the server and get VIP, cars and more.')}</p><div class="rows">${btn('store','Open Store')}</div>`;
+ else if(k==='help')h=`<div class="k">Controls</div><div class="t">Help</div><div class="keys">${(D.keys||[]).map(([a,b])=>`<div>${esc(a)}</div><b>${esc(b)}</b>`).join('')}</div>`;
+ else if(k==='photo')h=`<div class="k">Hide the HUD</div><div class="t">Photo Studio</div><p>Free camera with the HUD hidden. WASD / mouse to move, Q / E up and down, scroll to zoom, ESC to leave.</p><div class="rows">${btn('photo','Start Photo Studio')}</div>`;
+ else if(k==='settings')h=`<div class="k">Game</div><div class="t">Settings</div><div class="rows">${btn('settings','ROX Settings')}${btn('hud','HUD Settings')}${btn('keybinds','Key Bindings')}${btn('gtasettings','GTA Settings')}</div>`;
+ else h=`<div class="k">Leave ${esc(D.server||'the server')}</div><div class="t">Quit Game</div><p>Your character is saved automatically.</p><div class="rows">${btn('quit','Disconnect')}${btn('resume','Cancel')}</div>`;
+ $('right').innerHTML=h;document.querySelectorAll('.row.btn').forEach(b=>b.onclick=()=>act(b.dataset.a))}
+function go(){const k=MENU[sel][0];const first={map:'map',game:'resume',store:'store',photo:'photo',settings:'settings',quit:'quit'}[k];if(first)act(first)}
+function act(a){if(a==='clearwp'){D.waypoint=false;right()}post('action',{action:a});if(a!=='clearwp')close(true)}
+function open(d){D=d||{};sel=0;if(D.color){document.documentElement.style.setProperty('--a',D.color)}
+ $('logo').innerHTML=esc(D.server||'ROX').replace(/^(.)/,'$1');$('cash').textContent=money(D.cash);$('bank').textContent=D.bank!=null?'BANK '+money(D.bank):'';$('time').textContent=D.time||'';
+ $('pm').classList.add('on');nav()}
+function close(silent){if(!$('pm').classList.contains('on'))return;$('pm').classList.remove('on');if(!silent)post('close')}
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open')open(d.data);if(d.action==='close')close(true);if(d.action==='update'){Object.assign(D,d.data);right()}});
+document.addEventListener('keydown',e=>{if(!$('pm').classList.contains('on'))return;
+ if(e.key==='Escape'||e.key==='Backspace')close();else if(e.key==='ArrowDown'){sel=(sel+1)%MENU.length;nav()}else if(e.key==='ArrowUp'){sel=(sel-1+MENU.length)%MENU.length;nav()}else if(e.key==='Enter')go()});
+if(!RES){document.body.classList.add('preview');open({server:'ROX',name:'John Carter',job:'LSPD · Sergeant',cash:24850,bank:184200,cid:'RX1234',id:127,players:86,maxPlayers:128,zone:'Vinewood',street:'Alta Street',time:'4:11 pm',waypoint:true,
+ keys:[['Phone','F3'],['Inventory','TAB'],['Radial menu','F1'],['Emotes','F5'],['Seatbelt','B'],['Engine','G'],['Push to talk','N']]});const s=new URLSearchParams(location.search).get('sel');if(s){sel=+s;nav()}}
+</script></body></html>

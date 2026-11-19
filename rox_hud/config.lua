@@ -24,7 +24,7 @@ Config.BankCommand = 'bank'
 Config.MoneyShowTime = 6000
 
 -- ESC pause menu (ROX). false = GTA default pause menu
-Config.PauseMenu = true
+Config.PauseMenu = false   -- false when rox_pausemenu is used
 Config.ServerName = 'ROX'
 Config.PoliceJobs = { 'police', 'sheriff', 'bcso', 'sasp' }
 Config.EmsJobs = { 'ambulance', 'ems' }
