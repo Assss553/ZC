@@ -83,3 +83,36 @@ jobs:
           body: |
             ROX Play for Android — pairs with your PS4/PS5 directly and streams to the phone (no Sony app).
             Based on chiaki-ng (AGPL-3.0); full source in ROX-GAME-AI/rox-play-android. Not affiliated with Sony.
+
+  launch-test:
+    name: Install + launch on Android 14 emulator (catch crashes)
+    runs-on: ubuntu-latest
+    needs: android
+    timeout-minutes: 40
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: ROX-Play-Android, path: apk }
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Launch ROX Play and capture any crash
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r apk/ROX-Play-Android.apk
+            adb logcat -c
+            adb shell am start -W -n com.rox.play/com.metallic.chiaki.main.MainActivity
+            sleep 12
+            adb logcat -d -b crash > crash.txt || true
+            adb logcat -d | grep -E "AndroidRuntime|FATAL|chiaki|UnsatisfiedLink|DEBUG" | tail -150 > app.txt || true
+            echo "===== CRASH BUFFER ====="; cat crash.txt
+            echo "===== APP LOG ====="; cat app.txt
+            if adb shell pidof com.rox.play; then echo "ROX Play is RUNNING after 12 s"; else echo "ROX Play is NOT running (crashed/closed)"; exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: rox-play-launch-logs, path: "*.txt" }
