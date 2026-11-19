@@ -55,16 +55,19 @@ jobs:
 
       - name: Collect APKs into ROX-GAME-AI/release
         run: |
+          set -e
           mkdir -p ../release
-          cp app/build/outputs/apk/debug/app-debug.apk ../release/ROX-GAME-AI-debug.apk
-          if [ "${{ steps.sign.outputs.signed }}" = "true" ]; then
-            cp app/build/outputs/apk/release/app-release.apk ../release/ROX-GAME-AI.apk
-          else
-            cp app/build/outputs/apk/release/app-release-unsigned.apk ../release/ROX-GAME-AI-release-unsigned.apk
-            cp ../release/ROX-GAME-AI-debug.apk ../release/ROX-GAME-AI.apk
-          fi
+          D=app/build/outputs/apk/debug; R=app/build/outputs/apk/release
+          ls -la $D $R
+          if [ "${{ steps.sign.outputs.signed }}" = "true" ]; then SRC=$R; SUF=release; else SRC=$D; SUF=debug; fi
+          for abi in arm64-v8a armeabi-v7a x86_64 universal; do
+            f=$(ls $SRC/*-$abi-*.apk | grep -v unsigned | head -1)
+            cp "$f" ../release/ROX-GAME-AI-$abi.apk
+          done
+          # Main download = arm64-v8a (almost every phone from 2017 on)
+          cp ../release/ROX-GAME-AI-arm64-v8a.apk ../release/ROX-GAME-AI.apk
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
-          for f in ../release/*.apk; do echo "== $f"; ls -la "$f"; "$BT/apksigner" verify --print-certs "$f" 2>&1 | head -3 || true; done
+          for f in ../release/*.apk; do echo "== $f ($SUF)"; ls -la "$f"; "$BT/apksigner" verify -v "$f" | head -5; done
           (cd ../release && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
 
       - uses: actions/upload-artifact@v4

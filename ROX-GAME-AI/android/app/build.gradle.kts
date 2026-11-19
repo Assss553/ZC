@@ -24,6 +24,9 @@ android {
 
     signingConfigs {
         create("release") {
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
             if (releaseKeystore != null) {
                 storeFile = file(releaseKeystore)
                 storePassword = System.getenv("ROX_KEYSTORE_PASSWORD")
@@ -35,6 +38,7 @@ android {
 
     buildTypes {
         debug {
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
@@ -44,6 +48,16 @@ android {
             if (releaseKeystore != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
+        }
+    }
+
+    // One APK per CPU architecture (much smaller downloads) + one universal APK
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
         }
     }
 
