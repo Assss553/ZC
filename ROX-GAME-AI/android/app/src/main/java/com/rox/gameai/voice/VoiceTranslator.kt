@@ -42,6 +42,7 @@ class VoiceTranslator(
     private val settings: SettingsRepo,
     private val onFinal: (text: String, lang: String) -> Unit,
     private val onPartial: (text: String) -> Unit,
+    private val onSilent: () -> Unit = {},
 ) {
     private val main = Handler(Looper.getMainLooper())
     private var recognizer: SpeechRecognizer? = null
@@ -116,7 +117,8 @@ class VoiceTranslator(
                 if (peak > 300) silentSince = System.currentTimeMillis()
                 else if (!warned && System.currentTimeMillis() - silentSince > 15_000) {
                     warned = true
-                    RoxLog.w("Voice", "Captured game audio is silent for 15 s — the streaming app may block audio capture; switch Voice source to Microphone")
+                    RoxLog.w("Voice", "Captured game audio is silent for 15 s — the streaming app blocks audio capture")
+                    main.post { onSilent() }
                 }
                 val fd = writeFd ?: continue
                 try { FileOutputStream(fd.fileDescriptor).write(bytes, 0, n * 2) } catch (_: Throwable) { /* recognizer session ended; next session opens a new pipe */ }

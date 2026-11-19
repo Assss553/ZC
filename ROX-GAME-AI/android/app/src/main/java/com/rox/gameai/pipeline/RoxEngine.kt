@@ -89,6 +89,12 @@ class RoxEngine(
     private val _voice = MutableStateFlow<List<VoiceLine>>(emptyList())
     val voice: StateFlow<List<VoiceLine>> = _voice
 
+    private var nudeDetector: com.rox.gameai.vision.NudeNetDetector? = null
+    @Volatile private var diagFrames = 0
+    @Volatile private var diagOcrBlocks = 0
+    @Volatile private var diagOcrSample = ""
+    @Volatile private var diagMasks = 0
+    @Volatile private var diagBright = 0
     private var source: FrameSource? = null
     var projection: MediaProjection? = null
         private set
@@ -132,6 +138,7 @@ class RoxEngine(
     init {
         val model = TfliteContentClassifier.load(context)
         val nude = com.rox.gameai.vision.NudeNetDetector.load(context)
+        nudeDetector = nude
         safeVision = SafeVision(
             model?.let { m -> { px: IntArray, w: Int, h: Int -> m.classify(px, w, h).let { it.nudity to it.sexual } } },
             nude?.let { d -> { px: IntArray, w: Int, h: Int, sens: Float -> d.detect(px, w, h, sens) } },
@@ -139,6 +146,13 @@ class RoxEngine(
         modelInstalled = safeVision.modelAvailable
         voiceTranslator = VoiceTranslator(context, settings,
             onFinal = { text, lang -> scope.launch { onVoiceFinal(text, lang) } },
+            onSilent = {
+                if (settings.value.audioSource == com.rox.gameai.core.AudioSourceKind.STREAM_PLAYBACK) {
+                    RoxLog.w("Voice", "Game audio is blocked by the streaming app — switching to the microphone automatically")
+                    settings.update { it.copy(audioSource = com.rox.gameai.core.AudioSourceKind.MICROPHONE) }
+                    scope.launch(Dispatchers.Main) { restartVoice() }
+                }
+            },
             onPartial = { text -> _voice.value = (_voice.value.filter { !it.partial } + VoiceLine(System.currentTimeMillis(), "", text, "", true)).takeLast(60) })
         // Recognise game automatically from the console's own report
         scope.launch { connection.state.collect { recognizer.fromConsole(it.runningApp, it.runningTitleId) } }
@@ -207,8 +221,14 @@ class RoxEngine(
     private fun startWatchdog() {
         watchdog?.cancel()
         watchdog = scope.launch {
+            var tick = 0
             while (isActive && _status.value.running) {
                 delay(1000)
+                if (++tick % 10 == 0) {
+                    val nd = nudeDetector
+                    RoxLog.i("Diag", "10s: frames=$diagFrames ${_status.value.frameW}x${_status.value.frameH} ocrBlocks=$diagOcrBlocks lang=${_status.value.gameLanguage.ifEmpty { "?" }} text=\"$diagOcrSample\" maskedFrames=$diagMasks nudenet=${nd?.lastBest ?: "off"} (${nd?.lastMs ?: 0}ms) overlay=${if (_status.value.inAppDisplay) "in-app" else "floating"}")
+                    diagFrames = 0; diagOcrBlocks = 0; diagMasks = 0; diagOcrSample = ""
+                }
                 val gap = SystemClock.elapsedRealtime() - lastFrameAt
                 val active = gap < settings.value.streamTimeoutSec * 1000L
                 if (_status.value.videoActive != active) {
@@ -256,6 +276,8 @@ class RoxEngine(
             if (blackWarned) { blackWarned = false; _status.value = _status.value.copy(message = ""); RoxLog.i("Stream", "Video visible again") }
         }
         val res = safeVision.process(pixels, w, h, s, System.currentTimeMillis(), profile?.safeVision ?: true, profile?.blurMode)
+        diagFrames++; if (res.regions.isNotEmpty()) diagMasks++
+        for (e in res.newEvents) RoxLog.i("SafeVision", "Blocked ${e.category} (${(e.score * 100).toInt()}%) at ${e.rect}")
         val idx = bufIndex; bufIndex = (bufIndex + 1) % buffers.size
         val out = buffers[idx]?.takeIf { it.width == w && it.height == h } ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { buffers[idx] = it }
         out.setPixels(pixels, 0, w, 0, 0, w, h)
@@ -280,6 +302,8 @@ class RoxEngine(
                 blocks = ocr.recognize(bmp, probe, scaleBack)
             }
             perf.lastOcrMs = SystemClock.elapsedRealtime() - t0
+            diagOcrBlocks += blocks.size
+            if (blocks.isNotEmpty()) diagOcrSample = blocks.joinToString(" | ") { it.text }.take(80)
             if (blocks.isEmpty()) { _overlays.value = emptyList(); return }
             val all = blocks.joinToString(" ") { it.text }
             recognizer.fromScreenText(all)

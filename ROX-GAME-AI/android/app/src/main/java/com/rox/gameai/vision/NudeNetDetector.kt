@@ -11,9 +11,12 @@ import java.nio.FloatBuffer
 /** Trained exposed-body-part detector running on-device with ONNX Runtime (NNAPI when available). */
 class NudeNetDetector private constructor(private val env: OrtEnvironment, private val session: OrtSession) {
     private val inputName = session.inputNames.first()
+    @Volatile var lastBest: String = "-"; private set
+    @Volatile var lastMs: Long = 0; private set
 
     @Synchronized
     fun detect(px: IntArray, w: Int, h: Int, sensitivity: Float): List<Detection> {
+        val t0 = System.currentTimeMillis()
         val (tensor, side) = NudeNet.preprocess(px, w, h)
         OnnxTensor.createTensor(env, FloatBuffer.wrap(tensor), longArrayOf(1, 3, NudeNet.SIZE.toLong(), NudeNet.SIZE.toLong())).use { input ->
             session.run(mapOf(inputName to input)).use { res ->
@@ -22,7 +25,10 @@ class NudeNetDetector private constructor(private val env: OrtEnvironment, priva
                 val n = out[0].size
                 val flat = FloatArray(out.size * n)
                 for (r in out.indices) System.arraycopy(out[r], 0, flat, r * n, n)
-                return NudeNet.toDetections(NudeNet.postprocess(flat, n, w, h, side), sensitivity)
+                val raw = NudeNet.postprocess(flat, n, w, h, side)
+                lastBest = raw.maxByOrNull { it.score }?.let { "${NudeNet.LABELS[it.cls]}=${"%.2f".format(it.score)}" } ?: "none"
+                lastMs = System.currentTimeMillis() - t0
+                return NudeNet.toDetections(raw, sensitivity)
             }
         }
     }
