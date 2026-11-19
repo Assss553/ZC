@@ -104,6 +104,16 @@ class RoxEngine(
     private var seq = 0L
     private var autoScriptIndex = 0
     private var restarts = 0
+    @Volatile private var blackSince = 0L
+    @Volatile private var blackWarned = false
+
+    /** true if the frame is (almost) completely black — what Android delivers for protected (FLAG_SECURE/DRM) apps. */
+    private fun isBlack(px: IntArray): Boolean {
+        var bright = 0; var n = 0
+        var i = 0
+        while (i < px.size) { val c = px[i]; if (((c shr 16) and 0xFF) + ((c shr 8) and 0xFF) + (c and 0xFF) > 45) bright++; n++; i += 97 }
+        return bright * 100 < n * 2
+    }
 
     init {
         val model = TfliteContentClassifier.load(context)
@@ -216,6 +226,17 @@ class RoxEngine(
         }
         if (pixels.size != w * h) pixels = IntArray(w * h)
         src.getPixels(pixels, 0, w, 0, 0, w, h)
+        if (isBlack(pixels)) {
+            if (blackSince == 0L) blackSince = t0
+            if (!blackWarned && t0 - blackSince > 4000) {
+                blackWarned = true
+                RoxLog.e("Stream", "The captured video is completely black: the streaming app (e.g. PS Remote Play) blocks screen capture. ROX cannot see the game this way — use the PC (ROX Server / ROX Play) or an HDMI capture card.")
+                _status.value = _status.value.copy(message = "protected")
+            }
+        } else if (blackSince != 0L) {
+            blackSince = 0L
+            if (blackWarned) { blackWarned = false; _status.value = _status.value.copy(message = ""); RoxLog.i("Stream", "Video visible again") }
+        }
         val res = safeVision.process(pixels, w, h, s, System.currentTimeMillis(), profile?.safeVision ?: true, profile?.blurMode)
         val idx = bufIndex; bufIndex = (bufIndex + 1) % buffers.size
         val out = buffers[idx]?.takeIf { it.width == w && it.height == h } ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { buffers[idx] = it }

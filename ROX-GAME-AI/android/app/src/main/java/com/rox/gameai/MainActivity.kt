@@ -34,7 +34,11 @@ class MainActivity : ComponentActivity() {
         if (r.resultCode == Activity.RESULT_OK && r.data != null) {
             val i = Intent(this, CaptureService::class.java).putExtra(CaptureService.EXTRA_CODE, r.resultCode).putExtra(CaptureService.EXTRA_DATA, r.data)
             ContextCompat.startForegroundService(this, i)
-            if (app.settings.value.displayMode == DisplayMode.FLOATING_WINDOW && !app.overlay.canShow()) requestOverlay()
+            // Over PS Remote Play, subtitles and masks are drawn in a floating window: always needs this permission
+            if (app.settings.value.displayMode != DisplayMode.LOG_ONLY && !app.overlay.canShow()) {
+                RoxLog.w("AutoStart", "Overlay permission missing — asking for it (needed to show translation/blur over the game)")
+                requestOverlay()
+            }
             if (app.engine.connection.isRemotePlayInstalled()) app.engine.connection.launchRemotePlay()
             else RoxLog.w("AutoStart", "PS Remote Play is not installed — capturing whatever is on screen")
         } else RoxLog.w("AutoStart", "Screen capture permission was not granted")

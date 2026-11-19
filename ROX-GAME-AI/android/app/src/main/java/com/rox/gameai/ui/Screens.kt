@@ -120,6 +120,18 @@ fun HomeScreen(app: RoxApp, actions: RoxActions, go: (Section) -> Unit) {
             Button({ actions.stop() }, Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = RoxPanel2, contentColor = RoxWhite)) { Text("STOP", fontWeight = FontWeight.Black) }
         }
         Text(stepText(st.step) + if (st.message.isNotBlank()) " · ${st.message}" else "", color = RoxOrange, fontWeight = FontWeight.Bold)
+        if (st.message == "protected") {
+            RoxCard(t("The game video is blocked", "فيديو اللعبة محجوب")) {
+                Note(t("The streaming app blocks screen capture, so ROX receives a black picture and cannot translate or blur. Use ROX Server / ROX Play on your PC, or an HDMI capture card.",
+                    "تطبيق البث يمنع التقاط شاشته، فتصل الصورة إلى ROX سوداء ولا يستطيع الترجمة أو التغبيش. استخدم ROX Server أو ROX Play على الكمبيوتر، أو بطاقة التقاط HDMI."), RoxRed)
+            }
+        }
+        if (st.running && !st.inAppDisplay && !app.overlay.canShow()) {
+            RoxCard(t("Permission needed", "صلاحية مطلوبة")) {
+                Note(t("Allow \"Display over other apps\" so ROX can show the translation and blur on top of the game.", "اسمح بـ \"العرض فوق التطبيقات الأخرى\" حتى يعرض ROX الترجمة والتغبيش فوق اللعبة."), RoxRed)
+                PrimaryButton(t("Allow", "السماح")) { actions.requestOverlay() }
+            }
+        }
         if (game.needsManualPick) {
             RoxCard(t("Game not recognised", "لم يتم التعرف على اللعبة")) {
                 Note(t("Choose it in the Game Library.", "اخترها يدويًا من مكتبة الألعاب."))
