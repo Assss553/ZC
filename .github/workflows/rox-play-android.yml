@@ -36,31 +36,50 @@ jobs:
       - name: Apply ROX Play branding
         working-directory: chiaki
         run: bash ../rox-src/ROX-GAME-AI/rox-play-android/apply-rox-android.sh
-      - name: Reuse ROX debug signing key
+      - name: Reuse ROX signing keys (Actions cache only, never committed)
         uses: actions/cache@v4
-        with: { path: ~/.android/debug.keystore, key: rox-play-android-keystore-v1 }
+        with:
+          path: |
+            ~/.android/debug.keystore
+            ~/.rox
+          key: rox-play-android-keystore-v2
       - name: Build APK
         working-directory: chiaki/android
         env: { CMAKE_POLICY_VERSION_MINIMUM: "3.5" }
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
-          ls -la app/build/outputs/apk/debug/
-      - name: Collect
+          ./gradlew --no-daemon assembleDebug assembleRelease
+          ls -la app/build/outputs/apk/debug/ app/build/outputs/apk/release/
+      - name: Sign release (zipalign 16 KB + apksigner v1/v2/v3) and verify every APK
         run: |
-          mkdir out
-          f=$(ls chiaki/android/app/build/outputs/apk/debug/*.apk | head -1)
-          cp "$f" out/ROX-Play-Android.apk
-          ls -la out
+          set -e
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          mkdir -p out ~/.rox
+          KS=~/.rox/release.jks
+          # Random password generated once on the runner and kept only in the Actions cache
+          if [ ! -f ~/.rox/pw ]; then openssl rand -hex 24 > ~/.rox/pw; chmod 600 ~/.rox/pw; fi
+          export PW=$(cat ~/.rox/pw); echo "::add-mask::$PW"
+          if [ ! -f $KS ]; then keytool -genkeypair -keystore $KS -storepass "$PW" -keypass "$PW" -alias rox -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=ROX Play" > /dev/null; fi
+          U=$(ls chiaki/android/app/build/outputs/apk/release/*.apk | head -1)
+          $BT/zipalign -f -P 16 4 "$U" aligned.apk
+          $BT/apksigner sign --ks $KS --ks-pass env:PW --key-pass env:PW --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out out/ROX-Play-Android.apk aligned.apk
+          D=$(ls chiaki/android/app/build/outputs/apk/debug/*.apk | head -1)
+          cp "$D" out/ROX-Play-Android-debug.apk
+          for f in out/*.apk; do
+            echo "== $f"; ls -la "$f"
+            $BT/apksigner verify -v "$f" | head -6
+            $BT/zipalign -c -P 16 4 "$f" && echo "zipalign OK"
+            $BT/aapt2 dump badging "$f" | grep -E "^package|sdkVersion|targetSdk|native-code"
+          done
       - uses: actions/upload-artifact@v4
-        with: { name: ROX-Play-Android, path: out/ROX-Play-Android.apk }
+        with: { name: ROX-Play-Android, path: out/ }
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: rox-play-android-${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           name: ROX Play Android build ${{ github.run_number }}
           make_latest: "false"
-          files: out/ROX-Play-Android.apk
+          files: out/*.apk
           body: |
             ROX Play for Android — pairs with your PS4/PS5 directly and streams to the phone (no Sony app).
             Based on chiaki-ng (AGPL-3.0); full source in ROX-GAME-AI/rox-play-android. Not affiliated with Sony.
