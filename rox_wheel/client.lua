@@ -1,6 +1,69 @@
 -- ROX Store | All rights reserved
 -- ROX Wheel: weapons + items wheel on top of ox_inventory
 local isOpen = false
+local saved = {}   -- removed clothing: hat / glasses / mask
+
+local function gearState()
+    local ped = cache.ped
+    local hat = GetPedPropIndex(ped, 0) ~= -1
+    local glasses = GetPedPropIndex(ped, 1) ~= -1
+    local mask = GetPedDrawableVariation(ped, 1) ~= 0
+    local res = 'nui://' .. GetCurrentResourceName() .. '/html/gear/'
+    return {
+        { name = 'gear_glasses', label = 'Glasses', slot = 'gear:glasses', toggle = true, on = glasses or saved.glasses ~= nil and false, has = glasses or saved.glasses ~= nil, image = res .. 'glasses.png' },
+        { name = 'gear_hat', label = 'Hat', slot = 'gear:hat', toggle = true, on = hat, has = hat or saved.hat ~= nil, image = res .. 'hat.png' },
+        { name = 'gear_mask', label = 'Mask', slot = 'gear:mask', toggle = true, on = mask, has = mask or saved.mask ~= nil, image = res .. 'mask.png' },
+        { name = 'gear_outfit', label = (hat or glasses or mask) and 'Take off all' or 'Put back on', slot = 'gear:all', active = (hat or glasses or mask), image = res .. 'outfit.png' },
+    }
+end
+
+local function anim(dict, clip, ms)
+    lib.requestAnimDict(dict)
+    TaskPlayAnim(cache.ped, dict, clip, 6.0, -6.0, ms, 49, 0, false, false, false)
+    Wait(ms - 300)
+end
+
+local function toggleGear(what)
+    local ped = cache.ped
+    if what == 'hat' then
+        if GetPedPropIndex(ped, 0) ~= -1 then
+            saved.hat = { GetPedPropIndex(ped, 0), GetPedPropTextureIndex(ped, 0) }
+            anim('missheist_agency2ahelmet', 'take_off_helmet_stand', 1200); ClearPedProp(ped, 0)
+        elseif saved.hat then
+            anim('mp_masks@standard_car@ds@', 'put_on_mask', 800); SetPedPropIndex(ped, 0, saved.hat[1], saved.hat[2], true); saved.hat = nil
+        end
+    elseif what == 'glasses' then
+        if GetPedPropIndex(ped, 1) ~= -1 then
+            saved.glasses = { GetPedPropIndex(ped, 1), GetPedPropTextureIndex(ped, 1) }
+            anim('clothingspecs', 'take_off', 1200); ClearPedProp(ped, 1)
+        elseif saved.glasses then
+            anim('clothingspecs', 'put_on', 1200); SetPedPropIndex(ped, 1, saved.glasses[1], saved.glasses[2], true); saved.glasses = nil
+        end
+    elseif what == 'mask' then
+        if GetPedDrawableVariation(ped, 1) ~= 0 then
+            saved.mask = { GetPedDrawableVariation(ped, 1), GetPedTextureVariation(ped, 1) }
+            anim('mp_masks@standard_car@ds@', 'put_on_mask', 800); SetPedComponentVariation(ped, 1, 0, 0, 0)
+        elseif saved.mask then
+            anim('mp_masks@standard_car@ds@', 'put_on_mask', 800); SetPedComponentVariation(ped, 1, saved.mask[1], saved.mask[2], 0); saved.mask = nil
+        end
+    elseif what == 'all' then
+        local wearing = GetPedPropIndex(ped, 0) ~= -1 or GetPedPropIndex(ped, 1) ~= -1 or GetPedDrawableVariation(ped, 1) ~= 0
+        for _, k in ipairs({ 'hat', 'glasses', 'mask' }) do
+            local on = (k == 'hat' and GetPedPropIndex(ped, 0) ~= -1) or (k == 'glasses' and GetPedPropIndex(ped, 1) ~= -1) or (k == 'mask' and GetPedDrawableVariation(ped, 1) ~= 0)
+            if wearing == on then toggleGear(k) end
+        end
+    end
+end
+
+local function weaponStats(name, hash, cat, it)
+    local base = Config.ClassStats[cat] or {}
+    local o = Config.WeaponStats[name] or {}
+    local dmg = GetWeaponDamage(hash, 0) or 0
+    local comps = it.metadata and it.metadata.components
+    return { type = o.type or base.type, damage = o.damage or math.min(100, dmg * (cat == 4 and 0.6 or 1.6)),
+             accuracy = o.accuracy or base.accuracy or 50, handling = o.handling or base.handling or 50, range = o.range or base.range or 50,
+             mods = comps and #comps or 0, maxMods = o.maxMods or 5 }
+end
 
 local function buildData()
     local weapons, items = {}, {}
@@ -17,6 +80,10 @@ local function buildData()
             local hash = joaat(name)
             local cat = Config.WeaponGroups[GetWeapontypeGroup(hash)]
             if cat then
+                entry.stats = weaponStats(name, hash, cat, it)
+                if GetResourceState('rox_weaponhud') == 'started' and not entry.image then
+                    entry.image = 'nui://rox_weaponhud/html/icons/' .. name .. '.png'
+                end
                 entry.ammo = it.metadata and it.metadata.ammo
                 if entry.ammo then
                     local ammoType = GetPedAmmoTypeFromWeapon(cache.ped, hash)
@@ -34,6 +101,9 @@ local function buildData()
             if cat then local list = items[cat]; list[#list + 1] = entry end
         end
     end
+    local gear = {}
+    for _, g in ipairs(gearState()) do if g.has ~= false then gear[#gear + 1] = g end end
+    for _, g in ipairs(gear) do items[7][#items[7] + 1] = g end
     return { weapons = weapons, items = items }
 end
 
@@ -73,6 +143,10 @@ RegisterNUICallback('close', function(d, cb)
     cb('ok')
     isOpen = false
     SetNuiFocusKeepInput(false); SetNuiFocus(false, false)
+    if type(d and d.slot) == 'string' and d.slot:sub(1, 5) == 'gear:' then
+        CreateThread(function() toggleGear(d.slot:sub(6)) end)
+        return
+    end
     local slot = tonumber(d and d.slot)
     if slot == nil then return end
     if slot == 0 then                                                   -- fist: holster

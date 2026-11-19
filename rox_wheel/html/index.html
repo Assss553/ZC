@@ -40,6 +40,20 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
 .card.hasbar img{max-height:52%;transform:translateY(-12%)}
 .card.sel .bar{background:rgba(20,21,24,.92)}
 .card.sel .cat{color:rgba(0,0,0,.45)}
+.card .bar.tg{font-size:clamp(14px,2vh,19px);letter-spacing:2px}
+.card .bar.tg.on b{color:var(--a)}
+.card .chk{position:absolute;right:8px;bottom:7px;width:22px;height:22px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;font:900 13px Inter}
+.stats{position:fixed;right:3vw;bottom:6vh;width:clamp(260px,24vw,380px);padding:18px 20px;border-radius:16px;background:rgba(14,15,18,.82);border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(10px);opacity:0;transform:translateX(16px);transition:.2s;pointer-events:none}
+.stats.on{opacity:1;transform:none}
+.stats h4{font:700 clamp(20px,2.7vh,27px)/1 Rajdhani;letter-spacing:1px;text-transform:uppercase}
+.stats h5{font:700 clamp(14px,1.9vh,18px) Rajdhani;letter-spacing:2px;color:rgba(255,255,255,.55);text-transform:uppercase;margin:3px 0 14px}
+.stats .r{margin-top:10px}.stats .r div{display:flex;justify-content:space-between;font:700 clamp(13px,1.8vh,17px) Rajdhani;letter-spacing:2px}
+.stats .r div span{color:rgba(255,255,255,.6)}
+.stats .r i{display:block;height:5px;margin-top:5px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}
+.stats .r i b{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#fff,#ffd2b5)}
+.stats .mods{margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;font:700 clamp(13px,1.8vh,17px) Rajdhani;letter-spacing:2px}
+.stats .mods span{color:rgba(255,255,255,.6)}
 .eqtoast{position:fixed;left:50%;bottom:16vh;transform:translate(-50%,10px);display:flex;align-items:center;gap:12px;opacity:0;transition:.25s;pointer-events:none;
   font:700 clamp(18px,2.6vh,26px) Rajdhani;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.8)}
 .eqtoast.on{opacity:1;transform:translate(-50%,0)}
@@ -67,33 +81,38 @@ body.preview{background:#59626b url(demo.jpg) center/cover}
   <div class="center"><div class="nm" id="nm">—</div><div class="ct" id="ct"></div><div class="ammo" id="ammo"></div><div class="meta" id="meta"></div></div>
   <div class="foot"><span><span class="key">MOUSE</span>Select</span><span><span class="key">WHEEL</span>Cycle</span><span><span class="key">Q</span><span class="key">E</span>Tab</span><span><span class="key">TAB</span>Release to equip</span></div>
 </div></div>
+<div class="stats" id="stats"></div>
 <div class="eqtoast" id="eqt"><span class="key" id="eqk">TAB</span><span id="eql"></span></div>
 <script>
 const RES=typeof GetParentResourceName==='function'?GetParentResourceName():null;
 const post=(n,d={})=>RES?fetch(`https://${RES}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({})):Promise.resolve({});
-const CATS={weapons:['Melee','Pistols','SMG','Shotguns','Rifles','Snipers','Heavy','Throwables'],items:['Food','Drinks','Medical','Armour','Equipment','Tools','Documents','Ammo']};
+const CATS={weapons:['Melee','Pistols','SMG','Shotguns','Rifles','Snipers','Heavy','Throwables'],items:['Food','Drinks','Medical','Armour','Equipment','Tools','Gear','Ammo']};
 // state: { tab, data:{weapons:[[...items]x8], items:[...]}, idx:{weapons:[0..], items:[..]}, sel }
 const S={tab:'weapons',data:{weapons:[],items:[]},idx:{weapons:Array(8).fill(0),items:Array(8).fill(0)},sel:-1,equipped:null,img:'nui://ox_inventory/web/images/'};
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const R=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--R'))||getComputedStyle(document.documentElement).getPropertyValue('--R');
 function pos(i){const st=$('orbit').getBoundingClientRect(),r=st.width/2,a=-Math.PI/2+i*Math.PI/4;return[Math.cos(a)*r,Math.sin(a)*r*.92]}
-const img=it=>it.image||(S.img+it.name+'.png');
+const img=it=>it.image?(it.image.indexOf('gear/')===0&&RES?it.image:it.image):(S.img+it.name+'.png');
 function render(){
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
  const L=S.data[S.tab];let h='';
  for(let i=0;i<8;i++){const list=L[i]||[],k=S.idx[S.tab][i]%Math.max(1,list.length),it=list[k],[x,y]=pos(i);
-  const bar=it&&it.ammo!=null;
-  h+=`<div class="card ${it?'':'empty'} ${i===S.sel?'sel':''} ${it&&S.equipped===it.name?'eq':''} ${bar?'hasbar':''}" data-i="${i}" style="--x:${x}px;--y:${y}px">
+  const bar=it&&it.ammo!=null;const tgl=it&&it.toggle;
+  h+=`<div class="card ${it?'':'empty'} ${i===S.sel?'sel':''} ${it&&S.equipped===it.name?'eq':''} ${bar||tgl?'hasbar':''}" data-i="${i}" style="--x:${x}px;--y:${y}px">
    ${it?'<div class="glow"></div>':''}<span class="cat">${CATS[S.tab][i]}</span>${it?`<img src="${img(it)}" onerror="this.style.display='none'">`:''}
-   ${bar?`<div class="bar"><b>${it.ammo}</b><span>${it.ammoTotal??0}</span></div>`:''}
+   ${bar?`<div class="bar"><b>${it.ammo}</b><span>${it.ammoTotal??0}</span></div>`:''}${it&&it.toggle?`<div class="bar tg ${it.on?'on':''}"><b>${it.on?'ON':'OFF'}</b></div>`:''}${it&&it.active?'<span class="chk">✓</span>':''}
    ${it&&it.count>1?`<span class="cnt">x${it.count.toLocaleString('en-US')}</span>`:''}
    ${list.length>1&&i!==S.sel?`<div class="dots">${list.map((_,j)=>`<i class="${j===k?'on':''}"></i>`).join('')}</div>`:''}</div>`}
  $('cards').innerHTML=h;info()}
 function info(){const i=S.sel,list=i>=0?(S.data[S.tab][i]||[]):[],k=i>=0?S.idx[S.tab][i]%Math.max(1,list.length):0,it=list[k];
  const o=$('orbit');o.style.setProperty('--show',i>=0?1:0);o.style.setProperty('--ang',(i*45-11)+'deg');
- $('nm').textContent=it?it.label:(i>=0?'Empty':'—');$('ct').textContent=i>=0?CATS[S.tab][i]:(S.tab==='weapons'?'Weapons':'Items');
+ $('nm').textContent=it?it.label:(i>=0?'Empty':'—');$('ct').textContent=i>=0?(it&&it.stats&&it.stats.type?it.stats.type:CATS[S.tab][i]):(S.tab==='weapons'?'Weapons':'Items');
  $('ammo').innerHTML=it&&it.ammo!=null?`${it.ammo} <small>/ ${it.ammoTotal??0}</small>`:'';
  $('meta').innerHTML=it?[it.durability!=null?`${Math.round(it.durability)}% condition`:'',it.weight?`${(it.weight/1000).toFixed(2)} kg`:'',it.count>1?`x${it.count}`:''].filter(Boolean).map(t=>`<span>${t}</span>`).join(''):'';
+ const st=$('stats');
+ if(it&&it.stats){const R=(k,v)=>`<div class="r"><div>${k}<span>${Math.round(v)}</span></div><i><b style="width:${Math.max(3,Math.min(100,v))}%"></b></i></div>`;
+  st.innerHTML=`<h4>${esc(it.label)}</h4><h5>${esc(it.stats.type||CATS[S.tab][i])}</h5>${R('DAMAGE',it.stats.damage)}${R('ACCURACY',it.stats.accuracy)}${R('HANDLING',it.stats.handling)}${R('RANGE',it.stats.range)}<div class="mods">MODS<span>${it.stats.mods||0} / ${it.stats.maxMods??4}</span></div>`;st.classList.add('on')}
+ else st.classList.remove('on');
  const cy=$('cyc'),pg=$('pager');
  if(i>=0&&list.length>1){const[x,y]=pos(i);[cy,pg].forEach(e=>{e.style.setProperty('--x',x+'px');e.style.setProperty('--y',y+'px');e.classList.add('on')});pg.textContent=`${k+1} / ${list.length}`}
  else{cy.classList.remove('on');pg.classList.remove('on')}}
@@ -116,7 +135,7 @@ window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open')op
 addEventListener('resize',()=>{if($('wheel').classList.contains('on'))render()});
 /* browser preview */
 if(!RES){document.body.classList.add('preview');S.img='images/';const W=(name,label,o={})=>({name,label,slot:1,count:1,...o});
- open({data:{weapons:[[W('WEAPON_UNARMED','Fist',{image:'images/fist.png'}),W('rox_baton','Baton')],[W('WEAPON_PISTOL','Pistol',{ammo:12,ammoTotal:84,durability:96,weight:1200}),W('WEAPON_COMBATPISTOL','Combat Pistol',{ammo:8,ammoTotal:40})],[],[],[W('WEAPON_CARBINERIFLE','Carbine Rifle',{ammo:30,ammoTotal:210,durability:88,weight:3400})],[],[],[W('rox_taser','Taser')]],
-  items:[[W('burger','Burger',{count:3})],[W('water','Water',{count:2})],[W('rox_pills','Painkillers',{count:8}),W('bandage','Bandage',{count:6})],[W('rox_vest','Plate Carrier')],[W('rox_radio','Radio'),W('phone','Phone')],[W('lockpick','Lockpick',{count:5})],[W('rox_idcard','ID Card')],[W('rox_ammo','5.56 Rounds',{count:398})]]},equipped:'WEAPON_PISTOL'});
+ open({data:{weapons:[[W('WEAPON_UNARMED','Fist',{image:'images/fist.png'}),W('rox_baton','Baton')],[W('WEAPON_PISTOL','Pistol',{ammo:12,ammoTotal:84,durability:96,weight:1200,stats:{type:'Sidearm',damage:34,accuracy:48,handling:82,range:30,mods:1,maxMods:3}}),W('WEAPON_COMBATPISTOL','Combat Pistol',{ammo:8,ammoTotal:40})],[],[],[W('WEAPON_CARBINERIFLE','Carbine Rifle',{ammo:30,ammoTotal:210,durability:88,weight:3400,stats:{type:'Longarm',damage:58,accuracy:62,handling:55,range:70,mods:2,maxMods:5}})],[],[],[W('rox_taser','Taser')]],
+  items:[[W('burger','Burger',{count:3})],[W('water','Water',{count:2})],[W('rox_pills','Painkillers',{count:8}),W('bandage','Bandage',{count:6})],[W('rox_vest','Plate Carrier')],[W('rox_radio','Radio'),W('phone','Phone')],[W('lockpick','Lockpick',{count:5})],[W('gear_glasses','Sunglasses',{toggle:true,on:false,image:'gear/glasses.png'}),W('gear_hat','Cap',{toggle:true,on:false,image:'gear/hat.png'}),W('gear_mask','Mask',{toggle:true,on:true,image:'gear/mask.png'}),W('gear_outfit','Full Outfit',{active:true,image:'gear/outfit.png'})],[W('rox_ammo','5.56 Rounds',{count:398})]]},equipped:'WEAPON_PISTOL'});
  const q=new URLSearchParams(location.search);if(q.get('tab'))tab(q.get('tab'));if(q.get('sel'))setTimeout(()=>{S.sel=+q.get('sel');render()},50)}
 </script></body></html>
