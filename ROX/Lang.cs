@@ -7,9 +7,9 @@ public static class Lang
 
     static readonly Dictionary<string, (string en, string ar)> T = new()
     {
-        ["start"] = ("▶  START", "▶  تشغيل"),
-        ["stop"] = ("■  STOP", "■  إيقاف"),
-        ["settings"] = ("⚙  SETTINGS", "⚙  الإعدادات"),
+        ["start"] = ("START", "تشغيل"),
+        ["stop"] = ("STOP", "إيقاف"),
+        ["settings"] = ("SETTINGS", "الإعدادات"),
         ["running"] = ("● LIVE", "● شغال"),
         ["idle"] = ("● OFFLINE", "● متوقف"),
         ["hint"] = ("Open Settings to pick your mic and outputs, then press START.", "افتح الإعدادات واختر الميك والسماعات ثم اضغط تشغيل."),
@@ -26,7 +26,7 @@ public static class Lang
         ["samplerTip"] = ("Click = play · Right-click = assign sound", "كليك = تشغيل · كليك يمين = اختيار صوت"),
         ["clear"] = ("CLEAR", "إيقاف"),
         ["empty"] = ("empty", "فارغ"),
-        ["load"] = ("♪ Load", "♪ أغنية"),
+        ["load"] = ("Load", "أغنية"),
         ["bleep"] = ("BLEEP", "تصفير"),
         ["mute"] = ("MUTE", "كتم"),
         ["micmuted"] = ("MIC MUTED", "الميك مكتوم"),

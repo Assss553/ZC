@@ -53,7 +53,7 @@ public sealed class Knob : FrameworkElement
     {
         Big = big;
         Width = big ? 120 : 84; Height = big ? 138 : 100;
-        Cursor = Cursors.SizeNS;
+        Cursor = Cursors.SizeNS; FlowDirection = FlowDirection.LeftToRight;
         ThemeManager.Changed += InvalidateVisual;
         ToolTip = "Drag / scroll — double-click to reset";
     }
@@ -118,7 +118,7 @@ public sealed class Fader : FrameworkElement
 {
     double value, level;
     public event Action<double>? Changed;
-    public Fader() { Width = 64; Height = 300; Cursor = Cursors.Hand; ThemeManager.Changed += InvalidateVisual; }
+    public Fader() { Width = 64; Height = 300; Cursor = Cursors.Hand; FlowDirection = FlowDirection.LeftToRight; ThemeManager.Changed += InvalidateVisual; }
 
     public double Value { get => value; set { var v = Math.Clamp(value, 0, 1); if (v == this.value) return; this.value = v; InvalidateVisual(); Changed?.Invoke(v); } }
     public double Level { get => level; set { level = value; InvalidateVisual(); } }
@@ -161,7 +161,7 @@ public sealed class Fader : FrameworkElement
 public sealed class LedBar : FrameworkElement
 {
     double level;
-    public LedBar() { Height = 14; ThemeManager.Changed += InvalidateVisual; }
+    public LedBar() { Height = 14; FlowDirection = FlowDirection.LeftToRight; ThemeManager.Changed += InvalidateVisual; }
     public double Level { get => level; set { level = value; InvalidateVisual(); } }
     protected override void OnRender(DrawingContext dc)
     {

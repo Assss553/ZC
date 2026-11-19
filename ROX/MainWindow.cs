@@ -93,7 +93,7 @@ public sealed class MainWindow : Window
         startBtn = Btn("", false, 140); startBtn.Height = 42;
         startBtn.Click += (_, _) => { if (engine.Running) { engine.Stop(); UpdateStart(); } else StartEngine(); };
         right.Children.Add(startBtn);
-        var set = Btn(L("settings"), true, 150); set.Height = 42;
+        var set = Btn("", true, 160); set.Content = Icons.With("settings", L("settings"), 18); set.Height = 42;
         set.Click += (_, _) => new SettingsWindow(cfg, () => { if (engine.Running) StartEngine(); }, Build, (i, v) => engine.SetOutputVolume(OutIndex(i), v)) { Owner = this }.ShowDialog();
         right.Children.Add(set);
         dp.Children.Add(right);
@@ -105,9 +105,9 @@ public sealed class MainWindow : Window
     {
         var card = Card(new Thickness(14), 16);
         var sp = new StackPanel();
-        sp.Children.Add(SectionTitle(L("mixer")));
+        sp.Children.Add(TitleIcon("volume", L("mixer")));
         var strips = new StackPanel { Orientation = Orientation.Horizontal };
-        var icons = new[] { "🎤", "🎧", "♫", "▦" };
+        var icons = new[] { "mic", "headphones", "music", "pads" };
         var names = new[] { L("mic"), L("line"), L("music"), L("sfx") };
         var chans = AllChannels;
         for (int i = 0; i < 4; i++)
@@ -120,7 +120,7 @@ public sealed class MainWindow : Window
             lcd.SetResourceReference(Border.BorderBrushProperty, "Accent1Soft");
             lcd.Effect = new DropShadowEffect { BlurRadius = 14, ShadowDepth = 0, Opacity = 0.7, Color = ThemeManager.A1 };
             var ls = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            ls.Children.Add(Center(Txt($"{i + 1}  {icons[i]}", 15, "OnAccent", FontWeights.Bold)));
+            var top = Icons.With(icons[i], (i + 1).ToString(), 18, "OnAccent"); ((TextBlock)top.Children[1]).FontWeight = FontWeights.Black; ((TextBlock)top.Children[1]).FontSize = 16; ls.Children.Add(top);
             ls.Children.Add(Center(Txt(names[i], 11, "OnAccent", FontWeights.Bold)));
             lcd.Child = ls;
             strip.Children.Add(lcd);
@@ -131,10 +131,10 @@ public sealed class MainWindow : Window
             strip.Children.Add(f);
             faders.Add((ch, f));
 
-            var mute = Btn("◀×", true, 60);
+            var mute = Btn("", true, 60); mute.Content = Icons.Make(ch.Muted ? "volumeoff" : "volume", 18);
             mute.Tag = ch.Muted ? "on2" : null;
             mute.ToolTip = L("mute");
-            mute.Click += (_, _) => { ch.Muted = !ch.Muted; mute.Tag = ch.Muted ? "on2" : null; if (ch == engine.Mic) PaintMic(); };
+            mute.Click += (_, _) => { ch.Muted = !ch.Muted; mute.Tag = ch.Muted ? "on2" : null; mute.Content = Icons.Make(ch.Muted ? "volumeoff" : "volume", 18); if (ch == engine.Mic) PaintMic(); };
             strip.Children.Add(mute);
             strips.Children.Add(strip);
         }
@@ -142,8 +142,8 @@ public sealed class MainWindow : Window
 
         // music transport
         var mrow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
-        var load = Btn(L("load"), false); load.Click += (_, _) => LoadMusic();
-        var play = Btn("⏯", false, 48); play.Click += (_, _) => engine.Player.Playing = !engine.Player.Playing;
+        var load = Btn("", false); load.Content = Icons.With("playlist", L("load"), 16); load.Click += (_, _) => LoadMusic();
+        var play = Btn("", false, 48); play.Content = Icons.Make("playpause", 16); play.Click += (_, _) => engine.Player.Playing = !engine.Player.Playing;
         musicName = Txt(engine.Player.File is string mf ? System.IO.Path.GetFileName(mf) : "—", 11, "Sub");
         musicName.VerticalAlignment = VerticalAlignment.Center; musicName.MaxWidth = 200; musicName.TextTrimming = TextTrimming.CharacterEllipsis;
         mrow.Children.Add(load); mrow.Children.Add(play); mrow.Children.Add(musicName);
@@ -181,7 +181,7 @@ public sealed class MainWindow : Window
         fxg.Children.Add(presets);
 
         var center = new StackPanel(); Grid.SetColumn(center, 1);
-        center.Children.Add(SectionTitle(L("effects")));
+        center.Children.Add(TitleIcon("fx", L("effects")));
         var big = new UniformGrid { Columns = 4, HorizontalAlignment = HorizontalAlignment.Center };
         var v = engine.Voice;
         big.Children.Add(MakeKnob("reverb", L("reverb"), 0, 100, 0, x => v.Reverb = (float)x, x => $"{x:0}%", true));
@@ -189,8 +189,7 @@ public sealed class MainWindow : Window
         big.Children.Add(MakeKnob("echo", L("echo"), 0, 100, 0, x => v.Echo = (float)x, x => $"{x:0}%", true));
         big.Children.Add(MakeKnob("noise", L("noise"), 0, 100, 50, x => v.NoiseStrength = (float)x, x => $"{x:0}%", true));
         center.Children.Add(big);
-        var tuneTitle = SectionTitle(L("mictune")); tuneTitle.Margin = new Thickness(0, 6, 0, 0);
-        center.Children.Add(tuneTitle);
+                center.Children.Add(TitleIcon("mic", L("mictune")));
         var small = new UniformGrid { Columns = 5, HorizontalAlignment = HorizontalAlignment.Center };
         small.Children.Add(MakeKnob("gain", L("gain"), -12, 24, 0, x => v.Gain = (float)x, x => $"{x:0}dB"));
         small.Children.Add(MakeKnob("comp", L("comp"), 0, 100, 30, x => v.Comp = (float)x, x => $"{x:0}%"));
@@ -203,12 +202,12 @@ public sealed class MainWindow : Window
         var fxBtns = new StackPanel { Margin = new Thickness(12, 0, 0, 0), Width = 150 };
         Grid.SetColumn(fxBtns, 2);
         fxBtns.Children.Add(SectionTitle(" "));
-        fxBtns.Children.Add(FxToggle(L("megaphone"), () => v.Megaphone = !v.Megaphone, () => v.Megaphone));
-        fxBtns.Children.Add(FxToggle(L("robot"), () => v.Robot = !v.Robot, () => v.Robot));
-        var deep = Btn(L("deep"), false); deep.Height = 40;
+        fxBtns.Children.Add(FxToggle("megaphone", L("megaphone"), () => v.Megaphone = !v.Megaphone, () => v.Megaphone));
+        fxBtns.Children.Add(FxToggle("robot", L("robot"), () => v.Robot = !v.Robot, () => v.Robot));
+        var deep = Btn("", false); deep.Content = Icons.With("deep", L("deep"), 18); deep.Height = 40;
         deep.Click += (_, _) => { knobs["pitch"].Value = -5; knobs["bass"].Value = 6; knobs["reverb"].Value = 15; };
         fxBtns.Children.Add(deep);
-        var fxb = FxToggle(L("fx"), () => { v.FxOn = !v.FxOn; engine.UpdatePitch(); }, () => v.FxOn);
+        var fxb = FxToggle("fx", L("fx"), () => { v.FxOn = !v.FxOn; engine.UpdatePitch(); }, () => v.FxOn);
         fxb.Height = 80; fxb.FontSize = 22;
         fxBtns.Children.Add(fxb);
         fxg.Children.Add(fxBtns);
@@ -219,7 +218,7 @@ public sealed class MainWindow : Window
         var smp = Card(new Thickness(14), 16); smp.Margin = new Thickness(0, 16, 0, 0);
         Grid.SetRow(smp, 1);
         var sdock = new DockPanel();
-        var st = SectionTitle(L("sampler")); DockPanel.SetDock(st, Dock.Top); sdock.Children.Add(st);
+        var st = TitleIcon("pads", L("sampler")); DockPanel.SetDock(st, Dock.Top); sdock.Children.Add(st);
         var tip = Txt(L("samplerTip"), 11, "Sub"); DockPanel.SetDock(tip, Dock.Bottom); sdock.Children.Add(tip);
         var bankCol = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         for (int i = 0; i < 3; i++)
@@ -244,7 +243,7 @@ public sealed class MainWindow : Window
             Grid.SetRow(b, i / 2); Grid.SetColumn(b, i % 2);
             padGrid.Children.Add(b); pads[i] = b;
         }
-        var clear = Btn(L("clear"), true, 96); clear.Height = 46;
+        var clear = Btn("", true, 110); clear.Content = Icons.With("clear", L("clear"), 16); clear.Height = 46;
         clear.HorizontalAlignment = HorizontalAlignment.Center; clear.VerticalAlignment = VerticalAlignment.Center;
         clear.SetResourceReference(Control.BackgroundProperty, "Panel");
         Grid.SetRowSpan(clear, 2); Grid.SetColumnSpan(clear, 2);
@@ -263,7 +262,7 @@ public sealed class MainWindow : Window
         var card = Card(new Thickness(14), 16); card.Width = 230;
         var dp = new DockPanel();
         var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top);
-        top.Children.Add(SectionTitle(L("output")));
+        top.Children.Add(TitleIcon("output", L("output")));
         master = new LedBar { Margin = new Thickness(0, 4, 0, 12) };
         top.Children.Add(master);
         var mon = new CheckBox { Content = L("monitor"), IsChecked = engine.MonitorMic, Margin = new Thickness(0, 0, 0, 12) };
@@ -272,7 +271,7 @@ public sealed class MainWindow : Window
         dp.Children.Add(top);
 
         var bottom = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom };
-        var bleep = Btn("⊘  " + L("bleep"), true); bleep.Height = 56; bleep.FontSize = 16;
+        var bleep = Btn("", true); bleep.Content = Icons.With("bleep", L("bleep"), 20); bleep.Height = 56; bleep.FontSize = 16;
         bleep.PreviewMouseLeftButtonDown += (_, _) => { engine.Voice.Bleep = true; bleep.Tag = "on2"; };
         bleep.PreviewMouseLeftButtonUp += (_, _) => { engine.Voice.Bleep = false; bleep.Tag = null; };
         bleep.MouseLeave += (_, _) => { engine.Voice.Bleep = false; bleep.Tag = null; };
@@ -292,10 +291,11 @@ public sealed class MainWindow : Window
         if (micBtn == null) return;
         bool m = engine.Mic.Muted;
         var sp = new StackPanel();
-        sp.Children.Add(Center(Txt(m ? "🔇" : "🎤", 44, m ? "Accent2" : "Accent1")));
+        sp.Children.Add(Icons.Make(m ? "micoff" : "mic", 54));
         sp.Children.Add(Center(Txt(m ? L("micmuted") : L("mute"), 15, m ? "Accent2" : "Accent1", FontWeights.Bold)));
         micBtn.Content = sp;
         micBtn.SetResourceReference(Control.BorderBrushProperty, m ? "Accent2" : "Accent1");
+        micBtn.SetResourceReference(Control.ForegroundProperty, m ? "Accent2" : "Accent1");
         micBtn.Tag = m ? "on2" : null;
     }
 
@@ -318,9 +318,9 @@ public sealed class MainWindow : Window
         v.Gain = G("gain", 0); v.Comp = G("comp", 30); v.Bass = G("bass", 0); v.Mid = G("mid", 0); v.Treble = G("treble", 0); v.EqDirty = true;
     }
 
-    Button FxToggle(string text, Action flip, Func<bool> state)
+    Button FxToggle(string icon, string text, Action flip, Func<bool> state)
     {
-        var b = Btn(text, true); b.Height = 40;
+        var b = Btn("", true); b.Content = Icons.With(icon, text, 18); b.Height = 40;
         b.Tag = state() ? "on2" : null;
         b.Click += (_, _) => { flip(); b.Tag = state() ? "on2" : null; };
         return b;
@@ -379,7 +379,7 @@ public sealed class MainWindow : Window
     void UpdateStart()
     {
         if (startBtn == null || statusPill == null) return;
-        startBtn.Content = engine.Running ? L("stop") : L("start");
+        startBtn.Content = Icons.With(engine.Running ? "stop" : "play", engine.Running ? L("stop") : L("start"), 16);
         startBtn.Tag = engine.Running ? "on" : null;
         statusPill.Text = engine.Running ? L("running") : L("idle");
         statusPill.SetResourceReference(TextBlock.ForegroundProperty, engine.Running ? "Accent1" : "Sub");
@@ -418,6 +418,14 @@ public sealed class MainWindow : Window
         var tb = Txt(t, 12, "Sub", FontWeights.Bold);
         tb.Margin = new Thickness(2, 0, 0, 8);
         return tb;
+    }
+
+    static FrameworkElement TitleIcon(string icon, string text)
+    {
+        var sp = Icons.With(icon, text, 13, "Sub");
+        sp.HorizontalAlignment = HorizontalAlignment.Left; sp.Margin = new Thickness(2, 0, 0, 8);
+        var tb = (TextBlock)sp.Children[1]; tb.FontSize = 12; tb.FontWeight = FontWeights.Bold; tb.Margin = new Thickness(6, 0, 0, 0);
+        return sp;
     }
 
     static T Center<T>(T e) where T : FrameworkElement { e.HorizontalAlignment = HorizontalAlignment.Center; return e; }
