@@ -1,0 +1,120 @@
+<!doctype html>
+<!-- ROX Store | ROX Gun Store | All rights reserved -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROX Gun Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--a:#ff5fa8}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:Inter,sans-serif;color:#fff;background:transparent}
+#app{position:fixed;inset:0;display:none;background:radial-gradient(ellipse at 55% 50%,#2a2b31 0%,#141518 55%,#0a0a0c 100%)}
+#app.on{display:block;animation:in .2s}@keyframes in{from{opacity:0}}
+.crumb{position:absolute;left:2.2vw;top:2.6vh;font:700 clamp(15px,2vh,20px) Rajdhani;letter-spacing:1px;color:rgba(255,255,255,.55);text-transform:uppercase}
+.title{position:absolute;left:2.2vw;top:5vh;font:700 clamp(26px,3.6vh,38px) Rajdhani;letter-spacing:1px;text-transform:uppercase}
+.tabs{position:absolute;left:2.2vw;top:5.2vh;display:flex;align-items:center;gap:6px}
+.tabs .t{font:700 clamp(12px,1.55vh,15px) Rajdhani;letter-spacing:1.5px;padding:4px 10px;border-radius:3px;color:rgba(255,255,255,.75);cursor:pointer;display:flex;align-items:center;gap:6px}
+.tabs .t.on{background:#fff;color:#111}
+.tabs .t .dot{width:7px;height:7px;border-radius:50%;background:var(--a)}
+.key{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 5px;border-radius:5px;border:1.5px solid rgba(255,255,255,.75);font:800 10px Inter;color:#fff}
+.cats{position:absolute;left:2.2vw;top:10vh;width:clamp(260px,22vw,400px);display:flex;flex-direction:column}
+.c{display:flex;align-items:center;gap:10px;height:clamp(36px,4.4vh,46px);padding:0 14px;font:500 clamp(14px,1.8vh,18px) Inter;color:rgba(255,255,255,.85);border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}
+.c .dot{width:8px;height:8px;border-radius:50%;background:var(--a)}
+.c.lock{color:rgba(255,255,255,.4)}.c.lock::after{content:"🔒";margin-left:auto;font-size:13px;opacity:.6}
+.c.on{color:#15151f;background:linear-gradient(90deg,#fff 0%,#eeeef2 45%,rgba(255,255,255,.3) 90%);border-color:transparent}
+.money{position:absolute;right:2.2vw;top:2.6vh;display:flex;gap:16px;align-items:center;font:700 clamp(18px,2.5vh,26px) Rajdhani}
+.money .bank{color:rgba(255,255,255,.55);font-size:.8em}
+.close{position:absolute;right:2.2vw;top:7vh;font:600 12px Inter;color:rgba(255,255,255,.5)}
+/* showcase */
+.show{position:absolute;left:24vw;right:22vw;top:12vh;bottom:22vh;display:grid;place-items:center}
+.show::before{content:"";position:absolute;left:10%;right:10%;bottom:6%;height:14%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.65),transparent)}
+.show img{width:74%;height:62%;object-fit:contain;image-rendering:auto;filter:drop-shadow(0 30px 30px rgba(0,0,0,.6)) contrast(1.05);transition:transform .35s cubic-bezier(.2,1,.4,1),opacity .2s}
+.show img.swap{opacity:0;transform:translateX(30px)}
+.show .tint{position:absolute;inset:0;pointer-events:none;mix-blend-mode:color;opacity:.0;transition:opacity .2s}
+/* bottom left info */
+.info{position:absolute;left:2.2vw;bottom:5vh;width:clamp(320px,34vw,620px)}
+.price{display:flex;align-items:center;gap:8px;font:700 clamp(22px,3vh,32px) Rajdhani}
+.price .cashic{display:inline-grid;place-items:center;width:24px;height:16px;border-radius:3px;background:#3ddc84;color:#0c2a18;font:800 10px Inter}
+.price.no{color:#ff6b6b}
+.nm{font:700 clamp(16px,2.1vh,22px) Rajdhani;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.sw{display:flex;gap:8px;margin-top:1.4vh}
+.sw div{width:clamp(38px,5vh,54px);height:clamp(38px,5vh,54px);border-radius:3px;border:2px solid transparent;cursor:pointer;position:relative}
+.sw div.on{border-color:#fff}
+.sw div span{position:absolute;right:3px;bottom:2px;font:800 9px Inter;color:#fff;background:#e0405f;border-radius:3px;padding:0 3px}
+.strip{display:flex;gap:6px;margin-top:1.4vh}
+.strip div{width:clamp(80px,9vw,140px);height:clamp(46px,6vh,70px);border-radius:3px;background:rgba(255,255,255,.06);border:2px solid transparent;display:grid;place-items:center;cursor:pointer}
+.strip div.on{border-color:#fff;background:rgba(255,255,255,.12)}
+.strip div{position:relative}.strip img{position:absolute;inset:10%;width:80%;height:80%;object-fit:contain}
+.pager{font:700 13px Rajdhani;letter-spacing:2px;color:rgba(255,255,255,.7);margin-top:.8vh}
+.buy{margin-top:1.6vh;display:flex;gap:14px;font:600 13px Inter;color:rgba(255,255,255,.75)}
+.buy span{display:flex;align-items:center;gap:7px;cursor:pointer}
+.msg{position:absolute;left:50%;bottom:4vh;transform:translateX(-50%);padding:10px 20px;border-radius:4px;background:rgba(0,0,0,.75);border-top:2px solid var(--a);font:600 14px Inter;opacity:0;transition:.25s}
+.msg.on{opacity:1}
+/* stats */
+.stats{position:absolute;right:2.2vw;bottom:5vh;width:clamp(260px,22vw,380px);background:rgba(36,37,44,.88);border-radius:3px;overflow:hidden}
+.stats .h{padding:12px 16px;background:rgba(255,255,255,.06)}
+.stats .h b{display:block;font:700 clamp(15px,2vh,20px) Rajdhani;letter-spacing:1px;text-transform:uppercase}
+.stats .h span{font:700 clamp(13px,1.7vh,17px) Rajdhani;letter-spacing:1px;color:rgba(255,255,255,.6);text-transform:uppercase}
+.stats .r{padding:9px 16px 10px}
+.stats .r div{display:flex;justify-content:space-between;font:700 clamp(13px,1.75vh,17px) Rajdhani;letter-spacing:1.5px}
+.stats .r i{display:block;position:relative;height:5px;margin-top:6px;background:rgba(255,255,255,.12)}
+.stats .r i b{position:absolute;left:0;top:0;bottom:0;background:#fff}
+.stats .r i em{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff}
+</style></head><body>
+<div id="app">
+ <div class="crumb" id="crumb"></div>
+ <div class="tabs" id="tabs"></div>
+ <div class="cats" id="cats"></div>
+ <div class="money"><span id="cash"></span><span class="bank" id="bank"></span></div>
+ <div class="close"><span class="key">ESC</span> Close</div>
+ <div class="show"><img id="img" alt=""></div>
+ <div class="info" id="info"></div>
+ <div class="stats" id="stats"></div>
+ <div class="msg" id="msg"></div>
+</div>
+<script>
+const RES=typeof GetParentResourceName==='function'?GetParentResourceName():null;
+const post=(n,d={})=>RES?fetch(`https://${RES}/${n}`,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).catch(()=>({})):Promise.resolve({ok:true});
+let C={shop:[],tints:[],wallet:{}},tab=0,cat=0,idx=0,tint=0;const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>'$'+Math.round(n||0).toLocaleString('en-US');
+const T=()=>C.shop[tab],K=()=>T().cats[cat],IT=()=>K().items[idx];
+const locked=()=>{const l=C.license&&C.license[T().id];return l&&!(C.wallet.licences||{})[l]};
+const src=it=>C.preview?(C.preview[it.name]||''):(C.hires+it.name+'.png');
+const fallback=it=>C.img+it.name+'.png';
+function setImg(el,it){el.onerror=()=>{if(!C.preview&&el.src.indexOf(C.img)<0)el.src=fallback(it)};el.src=src(it)}
+function render(){
+ $('crumb').textContent=C.name||'';
+ $('tabs').innerHTML='<span class="key">Q</span>'+C.shop.map((t,i)=>`<div class="t ${i===tab?'on':''}" data-i="${i}">${i===tab?'<span class="dot"></span>':''}${esc(t.label)}</div>`).join('')+'<span class="key">E</span>';
+ document.querySelectorAll('.tabs .t').forEach(e=>e.onclick=()=>{tab=+e.dataset.i;cat=0;idx=0;tint=0;render();post('nav')});
+ $('cats').innerHTML=T().cats.map((c,i)=>`<div class="c ${i===cat?'on':''} ${locked()?'lock':''}" data-i="${i}">${i!==cat&&i===0?'<span class="dot"></span>':''}${esc(c.label)}</div>`).join('');
+ document.querySelectorAll('.c').forEach(e=>{e.onmouseenter=()=>{if(cat!==+e.dataset.i){cat=+e.dataset.i;idx=0;tint=0;render();post('nav')}}});
+ $('cash').textContent=money(C.wallet.cash);$('bank').textContent='BANK '+money(C.wallet.bank);
+ item()}
+function item(){const it=IT(),isW=it.name.indexOf('WEAPON_')===0&&it.stats&&it.type!=='Melee';const img=$('img');img.classList.add('swap');setTimeout(()=>{setImg(img,it);img.classList.remove('swap')},120);
+ const t=isW?C.tints[tint]:null,price=it.price+(t?t[2]:0),can=(C.wallet.cash||0)+(C.wallet.bank||0)>=price&&!locked();
+ $('info').innerHTML=`<div class="price ${can?'':'no'}"><span class="cashic">$</span>${money(price).slice(1)}</div><div class="nm">${esc(it.label)}${t&&tint?' · '+esc(t[1]):''}</div>
+ ${isW?`<div class="sw">${C.tints.map((x,i)=>`<div class="${i===tint?'on':''}" data-t="${i}" style="background:${x[3]}">${x[2]?'<span>$</span>':''}</div>`).join('')}</div>`:''}
+ <div class="strip">${K().items.map((x,i)=>`<div class="${i===idx?'on':''}" data-i="${i}"><img alt=""></div>`).join('')}</div>
+ <div class="pager">${idx+1} / ${K().items.length}</div>
+ <div class="buy"><span id="buyb"><span class="key">ENTER</span>${locked()?'Licence required':'Purchase'}</span><span><span class="key">◀ ▶</span>Browse</span>${isW?'<span><span class="key">↑ ↓</span>Colour</span>':''}</div>`;
+ document.querySelectorAll('.strip div').forEach((e,i)=>{setImg(e.querySelector('img'),K().items[i]);e.onclick=()=>{idx=i;tint=0;item();post('nav')}});
+ document.querySelectorAll('.sw div').forEach(e=>e.onclick=()=>{tint=+e.dataset.t;item();post('nav')});
+ $('buyb').onclick=buy;
+ if(it.stats){const N=['DAMAGE','ACCURACY','HANDLING','RANGE'];$('stats').style.display='block';
+  $('stats').innerHTML=`<div class="h"><b>${esc(it.label)}</b><span>${esc(it.type||'')}</span></div>`+it.stats.map((v,i)=>`<div class="r"><div>${N[i]}<span>${(v/10).toFixed(1)}</span></div><i><b style="width:${v}%"></b></i></div>`).join('')}
+ else{$('stats').style.display=it.type?'block':'none';$('stats').innerHTML=`<div class="h"><b>${esc(it.label)}</b><span>${esc(it.type||'')}</span></div>`}}
+function msg(t){const m=$('msg');m.textContent=t;m.classList.add('on');clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('on'),2200)}
+function buy(){if(locked())return msg('You need a licence for this section');const it=IT(),isW=it.name.indexOf('WEAPON_')===0&&it.stats&&it.type!=='Melee';
+ post('buy',{name:it.name,tint:isW?C.tints[tint][0]:null}).then(r=>{if(r.ok){msg('Purchased '+it.label);if(r.wallet){C.wallet.cash=r.wallet.cash;C.wallet.bank=r.wallet.bank;$('cash').textContent=money(C.wallet.cash);$('bank').textContent='BANK '+money(C.wallet.bank);item()}}else msg(r.err||'Purchase failed')})}
+function close(){$('app').classList.remove('on');post('close')}
+window.addEventListener('message',e=>{const d=e.data||{};if(d.action==='open'){C=d;tab=0;cat=0;idx=0;tint=0;$('app').classList.add('on');render()}});
+document.addEventListener('keydown',e=>{if(!$('app').classList.contains('on'))return;const k=e.key;
+ if(k==='Escape'||k==='Backspace')close();
+ else if(k==='q'||k==='Q'){tab=(tab-1+C.shop.length)%C.shop.length;cat=idx=tint=0;render();post('nav')}
+ else if(k==='e'||k==='E'){tab=(tab+1)%C.shop.length;cat=idx=tint=0;render();post('nav')}
+ else if(k==='ArrowRight'){idx=(idx+1)%K().items.length;tint=0;item();post('nav')}
+ else if(k==='ArrowLeft'){idx=(idx-1+K().items.length)%K().items.length;tint=0;item();post('nav')}
+ else if(k==='ArrowDown'){if(e.shiftKey){cat=(cat+1)%T().cats.length;idx=tint=0;render()}else{tint=(tint+1)%C.tints.length;item()}post('nav')}
+ else if(k==='ArrowUp'){if(e.shiftKey){cat=(cat-1+T().cats.length)%T().cats.length;idx=tint=0;render()}else{tint=(tint-1+C.tints.length)%C.tints.length;item()}post('nav')}
+ else if(k==='Enter')buy()});
+/*PREVIEW*/
+</script></body></html>
