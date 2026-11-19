@@ -1,0 +1,65 @@
+<Window x:Class="ROX.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ROX" Width="1280" Height="760" MinWidth="1100" MinHeight="680"
+        Background="{StaticResource Bg}" FlowDirection="RightToLeft" WindowStartupLocation="CenterScreen">
+  <DockPanel Margin="14">
+    <!-- Header -->
+    <Border DockPanel.Dock="Top" Background="{StaticResource Panel}" CornerRadius="12" Padding="12" Margin="0,0,0,12">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" FlowDirection="LeftToRight" VerticalAlignment="Center">
+          <TextBlock Text="R" FontSize="34" FontWeight="Black" Foreground="{StaticResource Cyan}"/>
+          <TextBlock Text="O" FontSize="34" FontWeight="Black" Foreground="{StaticResource Pink}"/>
+          <TextBlock Text="X" FontSize="34" FontWeight="Black" Foreground="{StaticResource Cyan}"/>
+        </StackPanel>
+        <WrapPanel x:Name="DevicePanel" VerticalAlignment="Center"/>
+      </DockPanel>
+    </Border>
+
+    <TextBlock x:Name="Status" DockPanel.Dock="Bottom" Margin="4,8,4,0" Foreground="#9090A8"/>
+
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Faders -->
+      <Border Background="{StaticResource Panel}" CornerRadius="12" Padding="10" Margin="0,0,12,0">
+        <StackPanel>
+          <TextBlock Text="المكسر" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Cyan}" Margin="6,0,0,8"/>
+          <StackPanel x:Name="Strips" Orientation="Horizontal"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Voice -->
+      <Border Grid.Column="1" Background="{StaticResource Panel}" CornerRadius="12" Padding="12">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <TextBlock Text="الصوت والمؤثرات" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Pink}"/>
+            <UniformGrid x:Name="Knobs" Columns="2" Margin="0,8"/>
+            <WrapPanel x:Name="FxButtons" Margin="0,4"/>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+
+      <!-- Pads & outputs -->
+      <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="12" Padding="12" Margin="12,0,0,0" Width="330">
+        <StackPanel>
+          <TextBlock Text="الأزرار السريعة (كليك يمين لاختيار صوت)" FontWeight="Bold" Foreground="{StaticResource Cyan}"/>
+          <UniformGrid x:Name="Pads" Columns="2" Margin="0,6"/>
+          <Button x:Name="StopPads" Content="إيقاف كل الأصوات"/>
+          <StackPanel Orientation="Horizontal">
+            <Button x:Name="LoadMusic" Content="🎵 اختر أغنية"/>
+            <Button x:Name="PlayMusic" Content="⏯ تشغيل/إيقاف"/>
+          </StackPanel>
+          <TextBlock x:Name="MusicName" Foreground="#9090A8" TextTrimming="CharacterEllipsis" Margin="4"/>
+          <Button x:Name="Bleep" Content="BLEEP 🔇 (اضغط مطولاً)" Foreground="{StaticResource Pink}" BorderBrush="{StaticResource Pink}"/>
+          <Button x:Name="MicMute" Content="🎤 كتم الميك" Height="60" FontSize="16"/>
+          <TextBlock Text="مستوى الإخراج" Margin="4,10,4,2"/>
+          <ProgressBar x:Name="MasterMeter" Height="10" Maximum="1" Foreground="{StaticResource Cyan}" Background="#2A2A38" BorderThickness="0"/>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </DockPanel>
+</Window>
