@@ -1,0 +1,144 @@
+import { Inventory, SlotWithItem } from '../../typings';
+import React, { Fragment, useMemo } from 'react';
+import { Items } from '../../store/items';
+import { Locale } from '../../store/locale';
+import { useAppSelector } from '../../store';
+import ClockIcon from '../utils/icons/ClockIcon';
+import { getItemUrl } from '../../helpers';
+import Divider from '../utils/Divider';
+import Markdown from '../utils/Markdown';
+import { getRarity, RARITY_INFO, formatWeight } from '../../helpers/rarity';
+
+const SlotTooltip: React.ForwardRefRenderFunction<
+  HTMLDivElement,
+  { item: SlotWithItem; inventoryType: Inventory['type']; style: React.CSSProperties }
+> = ({ item, inventoryType, style }, ref) => {
+  const additionalMetadata = useAppSelector((state) => state.inventory.additionalMetadata);
+  const itemData = useMemo(() => Items[item.name], [item]);
+  const ingredients = useMemo(() => {
+    if (!item.ingredients) return null;
+    return Object.entries(item.ingredients).sort((a, b) => a[1] - b[1]);
+  }, [item]);
+  const description = item.metadata?.description || itemData?.description;
+  const ammoName = itemData?.ammoName && Items[itemData?.ammoName]?.label;
+
+  return (
+    <>
+      {!itemData ? (
+        <div className="tooltip-wrapper" ref={ref} style={style}>
+          <div className="tooltip-header-wrapper">
+            <p>{item.name}</p>
+          </div>
+          <Divider />
+        </div>
+      ) : (
+        <div style={{ ...style }} className="tooltip-wrapper" ref={ref}>
+          <div className="rox-tip-head">
+            <div className={`rox-tip-img rarity-${getRarity(item)}`}>
+              <div className="rox-slot-bg" />
+              <img src={getItemUrl(item)} alt="" />
+            </div>
+            <div>
+              <b>{item.metadata?.label || itemData.label || item.name}</b>
+              <div className="rox-tip-meta">
+                <span className="rox-dot" style={{ background: RARITY_INFO[getRarity(item)].color }} />
+                {RARITY_INFO[getRarity(item)].label}
+                {item.weight > 0 && <span>&nbsp;&nbsp;{formatWeight(item.weight)}</span>}
+                {item.count > 1 && <span>&nbsp;&nbsp;x{item.count}</span>}
+              </div>
+            </div>
+          </div>
+          <div className="tooltip-header-wrapper rox-tip-sub">
+            {inventoryType === 'crafting' ? (
+              <div className="tooltip-crafting-duration">
+                <ClockIcon />
+                <p>{(item.duration !== undefined ? item.duration : 3000) / 1000}s</p>
+              </div>
+            ) : (
+              <p>{item.metadata?.type}</p>
+            )}
+          </div>
+          <Divider />
+          {description && (
+            <div className="tooltip-description">
+              <Markdown content={description} className="tooltip-markdown" />
+            </div>
+          )}
+          {inventoryType !== 'crafting' ? (
+            <>
+              {item.durability !== undefined && (
+                <p>
+                  {Locale.ui_durability}: {Math.trunc(item.durability)}
+                </p>
+              )}
+              {item.metadata?.ammo !== undefined && (
+                <p>
+                  {Locale.ui_ammo}: {item.metadata.ammo}
+                </p>
+              )}
+              {ammoName && (
+                <p>
+                  {Locale.ammo_type}: {ammoName}
+                </p>
+              )}
+              {item.metadata?.serial && (
+                <p>
+                  {Locale.ui_serial}: {item.metadata.serial}
+                </p>
+              )}
+              {item.metadata?.components && item.metadata?.components[0] && (
+                <p>
+                  {Locale.ui_components}:{' '}
+                  {(item.metadata?.components).map((component: string, index: number, array: []) =>
+                    index + 1 === array.length ? Items[component]?.label : Items[component]?.label + ', '
+                  )}
+                </p>
+              )}
+              {item.metadata?.weapontint && (
+                <p>
+                  {Locale.ui_tint}: {item.metadata.weapontint}
+                </p>
+              )}
+              {additionalMetadata.map((data: { metadata: string; value: string }, index: number) => (
+                <Fragment key={`metadata-${index}`}>
+                  {item.metadata && item.metadata[data.metadata] && (
+                    <p>
+                      {data.value}: {item.metadata[data.metadata]}
+                    </p>
+                  )}
+                </Fragment>
+              ))}
+              {inventoryType === 'player' && (
+                <div className="rox-tip-actions">
+                  <svg viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M12 2a6 6 0 0 0-6 6v8a6 6 0 0 0 12 0V8a6 6 0 0 0-6-6zm0 2a4 4 0 0 1 4 4v2h-3V4.1A4 4 0 0 1 12 4zm-1 .1V10H8V8a4 4 0 0 1 3-3.9z"/></svg>
+                  Actions
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="tooltip-ingredients">
+              {ingredients &&
+                ingredients.map((ingredient) => {
+                  const [item, count] = [ingredient[0], ingredient[1]];
+                  return (
+                    <div className="tooltip-ingredient" key={`ingredient-${item}`}>
+                      <img src={getItemUrl(item)} alt="item-image" />
+                      <p>
+                        {count >= 1
+                          ? `${count}x ${Items[item]?.label || item}`
+                          : count === 0
+                            ? `${Items[item]?.label || item}`
+                            : count < 1 && `${count * 100}% ${Items[item]?.label || item}`}
+                      </p>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
+
+export default React.forwardRef(SlotTooltip);

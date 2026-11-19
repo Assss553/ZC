@@ -1,0 +1,552 @@
+diff --git a/web/src/App.tsx b/web/src/App.tsx
+index f015ad0..3e5b45a 100644
+--- a/web/src/App.tsx
++++ b/web/src/App.tsx
+@@ -13,76 +13,43 @@ import { useDragDropManager } from 'react-dnd';
+ import KeyPress from './components/utils/KeyPress';
+ 
+ debugData([
++  {
++    action: 'init',
++    data: { locale: { ui_use: 'Use', ui_give: 'Give', ui_close: 'Close' }, imagepath: 'images', items: { 'armour': { name: 'armour', label: 'Body Armour', stack: true, usable: true, close: true, count: 0 },'parachute': { name: 'parachute', label: 'Parachute', stack: true, usable: true, close: true, count: 0 },'paperbag': { name: 'paperbag', label: 'Paper Bag', stack: true, usable: true, close: true, count: 0 },'WEAPON_FIREEXTINGUISHER': { name: 'WEAPON_FIREEXTINGUISHER', label: 'Fire Extinguisher', stack: true, usable: true, close: true, count: 0 },'radio': { name: 'radio', label: 'Radio', stack: true, usable: true, close: true, count: 0 },'WEAPON_CROWBAR': { name: 'WEAPON_CROWBAR', label: 'Crowbar', stack: true, usable: true, close: true, count: 0 },'WEAPON_NIGHTSTICK': { name: 'WEAPON_NIGHTSTICK', label: 'Nightstick', stack: true, usable: true, close: true, count: 0 },'WEAPON_STUNGUN': { name: 'WEAPON_STUNGUN', label: 'Taser', stack: true, usable: true, close: true, count: 0 },'medikit': { name: 'medikit', label: 'Medikit', stack: true, usable: true, close: true, count: 0 },'card_bank': { name: 'card_bank', label: 'Bank Card', stack: true, usable: true, close: true, count: 0 },'card_id': { name: 'card_id', label: 'ID Card', stack: true, usable: true, close: true, count: 0 },'usb_black': { name: 'usb_black', label: 'USB', stack: true, usable: true, close: true, count: 0 },'WEAPON_PISTOL': { name: 'WEAPON_PISTOL', label: 'Pistol', stack: true, usable: true, close: true, count: 0 },'WEAPON_HANDCUFFS': { name: 'WEAPON_HANDCUFFS', label: 'Handcuffs', stack: true, usable: true, close: true, count: 0 },'ammo-9': { name: 'ammo-9', label: '9mm Ammo', stack: true, usable: true, close: true, count: 0 } }, leftInventory: { id: 'rox', type: 'player', slots: 40, label: '', weight: 0, maxWeight: 100000, items: [] } },
++  },
+   {
+     action: 'setupInventory',
+     data: {
+       leftInventory: {
+-        id: 'test',
+-        type: 'player',
+-        slots: 50,
+-        label: 'Bob Smith',
+-        weight: 3000,
+-        maxWeight: 5000,
+-        items: [
+-          {
+-            slot: 1,
+-            name: 'iron',
+-            weight: 3000,
+-            metadata: {
+-              description: `name: Svetozar Miletic  \n Gender: Male`,
+-              ammo: 3,
+-              mustard: '60%',
+-              ketchup: '30%',
+-              mayo: '10%',
+-            },
+-            count: 5,
+-          },
+-          { slot: 2, name: 'powersaw', weight: 0, count: 1, metadata: { durability: 75 } },
+-          { slot: 3, name: 'copper', weight: 100, count: 12, metadata: { type: 'Special' } },
+-          {
+-            slot: 4,
+-            name: 'water',
+-            weight: 100,
+-            count: 1,
+-            metadata: { description: 'Generic item description' },
+-          },
+-          { slot: 5, name: 'water', weight: 100, count: 1 },
+-          {
+-            slot: 6,
+-            name: 'backwoods',
+-            weight: 100,
+-            count: 1,
+-            metadata: {
+-              label: 'Russian Cream',
+-              imageurl: 'https://i.imgur.com/2xHhTTz.png',
+-            },
+-          },
+-        ],
+-      },
+-      rightInventory: {
+-        id: 'shop',
+-        type: 'crafting',
+-        slots: 5000,
+-        label: 'Bob Smith',
+-        weight: 3000,
+-        maxWeight: 5000,
++        id: 'rox', type: 'player', slots: 40, label: 'Inventory', weight: 50790, maxWeight: 100000,
+         items: [
+-          {
+-            slot: 1,
+-            name: 'lockpick',
+-            weight: 500,
+-            price: 300,
+-            ingredients: {
+-              iron: 5,
+-              copper: 12,
+-              powersaw: 0.1,
+-            },
+-            metadata: {
+-              description: 'Simple lockpick that breaks easily and can pick basic door locks',
+-            },
+-          },
++          { slot: 1, name: 'paperbag', weight: 200, count: 1 },
++          { slot: 2, name: 'WEAPON_PISTOL', weight: 1200, count: 1, metadata: { durability: 100, ammo: 12 } },
++          { slot: 3, name: 'card_id', weight: 10, count: 1 },
++          { slot: 4, name: 'WEAPON_HANDCUFFS', weight: 300, count: 1 },
++          { slot: 5, name: 'ammo-9', weight: 8, count: 398 },
++          { slot: 8, name: 'armour', weight: 3500, count: 1, metadata: { durability: 100 } },
++          { slot: 9, name: 'armour', weight: 3500, count: 1, metadata: { durability: 100 } },
++          { slot: 10, name: 'parachute', weight: 900, count: 1 },
++          { slot: 11, name: 'paperbag', weight: 200, count: 1, metadata: { durability: 90 } },
++          { slot: 12, name: 'armour', weight: 3500, count: 1, metadata: { durability: 100 } },
++          { slot: 14, name: 'WEAPON_FIREEXTINGUISHER', weight: 6000, count: 1, metadata: { durability: 100 } },
++          { slot: 15, name: 'armour', weight: 2000, count: 1, metadata: { rarity: 'common' } },
++          { slot: 16, name: 'radio', weight: 400, count: 3, metadata: { rarity: 'common' } },
++          { slot: 17, name: 'WEAPON_CROWBAR', weight: 1500, count: 1 },
++          { slot: 18, name: 'WEAPON_FIREEXTINGUISHER', weight: 6000, count: 1 },
++          { slot: 19, name: 'radio', weight: 400, count: 1, metadata: { durability: 100 } },
++          { slot: 20, name: 'WEAPON_NIGHTSTICK', weight: 600, count: 1, metadata: { durability: 100 } },
++          { slot: 21, name: 'WEAPON_STUNGUN', weight: 300, count: 1 },
++          { slot: 22, name: 'medikit', weight: 20, count: 8, metadata: { rarity: 'common' } },
++          { slot: 24, name: 'card_bank', weight: 30, count: 1, metadata: { label: 'Transparency (Red)', description: 'A clear plastic sheet for an overhead projector. Marks in the corners line it up.' } },
++          { slot: 25, name: 'card_id', weight: 30, count: 1, metadata: { label: 'Transparency (Blue)', description: 'A clear plastic sheet for an overhead projector. Marks in the corners line it up.' } },
++          { slot: 26, name: 'armour', weight: 3500, count: 1, metadata: { durability: 30 } },
++          { slot: 27, name: 'armour', weight: 2000, count: 1, metadata: { rarity: 'common' } },
++          { slot: 29, name: 'usb_black', weight: 30, count: 1, metadata: { label: 'Transparency (Amber)', description: 'A clear plastic sheet for an overhead projector. Marks in the corners line it up.' } },
+         ],
+       },
++      rightInventory: { id: 'drop', type: 'drop', slots: 5, label: 'Drop', weight: 0, maxWeight: 100000, items: [] },
+     },
+   },
+ ]);
+diff --git a/web/src/components/inventory/InventoryControl.tsx b/web/src/components/inventory/InventoryControl.tsx
+index 79ae0c6..f0b70c1 100644
+--- a/web/src/components/inventory/InventoryControl.tsx
++++ b/web/src/components/inventory/InventoryControl.tsx
+@@ -91,6 +91,7 @@ const InventoryControl: React.FC = () => {
+             onKeyDown={handleKeyDown}
+             min={0}
+           />
++          <p className="rox-amount-label">{Locale.ui_amount || 'Amount'}</p>
+           <button
+             className="inventory-control-button"
+             ref={(el) => {
+diff --git a/web/src/components/inventory/InventoryGrid.tsx b/web/src/components/inventory/InventoryGrid.tsx
+index 76d976b..b99d5d2 100644
+--- a/web/src/components/inventory/InventoryGrid.tsx
++++ b/web/src/components/inventory/InventoryGrid.tsx
+@@ -8,7 +8,13 @@ import { useIntersection } from '../../hooks/useIntersection';
+ 
+ const PAGE_SIZE = 30;
+ 
+-const InventoryGrid: React.FC<{ inventory: Inventory }> = ({ inventory }) => {
++const InventoryGrid: React.FC<{ inventory: Inventory; filter?: (slot: number) => boolean; title?: string; className?: string }> = ({
++  inventory,
++  filter,
++  title,
++  className,
++}) => {
++  const items = useMemo(() => (filter ? inventory.items.filter((i) => filter(i.slot)) : inventory.items), [inventory.items, filter]);
+   const weight = useMemo(
+     () => (inventory.maxWeight !== undefined ? Math.floor(getTotalWeight(inventory.items) * 1000) / 1000 : 0),
+     [inventory.maxWeight, inventory.items]
+@@ -25,21 +31,21 @@ const InventoryGrid: React.FC<{ inventory: Inventory }> = ({ inventory }) => {
+   }, [entry]);
+   return (
+     <>
+-      <div className="inventory-grid-wrapper" style={{ pointerEvents: isBusy ? 'none' : 'auto' }}>
++      <div className={`inventory-grid-wrapper ${className || ''}`} style={{ pointerEvents: isBusy ? 'none' : 'auto' }}>
+         <div>
+           <div className="inventory-grid-header-wrapper">
+-            <p>{inventory.label}</p>
+-            {inventory.maxWeight && (
+-              <p>
+-                {weight / 1000}/{inventory.maxWeight / 1000}kg
++            <p>{title ?? inventory.label}</p>
++            {inventory.maxWeight ? (
++              <p className="rox-weight">
++                {(weight / 1000).toFixed(2)}/{inventory.maxWeight / 1000}
+               </p>
+-            )}
++            ) : null}
+           </div>
+           <WeightBar percent={inventory.maxWeight ? (weight / inventory.maxWeight) * 100 : 0} />
+         </div>
+         <div className="inventory-grid-container" ref={containerRef}>
+           <>
+-            {inventory.items.slice(0, (page + 1) * PAGE_SIZE).map((item, index) => (
++            {items.slice(0, (page + 1) * PAGE_SIZE).map((item, index) => (
+               <InventorySlot
+                 key={`${inventory.type}-${inventory.id}-${item.slot}`}
+                 item={item}
+diff --git a/web/src/components/inventory/InventorySlot.tsx b/web/src/components/inventory/InventorySlot.tsx
+index ab41e57..5e6cbb5 100644
+--- a/web/src/components/inventory/InventorySlot.tsx
++++ b/web/src/components/inventory/InventorySlot.tsx
+@@ -2,7 +2,6 @@ import React, { useCallback, useRef } from 'react';
+ import { DragSource, Inventory, InventoryType, Slot, SlotWithItem } from '../../typings';
+ import { useDrag, useDragDropManager, useDrop } from 'react-dnd';
+ import { useAppDispatch } from '../../store';
+-import WeightBar from '../utils/WeightBar';
+ import { onDrop } from '../../dnd/onDrop';
+ import { onBuy } from '../../dnd/onBuy';
+ import { Items } from '../../store/items';
+@@ -15,16 +14,18 @@ import { ItemsPayload } from '../../reducers/refreshSlots';
+ import { closeTooltip, openTooltip } from '../../store/tooltip';
+ import { openContextMenu } from '../../store/contextMenu';
+ import { useMergeRefs } from '@floating-ui/react';
++import { getRarity } from '../../helpers/rarity';
+ 
+ interface SlotProps {
+   inventoryId: Inventory['id'];
+   inventoryType: Inventory['type'];
+   inventoryGroups: Inventory['groups'];
+   item: Slot;
++  variant?: 'default' | 'weapon' | 'quick' | 'gear';
+ }
+ 
+ const InventorySlot: React.ForwardRefRenderFunction<HTMLDivElement, SlotProps> = (
+-  { item, inventoryId, inventoryType, inventoryGroups },
++  { item, inventoryId, inventoryType, inventoryGroups, variant },
+   ref
+ ) => {
+   const manager = useDragDropManager();
+@@ -122,29 +123,35 @@ const InventorySlot: React.ForwardRefRenderFunction<HTMLDivElement, SlotProps> =
+ 
+   const refs = useMergeRefs([connectRef, ref]);
+ 
++  const has = isSlotWithItem(item);
++  const rarity = has ? getRarity(item) : 'empty';
++  const showNumber = inventoryType === 'player' && item.slot <= 5;
++  const dur = has && inventoryType !== 'shop' ? item.durability : undefined;
++
+   return (
+     <div
+       ref={refs}
+       onContextMenu={handleContext}
+       onClick={handleClick}
+-      className="inventory-slot"
++      className={`inventory-slot rox-slot rox-${variant || 'default'} rarity-${rarity}${isOver ? ' rox-over' : ''}`}
+       style={{
+         filter:
+           !canPurchaseItem(item, { type: inventoryType, groups: inventoryGroups }) || !canCraftItem(item, inventoryType)
+             ? 'brightness(80%) grayscale(100%)'
+             : undefined,
+         opacity: isDragging ? 0.4 : 1.0,
+-        backgroundImage: item?.name ? `url(${getItemUrl(item as SlotWithItem)})` : 'none',
+-        border: isOver ? '1px dashed rgba(255,255,255,0.4)' : '',
+       }}
+     >
+-      {isSlotWithItem(item) && (
++      <div className="rox-slot-bg" />
++      {item?.name && <div className="rox-slot-img" style={{ backgroundImage: `url(${getItemUrl(item as SlotWithItem)})` }} />}
++      {showNumber && <div className="rox-slot-number">{item.slot}</div>}
++      {has && (
+         <div
+           className="item-slot-wrapper"
+           onMouseEnter={() => {
+             timerRef.current = window.setTimeout(() => {
+               dispatch(openTooltip({ item, inventoryType }));
+-            }, 500) as unknown as number;
++            }, 250) as unknown as number;
+           }}
+           onMouseLeave={() => {
+             dispatch(closeTooltip());
+@@ -154,73 +161,22 @@ const InventorySlot: React.ForwardRefRenderFunction<HTMLDivElement, SlotProps> =
+             }
+           }}
+         >
+-          <div
+-            className={
+-              inventoryType === 'player' && item.slot <= 5 ? 'item-hotslot-header-wrapper' : 'item-slot-header-wrapper'
+-            }
+-          >
+-            {inventoryType === 'player' && item.slot <= 5 && <div className="inventory-slot-number">{item.slot}</div>}
+-            <div className="item-slot-info-wrapper">
+-              <p>
+-                {item.weight > 0
+-                  ? item.weight >= 1000
+-                    ? `${(item.weight / 1000).toLocaleString('en-us', {
+-                        minimumFractionDigits: 2,
+-                      })}kg `
+-                    : `${item.weight.toLocaleString('en-us', {
+-                        minimumFractionDigits: 0,
+-                      })}g `
+-                  : ''}
+-              </p>
+-              <p>{item.count ? item.count.toLocaleString('en-us') + `x` : ''}</p>
++          {item.count > 1 && <div className="rox-slot-count">x{item.count.toLocaleString('en-us')}</div>}
++          {inventoryType === 'shop' && item?.price !== undefined && item.price > 0 && (
++            <div className="rox-slot-price" style={{ color: item.currency === 'money' || !item.currency ? '#2ECC71' : '#E74C3C' }}>
++              {item.currency && item.currency !== 'money' && item.currency !== 'black_money' ? (
++                <img src={getItemUrl(item.currency)} alt="" />
++              ) : (
++                Locale.$ || '$'
++              )}
++              {item.price.toLocaleString('en-us')}
+             </div>
+-          </div>
+-          <div>
+-            {inventoryType !== 'shop' && item?.durability !== undefined && (
+-              <WeightBar percent={item.durability} durability />
+-            )}
+-            {inventoryType === 'shop' && item?.price !== undefined && (
+-              <>
+-                {item?.currency !== 'money' && item.currency !== 'black_money' && item.price > 0 && item.currency ? (
+-                  <div className="item-slot-currency-wrapper">
+-                    <img
+-                      src={getItemUrl(item.currency)}
+-                      alt="item-image"
+-                      style={{
+-                        imageRendering: '-webkit-optimize-contrast',
+-                        height: 'auto',
+-                        width: '2vh',
+-                        backfaceVisibility: 'hidden',
+-                        transform: 'translateZ(0)',
+-                      }}
+-                    />
+-                    <p>{item.price.toLocaleString('en-us')}</p>
+-                  </div>
+-                ) : (
+-                  <>
+-                    {item.price > 0 && (
+-                      <div
+-                        className="item-slot-price-wrapper"
+-                        style={{ color: item.currency === 'money' || !item.currency ? '#2ECC71' : '#E74C3C' }}
+-                      >
+-                        <p>
+-                          {Locale.$ || '$'}
+-                          {item.price.toLocaleString('en-us')}
+-                        </p>
+-                      </div>
+-                    )}
+-                  </>
+-                )}
+-              </>
+-            )}
+-            <div className="inventory-slot-label-box">
+-              <div className="inventory-slot-label-text">
+-                {item.metadata?.label ? item.metadata.label : Items[item.name]?.label || item.name}
+-              </div>
+-            </div>
+-          </div>
++          )}
+         </div>
+       )}
++      {dur !== undefined && (
++        <div className={`rox-slot-ring ${dur < 30 ? 'low' : dur < 95 ? 'mid' : ''}`} title={`${Math.trunc(dur)}%`} />
++      )}
+     </div>
+   );
+ };
+diff --git a/web/src/components/inventory/LeftInventory.tsx b/web/src/components/inventory/LeftInventory.tsx
+index 4520e68..543f029 100644
+--- a/web/src/components/inventory/LeftInventory.tsx
++++ b/web/src/components/inventory/LeftInventory.tsx
+@@ -2,10 +2,14 @@ import InventoryGrid from './InventoryGrid';
+ import { useAppSelector } from '../../store';
+ import { selectLeftInventory } from '../../store/inventory';
+ 
++// ROX: slots 1-7 live in the loadout column (primary, secondary, quick use, gear)
++export const LOADOUT_SLOTS = 7;
++const pockets = (slot: number) => slot > LOADOUT_SLOTS;
++
+ const LeftInventory: React.FC = () => {
+   const leftInventory = useAppSelector(selectLeftInventory);
+ 
+-  return <InventoryGrid inventory={leftInventory} />;
++  return <InventoryGrid inventory={leftInventory} filter={pockets} title="" className="rox-left" />;
+ };
+ 
+ export default LeftInventory;
+diff --git a/web/src/components/inventory/RightInventory.tsx b/web/src/components/inventory/RightInventory.tsx
+index 296ca7b..329fd87 100644
+--- a/web/src/components/inventory/RightInventory.tsx
++++ b/web/src/components/inventory/RightInventory.tsx
+@@ -4,8 +4,9 @@ import { selectRightInventory } from '../../store/inventory';
+ 
+ const RightInventory: React.FC = () => {
+   const rightInventory = useAppSelector(selectRightInventory);
++  const isDrop = rightInventory.type === 'drop' || rightInventory.type === 'newdrop';
+ 
+-  return <InventoryGrid inventory={rightInventory} />;
++  return <InventoryGrid inventory={rightInventory} title={isDrop ? 'Drop Inventory' : rightInventory.label} className="rox-right" />;
+ };
+ 
+ export default RightInventory;
+diff --git a/web/src/components/inventory/SlotTooltip.tsx b/web/src/components/inventory/SlotTooltip.tsx
+index 8a4e4ad..aea2744 100644
+--- a/web/src/components/inventory/SlotTooltip.tsx
++++ b/web/src/components/inventory/SlotTooltip.tsx
+@@ -7,6 +7,7 @@ import ClockIcon from '../utils/icons/ClockIcon';
+ import { getItemUrl } from '../../helpers';
+ import Divider from '../utils/Divider';
+ import Markdown from '../utils/Markdown';
++import { getRarity, RARITY_INFO, formatWeight } from '../../helpers/rarity';
+ 
+ const SlotTooltip: React.ForwardRefRenderFunction<
+   HTMLDivElement,
+@@ -32,8 +33,22 @@ const SlotTooltip: React.ForwardRefRenderFunction<
+         </div>
+       ) : (
+         <div style={{ ...style }} className="tooltip-wrapper" ref={ref}>
+-          <div className="tooltip-header-wrapper">
+-            <p>{item.metadata?.label || itemData.label || item.name}</p>
++          <div className="rox-tip-head">
++            <div className={`rox-tip-img rarity-${getRarity(item)}`}>
++              <div className="rox-slot-bg" />
++              <img src={getItemUrl(item)} alt="" />
++            </div>
++            <div>
++              <b>{item.metadata?.label || itemData.label || item.name}</b>
++              <div className="rox-tip-meta">
++                <span className="rox-dot" style={{ background: RARITY_INFO[getRarity(item)].color }} />
++                {RARITY_INFO[getRarity(item)].label}
++                {item.weight > 0 && <span>&nbsp;&nbsp;{formatWeight(item.weight)}</span>}
++                {item.count > 1 && <span>&nbsp;&nbsp;x{item.count}</span>}
++              </div>
++            </div>
++          </div>
++          <div className="tooltip-header-wrapper rox-tip-sub">
+             {inventoryType === 'crafting' ? (
+               <div className="tooltip-crafting-duration">
+                 <ClockIcon />
+@@ -93,6 +108,12 @@ const SlotTooltip: React.ForwardRefRenderFunction<
+                   )}
+                 </Fragment>
+               ))}
++              {inventoryType === 'player' && (
++                <div className="rox-tip-actions">
++                  <svg viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M12 2a6 6 0 0 0-6 6v8a6 6 0 0 0 12 0V8a6 6 0 0 0-6-6zm0 2a4 4 0 0 1 4 4v2h-3V4.1A4 4 0 0 1 12 4zm-1 .1V10H8V8a4 4 0 0 1 3-3.9z"/></svg>
++                  Actions
++                </div>
++              )}
+             </>
+           ) : (
+             <div className="tooltip-ingredients">
+diff --git a/web/src/components/inventory/index.tsx b/web/src/components/inventory/index.tsx
+index b2226b1..80dadac 100644
+--- a/web/src/components/inventory/index.tsx
++++ b/web/src/components/inventory/index.tsx
+@@ -13,6 +13,7 @@ import { closeTooltip } from '../../store/tooltip';
+ import InventoryContext from './InventoryContext';
+ import { closeContextMenu } from '../../store/contextMenu';
+ import Fade from '../utils/transitions/Fade';
++import InventoryLoadout from './InventoryLoadout';
+ 
+ const Inventory: React.FC = () => {
+   const [inventoryVisible, setInventoryVisible] = useState(false);
+@@ -45,7 +46,10 @@ const Inventory: React.FC = () => {
+       <Fade in={inventoryVisible}>
+         <div className="inventory-wrapper">
+           <LeftInventory />
+-          <InventoryControl />
++          <div className="rox-mid">
++            <InventoryLoadout />
++            <InventoryControl />
++          </div>
+           <RightInventory />
+           <Tooltip />
+           <InventoryContext />
+diff --git a/web/src/index.scss b/web/src/index.scss
+index c19acc2..f6c49e0 100644
+--- a/web/src/index.scss
++++ b/web/src/index.scss
+@@ -562,3 +562,107 @@ body.inv-dragging {
+   transform: translateY(200px);
+   transition: all 200ms;
+ }
++
++/* =====================================================================
++   ROX Store inventory theme  (layout: pockets | loadout | drop)
++   ===================================================================== */
++$rox-slot: 9.2vh;
++$rox-line: rgba(255, 255, 255, 0.06);
++
++.inventory-wrapper {
++  gap: 6vh !important;
++  align-items: flex-start !important;
++  padding-top: 7vh;
++  transform: perspective(1600px) rotateY(8deg) rotateX(2deg);
++  transform-origin: 20% 50%;
++}
++.inventory-grid-wrapper.rox-left .inventory-grid-header-wrapper,
++.inventory-grid-wrapper.rox-right .inventory-grid-header-wrapper {
++  display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.2vh;
++  p { font-size: 1.45vh; font-weight: 700; color: #e9e9ea; }
++  .rox-weight { font-weight: 600; color: #cfd0d3; }
++}
++.inventory-grid-wrapper.rox-left .weight-bar, .inventory-grid-wrapper.rox-right .weight-bar { display: none; }
++.inventory-grid-container {
++  grid-template-columns: repeat(5, $rox-slot) !important;
++  grid-auto-rows: $rox-slot !important;
++  gap: 2.4vh 0.9vh !important;
++  height: auto !important; max-height: 60vh;
++}
++.inventory-grid-wrapper.rox-right .inventory-grid-container { max-height: 30vh; }
++
++/* slot */
++.rox-slot {
++  position: relative; width: 100%; height: 100%; border-radius: 0.3vh;
++  background: rgba(25, 25, 27, 0.4) !important; border: 1px solid $rox-line !important;
++  overflow: visible; image-rendering: -webkit-optimize-contrast;
++}
++.rox-slot-bg { position: absolute; inset: 0; border-radius: 0.3vh; overflow: hidden; }
++.rox-slot:not(.rarity-empty) .rox-slot-bg::before, .rox-tip-img .rox-slot-bg::before {
++  content: ''; position: absolute; inset: 0;
++  background: repeating-linear-gradient(135deg, rgba(0,0,0,.28) 0 2px, rgba(255,255,255,.035) 2px 4px, transparent 4px 9px);
++}
++.rarity-common .rox-slot-bg { background: linear-gradient(135deg, #46484d, #232427 60%, #1b1c1e); }
++.rarity-uncommon .rox-slot-bg { background: radial-gradient(120% 120% at 0% 0%, #2f7a4c 0%, #1e2c24 50%, #1b1c1e 80%); }
++.rarity-rare .rox-slot-bg { background: radial-gradient(120% 120% at 0% 0%, #2e6bc0 0%, #1d2b40 50%, #1b1c1e 80%); }
++.rarity-epic .rox-slot-bg { background: radial-gradient(120% 120% at 0% 0%, #7b45b8 0%, #2a1f3b 50%, #1b1c1e 80%); }
++.rarity-legendary .rox-slot-bg { background: radial-gradient(120% 120% at 0% 0%, #c98a24 0%, #3a2c16 50%, #1b1c1e 80%); }
++.rox-slot-img {
++  position: absolute; inset: 12%; background-size: contain; background-repeat: no-repeat; background-position: center;
++  filter: drop-shadow(0 0.4vh 0.5vh rgba(0, 0, 0, 0.6)); pointer-events: none;
++}
++.rox-slot .item-slot-wrapper { position: absolute; inset: 0; }
++.rox-slot-count { position: absolute; right: 0.45vh; top: 0.35vh; font-size: 1.05vh; font-weight: 700; color: #e6e6e6; text-shadow: 0 1px 2px #000; }
++.rox-slot-number {
++  position: absolute; left: 0.45vh; bottom: 0.4vh; width: 1.6vh; height: 1.6vh; border-radius: 0.2vh; background: #e9e9ea; color: #111;
++  font-size: 1.05vh; font-weight: 800; display: grid; place-items: center; z-index: 2;
++}
++.rox-slot-ring {
++  position: absolute; left: 50%; bottom: -1.75vh; transform: translateX(-50%); width: 1.15vh; height: 1.15vh; border-radius: 50%;
++  border: 0.22vh solid #47d17e; z-index: 2;
++  &.mid { border-color: #7a7d83; } &.low { border-color: #c9b04a; }
++}
++.rox-slot-price { position: absolute; left: 0.5vh; bottom: 0.4vh; font-size: 1.15vh; font-weight: 700; display: flex; gap: 0.3vh; align-items: center; img { height: 1.6vh; } }
++.rox-over { outline: 2px solid #fff; outline-offset: 1px; }
++.inventory-slot-label-box, .item-slot-info-wrapper { display: none; }
++
++/* loadout column */
++.rox-mid { display: flex; flex-direction: column; width: 19vh; padding-top: 3.2vh; }
++.rox-h { font-size: 1.45vh; font-weight: 700; color: #e9e9ea; margin: 0 0 0.9vh; }
++.rox-pair { display: flex; gap: 1.6vh; margin-bottom: 2.2vh; }
++.rox-pair-slot { position: relative; width: 7.6vh; height: 7.6vh; }
++.rox-ok { position: absolute; right: -1.9vh; bottom: 0.4vh; width: 1.15vh; height: 1.15vh; border-radius: 50%; border: 0.22vh solid #47d17e; }
++.rox-quick { display: flex; gap: 0.9vh; margin-bottom: 2.6vh; }
++.rox-quick .rox-slot { width: 5vh; height: 5.4vh; }
++.rox-quick .rox-slot-number { bottom: -1.9vh; left: 0.2vh; width: 1.35vh; height: 1.35vh; font-size: 0.9vh; }
++.rox-quick .rox-slot-count { font-size: 0.85vh; }
++.rox-gear { display: grid; gap: 0.9vh; }
++.rox-gear .rox-slot { width: 17.5vh; height: 6.6vh; }
++.rox-gear .rox-slot-img { inset: 10% 30%; }
++
++/* amount + buttons (under gear) */
++.inventory-control { justify-content: flex-start !important; margin-top: 1.6vh; }
++.inventory-control-wrapper { align-items: stretch !important; width: 17.5vh; gap: 0.7vh !important; }
++.inventory-control-input {
++  background: transparent !important; border: 0 !important; border-bottom: 1px solid $rox-line !important; border-radius: 0 !important;
++  text-align: center; font-size: 1.4vh !important; padding: 0.6vh !important; width: 100% !important;
++}
++.rox-amount-label { text-align: center; color: #8e9096; font-size: 1.3vh; font-weight: 600; margin: -0.2vh 0 0.8vh; }
++.inventory-control-button {
++  background: rgba(30, 31, 34, 0.7) !important; border: 1px solid $rox-line !important; border-radius: 0.4vh !important;
++  font-size: 1.25vh !important; padding: 0.9vh !important; width: 100% !important;
++  &:hover { background: rgba(255, 255, 255, 0.12) !important; }
++}
++
++/* tooltip */
++.tooltip-wrapper { background: rgba(22, 22, 24, 0.96) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 0.6vh !important; min-width: 26vh; max-width: 30vh; }
++.rox-tip-head { display: flex; gap: 1.1vh; align-items: center; margin-bottom: 0.6vh; }
++.rox-tip-head b { font-size: 1.45vh; font-weight: 800; display: block; line-height: 1.2; }
++.rox-tip-img { position: relative; width: 3.8vh; height: 3.8vh; flex: 0 0 auto; border-radius: 0.3vh; overflow: hidden; display: grid; place-items: center;
++  img { position: relative; width: 85%; height: 85%; object-fit: contain; } }
++.rox-tip-meta { font-size: 1.1vh; font-weight: 600; color: #9a9ca2; margin-top: 0.3vh; display: flex; align-items: center; }
++.rox-dot { display: inline-block; width: 0.65vh; height: 0.65vh; border-radius: 50%; margin-right: 0.45vh; }
++.rox-tip-sub:empty { display: none; }
++.rox-tip-actions { margin-top: 1vh; padding-top: 0.8vh; border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 1.1vh; font-weight: 600; color: #9a9ca2; display: flex; gap: 0.6vh; align-items: center; }
++.rox-weapon .rox-slot-ring, .rox-quick .rox-slot-ring, .rox-gear .rox-slot-ring { display: none; }
++.inventory-control-button { text-transform: none !important; color: #e6e7ea !important; font-weight: 600 !important; }
