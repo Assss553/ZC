@@ -1,0 +1,65 @@
+name: ROX Play — Android build (direct PS4/PS5 pairing on the phone, based on chiaki-ng)
+
+on:
+  push:
+    branches: [ "ccr-dcf102d9-fn7ygb", "main" ]
+    paths: [ "ROX-GAME-AI/rox-play-android/**", ".github/workflows/rox-play-android.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CHIAKI_COMMIT: 43728af2e639fecb8a7af1cd68c29820a40de973
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Get chiaki-ng source (pinned official commit)
+        run: |
+          git init chiaki && cd chiaki
+          git remote add origin https://github.com/streetpea/chiaki-ng
+          git fetch --depth 1 origin $CHIAKI_COMMIT
+          git checkout FETCH_HEAD
+          git submodule update --init --recursive --depth 1 third-party/nanopb third-party/jerasure third-party/gf-complete third-party/curl android/app/src/main/cpp/oboe
+      - uses: actions/checkout@v4
+        with: { path: rox-src }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - name: Install NDK + CMake used by chiaki-ng
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;28.2.13676358" "cmake;3.22.1" > /dev/null
+          pip install --user protobuf
+      - name: Apply ROX Play branding
+        working-directory: chiaki
+        run: bash ../rox-src/ROX-GAME-AI/rox-play-android/apply-rox-android.sh
+      - name: Reuse ROX debug signing key
+        uses: actions/cache@v4
+        with: { path: ~/.android/debug.keystore, key: rox-play-android-keystore-v1 }
+      - name: Build APK
+        working-directory: chiaki/android
+        env: { CMAKE_POLICY_VERSION_MINIMUM: "3.5" }
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          ls -la app/build/outputs/apk/debug/
+      - name: Collect
+        run: |
+          mkdir out
+          f=$(ls chiaki/android/app/build/outputs/apk/debug/*.apk | head -1)
+          cp "$f" out/ROX-Play-Android.apk
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with: { name: ROX-Play-Android, path: out/ROX-Play-Android.apk }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rox-play-android-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: ROX Play Android build ${{ github.run_number }}
+          make_latest: "false"
+          files: out/ROX-Play-Android.apk
+          body: |
+            ROX Play for Android — pairs with your PS4/PS5 directly and streams to the phone (no Sony app).
+            Based on chiaki-ng (AGPL-3.0); full source in ROX-GAME-AI/rox-play-android. Not affiliated with Sony.
