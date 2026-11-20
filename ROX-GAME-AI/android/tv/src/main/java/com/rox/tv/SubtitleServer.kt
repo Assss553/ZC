@@ -17,6 +17,7 @@ class SubtitleServer private constructor(private val context: Context, val code:
     var onChange: (text: String) -> Unit = {}
     var onStatus: (String) -> Unit = {}
     var isShown: () -> Boolean = { false }
+    var onItems: (List<TvProtocol.Msg.Item>, Long) -> Unit = { _, _ -> }
     @Volatile var lastStatus = "starting…"; private set
 
     companion object {
@@ -52,6 +53,7 @@ class SubtitleServer private constructor(private val context: Context, val code:
                             // Ack after layout so the phone learns whether the text is really visible
                             main.postDelayed({ runCatching { conn.send("{\"type\":\"ack\",\"id\":${m.id},\"shown\":${isShown()}}") } }, 300)
                         }
+                        is TvProtocol.Msg.Items -> if (state.isPaired(conn)) onItems(m.items, m.ttlMs)
                         TvProtocol.Msg.Clear -> if (state.onClear(conn)) onChange("")
                         TvProtocol.Msg.Ping -> conn.send("{\"type\":\"pong\"}")
                         is TvProtocol.Msg.Unknown -> Log.w("ROXTV", "unknown msg")

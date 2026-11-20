@@ -147,11 +147,9 @@ class RoxEngine(
         voiceTranslator = VoiceTranslator(context, settings,
             onFinal = { text, lang -> scope.launch { onVoiceFinal(text, lang) } },
             onSilent = {
-                if (settings.value.audioSource == com.rox.gameai.core.AudioSourceKind.STREAM_PLAYBACK) {
-                    RoxLog.w("Voice", "Game audio is blocked by the streaming app — switching to the microphone automatically")
-                    settings.update { it.copy(audioSource = com.rox.gameai.core.AudioSourceKind.MICROPHONE) }
-                    scope.launch(Dispatchers.Main) { restartVoice() }
-                }
+                // Never switch to the microphone on our own: it would transcribe the player's own voice.
+                RoxLog.w("Voice", "Game audio is blocked by the streaming app — voice translation stopped (no automatic microphone)")
+                scope.launch(Dispatchers.Main) { voiceTranslator.stop(); _status.value = _status.value.copy(voiceActive = false, voiceMode = "blocked") }
             },
             onPartial = { text -> _voice.value = (_voice.value.filter { !it.partial } + VoiceLine(System.currentTimeMillis(), "", text, "", true)).takeLast(60) })
         // Recognise game automatically from the console's own report

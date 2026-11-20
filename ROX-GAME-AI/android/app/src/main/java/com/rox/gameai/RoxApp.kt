@@ -38,7 +38,7 @@ class RoxApp : Application() {
         overlay = OverlayWindow(this)
         server = com.rox.gameai.connection.RoxServerClient(store, scope)
         tv = com.rox.gameai.connection.TvLink(this, scope)
-        scope.launch { engine.overlays.collect { tv.onOverlays(it) } }
+        scope.launch { engine.overlays.collect { tv.onOverlays(it); tv.onPositioned(it, engine.status.value.frameW, engine.status.value.frameH) } }
         scope.launch { server.subtitles.collect { tv.onOverlays(it) } }
         RoxLog.i("App", "ROX GAME AI ${BuildConfig.VERSION_NAME} started (Android ${android.os.Build.VERSION.RELEASE}, ${android.os.Build.MODEL})")
         // Floating translation window above PS Remote Play

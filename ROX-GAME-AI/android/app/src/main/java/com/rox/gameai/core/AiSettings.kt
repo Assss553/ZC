@@ -18,7 +18,7 @@ data class AiSettings(
     val customRegions: List<NRect> = emptyList(),
     val safeVisionEnabled: Boolean = true,
     val translationEnabled: Boolean = true,
-    val voiceEnabled: Boolean = true,
+    val voiceEnabled: Boolean = false,
     val voiceLanguage: String = "en-US",
     val audioSampleRate: Int = 16000,
     val ttsDubbing: Boolean = false,

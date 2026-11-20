@@ -45,6 +45,8 @@ class TvActivity : Activity() {
     private var showDiag = true
     private var mode = "A"
     private var received = 0
+    private lateinit var itemsLayer: FrameLayout
+    private var itemsExpire = 0L
     private lateinit var rootView: FrameLayout
     private var lastReceived = "—"
 
@@ -53,6 +55,8 @@ class TvActivity : Activity() {
         val root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
         tvView = TvView(this).apply { isFocusable = false; isFocusableInTouchMode = false; descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS }
         root.addView(tvView, FrameLayout.LayoutParams(-1, -1))
+        itemsLayer = FrameLayout(this)
+        root.addView(itemsLayer, FrameLayout.LayoutParams(-1, -1))
         subtitle = Ui.subtitleView(this)
         root.addView(subtitle, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = 60 })
         diag = TextView(this).apply {
@@ -70,6 +74,7 @@ class TvActivity : Activity() {
         server.mode = { mode }
         server.onChange = { text -> if (text.isNotBlank()) { received++; lastReceived = text.take(60); render() }; show(text) }
         server.isShown = { if (enabled) subtitleShown() else false }
+        server.onItems = { items, ttl -> showItems(items, ttl) }
         server.onStatus = { phoneStatus = it; render() }
         phoneStatus = server.lastStatus
         if (checkSelfPermission("android.permission.READ_TV_LISTINGS") != android.content.pm.PackageManager.PERMISSION_GRANTED)
@@ -94,7 +99,10 @@ class TvActivity : Activity() {
         mode = "A"
         modeA = "tuning ${label(input)}…"
         tvView.setCallback(object : TvView.TvInputCallback() {
-            override fun onVideoAvailable(inputId: String) { modeA = "WORKS ✓ — HDMI picture shown inside ROX TV (${label(input)})"; render() }
+            override fun onVideoAvailable(inputId: String) {
+                modeA = "WORKS ✓ — HDMI picture shown inside ROX TV (${label(input)})"; render()
+                main.postDelayed({ if (showDiag) { showDiag = false; render() } }, 10_000) // auto-hide; key 7 shows it again
+            }
             override fun onVideoUnavailable(inputId: String, reason: Int) {
                 modeA = "no picture yet (reason $reason: ${reasonText(reason)}) — is the PlayStation on and on ${label(input)}?"; render()
             }
@@ -142,6 +150,30 @@ class TvActivity : Activity() {
         Bus.publish(t)
     }
 
+    /** Menu/label translations drawn exactly where the original English text is on the game picture. */
+    private fun showItems(items: List<TvProtocol.Msg.Item>, ttl: Long) {
+        itemsLayer.removeAllViews()
+        if (!enabled) return
+        val W = itemsLayer.width.toFloat(); val H = itemsLayer.height.toFloat()
+        if (W <= 0f || H <= 0f) return
+        for (it in items) {
+            val tv = TextView(this).apply {
+                text = it.text; setTextColor(Color.WHITE); gravity = Gravity.CENTER
+                textDirection = View.TEXT_DIRECTION_RTL; maxLines = 2
+                setBackgroundColor(Color.argb(235, 12, 12, 12))
+                val hPx = (it.b - it.t) * H
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, (hPx * 0.72f).coerceIn(14f, 48f))
+                setPadding(6, 0, 6, 0)
+            }
+            val lp = FrameLayout.LayoutParams(((it.r - it.l) * W * 1.15f).toInt().coerceAtLeast(60), ((it.b - it.t) * H * 1.25f).toInt().coerceAtLeast(24))
+            lp.leftMargin = (it.l * W).toInt(); lp.topMargin = (it.t * H).toInt()
+            itemsLayer.addView(tv, lp)
+        }
+        itemsLayer.bringToFront(); subtitle.bringToFront(); diag.bringToFront()
+        itemsExpire = System.currentTimeMillis() + ttl
+        main.postDelayed({ if (System.currentTimeMillis() >= itemsExpire) itemsLayer.removeAllViews() }, ttl + 50)
+    }
+
     /** Reported back to the phone so it can show whether the subtitle is really on screen. */
     fun subtitleShown(): Boolean = subtitle.isShown && subtitle.width > 0 && subtitle.height > 0
 
@@ -171,12 +203,12 @@ class TvActivity : Activity() {
             append("Mode A (HDMI inside ROX): $modeA\n")
             append("Mode B (window over TV's HDMI app): $modeB\n\n")
             append("Remote:  OK = subtitles on/off   ▲▼ = size   ◀▶ = transparency\n")
-            append("1 = Mode A   2 = Mode B   3 = next HDMI   0 = test subtitle   MENU/INFO = hide this panel")
+            append("1 = Mode A   2 = Mode B   3 = next HDMI   0 = test subtitle   7 = hide/show this panel")
         }
     }
 
     private val ourKeys = setOf(KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
-        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_3,
+        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_3, KeyEvent.KEYCODE_7,
         KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED, KeyEvent.KEYCODE_PROG_GREEN)
     private var lastKey = "—"
 
@@ -200,7 +232,7 @@ class TvActivity : Activity() {
             KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_PROG_RED -> startModeB()
             KeyEvent.KEYCODE_3 -> { if (hdmiInputs.isNotEmpty()) { inputIndex = (inputIndex + 1) % hdmiInputs.size; startModeA() } }
             KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_PROG_GREEN -> show("إيلينا: يجب أن نجد المفتاح القديم قبل حلول الظلام.")
-            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_GUIDE -> { showDiag = !showDiag; render() }
+            KeyEvent.KEYCODE_7, KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_GUIDE -> { showDiag = !showDiag; render() }
             else -> return super.onKeyDown(keyCode, event)
         }
         return true

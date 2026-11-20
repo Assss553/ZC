@@ -21,6 +21,13 @@ class TvProtocolTest {
         assertTrue(st.onHello(Any(), TvProtocol.Msg.Hello("531757", "phone")))
     }
 
+    @Test fun parsesPositionedMenuItems() {
+        val m = TvProtocol.parse("""{"type":"items","ttlMs":3000,"items":[{"t":"الخريطة","l":0.1,"tp":0.6,"r":0.2,"b":0.65,"k":"MENU"},{"t":"","l":0,"tp":0,"r":1,"b":1},{"t":"x","l":0.5,"tp":0.5,"r":0.4,"b":0.6}]}""") as TvProtocol.Msg.Items
+        assertEquals(1, m.items.size) // empty text and inverted box are dropped
+        assertEquals("الخريطة", m.items[0].text)
+        assertEquals(0.6f, m.items[0].t, 1e-6f)
+    }
+
     @Test fun codeIsSixDigits() { repeat(50) { assertTrue(TvProtocol.newCode().matches(Regex("\\d{6}"))) } }
 
     @Test fun onlyPairedPhonesCanShowText() {

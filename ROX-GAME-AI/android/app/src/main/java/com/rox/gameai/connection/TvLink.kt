@@ -106,9 +106,33 @@ class TvLink(private val context: Context, private val scope: CoroutineScope) {
     }
 
     /** Called with every OCR/translation result; sends only changes, refreshes TTL, clears when the dialogue is gone. */
+    private var lastItemsKey = ""; private var lastItemsAt = 0L
+
+    /**
+     * Positioned translations (menus, labels) drawn on the TV where the original text is.
+     * Coordinates are normalised to the 16:9 game picture inside the captured phone screen
+     * (Remote Play letterboxes the game; we remove the side bars).
+     */
+    fun onPositioned(list: List<TextOverlay>, frameW: Int, frameH: Int, now: Long = System.currentTimeMillis()) {
+        if (!_state.value.paired || frameW <= 0 || frameH <= 0) return
+        val gw: Float; val gh: Float; val ox: Float; val oy: Float
+        if (frameW.toFloat() / frameH > 16f / 9f) { gh = frameH.toFloat(); gw = gh * 16f / 9f; ox = (frameW - gw) / 2f; oy = 0f }
+        else { gw = frameW.toFloat(); gh = gw * 9f / 16f; ox = 0f; oy = (frameH - gh) / 2f }
+        val items = org.json.JSONArray()
+        list.filter { it.translated.isNotBlank() && it.kind != TextKind.DIALOG }.take(24).forEach { o ->
+            val l = (o.rect.left - ox) / gw; val t = (o.rect.top - oy) / gh; val r = (o.rect.right - ox) / gw; val b = (o.rect.bottom - oy) / gh
+            if (r <= 0f || b <= 0f || l >= 1f || t >= 1f) return@forEach
+            items.put(JSONObject().put("t", o.translated).put("l", l.toDouble()).put("tp", t.toDouble()).put("r", r.toDouble()).put("b", b.toDouble()).put("k", o.kind.name))
+        }
+        val key = items.toString()
+        if (key == lastItemsKey && now - lastItemsAt < 2000) return
+        lastItemsKey = key; lastItemsAt = now
+        send(JSONObject().put("type", "items").put("items", items).put("ttlMs", 3000))
+    }
+
     fun onOverlays(list: List<TextOverlay>, now: Long = System.currentTimeMillis()) {
         if (!_state.value.paired) return
-        val best = list.filter { it.translated.isNotBlank() }
+        val best = list.filter { it.translated.isNotBlank() && it.kind in setOf(TextKind.DIALOG, TextKind.MISSION, TextKind.NOTIFICATION, TextKind.SIGN) }
             .sortedBy { when (it.kind) { TextKind.DIALOG -> 0; TextKind.MISSION -> 1; TextKind.NOTIFICATION -> 2; TextKind.SIGN -> 3; else -> 4 } }
             .take(2)
         val text = best.joinToString("\n") { it.translated }

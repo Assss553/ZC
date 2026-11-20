@@ -17,6 +17,8 @@ object TvProtocol {
     sealed class Msg {
         data class Hello(val code: String, val device: String) : Msg()
         data class Subtitle(val text: String, val speaker: String, val kind: String, val ttlMs: Long, val id: Long) : Msg()
+        data class Item(val text: String, val l: Float, val t: Float, val r: Float, val b: Float, val kind: String)
+        data class Items(val items: List<Item>, val ttlMs: Long) : Msg()
         object Clear : Msg()
         object Ping : Msg()
         data class Unknown(val raw: String) : Msg()
@@ -28,6 +30,13 @@ object TvProtocol {
             "hello" -> Msg.Hello(j.optString("code"), j.optString("device", "Phone"))
             "subtitle" -> Msg.Subtitle(j.optString("text"), j.optString("speaker"), j.optString("kind", "DIALOG"),
                 j.optLong("ttlMs", 4000L).coerceIn(500L, 30_000L), j.optLong("id"))
+            "items" -> {
+                val a = j.optJSONArray("items")
+                Msg.Items((0 until (a?.length() ?: 0)).mapNotNull { i ->
+                    val o = a!!.optJSONObject(i) ?: return@mapNotNull null
+                    Msg.Item(o.optString("t"), o.optDouble("l").toFloat(), o.optDouble("tp").toFloat(), o.optDouble("r").toFloat(), o.optDouble("b").toFloat(), o.optString("k"))
+                }.filter { it.text.isNotBlank() && it.r > it.l && it.b > it.t }, j.optLong("ttlMs", 3000L).coerceIn(500L, 30_000L))
+            }
             "clear" -> Msg.Clear
             "ping" -> Msg.Ping
             else -> Msg.Unknown(raw)
