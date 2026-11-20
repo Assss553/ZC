@@ -511,6 +511,44 @@ def poster_laundry(seed):
         dr.text((130, y + 22), a, font=_font(64), fill=(20, 20, 24)); dr.text((540, y + 22), c, font=_font(64), fill=(255, 90, 31))
     return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
 
+def window_lit(seed, tone=(255, 196, 120)):
+    """Night window: warm lit room behind the glass, curtain / blind silhouettes, a lamp glow."""
+    from PIL import ImageDraw, ImageFilter
+    rng = np.random.default_rng(seed)
+    im = Image.new('RGB', (N, N), tuple(int(c * 0.55) for c in tone)); dr = ImageDraw.Draw(im)
+    for y in range(N):
+        v = 0.55 + 0.45 * (1 - abs(y / N - 0.35) * 1.4)
+        dr.line((0, y, N, y), fill=tuple(int(min(255, c * v)) for c in tone))
+    kind = seed % 4
+    if kind == 0:   # blinds half down
+        h = int(N * rng.uniform(0.2, 0.55))
+        for yy in range(0, h, 14): dr.rectangle((0, yy, N, yy + 9), fill=tuple(int(c * 0.9) for c in tone))
+    elif kind == 1:  # curtains both sides
+        for x0 in (0, N - int(N * 0.28)):
+            for k in range(6): dr.rectangle((x0 + k * N * 0.047, 0, x0 + k * N * 0.047 + N * 0.04, N), fill=(int(150 + 40 * (k % 2)), 60, 50))
+    elif kind == 2:  # shelf + plant silhouettes
+        dr.rectangle((0, int(N * 0.62), N, int(N * 0.66)), fill=(60, 40, 30))
+        for k in range(5): dr.rectangle((40 + k * 90, int(N * 0.5), 80 + k * 90, int(N * 0.62)), fill=(50, 35, 28))
+    else:            # ceiling lamp + figure
+        dr.ellipse((N // 2 - 40, 10, N // 2 + 40, 60), fill=(255, 250, 230))
+        dr.ellipse((N * 0.62, N * 0.38, N * 0.72, N * 0.5), fill=(40, 30, 28)); dr.rectangle((N * 0.6, N * 0.5, N * 0.74, N), fill=(40, 30, 28))
+    im = im.filter(ImageFilter.GaussianBlur(3))
+    a = np.asarray(im).astype(np.float64)
+    y, x = np.mgrid[0:N, 0:N] / N
+    refl = np.clip(0.18 * (1 - y) + 0.12 * np.clip(1 - np.abs(x - y * 0.7 - 0.2) * 5, 0, 1), 0, 1)
+    a = a * (1 - refl[:, :, None] * 0.5) + 200 * refl[:, :, None]
+    return dict(d=np.clip(a, 0, 255).astype(np.uint8))
+
+def window_night(seed):
+    y, x = np.mgrid[0:N, 0:N] / N
+    m = 0.6 + 0.4 * fbm(3.0, seed) - 0.2 * y
+    refl = np.clip(blur((fbm(2.4, seed + 1) > 0.6).astype(float), 10) * 1.2, 0, 1)
+    d = col((14, 18, 26)) * m[:, :, None] + col((60, 70, 90)) * refl[:, :, None]
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), s=spec_map(np.full((N, N), 0.9), np.full((N, N), 0.95)))
+
+def neon(text, color, seed, aspect=5, bg=(8, 6, 10)):
+    return sign_text(text, color, bg, seed, glow=True, aspect=aspect)
+
 def build_all():
     T = {}
     T['rox_paint_white'] = paint((232, 230, 224), 1)
@@ -577,6 +615,18 @@ def build_all():
     T['rox_neon_wash'] = sign_text('WASH · DRY · CHILL', (255, 90, 200), (8, 6, 12), 147, aspect=6)
     T['rox_neon_heart'] = sign_text('♥ CLEAN VIBES', (90, 230, 255), (8, 6, 12), 148, aspect=5)
     T['rox_blade_laundry'] = sign_text('LAUNDRY', (255, 255, 255), (20, 20, 24), 149, aspect=4, border=(255, 90, 31))
+    for i, tone in enumerate(((255, 196, 120), (255, 214, 160), (255, 180, 110), (220, 230, 255), (255, 200, 140), (255, 160, 100))):
+        T['rox_win_lit_%d' % i] = window_lit(200 + i, tone)
+    T['rox_win_night'] = window_night(210)
+    T['rox_brownstone'] = stone_blocks((120, 74, 58), 211)
+    T['rox_neon_deli'] = neon('DELI 24H', (255, 70, 60), 212)
+    T['rox_neon_pizza'] = neon("JOE'S PIZZA", (255, 200, 60), 213, aspect=6)
+    T['rox_neon_bar'] = neon('BAR', (80, 200, 255), 214, aspect=3)
+    T['rox_neon_hotel'] = neon('HOTEL ROX', (255, 80, 180), 215, aspect=5)
+    T['rox_neon_pharmacy'] = neon('PHARMACY', (80, 255, 140), 216, aspect=5)
+    T['rox_neon_cafe'] = neon('COFFEE', (255, 170, 80), 217, aspect=4)
+    T['rox_sign_subway'] = sign_text('SUBWAY', (255, 255, 255), (20, 110, 60), 218, glow=False, aspect=4, border=(255, 255, 255))
+    T['rox_sign_street'] = sign_text('ROX AVE', (255, 255, 255), (16, 120, 70), 219, glow=False, aspect=5, border=(255, 255, 255))
     T['rox_window_day'] = window_day(28)
     T['rox_window_dark'] = window_dark(29)
     T['rox_light_panel'] = light_panel(30)

@@ -264,6 +264,7 @@ def fire_escape(s, f, a0, a1, floors, fh, base):
 
 
 SHOPS = ('shop_market', 'shop_fashion', 'shop_cafe')
+LIT_RATE = 0.0      # share of upper windows that glow (night look); set by nyc.py
 
 
 def building(name, label, x0, y0, x1, y1, floors, wall='brick_red', base='stone', fh=3.4, gh=4.8, bay=3.4, win=(1.5, 1.9),
@@ -288,7 +289,8 @@ def building(name, label, x0, y0, x1, y1, floors, wall='brick_red', base='stone'
         f.wall(wall, gh, H, [h[:4] for h in holes])
         for (a0, z0, a1, z1, b, k) in holes:
             balc = side in balconies and b % 3 == 1
-            f.window(a0, a1, z0, z1, wall, frame=frame, ac=(not balc) and rnd.random() < ac_rate)
+            lit = rnd.random() < LIT_RATE
+            f.window(a0, a1, z0, z1, wall, frame=frame, ac=(not balc) and rnd.random() < ac_rate, glass=('win_lit_%d' % rnd.randrange(6)) if lit else ('win_night' if LIT_RATE else 'window_dark'))
             if rnd.random() < 0.3:                                    # half drawn blind
                 f.box('fabric' if rnd.random() < 0.5 else 'trim', a0 + 0.05, a1 - 0.05, z1 - rnd.uniform(0.4, 1.1), z1 - 0.05, -0.19, -0.185)
             if balc:
