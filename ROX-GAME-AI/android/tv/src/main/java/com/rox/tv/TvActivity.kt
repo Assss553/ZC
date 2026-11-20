@@ -44,6 +44,8 @@ class TvActivity : Activity() {
     private var enabled = true
     private var showDiag = true
     private var mode = "A"
+    private var received = 0
+    private var lastReceived = "—"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,6 +132,7 @@ class TvActivity : Activity() {
     }
 
     private fun show(text: String) {
+        if (text.isNotBlank()) { received++; lastReceived = text.take(60); render() }
         val t = if (enabled) text else ""
         Ui.applyText(subtitle, t)
         Bus.publish(t)
@@ -155,7 +158,8 @@ class TvActivity : Activity() {
         diag.text = buildString {
             append("ROX TV   •   ${ip()}:${TvProtocol.PORT}\n")
             append("PAIRING CODE:  ${server.code}\n")
-            append("Phone: $phoneStatus\n\n")
+            append("Phone: $phoneStatus\n")
+            append("Subtitles: ${if (enabled) "ON" else "OFF (press OK)"}   received: $received   last: $lastReceived\n\n")
             append("HDMI inputs: ${if (hdmiInputs.isEmpty()) "none visible to apps" else hdmiInputs.joinToString { label(it) }}\n")
             append("Mode A (HDMI inside ROX): $modeA\n")
             append("Mode B (window over TV's HDMI app): $modeB\n\n")
@@ -166,7 +170,7 @@ class TvActivity : Activity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { enabled = !enabled; show(server.state.text) }
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { enabled = !enabled; Ui.applyText(subtitle, if (enabled) server.state.text else ""); render() }
             KeyEvent.KEYCODE_DPAD_UP -> { Ui.sizeSp = (Ui.sizeSp + 2).coerceAtMost(60f); show(subtitle.text.toString()) }
             KeyEvent.KEYCODE_DPAD_DOWN -> { Ui.sizeSp = (Ui.sizeSp - 2).coerceAtLeast(14f); show(subtitle.text.toString()) }
             KeyEvent.KEYCODE_DPAD_LEFT -> { Ui.alpha = (Ui.alpha - 0.1f).coerceAtLeast(0.2f); show(subtitle.text.toString()) }

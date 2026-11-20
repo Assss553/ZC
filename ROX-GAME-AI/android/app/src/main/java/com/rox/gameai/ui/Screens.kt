@@ -546,6 +546,6 @@ fun TvCard(app: RoxApp) {
             Spacer(Modifier.width(8.dp))
             SecondaryButton(t("Pair", "اقتران")) { if (host.isNotBlank() && code.length == 6) app.tv.connect(com.rox.gameai.connection.TvLink.Tv("ROX TV", host.trim(), 9770), code) }
         }
-        if (st.paired) SecondaryButton(t("Send test subtitle", "إرسال ترجمة تجريبية")) { app.tv.sendSubtitle("هذه ترجمة تجريبية من الجوال إلى التلفزيون ✓", "ROX") }
+        if (st.paired) SecondaryButton(t("Send test subtitle", "إرسال ترجمة تجريبية")) { app.tv.sendSubtitle("هذه ترجمة تجريبية من الجوال إلى التلفزيون ✓ (${System.currentTimeMillis() % 1000})", "ROX", ttlMs = 10_000) }
     }
 }

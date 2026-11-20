@@ -119,8 +119,8 @@ class TvLink(private val context: Context, private val scope: CoroutineScope) {
         }
     }
 
-    fun sendSubtitle(text: String, speaker: String = "", kind: String = "DIALOG") {
-        send(JSONObject().put("type", "subtitle").put("text", text).put("speaker", speaker).put("kind", kind).put("ttlMs", 4500).put("id", ++seq))
+    fun sendSubtitle(text: String, speaker: String = "", kind: String = "DIALOG", ttlMs: Long = 4500) {
+        send(JSONObject().put("type", "subtitle").put("text", text).put("speaker", speaker).put("kind", kind).put("ttlMs", ttlMs).put("id", ++seq))
         _state.value = _state.value.copy(sent = _state.value.sent + 1, lastSent = text)
     }
 
