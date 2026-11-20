@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 /** Phone → ROX TV link: finds the TV with NSD (mDNS), pairs with the 6-digit code shown on the TV, sends subtitles. */
 class TvLink(private val context: Context, private val scope: CoroutineScope) {
     data class Tv(val name: String, val host: String, val port: Int)
-    data class State(val connected: Boolean = false, val paired: Boolean = false, val tv: Tv? = null, val message: String = "", val mode: String = "", val sent: Int = 0, val lastSent: String = "")
+    data class State(val connected: Boolean = false, val paired: Boolean = false, val tv: Tv? = null, val message: String = "", val mode: String = "", val sent: Int = 0, val lastSent: String = "", val acked: Int = 0, val shownOnTv: Boolean? = null)
 
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state
@@ -90,6 +90,11 @@ class TvLink(private val context: Context, private val scope: CoroutineScope) {
                 val j = runCatching { JSONObject(text) }.getOrNull() ?: return
                 when (j.optString("type")) {
                     "welcome" -> { _state.value = _state.value.copy(paired = true, mode = j.optString("mode")); RoxLog.i("TV", "Paired with ${tv.name} (${tv.host})"); lastText = "" }
+                    "ack" -> {
+                        val shown = j.optBoolean("shown")
+                        _state.value = _state.value.copy(acked = _state.value.acked + 1, shownOnTv = shown)
+                        if (!shown) RoxLog.w("TV", "TV received the subtitle but it is NOT visible on screen (subtitles off, or hidden under the HDMI picture)")
+                    }
                     "error" -> { _state.value = _state.value.copy(paired = false, message = j.optString("reason")); RoxLog.w("TV", "TV refused: ${j.optString("reason")}") }
                 }
             }

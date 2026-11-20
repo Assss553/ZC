@@ -528,7 +528,7 @@ fun TvCard(app: RoxApp) {
     RoxCard(t("ROX TV (show translation on the TV)", "ROX TV (عرض الترجمة على التلفزيون)")) {
         StatusTile(
             when { st.paired -> t("Paired with TV", "مقترن بالتلفزيون"); st.connected -> t("Connected — waiting for code", "متصل — بانتظار الرمز"); st.message.isNotBlank() -> st.message; else -> t("Not connected", "غير متصل") },
-            st.tv?.let { "${it.name} · ${it.host}" + if (st.paired) " · Mode ${st.mode} · ${t("sent", "مرسل")} ${st.sent}" else "" } ?: "—", st.paired)
+            st.tv?.let { "${it.name} · ${it.host}" + if (st.paired) " · Mode ${st.mode} · ${t("sent", "مرسل")} ${st.sent} · ${t("received by TV", "وصل للتلفزيون")} ${st.acked} · " + when (st.shownOnTv) { true -> t("visible ✓", "ظاهرة ✓"); false -> t("NOT visible ✗", "غير ظاهرة ✗"); null -> "—" } else "" } ?: "—", st.paired)
         Note(t("Open ROX TV on the Android TV (same Wi-Fi). Enter the 6-digit code shown on the TV.", "افتح تطبيق ROX TV على تلفزيون Android (نفس الشبكة)، ثم اكتب الرمز المكوّن من 6 أرقام الظاهر على التلفزيون."))
         RoxField(code, t("TV code (6 digits)", "رمز التلفزيون (6 أرقام)"), { code = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth())
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -45,12 +45,13 @@ class TvActivity : Activity() {
     private var showDiag = true
     private var mode = "A"
     private var received = 0
+    private lateinit var rootView: FrameLayout
     private var lastReceived = "—"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
-        tvView = TvView(this)
+        tvView = TvView(this).apply { isFocusable = false; isFocusableInTouchMode = false; descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS }
         root.addView(tvView, FrameLayout.LayoutParams(-1, -1))
         subtitle = Ui.subtitleView(this)
         root.addView(subtitle, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = 60 })
@@ -59,13 +60,16 @@ class TvActivity : Activity() {
             setBackgroundColor(Color.argb(205, 10, 10, 10))
         }
         root.addView(diag, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START).apply { setMargins(30, 30, 30, 30) })
+        subtitle.elevation = 50f; diag.elevation = 40f
         setContentView(root)
+        rootView = root
 
         multicast = getSystemService(WifiManager::class.java)?.createMulticastLock("roxtv")?.apply { setReferenceCounted(false); acquire() }
         val code = getPreferences(MODE_PRIVATE).getString("code", null)?.let { TvProtocol.asciiDigits(it) } ?: TvProtocol.newCode().also { getPreferences(MODE_PRIVATE).edit().putString("code", it).apply() }
         server = SubtitleServer.get(this, code)
         server.mode = { mode }
         server.onChange = { text -> if (text.isNotBlank()) { received++; lastReceived = text.take(60); render() }; show(text) }
+        server.isShown = { if (enabled) subtitleShown() else false }
         server.onStatus = { phoneStatus = it; render() }
         phoneStatus = server.lastStatus
         if (checkSelfPermission("android.permission.READ_TV_LISTINGS") != android.content.pm.PackageManager.PERMISSION_GRANTED)
@@ -134,8 +138,12 @@ class TvActivity : Activity() {
     private fun show(text: String) {
         val t = if (enabled) text else ""
         Ui.applyText(subtitle, t)
+        subtitle.bringToFront(); rootView.requestLayout(); rootView.invalidate()
         Bus.publish(t)
     }
+
+    /** Reported back to the phone so it can show whether the subtitle is really on screen. */
+    fun subtitleShown(): Boolean = subtitle.isShown && subtitle.width > 0 && subtitle.height > 0
 
     private fun label(i: TvInputInfo) = runCatching { i.loadLabel(this).toString() }.getOrDefault(i.id)
 
@@ -158,13 +166,27 @@ class TvActivity : Activity() {
             append("ROX TV   •   ${ip()}:${TvProtocol.PORT}\n")
             append("PAIRING CODE:  ${server.code}\n")
             append("Phone: $phoneStatus\n")
-            append("Subtitles: ${if (enabled) "ON" else "OFF (press OK)"}   received: $received   last: $lastReceived\n\n")
+            append("Subtitles: ${if (enabled) "ON" else "OFF (press OK)"}   received: $received   last: $lastReceived   key: $lastKey\n\n")
             append("HDMI inputs: ${if (hdmiInputs.isEmpty()) "none visible to apps" else hdmiInputs.joinToString { label(it) }}\n")
             append("Mode A (HDMI inside ROX): $modeA\n")
             append("Mode B (window over TV's HDMI app): $modeB\n\n")
             append("Remote:  OK = subtitles on/off   ▲▼ = size   ◀▶ = transparency\n")
             append("1 = Mode A   2 = Mode B   3 = next HDMI   0 = test subtitle   MENU/INFO = hide this panel")
         }
+    }
+
+    private val ourKeys = setOf(KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_3,
+        KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED, KeyEvent.KEYCODE_PROG_GREEN)
+    private var lastKey = "—"
+
+    /** TvView forwards remote keys to the HDMI input; take ours first. */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode in ourKeys) {
+            if (event.action == KeyEvent.ACTION_DOWN) { lastKey = KeyEvent.keyCodeToString(event.keyCode).removePrefix("KEYCODE_"); onKeyDown(event.keyCode, event); render() }
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {

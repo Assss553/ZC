@@ -16,6 +16,7 @@ class SubtitleServer private constructor(private val context: Context, val code:
     var mode: () -> String = { "A" }
     var onChange: (text: String) -> Unit = {}
     var onStatus: (String) -> Unit = {}
+    var isShown: () -> Boolean = { false }
     @Volatile var lastStatus = "starting…"; private set
 
     companion object {
@@ -46,7 +47,11 @@ class SubtitleServer private constructor(private val context: Context, val code:
                             conn.send(TvProtocol.welcome("ROX TV", mode())); clients = connections.count { state.isPaired(it) }
                             status("phone connected: ${m.device}")
                         } else { conn.send(TvProtocol.error("bad_code")); status("wrong pairing code from phone") }
-                        is TvProtocol.Msg.Subtitle -> if (state.onSubtitle(conn, m, System.currentTimeMillis())) onChange(state.text)
+                        is TvProtocol.Msg.Subtitle -> {
+                            if (state.onSubtitle(conn, m, System.currentTimeMillis())) onChange(state.text)
+                            // Ack after layout so the phone learns whether the text is really visible
+                            main.postDelayed({ runCatching { conn.send("{\"type\":\"ack\",\"id\":${m.id},\"shown\":${isShown()}}") } }, 300)
+                        }
                         TvProtocol.Msg.Clear -> if (state.onClear(conn)) onChange("")
                         TvProtocol.Msg.Ping -> conn.send("{\"type\":\"pong\"}")
                         is TvProtocol.Msg.Unknown -> Log.w("ROXTV", "unknown msg")
