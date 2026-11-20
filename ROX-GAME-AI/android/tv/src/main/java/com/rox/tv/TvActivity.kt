@@ -65,7 +65,7 @@ class TvActivity : Activity() {
         val code = getPreferences(MODE_PRIVATE).getString("code", null)?.let { TvProtocol.asciiDigits(it) } ?: TvProtocol.newCode().also { getPreferences(MODE_PRIVATE).edit().putString("code", it).apply() }
         server = SubtitleServer.get(this, code)
         server.mode = { mode }
-        server.onChange = ::show
+        server.onChange = { text -> if (text.isNotBlank()) { received++; lastReceived = text.take(60); render() }; show(text) }
         server.onStatus = { phoneStatus = it; render() }
         phoneStatus = server.lastStatus
         if (checkSelfPermission("android.permission.READ_TV_LISTINGS") != android.content.pm.PackageManager.PERMISSION_GRANTED)
@@ -132,7 +132,6 @@ class TvActivity : Activity() {
     }
 
     private fun show(text: String) {
-        if (text.isNotBlank()) { received++; lastReceived = text.take(60); render() }
         val t = if (enabled) text else ""
         Ui.applyText(subtitle, t)
         Bus.publish(t)
