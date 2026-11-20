@@ -61,8 +61,11 @@ class TvActivity : Activity() {
 
         multicast = getSystemService(WifiManager::class.java)?.createMulticastLock("roxtv")?.apply { setReferenceCounted(false); acquire() }
         val code = getPreferences(MODE_PRIVATE).getString("code", null)?.let { TvProtocol.asciiDigits(it) } ?: TvProtocol.newCode().also { getPreferences(MODE_PRIVATE).edit().putString("code", it).apply() }
-        server = SubtitleServer(this, code, { mode }, onChange = ::show, onStatus = { phoneStatus = it; render() })
-        server.start()
+        server = SubtitleServer.get(this, code)
+        server.mode = { mode }
+        server.onChange = ::show
+        server.onStatus = { phoneStatus = it; render() }
+        phoneStatus = server.lastStatus
         if (checkSelfPermission("android.permission.READ_TV_LISTINGS") != android.content.pm.PackageManager.PERMISSION_GRANTED)
             runCatching { requestPermissions(arrayOf("android.permission.READ_TV_LISTINGS"), 1) }
         findInputs()
@@ -179,7 +182,7 @@ class TvActivity : Activity() {
     }
 
     override fun onDestroy() {
-        server.stop()
+        server.onChange = {}; server.onStatus = {}  // keep the server running for the phone
         runCatching { tvView.reset() }
         multicast?.release()
         super.onDestroy()

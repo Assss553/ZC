@@ -12,13 +12,19 @@ import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
 
 /** Local WebSocket server on the TV + mDNS/NSD advertisement so the phone finds it automatically. */
-class SubtitleServer(
-    private val context: Context,
-    val code: String,
-    private val mode: () -> String,
-    private val onChange: (text: String) -> Unit,
-    private val onStatus: (String) -> Unit,
-) {
+class SubtitleServer private constructor(private val context: Context, val code: String) {
+    var mode: () -> String = { "A" }
+    var onChange: (text: String) -> Unit = {}
+    var onStatus: (String) -> Unit = {}
+    @Volatile var lastStatus = "starting…"; private set
+
+    companion object {
+        @Volatile private var instance: SubtitleServer? = null
+        /** One server per process: re-opening ROX TV re-attaches instead of binding port 9770 twice. */
+        @Synchronized fun get(context: Context, code: String): SubtitleServer =
+            instance ?: SubtitleServer(context.applicationContext, code).also { instance = it; it.start() }
+    }
+
     private val main = Handler(Looper.getMainLooper())
     val state = SubtitleState(code)
     private var server: WebSocketServer? = null
@@ -26,7 +32,7 @@ class SubtitleServer(
     private var reg: NsdManager.RegistrationListener? = null
     @Volatile var clients = 0; private set
 
-    fun start() {
+    private fun start() {
         val s = object : WebSocketServer(InetSocketAddress(TvProtocol.PORT)) {
             override fun onOpen(conn: WebSocket, handshake: ClientHandshake) { status("phone connecting…") }
             override fun onClose(conn: WebSocket, code: Int, reason: String?, remote: Boolean) {
@@ -52,7 +58,7 @@ class SubtitleServer(
         }
         s.isReuseAddr = true
         s.connectionLostTimeout = 10
-        s.start()
+        try { s.start() } catch (t: Throwable) { status("server error: ${t.message}") }
         server = s
         // Auto-hide expired subtitles
         main.post(object : Runnable { override fun run() { if (state.tick(System.currentTimeMillis())) onChange(""); main.postDelayed(this, 250) } })
@@ -71,7 +77,7 @@ class SubtitleServer(
         runCatching { nsd?.registerService(info, NsdManager.PROTOCOL_DNS_SD, l); reg = l }
     }
 
-    private fun status(s: String) = main.post { onStatus(s) }
+    private fun status(s: String) = main.post { lastStatus = s; onStatus(s) }
 
     fun stop() {
         runCatching { reg?.let { nsd?.unregisterService(it) } }
