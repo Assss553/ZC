@@ -12,11 +12,15 @@ TXD = 'rox_nyc_txd'
 AV, ST = 9.0, 7.0        # half widths of the avenue (along Y) and the street (along X)
 SW = 6.0                 # pavement width
 E = 80.0                 # half size of the whole map
-for k in ('shop_market', 'shop_fashion', 'shop_cafe'):      # shops glow at night
-    MATS[k + '_lit'] = dict(MATS[k], sh='e', emis=1.8)
-SHOPS = ('shop_market_lit', 'shop_fashion_lit', 'shop_cafe_lit')
 NEON = ('neon_deli', 'neon_pizza', 'neon_bar', 'neon_hotel', 'neon_pharmacy', 'neon_cafe')
-POINTS = dict(steam=[], parking=[], trees=[], lamps=[], corners=[])
+INSIDE = {'neon_deli': 'shopr_deli', 'neon_pizza': 'shopr_pizza', 'neon_bar': 'shopr_bar', 'neon_hotel': 'shopr_boutique',
+          'neon_pharmacy': 'shopr_deli', 'neon_cafe': 'shopr_cafe', 'neon_burger': 'shopr_burger', 'neon_slice': 'shopr_pizza'}
+# small restaurants: (name, neon sign, awning)
+RESTAURANTS = [('ROX Pizza', 'neon_slice', 'awning_pizza'), ('ROX Burger', 'neon_burger', 'awning_navy'),
+               ('ROX Coffee', 'neon_cafe', 'awning_cafe'), ("Joe's Pizza", 'neon_pizza', 'awning_pizza'),
+               ('Corner Deli', 'neon_deli', 'awning_green'), ('Night Bar', 'neon_bar', 'awning_navy'),
+               ('ROX Burger 2', 'neon_burger', 'awning_pizza'), ('Bean Cafe', 'neon_cafe', 'awning_cafe')]
+POINTS = dict(steam=[], parking=[], trees=[], lamps=[], corners=[], dining=[])
 
 
 def nyc_piece(name, label):
@@ -145,10 +149,24 @@ def blocks():
             fx, fy = AV + SW, ST + SW          # building line
             lots = [  # (x0, y0, x1, y1) in the quadrant's positive frame: x along street, y along avenue
                 (fx, fy, fx + 22, fy + 22, 'corner'),
-                (fx + 24, fy, fx + 40, fy + 18, 'street'), (fx + 42, fy, E - 4, fy + 20, 'street'),
+                (fx + 23.5, fy, fx + 33, fy + 14, 'resto'), (fx + 34.5, fy, fx + 44, fy + 14, 'resto'), (fx + 46, fy, E - 4, fy + 20, 'street'),
                 (fx, fy + 24, fx + 18, fy + 42, 'avenue'), (fx, fy + 44, fx + 20, E - 4, 'avenue'),
             ]
             for (a, b, c, d, kind) in lots:
+                if kind == 'resto':
+                    x0, x1 = sorted((sx * a, sx * c)); y0, y1 = sorted((sy * b, sy * d))
+                    name, sg, aw = RESTAURANTS[len([o for o in out if getattr(o, 'resto', False)]) % len(RESTAURANTS)]
+                    n += 1; face_y = 'S' if sy > 0 else 'N'
+                    st = styles[rng.randrange(len(styles))]
+                    r = building('rox_nyc_b%02d' % n, name, x0, y0, x1, y1, rng.choice((2, 3, 3, 4)), wall=st['wall'], base='stone', gh=4.4, bay=3.0,
+                                 shop_sides=face_y, sign=(sg,), awning=aw, pilasters=False, seed=100 + n, tank=False, shops=(INSIDE[sg],), ac_rate=0.4,
+                                 blade=(sg, 'W' if sx > 0 else 'E') if False else None)
+                    r.txd, r.lod, r.resto = TXD, 1500, True
+                    out.append(r)
+                    # pavement terrace in front (GTA tables, chairs, parasols spawned by rox_nyc)
+                    yy = sy * (ST + 3.4); xc = (x0 + x1) / 2
+                    for dx in (-2.4, 2.4): POINTS['dining'].append((xc + dx, yy, 0.0))
+                    continue
                 x0, x1 = sorted((sx * a, sx * c)); y0, y1 = sorted((sy * b, sy * d))
                 face_x = 'W' if sx > 0 else 'E'; face_y = 'S' if sy > 0 else 'N'
                 sides = face_x + face_y if kind == 'corner' else (face_y if kind == 'street' else face_x)
@@ -160,7 +178,7 @@ def blocks():
                               shop_sides=sides, sign=(sg, NEON[(NEON.index(sg) + 2) % len(NEON)]), awning=('awning_red', 'awning_green')[n % 2],
                               escape=(face_y if kind == 'avenue' else face_x) if floors >= 5 and rng.random() < 0.7 else None,
                               pilasters=st['wall'] != 'brownstone', seed=100 + n, tank=floors >= 7 and rng.random() < 0.7,
-                              balconies=(face_x if kind == 'street' else '') if rng.random() < 0.3 else '', shops=SHOPS,
+                              balconies=(face_x if kind == 'street' else '') if rng.random() < 0.3 else '', shops=(INSIDE[sg],),
                               blade=('neon_hotel', face_y if sy > 0 else face_y) if kind == 'corner' and rng.random() < 0.5 else None,
                               billboard=face_y if kind == 'corner' and floors <= 10 and rng.random() < 0.5 else None)
                 b_.txd, b_.lod = TXD, 1500

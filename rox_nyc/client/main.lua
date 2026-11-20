@@ -61,6 +61,13 @@ local function spawn()
     prop(P.hotdog, 18.0, -10.0, 0.16, 0.0); prop(P.busstop, -11.6, 52.0, 0.16, 270.0)
     prop(P.dumpster, -60.0, 10.0, 0.16, 180.0); prop(P.dumpster, 62.0, -10.2, 0.16, 0.0)
     for k = 0, 3 do prop(P.cone, 4.0 + k * 1.2, -40.0, 0.0, 0.0) end
+    -- restaurant terraces: table, 4 chairs, parasol (+ a heater on every second one)
+    for i, p in ipairs(NycPoints.dining or {}) do
+        prop(P.rtable, p[1], p[2], kerb, 0.0)
+        for k = 0, 3 do local a = math.rad(k * 90.0); prop(P.rchair, p[1] + math.sin(a) * 0.75, p[2] + math.cos(a) * 0.75, kerb, (k * 90.0 + 180.0) % 360.0) end
+        prop(P.parasol, p[1], p[2], kerb, 0.0)
+        if i % 2 == 0 then prop(P.heater, p[1] + 1.6, p[2], kerb, 0.0) end
+    end
     -- parked cars
     if Config.ParkedCars then
         math.randomseed(7)

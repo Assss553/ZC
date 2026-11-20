@@ -1,7 +1,7 @@
 # ROX NYC (© ROX Store)
 
 New York style crossroads at night: 4-lane avenue × 2-lane street, ladder crossings, stop bars, manholes with steam,
-subway entrance, 20 brick / brownstone / stone building exteriors (lit windows, neon shop signs, awnings,
+subway entrance, 20 brick / brownstone / stone building exteriors + 8 small restaurants (pizza, burger, coffee, deli, bar) with lit interiors and pavement terraces, (lit windows, neon shop signs, awnings,
 fire escapes, water tanks, rooftop AC, billboards). Exteriors only – no interiors.
 
 Street furniture is **real GTA props** (`config.lua` → `Config.Props`): street lights, traffic lights, trees,

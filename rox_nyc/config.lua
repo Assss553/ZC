@@ -29,4 +29,9 @@ Config.Props = {
     cone     = { 'prop_roadcone02a', 'prop_mp_cone_01' },
     busstop  = { 'prop_busstop_02', 'prop_busstop_04' },
     sign     = { 'prop_sign_road_01a', 'prop_sign_road_03a' },
+    -- restaurant terraces
+    rtable   = { 'prop_table_03', 'prop_table_01' },
+    rchair   = { 'prop_chair_04a', 'prop_chair_01a', 'prop_chair_08' },
+    parasol  = { 'prop_parasol_04', 'prop_parasol_01' },
+    heater   = { 'prop_patio_heater_01' },
 }

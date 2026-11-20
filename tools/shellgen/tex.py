@@ -549,6 +549,84 @@ def window_night(seed):
 def neon(text, color, seed, aspect=5, bg=(8, 6, 10)):
     return sign_text(text, color, bg, seed, glow=True, aspect=aspect)
 
+def shop_real(kind, seed):
+    """Photo-like lit shop interior seen through glass at night (perspective room, blurred depth, reflections)."""
+    from PIL import ImageDraw, ImageFilter
+    S = 1024; rng = np.random.default_rng(seed)
+    pal = dict(deli=((236, 240, 236), (210, 222, 230)), pizza=((255, 196, 130), (120, 60, 30)), burger=((255, 214, 170), (150, 30, 30)),
+               cafe=((255, 206, 150), (90, 58, 36)), boutique=((250, 240, 230), (40, 40, 44)), bar=((255, 150, 90), (40, 20, 18)))[kind]
+    light, dark = pal
+    im = Image.new('RGB', (S, S), tuple(int(c * 0.45) for c in light)); dr = ImageDraw.Draw(im)
+    vx, vy = S * (0.45 + rng.uniform(-0.08, 0.08)), S * 0.42          # vanishing point
+    bw = (S * 0.30, S * 0.24, S * 0.70, S * 0.58)                      # back wall rectangle
+    # back wall, ceiling, floor, side walls in perspective
+    dr.polygon([(0, 0), (S, 0), (bw[2], bw[1]), (bw[0], bw[1])], fill=tuple(int(c * 0.82) for c in light))
+    dr.polygon([(0, S), (S, S), (bw[2], bw[3]), (bw[0], bw[3])], fill=tuple(int(c * 0.35) for c in dark))
+    dr.polygon([(0, 0), (bw[0], bw[1]), (bw[0], bw[3]), (0, S)], fill=tuple(int(c * 0.6) for c in light))
+    dr.polygon([(S, 0), (bw[2], bw[1]), (bw[2], bw[3]), (S, S)], fill=tuple(int(c * 0.55) for c in light))
+    dr.rectangle(bw, fill=tuple(int(c * 0.9) for c in light))
+    for k in range(9):                                                  # floor tiles lines
+        t = k / 9; y = bw[3] + (S - bw[3]) * t ** 1.6
+        dr.line((0, y, S, y), fill=tuple(int(c * 0.28) for c in dark), width=2)
+    for k in range(5):                                                  # ceiling light strips converging
+        t = (k + 1) / 6; y = bw[1] * (1 - t ** 0.7)
+        x0, x1 = bw[0] * (1 - t ** 0.7) + 0, S - (S - bw[2]) * (1 - t ** 0.7)
+        dr.rectangle((x0 + (vx - x0) * 0.15, y, x1 - (x1 - vx) * 0.15, y + max(3, 14 * (1 - t))), fill=(255, 252, 240))
+    def side_shelves(left):
+        for row in range(5):
+            z0, z1 = 0.28 + row * 0.11, 0.33 + row * 0.11
+            n = 26
+            for i in range(n):
+                t0, t1 = i / n, (i + 0.8) / n
+                def P(t, z):
+                    xs = (0 if left else S) + ((bw[0] if left else bw[2]) - (0 if left else S)) * t
+                    top = 0 + (bw[1] - 0) * t; bot = S + (bw[3] - S) * t
+                    return xs, top + (bot - top) * z
+                a, b, c, d = P(t0, z0), P(t1, z0), P(t1, z1), P(t0, z1)
+                col_ = tuple(int(0.55 * v + 0.45 * l) for v, l in zip(rng.integers(40, 230, 3), light)) if kind in ('deli', 'boutique') else tuple(int(v * rng.uniform(0.5, 1.0)) for v in (light if rng.random() < 0.5 else dark))
+                dr.polygon([a, b, c, d], fill=col_)
+    if kind in ('deli', 'boutique', 'cafe', 'bar'):
+        side_shelves(True); side_shelves(False)
+    if kind == 'deli':                                                   # glowing drink fridges on the back wall
+        for k in range(4):
+            x0 = bw[0] + 6 + k * (bw[2] - bw[0] - 12) / 4
+            dr.rectangle((x0, bw[1] + 10, x0 + (bw[2] - bw[0]) / 4 - 10, bw[3] - 6), fill=(230, 245, 255))
+            for r in range(6):
+                for c in range(5):
+                    dr.rectangle((x0 + 6 + c * 16, bw[1] + 18 + r * 26, x0 + 16 + c * 16, bw[1] + 38 + r * 26), fill=tuple(int(v) for v in rng.integers(60, 255, 3)))
+    if kind == 'pizza':                                                  # brick oven with fire, menu boards, counter
+        ox = (bw[0] + bw[2]) / 2; dr.rectangle((ox - 150, bw[1] + 40, ox + 150, bw[3]), fill=(120, 56, 36))
+        dr.pieslice((ox - 90, bw[1] + 120, ox + 90, bw[1] + 300), 180, 360, fill=(255, 150, 40)); dr.rectangle((ox - 90, bw[1] + 210, ox + 90, bw[1] + 240), fill=(255, 120, 30))
+        for k in range(3): dr.rectangle((bw[0] + 10 + k * 140, bw[1] + 8, bw[0] + 130 + k * 140, bw[1] + 60), fill=(26, 24, 22))
+    if kind == 'burger':
+        for k in range(4):
+            x0 = k * S / 4 + 20; dr.rounded_rectangle((x0, S * 0.62, x0 + S / 4 - 40, S * 0.86), 30, fill=(170, 28, 30))
+        dr.rectangle((bw[0], bw[1] + 10, bw[2], bw[1] + 70), fill=(30, 26, 26))
+    if kind == 'bar':
+        for k in range(30): x0 = bw[0] + k * (bw[2] - bw[0]) / 30; dr.rectangle((x0, bw[1] + 40, x0 + 8, bw[1] + 90), fill=tuple(int(v) for v in rng.integers(80, 255, 3)))
+    # counter in front
+    dr.rectangle((S * 0.18, S * 0.66, S * 0.9, S * 0.8), fill=tuple(int(c * 0.55) for c in dark)); dr.rectangle((S * 0.18, S * 0.645, S * 0.9, S * 0.665), fill=tuple(int(min(255, c * 1.1)) for c in light))
+    # pendant lamps / bokeh
+    for k in range(5):
+        x = S * (0.15 + 0.17 * k); dr.line((x, 0, x, S * 0.16), fill=(30, 30, 30), width=3); dr.ellipse((x - 28, S * 0.15, x + 28, S * 0.2), fill=(255, 236, 190))
+    im = im.filter(ImageFilter.GaussianBlur(2.2))
+    a = np.asarray(im).astype(np.float64)
+    bloom = np.asarray(im.filter(ImageFilter.GaussianBlur(24))).astype(np.float64)
+    a = a + 0.35 * np.clip(bloom - 150, 0, 255)
+    y, x = np.mgrid[0:S, 0:S] / S
+    vig = 1 - 0.35 * ((x - 0.5) ** 2 + (y - 0.45) ** 2) * 2
+    refl = np.clip(0.22 * np.clip(1 - np.abs(x - y * 0.55 - 0.15) * 4, 0, 1) + 0.12 * (1 - y), 0, 1)
+    a = a * vig[:, :, None] * (1 - 0.35 * refl[:, :, None]) + 255 * 0.35 * refl[:, :, None]
+    a = np.asarray(Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).resize((N, N), Image.LANCZOS))
+    return dict(d=a)
+
+def awning_stripe(c1, c2, seed, n=10):
+    y, x = np.mgrid[0:N, 0:N] / N
+    st = (np.floor(x * n) % 2).astype(float)
+    m = 0.9 + 0.12 * fbm(2.4, seed) + 0.05 * np.cos(y * 2 * np.pi * 3)
+    d = mix(col(c1) * np.ones((N, N, 1)), col(c2) * np.ones((N, N, 1)), st) * m[:, :, None]
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(fbm(2.0, seed + 1), 0.15))
+
 def build_all():
     T = {}
     T['rox_paint_white'] = paint((232, 230, 224), 1)
@@ -627,6 +705,14 @@ def build_all():
     T['rox_neon_cafe'] = neon('COFFEE', (255, 170, 80), 217, aspect=4)
     T['rox_sign_subway'] = sign_text('SUBWAY', (255, 255, 255), (20, 110, 60), 218, glow=False, aspect=4, border=(255, 255, 255))
     T['rox_sign_street'] = sign_text('ROX AVE', (255, 255, 255), (16, 120, 70), 219, glow=False, aspect=5, border=(255, 255, 255))
+    for i, k in enumerate(('deli', 'pizza', 'burger', 'cafe', 'boutique', 'bar')):
+        T['rox_shopr_' + k] = shop_real(k, 300 + i)
+    T['rox_awning_pizza'] = awning_stripe((190, 30, 30), (240, 236, 226), 310)
+    T['rox_awning_cafe'] = awning_stripe((30, 70, 50), (226, 220, 200), 311)
+    T['rox_awning_navy'] = awning_stripe((30, 40, 80), (226, 220, 200), 312, n=8)
+    T['rox_neon_burger'] = neon('ROX BURGER', (255, 210, 60), 313, aspect=6)
+    T['rox_neon_slice'] = neon('PIZZA  BY THE SLICE', (255, 90, 60), 314, aspect=7)
+    T['rox_neon_open'] = neon('OPEN', (255, 60, 80), 315, aspect=3)
     T['rox_window_day'] = window_day(28)
     T['rox_window_dark'] = window_dark(29)
     T['rox_light_panel'] = light_panel(30)
