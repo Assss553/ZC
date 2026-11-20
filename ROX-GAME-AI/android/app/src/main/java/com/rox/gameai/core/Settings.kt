@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.StateFlow
 
 class SettingsRepo(context: Context) {
     private val p = context.getSharedPreferences("rox_settings", Context.MODE_PRIVATE)
+    init {
+        // v2 migration: voice translation must be opt-in (older builds had it on, which kept the mic chime looping)
+        if (p.getInt("settingsVersion", 1) < 2) { p.edit().putBoolean("voiceEnabled", false).putInt("settingsVersion", 2).apply() }
+    }
     private val _state = MutableStateFlow(load())
     val state: StateFlow<AiSettings> = _state
     val value: AiSettings get() = _state.value

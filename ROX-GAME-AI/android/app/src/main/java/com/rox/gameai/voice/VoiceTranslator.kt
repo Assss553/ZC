@@ -56,6 +56,7 @@ class VoiceTranslator(
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     @Volatile private var forceService = false
+    private var failures = 0
 
     fun isRecognitionAvailable() = SpeechRecognizer.isRecognitionAvailable(context)
 
@@ -158,6 +159,7 @@ class VoiceTranslator(
                 partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let { if (it.isNotBlank()) onPartial(it) }
             }
             override fun onResults(results: Bundle?) {
+                failures = 0
                 results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let { if (it.isNotBlank()) onFinal(it, settings.value.voiceLanguage) }
                 main.postDelayed({ listen() }, 100)
             }
@@ -167,7 +169,14 @@ class VoiceTranslator(
                     forceService = true
                     RoxLog.w("Voice", "On-device speech pack for ${settings.value.voiceLanguage} is missing (error $error) — switching to the phone's speech service")
                 } else if (error != SpeechRecognizer.ERROR_NO_MATCH && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT && error != SpeechRecognizer.ERROR_RECOGNIZER_BUSY) RoxLog.w("Voice", "Recognizer error $error")
-                main.postDelayed({ listen() }, if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) 800 else 250)
+                // Each restart plays Android's microphone chime: back off and give up instead of looping
+                val benign = error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT
+                failures = if (benign) failures + 1 else failures + 2
+                if (failures >= 8) {
+                    RoxLog.w("Voice", "Voice translation stopped after repeated recognizer errors (no speech/game audio). Turn it on again from the Voice screen.")
+                    stop(); return
+                }
+                main.postDelayed({ listen() }, (1000L shl (failures / 2).coerceAtMost(4)))
             }
         })
         runCatching { rec.startListening(intent) }.onFailure { RoxLog.e("Voice", "startListening failed", it) }
@@ -179,6 +188,7 @@ class VoiceTranslator(
 
     fun stop() {
         running = false
+        failures = 0
         mode = "off"
         main.post { recognizer?.destroy(); recognizer = null }
         runCatching { record?.stop() }; runCatching { record?.release() }; record = null
