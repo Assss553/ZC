@@ -170,7 +170,10 @@ class RoxEngine(
         projection = p
         val (w, h, dpi) = screenSize
         // Capture at half resolution (enough for OCR/detection, saves battery and heat)
-        autoStart(com.rox.gameai.vision.ScreenCaptureSource(p, w / 2, h / 2, dpi))
+        // Full resolution (capped at 1920 px wide): Remote Play shows the game small on the phone,
+        // so half resolution made in-game dialogue unreadable for OCR.
+        val f = (1920f / w).coerceAtMost(1f)
+        autoStart(com.rox.gameai.vision.ScreenCaptureSource(p, (w * f).toInt() / 2 * 2, (h * f).toInt() / 2 * 2, dpi))
     }
 
     fun autoStartTest() = autoStart(TestPatternSource())
@@ -256,9 +259,13 @@ class RoxEngine(
         val interval = (profile?.ocrIntervalMs ?: s.ocrIntervalMs).toLong().let { if (perf.stats.value.throttled) it * 2 else it }
         if (s.translationEnabled && t0 - lastOcrAt >= interval && ocrBusy.compareAndSet(false, true)) {
             lastOcrAt = t0
-            val scale = s.ocrScale.coerceIn(0.3f, 1f)
-            val small = Bitmap.createScaledBitmap(src, (w * scale).toInt().coerceAtLeast(64), (h * scale).toInt().coerceAtLeast(36), true)
-            scope.launch(Dispatchers.Default) { try { runOcr(small, 1f / scale, w, h) } finally { ocrBusy.set(false) } }
+            // Screen capture: read only the 16:9 game picture (no status bar / notifications / side bars)
+            val crop = if (_status.value.inAppDisplay) com.rox.gameai.core.IRect(0, 0, w, h) else gameRect(w, h)
+            val scale = if (_status.value.inAppDisplay) s.ocrScale.coerceIn(0.3f, 1f) else (1600f / crop.width).coerceAtMost(1f)
+            val part = Bitmap.createBitmap(src, crop.left, crop.top, crop.width, crop.height)
+            val small = Bitmap.createScaledBitmap(part, (crop.width * scale).toInt().coerceAtLeast(64), (crop.height * scale).toInt().coerceAtLeast(36), true)
+            if (small !== part && part !== src) part.recycle()
+            scope.launch(Dispatchers.Default) { try { runOcr(small, 1f / scale, w, h, crop.left, crop.top) } finally { ocrBusy.set(false) } }
         }
         if (pixels.size != w * h) pixels = IntArray(w * h)
         src.getPixels(pixels, 0, w, 0, 0, w, h)
@@ -287,7 +294,15 @@ class RoxEngine(
         perf.onFrame(SystemClock.elapsedRealtime() - t0)
     }
 
-    private suspend fun runOcr(bmp: Bitmap, scaleBack: Float, frameW: Int, frameH: Int) {
+    /** The 16:9 game picture inside a letterboxed phone capture, minus the status-bar strip. */
+    private fun gameRect(w: Int, h: Int): com.rox.gameai.core.IRect {
+        val r = if (w.toFloat() / h > 16f / 9f) { val gw = (h * 16f / 9f).toInt(); com.rox.gameai.core.IRect((w - gw) / 2, 0, (w - gw) / 2 + gw, h) }
+                else { val gh = (w * 9f / 16f).toInt(); com.rox.gameai.core.IRect(0, (h - gh) / 2, w, (h - gh) / 2 + gh) }
+        val top = maxOf(r.top, (h * 0.05f).toInt())
+        return com.rox.gameai.core.IRect(r.left.coerceAtLeast(0), top, r.right.coerceAtMost(w), r.bottom.coerceAtMost(h))
+    }
+
+    private suspend fun runOcr(bmp: Bitmap, scaleBack: Float, frameW: Int, frameH: Int, offX: Int = 0, offY: Int = 0) {
         val t0 = SystemClock.elapsedRealtime()
         try {
             val st = _status.value
@@ -300,6 +315,9 @@ class RoxEngine(
                 blocks = ocr.recognize(bmp, probe, scaleBack)
             }
             perf.lastOcrMs = SystemClock.elapsedRealtime() - t0
+            // Back to full-frame coordinates; never translate ROX's own UI/notification text
+            blocks = blocks.map { b -> b.copy(rect = com.rox.gameai.core.IRect(b.rect.left + offX, b.rect.top + offY, b.rect.right + offX, b.rect.bottom + offY)) }
+                .filter { b -> !b.text.contains("rox", ignoreCase = true) && b.text.count { it.isLetter() } >= 2 }
             diagOcrBlocks += blocks.size
             if (blocks.isNotEmpty()) diagOcrSample = blocks.joinToString(" | ") { it.text }.take(80)
             if (blocks.isEmpty()) { _overlays.value = emptyList(); return }
