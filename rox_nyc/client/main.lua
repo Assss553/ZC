@@ -1,10 +1,11 @@
 --[[ ROX NYC  ·  © ROX Store – All rights reserved. ]]
 local origin, spawned, ents, fx, blip = nil, false, {}, {}, nil
 
-local function W(x, y, z)   -- local -> world
+local function W(x, y, z)   -- local -> world (also used by client/shops.lua)
     local r = math.rad(origin.w); local c, s = math.cos(r), math.sin(r)
     return vector3(origin.x + x * c - y * s, origin.y + x * s + y * c, origin.z + (z or 0.0))
 end
+NycWorld = function(x, y, z) return W(x, y, z) end
 local function pick(list)
     for _, n in ipairs(list or {}) do local h = joaat(n); if IsModelInCdimage(h) and IsModelValid(h) then return h end end
 end
@@ -61,6 +62,22 @@ local function spawn()
     prop(P.hotdog, 18.0, -10.0, 0.16, 0.0); prop(P.busstop, -11.6, 52.0, 0.16, 270.0)
     prop(P.dumpster, -60.0, 10.0, 0.16, 180.0); prop(P.dumpster, 62.0, -10.2, 0.16, 0.0)
     for k = 0, 3 do prop(P.cone, 4.0 + k * 1.2, -40.0, 0.0, 0.0) end
+    -- furnish the walk-in shops with GTA props
+    NycShopPoints = {}
+    NycFurnish(function(list, x, y, z, head)
+        local h = pick(list); if not h or not load(h) then return end
+        local mn = GetModelDimensions(h); local p = W(x, y, z)
+        local e = CreateObjectNoOffset(h, p.x, p.y, p.z - mn.z, false, false, false)
+        SetEntityHeading(e, (origin.w + head + (Config.PropFront or 180.0)) % 360.0); FreezeEntityPosition(e, true); SetModelAsNoLongerNeeded(h)
+        ents[#ents + 1] = e; return e
+    end, function(list, base, along)
+        local h = pick(list); if not h or not load(h) then return end
+        local mn = GetModelDimensions(h); local _, bmx = GetModelDimensions(GetEntityModel(base))
+        local bp = GetOffsetFromEntityInWorldCoords(base, along or 0.0, 0.0, 0.0)
+        local e = CreateObjectNoOffset(h, bp.x, bp.y, GetEntityCoords(base).z + bmx.z - mn.z, false, false, false)
+        SetEntityHeading(e, GetEntityHeading(base)); FreezeEntityPosition(e, true); SetModelAsNoLongerNeeded(h)
+        ents[#ents + 1] = e; return e
+    end)
     -- restaurant terraces: table, 4 chairs, parasol (+ a heater on every second one)
     for i, p in ipairs(NycPoints.dining or {}) do
         prop(P.rtable, p[1], p[2], kerb, 0.0)

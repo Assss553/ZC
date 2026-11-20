@@ -190,9 +190,9 @@ class Face:
         s, U, N = f.s, f.U, f.N
         s.surf(mat, f.P(a0, z0, 0), -N, Z, D, z1 - z0, step=0)
         s.surf(mat, f.P(a1, z0, -D), N, Z, D, z1 - z0, step=0)
-        s.surf(mat, f.P(a0, z0, 0), U, -N, a1 - a0, D, step=0)
+        if z0 > 0.01: s.surf(mat, f.P(a0, z0, 0), U, -N, a1 - a0, D, step=0)
         s.surf(mat, f.P(a0, z1, -D), U, N, a1 - a0, D, step=0)
-        s.surf(back, f.P(a0, z0, -D), U, Z, a1 - a0, z1 - z0, step=0, fit=fit)
+        if back: s.surf(back, f.P(a0, z0, -D), U, Z, a1 - a0, z1 - z0, step=0, fit=fit)
 
     def window(f, a0, a1, z0, z1, wall, frame='trim', D=0.2, cols=2, rows=2, sill='stone', lintel=True, ac=False, glass='window_dark'):
         f.recess(a0, a1, z0, z1, D, wall, glass)
@@ -269,11 +269,16 @@ LIT_RATE = 0.0      # share of upper windows that glow (night look); set by nyc.
 
 def building(name, label, x0, y0, x1, y1, floors, wall='brick_red', base='stone', fh=3.4, gh=4.8, bay=3.4, win=(1.5, 1.9),
              shop_sides='S', sign=None, awning=None, escape=None, garage=False, pilasters=True, seed=1, tank=True, frame='trim', ac_rate=0.25,
-             balconies='', blade=None, billboard=None, shops=SHOPS):
+             balconies='', blade=None, billboard=None, shops=SHOPS, enter=False):
     s = piece(name, label)
     rnd = random.Random(seed)
     H = gh + fh * (floors - 1)
-    s.cbox(x0, y0, 0, x1, y1, H + 0.9, 13)
+    TW, CH = 0.35, gh - 0.35            # enterable ground floor: wall thickness, ceiling height
+    if enter:
+        s.cbox(x0, y0, CH, x1, y1, H + 0.9, 13)      # upper floors solid, the shop below is a real room
+    else:
+        s.cbox(x0, y0, 0, x1, y1, H + 0.9, 13)
+    doors = []
     for side in 'SNWE':
         f = Face(s, x0, y0, x1, y1, side)
         n = max(1, int(round(f.L / bay)))
@@ -329,7 +334,11 @@ def building(name, label, x0, y0, x1, y1, floors, wall='brick_red', base='stone'
         # ---- ground floor
         gholes = []
         mid = n // 2
-        if shop:
+        if shop and enter:
+            for b in range(n):
+                c = bw * (b + 0.5)
+                gholes.append((c - 0.75, 0.0, c + 0.75, 2.6) if b == mid else (c - bw / 2 + 0.45, 0.6, c + bw / 2 - 0.45, 3.2))
+        elif shop:
             for b in range(n):
                 c = bw * (b + 0.5)
                 gholes.append((c - bw / 2 + 0.45, 0.0 if (garage or b == mid) else 0.55, c + bw / 2 - 0.45, 3.2))
@@ -339,7 +348,34 @@ def building(name, label, x0, y0, x1, y1, floors, wall='brick_red', base='stone'
                 gholes.append((c - 0.55, 0.0, c + 0.55, 2.15) if b == mid else (c - 0.7, 1.5, c + 0.7, 3.1))
         f.wall(base, 0, gh, gholes)
         f.box(base, 0, f.L, 0, 0.5, 0, 0.1)            # plinth (door bays cut it visually with frames)
+        if enter:
+            # inside face of the ground floor wall + collision with the openings left free
+            hs = [(f.L - h[2], h[1], f.L - h[0], h[3]) for h in gholes] if shop else []
+            s.surf('paint_white' if not shop else 'paint_white', f.P(f.L, 0, -TW), -f.U, Z, f.L, CH, holes=[h for h in hs if h[3] <= CH] if shop else [], step=1.0)
+            cuts = sorted((h[0], h[2], h[1], h[3]) for h in gholes) if shop else []
+            a = 0.0
+            for (c0, c1, hz0, hz1) in cuts + [(f.L, f.L, 0, 0)]:
+                if c0 > a: p0, p1 = f.P(a, 0, -TW), f.P(c0, CH, 0); s.cbox(min(p0[0], p1[0]), min(p0[1], p1[1]), 0, max(p0[0], p1[0]), max(p0[1], p1[1]), CH, 13, occ=False)
+                if c1 > c0:
+                    if hz0 > 0.01: p0, p1 = f.P(c0, 0, -TW), f.P(c1, hz0, 0); s.cbox(min(p0[0], p1[0]), min(p0[1], p1[1]), 0, max(p0[0], p1[0]), max(p0[1], p1[1]), hz0, 13, occ=False)
+                    if hz0 > 0.01: p0, p1 = f.P(c0, hz0, -0.05), f.P(c1, hz1, -0.02); s.cbox(min(p0[0], p1[0]), min(p0[1], p1[1]), hz0, max(p0[0], p1[0]), max(p0[1], p1[1]), hz1, 114, occ=False)
+                    p0, p1 = f.P(c0, hz1, -TW), f.P(c1, CH, 0); s.cbox(min(p0[0], p1[0]), min(p0[1], p1[1]), hz1, max(p0[0], p1[0]), max(p0[1], p1[1]), CH, 13, occ=False)
+                a = max(a, c1)
         for i, (a0, z0, a1, z1) in enumerate(gholes):
+            if shop and enter:
+                f.recess(a0, a1, z0, z1, TW, base, None)
+                for (p, q, r, t) in ((a0, a0 + 0.06, z0, z1), (a1 - 0.06, a1, z0, z1), (a0, a1, z1 - 0.06, z1)) + (((a0, a1, z0, z0 + 0.06),) if z0 > 0 else ()):
+                    f.box('metal_dark', p, q, r, t, -0.1, -0.02)
+                if z0 > 0:      # thin glazing bars (glass itself is left open so you can see inside)
+                    k = max(1, int((a1 - a0) / 1.4))
+                    for j in range(1, k + 1):
+                        aa = a0 + (a1 - a0) * j / (k + 1); f.box('metal_dark', aa - 0.02, aa + 0.02, z0, z1, -0.08, -0.04)
+                    f.box('stone', a0 - 0.05, a1 + 0.05, z0 - 0.06, z0, -TW, 0.08)
+                else:
+                    m = (a0 + a1) / 2; doors.append((round(float(f.P(m, 0, 1.0)[0]), 2), round(float(f.P(m, 0, 1.0)[1]), 2), side))
+                    f.box('stone', a0, a1, 0, 0.02, -TW, 0.2)
+                    s.light(*f.P(m, 2.4, 0.6), color=(255, 226, 180), intensity=3, falloff=5)
+                continue
             if shop and garage:
                 up = rnd.random() < 0.34
                 f.recess(a0, a1, z0, z1, 0.25, base, 'shutter', fit=False)
@@ -410,6 +446,18 @@ def building(name, label, x0, y0, x1, y1, floors, wall='brick_red', base='stone'
             a = min(max(bw * b, 0.4), f.L - 0.4)
             f.box('metal_dark', a - 0.06, a + 0.06, 2.95, 3.1, 0, 0.3)
             f.box('light', a - 0.1, a + 0.1, 2.75, 2.95, 0.18, 0.38)
+    if enter:   # floor, ceiling and lights of the walk-in shop
+        ix0, iy0, ix1, iy1 = x0 + TW, y0 + TW, x1 - TW, y1 - TW
+        s.surf('tile_check', (ix0, iy0, 0.01), X, Y, ix1 - ix0, iy1 - iy0, step=2.0)
+        s.cboxes.append((ix0, iy0, -0.2, ix1, iy1, 0.01, 81))
+        s.surf('ceiling_tile', (ix0, iy1, CH), X, -Y, ix1 - ix0, iy1 - iy0, step=2.0)
+        nx, ny = max(1, int((ix1 - ix0) / 3.5)), max(1, int((iy1 - iy0) / 3.5))
+        for i in range(nx):
+            for j in range(ny):
+                lx, ly = ix0 + (ix1 - ix0) * (i + 0.5) / nx, iy0 + (iy1 - iy0) * (j + 0.5) / ny
+                s.surf('light', (lx - 0.6, ly + 0.15, CH - 0.01), X, -Y, 1.2, 0.3, step=0, fit=True)
+                if (i + j) % 2 == 0: s.light(lx, ly, CH - 0.4, color=(255, 246, 230), intensity=5, falloff=7)
+        s.shop = dict(ix0=round(ix0, 2), iy0=round(iy0, 2), ix1=round(ix1, 2), iy1=round(iy1, 2), ch=round(CH, 2), doors=doors)
     roof_kit(s, x0, y0, x1, y1, H, rnd, tank=tank, parapet=base)
     s.bb = (x0 - 1, y0 - 1, 0, x1 + 1, y1 + 1, H + 6)
     return s

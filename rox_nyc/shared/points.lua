@@ -226,3 +226,19 @@ NycPoints = {
         { 56.65, 10.40, 0.00 },
     },
 }
+
+-- walk-in shops: interior box (ix0, iy0, ix1, iy1), ceiling height, doors {x, y, side}
+NycShops = {
+    { id = 1, label = "Deli 24H", kind = 'deli', ix0 = -36.65, iy0 = -34.65, ix1 = -15.35, iy1 = -13.35, ch = 4.45, doors = { { -27.83, -12.00, 'N' }, { -14.00, -22.17, 'E' } } },
+    { id = 2, label = "ROX Pizza", kind = 'pizza', ix0 = -47.65, iy0 = -26.65, ix1 = -38.85, iy1 = -13.35, ch = 4.05, doors = { { -43.25, -12.00, 'N' } } },
+    { id = 3, label = "ROX Burger", kind = 'burger', ix0 = -58.65, iy0 = -26.65, ix1 = -49.85, iy1 = -13.35, ch = 4.05, doors = { { -54.25, -12.00, 'N' } } },
+    { id = 4, label = "Pharmacy", kind = 'pharmacy', ix0 = -36.65, iy0 = 13.35, ix1 = -15.35, iy1 = 34.65, ch = 4.45, doors = { { -24.17, 12.00, 'S' }, { -14.00, 25.83, 'E' } } },
+    { id = 5, label = "ROX Coffee", kind = 'cafe', ix0 = -47.65, iy0 = 13.35, ix1 = -38.85, iy1 = 26.65, ch = 4.05, doors = { { -43.25, 12.00, 'S' } } },
+    { id = 6, label = "Joe's Pizza", kind = 'pizza', ix0 = -58.65, iy0 = 13.35, ix1 = -49.85, iy1 = 26.65, ch = 4.05, doors = { { -54.25, 12.00, 'S' } } },
+    { id = 7, label = "Deli 24H", kind = 'deli', ix0 = 15.35, iy0 = -34.65, ix1 = 36.65, iy1 = -13.35, ch = 4.45, doors = { { 24.17, -12.00, 'N' }, { 14.00, -25.83, 'W' } } },
+    { id = 8, label = "Corner Deli", kind = 'deli', ix0 = 38.85, iy0 = -26.65, ix1 = 47.65, iy1 = -13.35, ch = 4.05, doors = { { 43.25, -12.00, 'N' } } },
+    { id = 9, label = "Night Bar", kind = 'bar', ix0 = 49.85, iy0 = -26.65, ix1 = 58.65, iy1 = -13.35, ch = 4.05, doors = { { 54.25, -12.00, 'N' } } },
+    { id = 10, label = "Night Bar", kind = 'bar', ix0 = 15.35, iy0 = 13.35, ix1 = 36.65, iy1 = 34.65, ch = 4.45, doors = { { 27.83, 12.00, 'S' }, { 14.00, 22.17, 'W' } } },
+    { id = 11, label = "ROX Burger 2", kind = 'burger', ix0 = 38.85, iy0 = 13.35, ix1 = 47.65, iy1 = 26.65, ch = 4.05, doors = { { 43.25, 12.00, 'S' } } },
+    { id = 12, label = "Bean Cafe", kind = 'cafe', ix0 = 49.85, iy0 = 13.35, ix1 = 58.65, iy1 = 26.65, ch = 4.05, doors = { { 54.25, 12.00, 'S' } } },
+}
