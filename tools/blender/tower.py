@@ -2,12 +2,12 @@
 #   blender -b -P tower.py -- <outdir> [samples]
 import bpy, bmesh, math, sys, os
 from mathutils import Vector
-argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else [os.environ.get('OUT', '/tmp/tower'), os.environ.get('SAMPLES', '24')]
 OUT = argv[0] if argv else '/tmp/tower'; SAMPLES = int(argv[1]) if len(argv) > 1 else 24
 os.makedirs(OUT, exist_ok=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
-sc.render.engine = 'CYCLES'; sc.cycles.samples = SAMPLES; sc.cycles.use_denoising = False; sc.cycles.sample_clamp_indirect = 2.0; sc.cycles.max_bounces = 4
+sc.render.engine = 'CYCLES'; sc.cycles.samples = SAMPLES; sc.cycles.use_denoising = bool(int(os.environ.get('DENOISE', '0'))); sc.cycles.sample_clamp_indirect = 2.0; sc.cycles.max_bounces = 4
 sc.render.resolution_x, sc.render.resolution_y = 1600, 900
 sc.view_settings.view_transform = 'Filmic' if 'Filmic' in [i.identifier for i in sc.view_settings.bl_rna.properties['view_transform'].enum_items] else 'AgX'
 sc.view_settings.look = 'None'; sc.view_settings.exposure = 0.6
@@ -163,23 +163,37 @@ shot('Curtain wall fins + lit offices', A)
 prism('setback', chamfer(52, 42, 9), 70, 72.5, M['slab']); edge_strips('set_led', chamfer(52, 42, 9), 72.55, M['led'])
 vertical_strips('mid_led_v', mid, 15.2, 70, M['led'])
 shot('Setback + LED outline', A)
-# 8 upper tower (offset, taller)
-up = [(x - 4, y + 3) for x, y in chamfer(36, 30, 6)]; prism('upper_tower', up, 72.5, 128, M['glass'])
-fins('up_fin', up, 72.6, 128, spacing=1.5); spandrels('up_sp', up, 72.6, 128, 3.9); floors_lit('up_lit', up, 72.6, 128, 3.9, 0.15, 9)
-shot('Upper tower', (165, -150, 105), (0, 0, 70))
-# 9 crown + LED
-prism('crown', [(x * 1.06, y * 1.06) for x, y in up], 128, 131, M['slab'])
-edge_strips('crown_led', [(x * 1.06, y * 1.06) for x, y in up], 131.05, M['led']); vertical_strips('up_led_v', up, 72.5, 128, M['led'])
-for z in (100.0,): edge_strips(f'band_{z}', up, z, M['led'], h=0.08, out=0.25)
-shot('Crown + LED bands', (165, -150, 105), (0, 0, 70))
-# 10 rooftop: plant room, helipad, beacons
-box('plant', (2, 6, 133), (14, 9, 4), M['slab']); edge_strips('plant_led', [(-5, 1.5), (9, 1.5), (9, 10.5), (-5, 10.5)], 135.05, M['ledw'], h=0.08)
-bpy.ops.mesh.primitive_cylinder_add(radius=7, depth=0.4, location=(-6, -4, 131.2)); hp = bpy.context.object; hp.data.materials.append(M['heli'])
-bpy.ops.mesh.primitive_torus_add(major_radius=6.4, minor_radius=0.12, location=(-6, -4, 131.45)); bpy.context.object.data.materials.append(M['ledw'])
-for k in range(4):
-    a = k * math.pi / 2 + 0.6; box(f'beacon_{k}', (-6 + math.cos(a) * 9, -4 + math.sin(a) * 9, 134), (0.3, 0.3, 6), M['slab'])
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=0.35, location=(-6 + math.cos(a) * 9, -4 + math.sin(a) * 9, 137.2)); bpy.context.object.data.materials.append(M['sign'])
-shot('Rooftop: helipad + beacons', (75, -65, 160), (-2, 0, 128))
+# 8 the tower splits in two: twin towers with a gap, different heights
+upL = [(x - 13, y) for x, y in chamfer(18, 30, 4)]; upR = [(x + 13, y + 2) for x, y in chamfer(18, 28, 4)]
+TOWERS = ((upL, 138.0, 'L', 9), (upR, 118.0, 'R', 11))
+for pts, top, nm, sd in TOWERS:
+    prism(f'tower_{nm}', pts, 72.5, top, M['glass'])
+    fins(f'fin_{nm}', pts, 72.6, top, spacing=1.35); spandrels(f'sp_{nm}', pts, 72.6, top, 3.9); floors_lit(f'lit_{nm}', pts, 72.6, top, 3.9, 0.14, sd)
+shot('Split: twin towers', (165, -150, 110), (0, 0, 80))
+# 9 crowns, vertical LED corners, LED bands, sky bridge between the towers
+for pts, top, nm, sd in TOWERS:
+    cr = [(x * 1.0, y * 1.0) for x, y in pts]
+    prism(f'crown_{nm}', [(x + (0.6 if x > 0 else -0.6) * 0, y) for x, y in cr], top, top + 3, M['slab'])
+    edge_strips(f'crown_led_{nm}', cr, top + 3.05, M['led']); vertical_strips(f'v_led_{nm}', pts, 72.5, top, M['led'])
+    for z in (96.0, 110.0): edge_strips(f'band_{nm}_{z}', pts, z, M['led'], h=0.07, out=0.25)
+    # stepped crown lantern
+    inner = [(x * 0.82 + (-13 if nm == 'L' else 13) * 0.18, y * 0.82 + (0 if nm == 'L' else 2) * 0.18) for x, y in pts]
+    prism(f'lantern_{nm}', inner, top + 3, top + 7, M['glass']); edge_strips(f'lantern_led_{nm}', inner, top + 7.05, M['led'])
+    vertical_strips(f'lantern_v_{nm}', inner, top + 3, top + 7, M['led'], t=0.08)
+BR = [(-4.2, -1.5), (4.2, -1.5), (4.2, 3.5), (-4.2, 3.5)]
+prism('skybridge', BR, 98, 102, M['glass']); fins('bridge_fin', BR, 98, 102, spacing=0.9, depth=0.15)
+edge_strips('bridge_led_t', BR, 102.05, M['led'], h=0.08); edge_strips('bridge_led_b', BR, 97.95, M['led'], h=0.08)
+shot('Crowns + LED + sky bridge', (150, -140, 125), (0, 0, 100))
+# 10 rooftops: helipad on the tall tower, plant room + beacons on both
+bpy.ops.mesh.primitive_cylinder_add(radius=6.5, depth=0.4, location=(-13, 0, 145.4)); bpy.context.object.data.materials.append(M['heli'])
+bpy.ops.mesh.primitive_torus_add(major_radius=5.9, minor_radius=0.12, location=(-13, 0, 145.65)); bpy.context.object.data.materials.append(M['ledw'])
+box('plant_R', (13, 4, 127), (10, 8, 3), M['slab']); edge_strips('plant_led_R', [(8, 0), (18, 0), (18, 8), (8, 8)], 128.55, M['ledw'], h=0.08)
+for (cx, cy, z) in ((-13, 0, 145.0), (13, 2, 125.0)):
+    for k in range(4):
+        a = k * math.pi / 2 + 0.8; x, y = cx + math.cos(a) * 7, cy + math.sin(a) * 11
+        box(f'beacon_{cx}_{k}', (x, y, z + 3), (0.25, 0.25, 6), M['slab'])
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=0.35, location=(x, y, z + 6.2)); bpy.context.object.data.materials.append(M['sign'])
+shot('Rooftops: helipad + beacons', (70, -75, 175), (0, 0, 132))
 # 11 street lights + trees + parked cars (simple blocks)
 for x in range(-120, 130, 24):
     box(f'pole_{x}', (x, -33, 4), (0.25, 0.25, 8), M['fin']); box(f'lamp_{x}', (x, -34.2, 8), (0.5, 2.4, 0.2), M['fin'])
@@ -200,8 +214,16 @@ for i in range(70):
         if r.random() < 0.55: box(f'cw_{i}_{z}', (x, y - dpt / 2 - 0.05, z), (wdt * r.uniform(0.3, 0.9), 0.05, 1.2), M['cwin'])
 shot('City around', (220, -260, 140), (0, 0, 60))
 # 13-15 final hero shots
-shot('Final - aerial', (165, -185, 115), (0, 0, 62))
+shot('Final - aerial', (170, -190, 125), (0, 0, 70))
 shot('Final - street level', (38, -78, 2.2), (0, 0, 70))
-shot('Final - top', (-115, -80, 175), (0, 0, 95))
+shot('Final - top', (-120, -85, 185), (0, 0, 100))
+ORBIT = int(os.environ.get('ORBIT', '0'))
+if ORBIT:
+    sc.render.resolution_x, sc.render.resolution_y = int(os.environ.get('OW', '1280')), int(os.environ.get('OH', '720'))
+    sc.cycles.samples = int(os.environ.get('OSAMPLES', '16')); od = os.path.join(OUT, 'orbit'); os.makedirs(od, exist_ok=True)
+    for i in range(ORBIT):
+        t = i / ORBIT; a = math.radians(-50 + 140 * t); r = 210 - 50 * t; z = 150 - 95 * t
+        cam.location = (math.sin(a) * r, -math.cos(a) * r, z); tgt.location = (0, 0, 70 + 10 * t)
+        sc.render.filepath = os.path.join(od, f'o_{i:04d}.png'); bpy.ops.render.render(write_still=True); print('ORBIT', i, flush=True)
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, 'rox_tower.blend'))
 print('DONE')
