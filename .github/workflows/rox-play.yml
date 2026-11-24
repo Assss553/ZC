@@ -1,0 +1,95 @@
+name: ROX (direct PS connection + translation) — Android build
+on:
+  push:
+    branches: [ "ccr-a998703b-ccr9yy" ]
+    paths: [ "rox-play/**", ".github/workflows/rox-play.yml" ]
+  workflow_dispatch:
+permissions:
+  contents: write
+env:
+  CHIAKI_COMMIT: 43728af2e639fecb8a7af1cd68c29820a40de973
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Get chiaki-ng source (pinned official commit)
+        run: |
+          git init chiaki && cd chiaki
+          git remote add origin https://github.com/streetpea/chiaki-ng
+          git fetch --depth 1 origin $CHIAKI_COMMIT
+          git checkout FETCH_HEAD
+          git submodule update --init --recursive --depth 1 third-party/nanopb third-party/jerasure third-party/gf-complete third-party/curl android/app/src/main/cpp/oboe
+      - uses: actions/checkout@v4
+        with: { path: rox-src }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - name: Install NDK + CMake used by chiaki-ng
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;28.2.13676358" "cmake;3.22.1" > /dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq protobuf-compiler python3-protobuf > /dev/null
+      - name: Apply ROX
+        working-directory: chiaki
+        run: bash ../rox-src/rox-play/apply.sh
+      - name: Reuse signing key (Actions cache only, never committed)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/debug.keystore
+            ~/.rox
+          key: rox-play-onepp-keystore-v1
+      - name: Build APK
+        working-directory: chiaki/android
+        env: { CMAKE_POLICY_VERSION_MINIMUM: "3.5" }
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+      - name: Sign (zipalign 16 KB + v1/v2/v3) and verify
+        run: |
+          set -e
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          mkdir -p out ~/.rox; KS=~/.rox/release.jks
+          if [ ! -f ~/.rox/pw ]; then openssl rand -hex 24 > ~/.rox/pw; chmod 600 ~/.rox/pw; fi
+          export PW=$(cat ~/.rox/pw); echo "::add-mask::$PW"
+          if [ ! -f $KS ]; then keytool -genkeypair -keystore $KS -storepass "$PW" -keypass "$PW" -alias rox -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=ROX" > /dev/null; fi
+          U=$(ls chiaki/android/app/build/outputs/apk/release/*.apk | head -1)
+          $BT/zipalign -f -P 16 4 "$U" aligned.apk
+          $BT/apksigner sign --ks $KS --ks-pass env:PW --key-pass env:PW --out out/ROX.apk aligned.apk
+          cp rox-src/rox-play/assets/tv.apk out/ROX-TV.apk
+          $BT/apksigner verify out/ROX.apk && $BT/aapt2 dump badging out/ROX.apk | grep -E "^package|sdkVersion|targetSdk"
+      - uses: actions/upload-artifact@v4
+        with: { name: ROX, path: out/ }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rox-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: ROX build ${{ github.run_number }}
+          make_latest: "false"
+          files: out/*.apk
+          body: |
+            ROX: connects to your PS4/PS5 directly (Remote Play protocol, no Sony app, no screen recording),
+            translates the game text to Arabic inside the stream, and sends it to ROX TV.
+            Based on chiaki-ng (AGPL-3.0); ROX changes in rox-play/. Not affiliated with Sony.
+  launch-test:
+    runs-on: ubuntu-latest
+    needs: android
+    timeout-minutes: 40
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: ROX, path: apk }
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r apk/ROX.apk
+            adb shell am start -W -n com.rox.play/com.metallic.chiaki.main.MainActivity
+            sleep 12
+            adb logcat -d -b crash | tail -60 || true
+            adb shell pidof com.rox.play && echo "ROX RUNNING" || (echo "ROX NOT RUNNING"; exit 1)

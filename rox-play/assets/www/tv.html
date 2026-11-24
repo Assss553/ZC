@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROX TV</title>
+<style>
+html,body{margin:0;height:100%;background:transparent!important;overflow:hidden;font-family:'Segoe UI',Tahoma,sans-serif}
+#sub{position:absolute;left:8%;right:8%;bottom:7%;text-align:center;display:none}
+#sub span{display:inline-block;padding:.35em .9em;border-radius:.35em;color:#fff;font-weight:700;line-height:1.45;text-shadow:0 2px 6px #000}
+#st{position:absolute;top:2vh;left:2vw;font-size:1.8vh;color:#fff;background:rgba(7,19,49,.8);border-radius:99px;padding:.4vh 1.2vw;transition:opacity 1s}
+</style>
+<div id="sub"><span id="t"></span></div><div id="st">ROX · متصل بالجوال</div>
+<script>
+let hideT = 0, last = "";
+setTimeout(() => (st.style.opacity = 0), 6000);
+function show(s) {
+  const sub = document.getElementById("sub"), t = document.getElementById("t");
+  if (!s.running || !s.translated) { sub.style.display = "none"; return; }
+  t.textContent = s.translated; t.style.fontSize = (s.fontSize / 1080 * 100 * 1.3).toFixed(2) + "vh"; t.style.background = "rgba(0,0,0," + s.opacity + ")";
+  sub.style.top = sub.style.bottom = ""; sub.style.transform = "";
+  if (s.position === "top") sub.style.top = "5%"; else if (s.position === "center") { sub.style.top = "50%"; sub.style.transform = "translateY(-50%)"; } else sub.style.bottom = "7%";
+  sub.style.display = "block";
+  if (s.translated !== last) { last = s.translated; clearTimeout(hideT); hideT = setTimeout(() => (sub.style.display = "none"), 8000); }
+}
+function connect() { const es = new EventSource("/events?tv=1"); es.onmessage = (e) => { try { show(JSON.parse(e.data)); } catch {} }; es.onerror = () => { es.close(); setTimeout(connect, 2000); }; }
+connect();
+</script>
+</html>
