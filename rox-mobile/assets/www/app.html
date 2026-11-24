@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ROX</title>
+<style>
+:root{
+  --bg:#071331;--bg2:#0a1d4a;--glass:rgba(255,255,255,.055);--glass2:rgba(255,255,255,.09);--line:rgba(150,195,255,.16);--line2:rgba(150,195,255,.32);
+  --tx:#f2f7ff;--mut:#93a8cf;--acc:#3fc6ff;--acc2:#2a6cff;--ok:#4be3a6;--bad:#ff7b8a;--r:22px
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;color:var(--tx);font:15px/1.6 'IBM Plex Sans Arabic','Segoe UI',Tahoma,system-ui,sans-serif}
+body{background:var(--bg);padding:env(safe-area-inset-top) 0 calc(92px + env(safe-area-inset-bottom));overflow-x:hidden}
+body:before{content:"";position:fixed;inset:-20% -30% auto;height:70vh;background:radial-gradient(closest-side,#2a6cff55,transparent),radial-gradient(closest-side at 80% 30%,#3fc6ff33,transparent);filter:blur(10px);z-index:-1}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hide{display:none!important}
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:14px 18px}
+.top img{width:34px;height:34px;border-radius:10px;box-shadow:0 6px 18px #2a6cff55}
+.top b{flex:1;font-size:17px;letter-spacing:.3px}
+.iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);color:var(--tx);padding:0}
+.live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);background:var(--glass);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
+.live i{width:8px;height:8px;border-radius:50%;background:#58627d}.live.on i{background:var(--ok);box-shadow:0 0 0 4px #4be3a622}
+/* type */
+h1{font-size:28px;line-height:1.25;margin:4px 0 6px;font-weight:700}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),#8fe3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--mut);margin:0;font-size:14.5px}
+.wrap{padding:4px 18px 20px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+code{white-space:normal;word-break:break-word}
+.card{background:linear-gradient(180deg,var(--glass2),var(--glass));border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card h3{margin:0 0 10px;font-size:13px;font-weight:500;color:var(--mut);letter-spacing:.2px}
+/* buttons */
+button{font:inherit;color:var(--tx);background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:11px 14px;cursor:pointer;transition:transform .12s,background .2s}
+button:active{transform:scale(.97)}
+.cta{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:18px;padding:16px;font-weight:700;font-size:16.5px;color:#fff;background:linear-gradient(95deg,var(--acc2),var(--acc));box-shadow:0 10px 30px -6px #2a6cffaa,inset 0 1px 0 #ffffff40}
+.cta.live2{background:#0d2257;box-shadow:inset 0 0 0 1.5px var(--acc),0 0 30px -6px var(--acc)}
+.cta.live2 .pulse{width:10px;height:10px;border-radius:50%;background:var(--ok);animation:p 1.6s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 #4be3a688}100%{box-shadow:0 0 0 12px #4be3a600}}
+.ghost{background:none;border:0;color:var(--acc);padding:8px;font-size:14px}
+.seg{display:flex;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:none;padding:8px 4px;border-radius:10px;font-size:13.5px;color:var(--mut)}
+.seg button.on{background:var(--acc2);color:#fff;box-shadow:0 4px 12px #2a6cff66}
+/* list rows */
+.item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
+.item+.item{margin-top:8px}
+.ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#2a6cff44,#3fc6ff22);color:var(--acc);border:1px solid var(--line)}
+.item .t{flex:1;min-width:0}.item .t b{display:block;font-weight:500}.item .t small{color:var(--mut);font-size:12.5px}
+.tag{font-size:12px;border-radius:99px;padding:4px 10px;background:rgba(255,255,255,.06);color:var(--mut);white-space:nowrap}.tag.ok{background:#4be3a61f;color:var(--ok)}
+.chev{color:var(--mut)}
+/* choice (wizard) */
+.choice{display:flex;align-items:center;gap:14px;width:100%;text-align:start;padding:14px;border-radius:18px;background:rgba(0,0,0,.18);border:1.5px solid var(--line)}
+.choice+.choice{margin-top:10px}.choice.on{border-color:var(--acc);background:#2a6cff22;box-shadow:0 0 0 4px #3fc6ff1a}
+.choice .t{flex:1}.choice b{display:block;font-weight:500}.choice small{color:var(--mut)}
+.radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);flex:none}.choice.on .radio{border:6px solid var(--acc)}
+/* steps */
+.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:grid;gap:8px}
+.steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid var(--line);font-size:14.5px}
+.steps li:before{content:counter(s);width:26px;height:26px;flex:none;border-radius:50%;background:linear-gradient(135deg,var(--acc2),var(--acc));display:grid;place-items:center;font-size:13px;font-weight:700}
+.progress{display:flex;gap:6px;margin-bottom:6px}.progress i{flex:1;height:4px;border-radius:9px;background:var(--line)}.progress i.on{background:var(--acc)}
+.stepno{font-size:12.5px;color:var(--mut)}
+.big{font:700 26px/1.2 ui-monospace,Consolas,monospace;direction:ltr;text-align:center;padding:16px;border-radius:16px;background:rgba(0,0,0,.3);border:1px dashed var(--line2);letter-spacing:.5px;word-break:break-all}
+.code{width:100%;font:700 30px ui-monospace,Consolas,monospace;letter-spacing:12px;text-align:center;padding:14px;border-radius:18px;border:1.5px solid var(--line2);background:rgba(0,0,0,.28);color:var(--tx);direction:ltr;outline:none}
+.code:focus{border-color:var(--acc);box-shadow:0 0 0 4px #3fc6ff22}
+.qr{display:grid;place-items:center;padding:14px;background:#fff;border-radius:18px;width:184px;margin:6px auto}
+.note{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:14px;background:#3fc6ff12;border:1px solid #3fc6ff33;font-size:13.5px;color:#cfe9ff}
+.msg{min-height:22px;font-size:14px;margin-top:8px;text-align:center}
+.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
+/* stage */
+#stage{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;border-radius:18px;touch-action:none;border:1px solid var(--line)}
+#fr{width:100%;height:100%;object-fit:contain;display:block}
+#no{position:absolute;inset:0;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;text-align:center;color:var(--mut);padding:16px;font-size:13px}
+#sub{position:absolute;padding:.35em .7em;background:rgba(0,0,0,.72);border-radius:8px;text-align:center;font-weight:700;color:#fff;text-shadow:0 1px 3px #000;display:none;line-height:1.35;pointer-events:none}
+#badge{position:absolute;top:8px;inset-inline-start:8px;background:rgba(255,91,58,.9);border-radius:99px;padding:2px 10px;font-size:12px;display:none}
+#box{position:absolute;border:2px solid var(--acc);border-radius:6px;box-shadow:0 0 0 999px rgba(0,0,0,.35),0 0 14px #3fc6ffaa;display:none}
+#box .h{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--acc);border:3px solid #071331}
+#box .h[data-k=nw]{left:-10px;top:-10px}#box .h[data-k=ne]{right:-10px;top:-10px}#box .h[data-k=sw]{left:-10px;bottom:-10px}#box .h[data-k=se]{right:-10px;bottom:-10px}
+body.edit #box{display:block}body.edit #sub{opacity:.3}
+#fs{position:absolute;bottom:8px;inset-inline-end:8px;width:34px;height:34px;padding:0;display:grid;place-items:center;background:rgba(0,0,0,.5);border-radius:10px}
+body.full #stage{position:fixed;inset:0;z-index:30;aspect-ratio:auto;height:100%;border-radius:0}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ck{display:flex;align-items:center;gap:8px;padding:10px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid var(--line);font-size:13px;color:var(--mut)}
+.ck .d{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;flex:none}
+.ck.ok{color:var(--tx)}.ck.ok .d{background:var(--ok);border-color:var(--ok);color:#06301f}
+label.s{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin:14px 0 4px}label.s b{color:var(--tx);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}
+.sw input{appearance:none;width:50px;height:30px;border-radius:99px;background:#26365f;position:relative;flex:none;cursor:pointer}.sw input:after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.18s;box-shadow:0 2px 6px #0006}.sw input:checked{background:var(--acc2)}.sw input:checked:after{inset-inline-start:23px}
+.last{font-weight:700;font-size:19px;line-height:1.5}.orig{color:var(--mut);font-size:13px;direction:ltr;text-align:left;margin-top:4px}
+.log{display:grid;gap:10px}.log .e{padding:14px;border-radius:18px;background:linear-gradient(180deg,var(--glass2),var(--glass));border:1px solid var(--line)}
+.log .w{color:var(--acc);font-size:12.5px}.log .o{font-weight:500;font-size:16px}.log .s{color:var(--mut);font-size:12.5px;direction:ltr;text-align:left;margin-top:4px}
+.empty{text-align:center;color:var(--mut);padding:40px 20px}.empty svg{width:46px;height:46px;opacity:.5;margin-bottom:8px}
+.stat{display:flex;gap:10px}.stat div{flex:1;padding:12px;border-radius:16px;background:rgba(0,0,0,.18);border:1px solid var(--line)}.stat b{display:block;font-size:22px;font-weight:700}.stat small{color:var(--mut);font-size:12px}
+.bar{height:6px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc))}
+#chatLog{height:170px;overflow:auto;margin:4px 0 10px;display:flex;flex-direction:column;gap:6px}
+.txt{flex:1;min-width:0;padding:11px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--tx);font:inherit;outline:none}
+.row{display:flex;gap:8px;align-items:center}
+code{direction:ltr;unicode-bidi:embed;background:rgba(0,0,0,.3);padding:1px 6px;border-radius:6px;font-size:13px}
+/* bottom nav */
+nav{position:fixed;bottom:12px;left:12px;right:12px;z-index:20;display:flex;padding:6px;border-radius:24px;background:rgba(10,24,62,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:0 12px 40px #0008;margin-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;border-radius:18px;padding:7px 2px 5px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button.on{color:#fff;background:linear-gradient(180deg,#2a6cff,#2a6cffaa);box-shadow:0 6px 16px #2a6cff66}
+/* wizard sheet */
+#wiz{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#wiz .wrap{min-height:calc(100vh - 70px);align-content:start}
+.wfoot{position:sticky;bottom:0;padding:12px 18px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--bg) 30%)}
+.fade{animation:f .28s ease}@keyframes f{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="16" cy="11.5" r=".6"/><circle cx="18" cy="13.5" r=".6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="i-pc" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.8 8 9 4.6-1.2 8-4.5 8-9V6z"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M17 17h4v4h-4"/></symbol>
+  <symbol id="i-frame" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M7 12h10"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 4-4"/></symbol>
+  <symbol id="i-gp" viewBox="0 0 24 24"><path d="M7 7h10a5 5 0 0 1 4.9 6l-.6 3a2.5 2.5 0 0 1-4.4 1L15 15H9l-1.9 2a2.5 2.5 0 0 1-4.4-1l-.6-3A5 5 0 0 1 7 7z"/></symbol>
+</svg>
+<div id="app">
+  <div class="top"><img src="/www/icon.svg" alt=""><b>ROX</b><span class="live" id="live"><i></i><span id="liveTx">جاهز</span></span></div>
+
+  <section class="wrap tab fade" id="t-home">
+    <div><h1>جاهز تلعب <em>بالعربي؟</em></h1><p class="lead">ROX TV يقرأ الحوار من شاشة اللعبة ويترجمه فوقها، وأنت تتحكم من جوالك.</p></div>
+    <div class="card"><h3>آخر جملة</h3><div id="lastLine"></div></div>
+    <div class="card"><h3>الأجهزة</h3>
+      <div class="item"><div class="ico"><svg class="i"><use href="#i-tv"/></svg></div><div class="t"><b>التلفزيون</b><small id="tvInfo">غير مربوط</small></div><span class="tag" id="tvTag">اربطه</span><svg class="i chev"><use href="#i-arrow"/></svg></div>
+    </div>
+    <div class="msg bad" id="err"></div>
+    <button class="cta" id="goBtn" onclick="go()"></button>
+  </section>
+
+  <section class="wrap tab hide fade" id="t-session">
+    <div id="stage"><img id="fr" alt=""><div id="no"><svg class="i" style="width:34px;height:34px;opacity:.6"><use href="#i-play"/></svg>صورة اللعبة تطلع هنا بعد ما تبدأ<br><small>عشان تحدد مكان الترجمة</small></div><div id="box"><i class="h" data-k="nw"></i><i class="h" data-k="ne"></i><i class="h" data-k="sw"></i><i class="h" data-k="se"></i></div></div>
+    <div class="card">
+      <div class="row" style="margin-bottom:6px"><div class="ico"><svg class="i"><use href="#i-frame"/></svg></div><div style="flex:1"><b style="font-weight:500">مكان قراءة الترجمة</b><div class="stepno" id="regHint"></div></div></div>
+      <div id="regIdle" class="row" style="margin-top:8px"><button style="flex:1" onclick="editRegion()">حدّد بنفسك</button><button style="flex:1" onclick="cmd({type:'region',frac:null})">الافتراضي</button></div>
+      <div id="regEditing" class="hide"><div class="note" style="margin:8px 0 10px"><svg class="i"><use href="#i-info"/></svg><span>اسحب الإطار فوق الترجمة الإنجليزية في اللعبة، والزوايا لتغيير حجمه.</span></div><div class="row"><button class="cta" style="flex:2" onclick="saveRegion()">تم <svg class="i"><use href="#i-check"/></svg></button><button style="flex:1" onclick="endEdit()">إلغاء</button></div></div>
+    </div>
+    <div class="card"><h3>شكل الترجمة</h3>
+      <div class="seg" id="pos"></div>
+      <label class="s">حجم الترجمة <b id="szv"></b></label><input type="range" id="sz" min="16" max="60" oninput="szv.textContent=this.value" onchange="cmd({type:'save',patch:{fontSize:+this.value}})">
+      <label class="s">شفافية الخلفية <b id="opv"></b></label><input type="range" id="op" min="20" max="100" oninput="opv.textContent=this.value+'%'" onchange="cmd({type:'save',patch:{opacity:this.value/100}})">
+      <label class="sw" style="margin-top:10px"><span>اعرض الترجمة على الجوال بعد</span><input type="checkbox" id="phSubs" onchange="cmd({type:'save',patch:{phoneSubs:this.checked}})"></label>
+      <button class="ghost" onclick="cmd({type:'test'})">جرّب جملة</button>
+    </div>
+  </section>
+
+  <section class="wrap tab hide fade" id="t-log"><div><h1>الملخص</h1><p class="lead">كل اللي انقال، بالعربي.</p></div><div class="log" id="log"></div></section>
+
+  <section class="wrap tab hide fade" id="t-me">
+    <div><h1>الإعدادات</h1></div>
+    <div class="card">
+      <div class="row" style="margin-bottom:12px"><div class="ico"><svg class="i"><use href="#i-book"/></svg></div><div style="flex:1"><b style="font-weight:500">جمل الترجمة</b><div class="stepno">يتسع لـ 600,000 جملة على جوالك</div></div></div>
+      <div id="dictInfo"></div>
+      <p class="stepno" style="margin:12px 0">كل جملة تنترجم تنحفظ وتطلع فوراً بعدين حتى بدون إنترنت. أضف جملك: كل سطر <code>english = عربي</code></p>
+      <input type="file" id="dictFile" accept=".txt,.tsv,.csv" class="hide" onchange="importDict(this.files[0])">
+      <button style="width:100%" onclick="dictFile.click()">استيراد ملف جمل</button><div id="dictMsg" class="msg"></div>
+    </div>
+    <div class="card"><h3>إعادة الإعداد</h3><button style="width:100%" onclick="NATIVE.rescan();location.href='http://127.0.0.1:8765/'">ربط تلفزيون ثاني</button></div>
+  </section>
+</div>
+
+<nav id="nav">
+  <button data-t="home" class="on" onclick="tab('home')"><svg class="i"><use href="#i-home"/></svg>الرئيسية</button>
+  <button data-t="session" onclick="tab('session')"><svg class="i"><use href="#i-play"/></svg>الجلسة</button>
+  <button data-t="log" onclick="tab('log')"><svg class="i"><use href="#i-chat"/></svg>الملخص</button>
+  <button data-t="me" onclick="tab('me')"><svg class="i"><use href="#i-user"/></svg>الإعدادات</button>
+</nav>
+
+<div id="wiz" class="hide">
+  <div class="top"><button class="iconbtn" onclick="wizBack()"><svg class="i"><use href="#i-back"/></svg></button><b style="text-align:center">الإعداد</b><button class="iconbtn" onclick="closeWiz()">✕</button></div>
+  <div class="wrap" id="wizBody"></div><div class="wfoot" id="wizFoot"></div>
+</div>
+
+<script>
+const $ = (i) => document.getElementById(i), NATIVE = window.RoxApp || { ip: () => location.hostname, tvHost: () => "", rescan() {} };
+const LOCAL = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+const ic = (n, s) => `<svg class="i"${s ? ` style="width:${s}px;height:${s}px"` : ""}><use href="#i-${n}"/></svg>`;
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const nf = (x) => Number(x || 0).toLocaleString("ar");
+let st = null, edit = null, wiz = { step: "remote" }, ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch {} };
+const cmd = (o) => fetch("/api/cmd", { method: "POST", body: JSON.stringify(o) });
+const POS = [["bottom", "أسفل"], ["center", "وسط"], ["top", "أعلى"]];
+function seg(id, list, cur, fn) { $(id).innerHTML = ""; list.forEach(([v, t]) => { const b = document.createElement("button"); b.textContent = t; if (v === cur) b.className = "on"; b.onclick = () => fn(v); $(id).appendChild(b); }); }
+function tab(t) { document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("hide", s.id !== "t-" + t)); document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.t === t)); if (t !== "session") endEdit(); if (t === "session") frame(); scrollTo(0, 0); st && render(); }
+function connect() { const es = new EventSource("/events"); es.onmessage = (e) => { st = JSON.parse(e.data); render(); }; es.onerror = () => { es.close(); setTimeout(connect, 1500); }; }
+let frT = 0; function frame() { clearTimeout(frT); if ($("t-session").classList.contains("hide")) return; const im = new Image(); im.onload = () => { $("fr").src = im.src; $("no").classList.add("hide"); }; im.src = "/frame.jpg?" + Date.now(); frT = setTimeout(frame, 2000); }
+
+// ---------- start / stop
+function go() {
+  if (!st) return;
+  if (st.running && st.capturing) { cmd({ type: "stopCapture" }); return; }
+  start();
+}
+function start() { cmd({ type: "capture" }); wizAt("allow"); } // the TV asks for permission: one OK on the remote
+window.onResumeApp = () => { if (!$("wiz").classList.contains("hide")) drawWiz(); };
+
+// ---------- setup: Sony (PS Remote Play + second account + pairing code) first, then the TV, then start
+const ORDER = LOCAL ? ["tvtype", "tvinstall", "tvwait"] : ["allow", "play"];
+const TVS = [["google", "Google TV أو Android TV", "سوني، شاومي، TCL، هايسنس، تي في بوكس"], ["fire", "Fire TV", "أمازون فاير ستيك"], ["other", "LG / Samsung / غيره", "ما يدعم تثبيت التطبيقات"]];
+function wizAt(s) { wiz = { step: s, tv: wiz.tv }; $("wiz").classList.remove("hide"); drawWiz(); }
+function closeWiz() { $("wiz").classList.add("hide"); }
+function wizBack() { const i = ORDER.indexOf(wiz.step); if (i <= 0) closeWiz(); else { wiz.step = ORDER[i - 1]; drawWiz(); } }
+function wizNext() { const i = ORDER.indexOf(wiz.step); wiz.step = ORDER[i + 1]; drawWiz(); }
+function head(t, sub) { const i = ORDER.indexOf(wiz.step); return `<div class="fade"><div class="progress">${ORDER.map((_, j) => `<i class="${j <= i ? "on" : ""}"></i>`).join("")}</div><h1>${t}</h1>${sub ? `<p class="lead">${sub}</p>` : ""}</div>`; }
+const steps = (l) => `<ol class="steps">${l.map((x) => `<li><span>${x}</span></li>`).join("")}</ol>`;
+const next = (t, ok = true) => `<button class="cta" ${ok ? "" : 'disabled style="opacity:.45"'} onclick="wizNext()">${t} ${ic("arrow")}</button>`;
+function drawWiz() {
+  let h = "", f = "";
+  if (wiz.step === "tvtype") { h = head("وش نوع تلفزيونك؟", "تطبيق ROX TV يقرأ الشاشة ويترجمها، وجوالك يتحكم فيه.") + TVS.map(([v, t, s2]) => `<button class="choice ${wiz.tv === v ? "on" : ""}" onclick="wiz.tv='${v}';drawWiz()"><span class="radio"></span><span class="t"><b>${t}</b><small>${s2}</small></span><span class="ico">${ic("tv")}</span></button>`).join("");
+    f = next("التالي", !!wiz.tv) + `<button class="ghost" style="width:100%" onclick="wiz.step='tvwait';drawWiz()">ROX TV مثبّت عندي</button>`; }
+  else if (wiz.step === "tvinstall") {
+    const addr = NATIVE.ip() + ":8765/tv.apk";
+    if (wiz.tv === "other") { h = head("التلفزيون هذا ما يدعم", "LG وSamsung ما يقبلون تطبيقات أندرويد. تحتاج Google TV / Android TV، أو تي في بوكس، أو فاير ستيك."); f = `<button class="cta" onclick="wiz.step='tvtype';drawWiz()">رجوع</button>`; }
+    else { h = head("ثبّت ROX TV على التلفزيون", "") + steps([wiz.tv === "fire" ? "في فاير ستيك ثبّت <b>Downloader</b> من المتجر" : "في التلفزيون افتح <b>Google Play</b> وثبّت <b>Downloader</b> (من AFTVnews)", "افتح Downloader واكتب في خانة الرابط:", "اضغط <b>Go</b> ثم <b>Install</b> (لو طلب إذن: اسمح لـ Downloader بتثبيت التطبيقات)", "افتح <b>ROX TV</b> وفعّل «العرض فوق التطبيقات» لما يطلبه"]) + `<div class="big">${esc(addr)}</div><div class="note">${ic("info")}<span>خل تطبيق ROX مفتوح في جوالك وقت التحميل، والجوال والتلفزيون على <b>نفس الواي فاي</b>.</span></div>`;
+      f = next("ثبّته وفتحته"); } }
+  else if (wiz.step === "tvwait") { h = head("نبحث عن التلفزيون…", "افتح ROX TV على التلفزيون، وجوالك يلقاه لحاله.") + `<div class="card" style="text-align:center;padding:30px"><div style="color:var(--acc)">${ic("tv", 52)}</div><div class="stepno" style="margin-top:10px">نبحث في الواي فاي…</div></div>`;
+    f = `<button class="ghost" style="width:100%" onclick="NATIVE.rescan()">ابحث من جديد</button>`; }
+  else if (wiz.step === "allow") { const ok = st && st.capturing; ls("roxSetup", "1");
+    h = ok ? `<div class="fade" style="text-align:center;padding-top:30px"><div style="width:96px;height:96px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--ok),#2bc48a);color:#06301f">${ic("check", 48)}</div><h1>التلفزيون يقرأ الشاشة</h1></div>` : head("وافق على التلفزيون", "على شاشة التلفزيون طلع طلب «تسجيل الشاشة».") + steps(["بالريموت اختر <b>ابدأ الآن / Start now</b> واضغط OK", "ROX يقرأ النص بس، وما يحفظ أي فيديو", "بيرجعك التلفزيون لمدخل البلايستيشن"]);
+    f = ok ? next("التالي") : `<button class="ghost" style="width:100%" onclick="cmd({type:'capture'})">اطلبها مرة ثانية</button>`; }
+  else if (wiz.step === "play") { h = head("ادخل اللعبة", "") + steps(["العب عادي على البلايستيشن وادخل اللعبة اللي تبي تترجمها", "الترجمة تطلع فوق اللعبة على التلفزيون", "لو ما طلعت أو قرأ شي غلط: «الجلسة» ← «حدّد بنفسك» واسحب الإطار فوق النص الإنجليزي"]) + (st && st.error === "black" ? `<div class="note" style="color:var(--bad)">${ic("info")}<span>${ERR.black}</span></div>` : "");
+    f = `<button class="cta" onclick="closeWiz();tab('session');setTimeout(editRegion,900)">حدّد مكان الترجمة ${ic("arrow")}</button><button class="ghost" style="width:100%" onclick="closeWiz()">تمام</button>`; }
+  $("wizBody").innerHTML = h; $("wizFoot").innerHTML = f;
+}
+// ---------- region editor (same as before): fractions of the phone screen while PS Remote Play is open
+function editRegion() { edit = Object.assign({}, (st && st.region) || { x: 0.05, y: 0.62, w: 0.9, h: 0.33 }); document.body.classList.add("edit"); $("regIdle").classList.add("hide"); $("regEditing").classList.remove("hide"); drawBox(); }
+function endEdit() { edit = null; document.body.classList.remove("edit"); $("regIdle").classList.remove("hide"); $("regEditing").classList.add("hide"); }
+function saveRegion() { if (edit) cmd({ type: "region", frac: edit }); endEdit(); }
+function drawBox() { if (!edit) return; const b = $("box").style; b.left = edit.x * 100 + "%"; b.top = edit.y * 100 + "%"; b.width = edit.w * 100 + "%"; b.height = edit.h * 100 + "%"; }
+(() => { let drag = null; const S = $("stage");
+  S.addEventListener("pointerdown", (e) => { if (!edit) return; drag = { k: (e.target.dataset && e.target.dataset.k) || "move", x: e.clientX, y: e.clientY, r: S.getBoundingClientRect(), o: Object.assign({}, edit) }; S.setPointerCapture(e.pointerId); e.preventDefault(); });
+  S.addEventListener("pointermove", (e) => { if (!drag || !edit) return; const dx = (e.clientX - drag.x) / drag.r.width, dy = (e.clientY - drag.y) / drag.r.height, o = drag.o, q = Object.assign({}, o), M = 0.04;
+    if (drag.k === "move") { q.x = Math.min(1 - o.w, Math.max(0, o.x + dx)); q.y = Math.min(1 - o.h, Math.max(0, o.y + dy)); }
+    else { if (drag.k.includes("w")) { q.x = Math.min(o.x + o.w - M, Math.max(0, o.x + dx)); q.w = o.x + o.w - q.x; } if (drag.k.includes("e")) q.w = Math.max(M, Math.min(1 - o.x, o.w + dx)); if (drag.k.includes("n")) { q.y = Math.min(o.y + o.h - M, Math.max(0, o.y + dy)); q.h = o.y + o.h - q.y; } if (drag.k.includes("s")) q.h = Math.max(M, Math.min(1 - o.y, o.h + dy)); }
+    edit = q; drawBox(); });
+  S.addEventListener("pointerup", () => { drag = null; }); })();
+
+async function importDict(f) { if (!f) return; const m = $("dictMsg"); m.className = "msg"; m.textContent = "جاري الاستيراد…";
+  try { const r = await (await fetch("/api/import", { method: "POST", body: await f.text() })).json(); m.className = "msg ok"; m.textContent = `تمت إضافة ${nf(r.added)} جملة · تجاهل ${nf(r.skipped)} سطر`; } catch { m.className = "msg bad"; m.textContent = "تعذّر الاستيراد."; } $("dictFile").value = ""; }
+
+const ERR = { black: "الصورة اللي يقرأها التلفزيون سودا: هذا التلفزيون يمنع قراءة صورة HDMI.", capture_denied: "التلفزيون ما وافق على قراءة الشاشة. اضغط «ابدأ الترجمة» ووافق بالريموت.", offline: "ما فيه إنترنت: نترجم من القاموس بس.", capture_failed: "ما قدرنا نبدأ تسجيل الشاشة. جرّب مرة ثانية." };
+function render() {
+  const s = st; $("live").classList.toggle("on", s.running); $("liveTx").textContent = s.running ? (s.capturing ? "يترجم" : "بانتظار الشاشة") : "جاهز";
+  $("goBtn").innerHTML = s.running && s.capturing ? `<span class="pulse"></span>الترجمة فعّالة · اضغط للإيقاف` : `ابدأ الترجمة ${ic("arrow")}`; $("goBtn").classList.toggle("live2", s.running && s.capturing);
+  $("lastLine").innerHTML = s.translated ? `<div class="last">${esc(s.translated)}</div><div class="orig">${esc(s.original)}</div>` : `<div class="stepno">ما فيه ترجمة للحين.</div>`;
+  $("tvInfo").textContent = s.capturing ? (s.error === "black" ? "الصورة سودا" : "يقرأ الشاشة") : "متصل · جاهز"; $("tvTag").textContent = "متصل"; $("tvTag").classList.add("ok");
+  $("err").textContent = ERR[s.error] || "";
+  $("regHint").textContent = s.region ? "محدد يدوياً" : "الافتراضي: الجزء السفلي من الشاشة";
+  seg("pos", POS, s.position, (v) => cmd({ type: "save", patch: { position: v } }));
+  if (document.activeElement !== $("sz")) { $("sz").value = s.fontSize; $("szv").textContent = s.fontSize; }
+  if (document.activeElement !== $("op")) { const o = Math.round(s.opacity * 100); $("op").value = o; $("opv").textContent = o + "%"; }
+  $("phSubs").checked = s.phoneSubs;
+  const tot = s.memory + s.base; $("dictInfo").innerHTML = `<div class="stat"><div><b>${nf(tot)}</b><small>كلمة وجملة</small></div><div><b>${nf(s.memory)}</b><small>جمل محفوظة</small></div></div><div class="bar"><i style="width:${Math.min(100, tot / s.cap * 100).toFixed(1)}%"></i></div>`;
+  $("log").innerHTML = s.log.length ? s.log.map((l) => `<div class="e"><div class="o">${esc(l[1])}</div><div class="s">${esc(l[0])}</div></div>`).join("") : `<div class="empty">${ic("chat")}<div>ما فيه جمل للحين.</div></div>`;
+  if (edit) drawBox();
+  if (!$("wiz").classList.contains("hide") && wiz.step === "allow" && wiz.lastCap !== s.capturing) { wiz.lastCap = s.capturing; drawWiz(); }
+}
+if (LOCAL) { // phone page: install / find the TV, then hand over to the TV's control page
+  $("app").classList.add("hide"); $("nav").classList.add("hide"); wizAt(ls("roxTvSeen") ? "tvwait" : "tvtype"); $("wiz").querySelector(".iconbtn:last-child").style.visibility = "hidden";
+  setInterval(() => { const h = NATIVE.tvHost(); if (h) { ls("roxTvSeen", "1"); location.href = "http://" + h + ":8765/"; } }, 1000);
+} else { connect(); if (!ls("roxSetup")) setTimeout(start, 300); }
+</script>
+</html>

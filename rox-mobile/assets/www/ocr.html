@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><title>ROX OCR</title>
+<script src="/www/tess/tesseract.min.js"></script>
+<script>
+// Reads every crop the phone captured (long poll), sends the text back. Runs in a hidden 1x1 window inside the ROX service.
+(async () => {
+  let w = null;
+  for (;;) {
+    try {
+      if (!w) {
+        w = await Tesseract.createWorker("eng", 1, { workerPath: "/www/tess/worker.min.js", corePath: "/www/tess/", langPath: "/www/tess/", gzip: true, cacheMethod: "none", workerBlobURL: false });
+        await w.setParameters({ tessedit_pageseg_mode: "6", preserve_interword_spaces: "1" });
+      }
+      const r = await fetch("/ocr/next", { cache: "no-store" });
+      if (r.status !== 200) continue;
+      const img = await r.blob();
+      const { data } = await w.recognize(img);
+      const lines = (data.lines || []).filter((l) => l.confidence > 55).map((l) => l.text.trim()).filter(Boolean);
+      await fetch("/ocr/result", { method: "POST", body: lines.join(" ") });
+    } catch (e) { try { await w.terminate(); } catch {} w = null; await new Promise((r) => setTimeout(r, 1500)); }
+  }
+})();
+</script>
