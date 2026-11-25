@@ -4,7 +4,10 @@ import sys, os, subprocess
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
 D, OUT = sys.argv[1], sys.argv[2]; MUSIC = sys.argv[3] if len(sys.argv) > 3 else None
-AR = {'Split': 'الانقسام: البرج يصير برجين', 'Crowns': 'التيجان وخطوط LED والجسر المعلّق', 'Rooftops': 'السطوح: مهبط هيليكوبتر وأضواء',
+AR = {'Podium: glass lobby': 'القاعدة: صندوق زجاج للوبي', 'Core + elevator': 'العمود الأوسط: مصاعد', 'Lobby: reception': 'اللوبي: الاستقبال وجدار ROX والجلسات',
+      'Lobby: double': 'اللوبي: سقف عالي ومويه', 'Mid block: 14': 'الجزء الأوسط: ١٤ دور مكاتب', 'Office floor': 'دور المكاتب المفتوحة', 'Executive': 'دور المدير',
+      'Split: twin glass': 'الانقسام: برجين زجاج وجسر معلّق', 'Sky lounge': 'لاونج السطح فوق البرج الطويل', 'Final - night': 'النهائي: بالليل والداخل يبان', 'Final - full': 'النهائي: البرج كامل',
+      'Split': 'الانقسام: البرج يصير برجين', 'Crowns': 'التيجان وخطوط LED والجسر المعلّق', 'Rooftops': 'السطوح: مهبط هيليكوبتر وأضواء',
       'Ground': 'الأرضية: الساحة والشارع وممر المشاة', 'Podium: chamfered': 'القاعدة: زجاج غامق بزوايا مشطوفة', 'Podium: fins': 'القاعدة: زعانف وإضاءة LED على الحواف',
       'Entrance': 'المدخل: مظلة ولوحة ROX', 'Mid tower: dark': 'البرج الأوسط: زجاج أسود', 'Curtain': 'الواجهة: زعانف وأدوار ومكاتب منوّرة',
       'Setback': 'التراجع: حافة LED', 'Upper tower': 'البرج العلوي', 'Crown': 'التاج: خطوط LED', 'Rooftop': 'السطح: مهبط هيليكوبتر وأضواء',
