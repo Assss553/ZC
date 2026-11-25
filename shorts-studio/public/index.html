@@ -70,8 +70,9 @@ async function load(){
     $('styles').onclick=e=>{if(!e.target.dataset.k)return;style=e.target.dataset.k;[...$('styles').children].forEach(b=>b.classList.toggle('on',b===e.target))}}
   $('channel').textContent=s.channel?'📺 مربوط: '+s.channel:'القناة غير مربوطة';
   $('chbtn').innerHTML=s.channel?'<button class="g" onclick="api(\'/api/youtube/disconnect\',{}).then(load)">فصل</button>':(s.keys.google?'<a href="/auth/youtube"><button class="g">ربط يوتيوب</button></a>':'');
-  const miss=[!s.keys.claude&&'ANTHROPIC_API_KEY (السيناريو)',!s.keys.openai&&'OPENAI_API_KEY (الصور والصوت)',!s.keys.google&&'GOOGLE_CLIENT_ID (يوتيوب)'].filter(Boolean);
+  const miss=s.local?[]:[!s.keys.claude&&'ANTHROPIC_API_KEY (السيناريو)',!s.keys.openai&&'OPENAI_API_KEY (الصور والصوت)',!s.keys.google&&'GOOGLE_CLIENT_ID (يوتيوب)'].filter(Boolean);
   $('keys').textContent=miss.length?'وضع تجريبي — ناقص في ملف .env: '+miss.join('، '):'';
+  if(s.local)$('keys').innerHTML='<span style="color:var(--ok)">🧠 الذكاء الخاص شغال — بدون مفاتيح خارجية</span>';
   $('count').textContent=s.jobs.length+' مقطع';
   $('jobs').innerHTML=s.jobs.map(j=>`<div class="job">${j.video?`<video src="${j.video}" controls preload="metadata"></video>`:'<div class="ph"></div>'}
     <div class="meta"><div class="t">${esc(j.title||j.idea)}</div>

@@ -4,6 +4,9 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { STYLES } from './styles.js';
 import { VIDEOS_DIR } from './store.js';
+import { localText, localImage, localVoice } from './local-ai.js';
+
+const LOCAL = () => process.env.AI_MODE === 'local';
 
 const W = 1080, H = 1920, FPS = 30;
 
@@ -19,12 +22,18 @@ function run(cmd, args) {
 // 1) السيناريو
 async function writeScript(idea, styleKey, lang, seconds) {
   const scenes = Math.max(4, Math.round(seconds / 6));
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!LOCAL() && !process.env.ANTHROPIC_API_KEY) {
     return {
       title: idea.slice(0, 80), description: idea, tags: ['shorts'],
       scenes: Array.from({ length: scenes }, (_, i) => ({ narration: i === 0 ? idea : `المشهد ${i + 1}`, visual: idea })),
     };
   }
+  const ask = `You are a viral YouTube Shorts writer. Idea: "${idea}".
+Visual style: ${STYLES[styleKey].name}. Narration language: ${lang}. Total length about ${seconds} seconds, exactly ${scenes} scenes.
+Start with a strong hook in the first scene, end with a twist or call to action.
+Return ONLY JSON: {"title": "<=90 chars catchy, include #shorts", "description": "...", "tags": ["..."],
+"scenes": [{"narration": "spoken text in ${lang}, 1-2 short sentences", "visual": "detailed English image prompt for this scene, same main character description repeated every time"}]}`;
+  if (LOCAL()) { const t = await localText(ask); return JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); }
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
@@ -46,6 +55,7 @@ Return ONLY JSON: {"title": "<=90 chars catchy, include #shorts", "description":
 
 // 2) الصور
 async function makeImage(prompt, styleKey, out, i) {
+  if (LOCAL()) return localImage(`${prompt}, ${STYLES[styleKey].prompt}, masterpiece, best quality`, out);
   if (!process.env.OPENAI_API_KEY) {
     const colors = ['0x7a1f4d', '0x1f4d7a', '0x2d7a1f', '0x7a5a1f', '0x4d1f7a'];
     await run('ffmpeg', ['-y', '-f', 'lavfi', '-i', `gradients=s=${W}x${H}:c0=${colors[i % colors.length]}:c1=0x101020:duration=1`, '-frames:v', '1', out]);
@@ -63,6 +73,7 @@ async function makeImage(prompt, styleKey, out, i) {
 
 // 3) الصوت
 async function makeVoice(text, voice, out) {
+  if (LOCAL()) return localVoice(text, out);
   if (!process.env.OPENAI_API_KEY) return false;
   const res = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',

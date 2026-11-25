@@ -21,6 +21,7 @@ app.get('/api/state', (_req, res) => {
   res.json({
     styles: Object.fromEntries(Object.entries(STYLES).map(([k, v]) => [k, v.name])),
     channel: db.youtube?.channel || null,
+    local: process.env.AI_MODE === 'local',
     keys: { claude: !!process.env.ANTHROPIC_API_KEY, openai: !!process.env.OPENAI_API_KEY, google: !!process.env.GOOGLE_CLIENT_ID },
     jobs: db.jobs.map(({ result, ...j }) => ({ ...j, title: result?.title, video: result ? `/videos/${j.id}/final.mp4` : null }))
       .sort((a, b) => a.publishAt.localeCompare(b.publishAt)),
