@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>استوديو الشورتس</title>
+<style>
+  :root{--bg:#0d0f17;--card:#161a26;--line:#262b3d;--txt:#e9ecf5;--mut:#8b93ad;--acc:#ff3d6e;--ok:#2fd19a;--warn:#ffb648}
+  *{box-sizing:border-box}body{margin:0;font-family:system-ui,Tahoma,sans-serif;background:var(--bg);color:var(--txt)}
+  .wrap{max-width:1100px;margin:auto;padding:16px}h1{margin:8px 0 18px;font-size:26px}h1 span{color:var(--acc)}
+  .grid{display:grid;grid-template-columns:380px 1fr;gap:16px}@media(max-width:850px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 5px}
+  input,select,textarea{width:100%;background:#0f121c;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:10px;font:inherit}
+  textarea{min-height:110px;resize:vertical}.row{display:flex;gap:8px}.row>*{flex:1}
+  button{background:var(--acc);color:#fff;border:0;border-radius:9px;padding:11px 14px;font:inherit;font-weight:700;cursor:pointer}
+  button.g{background:#232839;font-weight:500;padding:7px 10px;font-size:13px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{background:#232839;font-weight:500;padding:6px 10px;font-size:13px}
+  .chips button.on{background:var(--acc)}
+  .job{display:flex;gap:12px;border-top:1px solid var(--line);padding:12px 0}.job:first-child{border:0}
+  .job video,.ph{width:96px;height:170px;border-radius:9px;background:#0f121c;object-fit:cover;flex:none}
+  .meta{flex:1;min-width:0}.t{font-weight:700;margin-bottom:4px}.s{font-size:13px;color:var(--mut)}
+  .b{display:inline-block;font-size:12px;padding:2px 8px;border-radius:20px;background:#232839;margin-inline-end:6px}
+  .published{color:var(--ok)}.failed{color:var(--acc)}.generating,.uploading{color:var(--warn)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.ch{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .note{font-size:12px;color:var(--warn);margin-top:8px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>🎬 استوديو <span>الشورتس</span></h1>
+<div class="grid">
+  <div class="card">
+    <div class="ch"><div id="channel" class="s">…</div><span id="chbtn"></span></div>
+    <div id="keys" class="note"></div>
+    <label>فكرة المقطع (كل سطر = فكرة)</label>
+    <textarea id="ideas" placeholder="ساموراي يكتشف أن سيفه يتكلم&#10;5 حقائق مرعبة عن المحيط"></textarea>
+    <label>الستايل</label><div id="styles" class="chips"></div>
+    <div class="row">
+      <div><label>كم مقطع باليوم</label><input id="perDay" type="number" min="1" max="24" value="3"></div>
+      <div><label>لكم يوم</label><input id="days" type="number" min="1" max="60" value="1"></div>
+    </div>
+    <label>متى يبدأ</label>
+    <div class="chips" id="starts">
+      <button data-v="now" class="on">الحين</button><button data-v="+1h">بعد ساعة</button>
+      <button data-v="+2h">بعد ساعتين</button><button data-v="tomorrow">بكرة 9ص</button><button data-v="custom">وقت محدد</button>
+    </div>
+    <input id="custom" type="datetime-local" style="display:none;margin-top:8px">
+    <div class="row">
+      <div><label>المدة (ثانية)</label><input id="seconds" type="number" min="15" max="60" value="40"></div>
+      <div><label>اللغة</label><select id="lang"><option>Arabic</option><option>English</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>الصوت</label><select id="voice"><option value="onyx">رجالي عميق</option><option value="ash">رجالي</option><option value="nova">نسائي</option><option value="shimmer">نسائي هادئ</option></select></div>
+      <div><label>الخصوصية</label><select id="privacy"><option value="public">عام</option><option value="unlisted">غير مدرج</option><option value="private">خاص</option></select></div>
+    </div>
+    <label><input id="auto" type="checkbox" checked style="width:auto"> ينزل على القناة تلقائياً في موعده</label>
+    <button id="go" style="width:100%;margin-top:12px">ابدأ الجدولة</button>
+    <div id="msg" class="note"></div>
+  </div>
+  <div class="card"><div class="ch"><b>الجدول</b><span id="count" class="s"></span></div><div id="jobs"></div></div>
+</div></div>
+<script>
+const $=id=>document.getElementById(id);let style='anime',start='now',first=true;
+const ST={queued:'بالانتظار',generating:'جاري الإنتاج',ready:'جاهز',uploading:'جاري الرفع',published:'منشور ✓',failed:'فشل'};
+const fmt=d=>new Date(d).toLocaleString('ar',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const api=(u,b)=>fetch(u,{method:b?'POST':'GET',headers:{'content-type':'application/json'},body:b&&JSON.stringify(b)}).then(r=>r.json());
+$('starts').onclick=e=>{const v=e.target.dataset.v;if(!v)return;start=v;[...$('starts').children].forEach(b=>b.classList.toggle('on',b===e.target));$('custom').style.display=v==='custom'?'block':'none'};
+async function load(){
+  const s=await api('/api/state');
+  if(first){first=false;$('styles').innerHTML=Object.entries(s.styles).map(([k,n])=>`<button data-k="${k}" class="${k===style?'on':''}">${n}</button>`).join('');
+    $('styles').onclick=e=>{if(!e.target.dataset.k)return;style=e.target.dataset.k;[...$('styles').children].forEach(b=>b.classList.toggle('on',b===e.target))}}
+  $('channel').textContent=s.channel?'📺 مربوط: '+s.channel:'القناة غير مربوطة';
+  $('chbtn').innerHTML=s.channel?'<button class="g" onclick="api(\'/api/youtube/disconnect\',{}).then(load)">فصل</button>':(s.keys.google?'<a href="/auth/youtube"><button class="g">ربط يوتيوب</button></a>':'');
+  const miss=[!s.keys.claude&&'ANTHROPIC_API_KEY (السيناريو)',!s.keys.openai&&'OPENAI_API_KEY (الصور والصوت)',!s.keys.google&&'GOOGLE_CLIENT_ID (يوتيوب)'].filter(Boolean);
+  $('keys').textContent=miss.length?'وضع تجريبي — ناقص في ملف .env: '+miss.join('، '):'';
+  $('count').textContent=s.jobs.length+' مقطع';
+  $('jobs').innerHTML=s.jobs.map(j=>`<div class="job">${j.video?`<video src="${j.video}" controls preload="metadata"></video>`:'<div class="ph"></div>'}
+    <div class="meta"><div class="t">${esc(j.title||j.idea)}</div>
+    <div class="s"><span class="b ${j.status}">${ST[j.status]}</span>${fmt(j.publishAt)}</div>
+    ${j.step?`<div class="s">${esc(j.step)}</div>`:''}
+    ${j.youtubeId?`<a class="s" href="https://youtube.com/shorts/${j.youtubeId}" target="_blank">فتح على يوتيوب ↗</a>`:''}
+    <div class="acts">
+      ${['ready','failed','queued'].includes(j.status)?`<button class="g" onclick="act('${j.id}','regenerate')">🔄 جدّد المقطع</button>`:''}
+      ${j.status==='ready'?`<button class="g" onclick="act('${j.id}','publish')">⬆ انشر الحين</button>`:''}
+      ${j.status!=='published'?`<button class="g" onclick="resch('${j.id}')">🕒 غيّر الموعد</button><button class="g" onclick="act('${j.id}','cancel')">✕ حذف</button>`:''}
+    </div></div></div>`).join('')||'<div class="s">ما فيه مقاطع بعد — اكتب فكرة وابدأ.</div>';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function act(id,a,b){const r=await api(`/api/jobs/${id}/${a}`,b||{});if(r.error)alert(r.error);load()}
+function resch(id){const v=prompt('الموعد الجديد (مثال: 2026-11-26 18:30)');if(v)act(id,'reschedule',{publishAt:v})}
+$('go').onclick=async()=>{
+  const r=await api('/api/plans',{ideas:$('ideas').value,style,perDay:$('perDay').value,days:$('days').value,
+    start:start==='custom'?$('custom').value:start,seconds:$('seconds').value,lang:$('lang').value,voice:$('voice').value,
+    privacy:$('privacy').value,autoPublish:$('auto').checked});
+  $('msg').textContent=r.error||'تمت الجدولة ✓';load();
+};
+load();setInterval(load,5000);
+</script>
+</body></html>
