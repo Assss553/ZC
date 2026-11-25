@@ -675,6 +675,7 @@ def build_all():
     T['rox_floor_bluegrey'] = concrete((108, 124, 146), 10, stains=0.1, cracks=0, gloss=0.55)
     T['rox_parquet_herringbone'] = herringbone((120, 72, 38), (186, 128, 76), 11)
     T['rox_wood_planks'] = planks((112, 78, 48), (178, 136, 92), 12)
+    T['rox_wood_oak'] = wood((150, 98, 52), (214, 160, 102), 41, vertical=True, gloss=0.35)
     T['rox_tile_terracotta'] = tiles((150, 112, 78), (86, 74, 62), 13, 4, 4, var=0.09, gloss=0.45)
     T['rox_tile_beige'] = tiles((214, 198, 170), (150, 142, 128), 14, 4, 4, var=0.05, gloss=0.6)
     T['rox_tile_white'] = tiles((236, 236, 232), (170, 172, 172), 15, 4, 6, var=0.02, gloss=0.8)

@@ -107,6 +107,7 @@ MATS = {
     'led_white':     dict(tex='rox_led_white', sh='e', tile=1.0, emis=9.0, col=56),
     'window_day':    dict(tex='rox_window_day', sh='e', tile=1.0, emis=2.2, col=114),
     'window_dark':   dict(tex='rox_window_dark', sh='s', tile=2.0, spec=1.0, fall=200, col=114),
+    'oak_panel':     dict(tex='rox_wood_oak', sh='ns', tile=1.2, spec=0.45, fall=70, col=70),
     'light':         dict(tex='rox_light_panel', sh='e', tile=1.0, emis=6.0, col=114),
     'fabric':        dict(tex='rox_blind_fabric', sh='n', tile=0.6, spec=0.02, col=97),
     'cardboard':     dict(tex='rox_cardboard', sh='n', tile=1.4, spec=0.02, col=86),

@@ -106,6 +106,45 @@ def interior(s, key, wall='paint_white', floor='tile_white', ceil='ceiling_tile'
         x += sp
 
 
+def mlo_dress(s, key):
+    # MLO look: black ceiling with linear LED lines, oak-clad core with black reveals, oak feature panels, glass-box offices
+    z0, z1, pts = FLOORS[key]
+    inner = [(x * 0.985, y * 0.985) for x, y in pts]
+    cx0, cy0, cx1, cy1 = min(p[0] for p in inner), min(p[1] for p in inner), max(p[0] for p in inner), max(p[1] for p in inner)
+    zc = z1 - 0.02
+    poly(s, 'paint_black', [(x * 0.97, y * 0.97) for x, y in inner], zc, False)
+    y = cy0 + 4
+    while y < cy1 - 3:                                   # long LED lines across the ceiling
+        s.box('led_white', cx0 + 4, y - 0.04, zc - 0.05, cx1 - 4, y + 0.04, zc); y += 5.0
+    x0, y0, x1, y1 = CORE; d = 0.06; zt = min(z1, z0 + 3.4) if key != 'lobby' else z0 + 9.0
+    s.box('oak_panel', x0 - d, y0 - d, z0, x1 + d, y1 + d, zt, faces='xXyY', step=1.2)
+    for xx in np.arange(x0 + 1.2, x1, 1.2):             # black reveals between panels (front + back)
+        for yy in (y0 - d - 0.01, y1 + d):
+            s.box('paint_black', xx - 0.02, yy, z0, xx + 0.02, yy + 0.01, zt)
+    s.box('led_white', x0 - d - 0.02, y0 - d - 0.03, zt - 0.06, x1 + d + 0.02, y1 + d + 0.03, zt)
+    if key == 'office':                                  # four glass-box offices along the north side
+        gy0, gy1 = 9.0, 15.5
+        for i in range(5):
+            xx = -18 + i * 8.0
+            s.box('metal_dark', xx - 0.04, gy0, z0, xx + 0.04, gy1, z0 + 3.0); s.cbox(xx - 0.04, gy0, z0, xx + 0.04, gy1, z0 + 3.0, 56)
+        for i in range(4):
+            a = -18 + i * 8.0
+            for xx in np.arange(a + 1.2, a + 8.0, 1.2):
+                if abs(xx - (a + 4.0)) > 0.7: s.box('metal_dark', xx - 0.025, gy0 - 0.03, z0, xx + 0.025, gy0 + 0.03, z0 + 3.0)
+            for zz in (z0 + 0.02, z0 + 2.95, z0 + 1.05):
+                s.box('metal_dark', a, gy0 - 0.03, zz, a + 3.4, gy0 + 0.03, zz + 0.05); s.box('metal_dark', a + 4.6, gy0 - 0.03, zz, a + 8.0, gy0 + 0.03, zz + 0.05)
+            s.cbox(a, gy0 - 0.03, z0, a + 3.4, gy0 + 0.03, z0 + 3.0, 56); s.cbox(a + 4.6, gy0 - 0.03, z0, a + 8.0, gy0 + 0.03, z0 + 3.0, 56)
+            s.box('metal_dark', a, gy0 - 0.03, z0 + 2.95, a + 8.0, gy0 + 0.03, z0 + 3.0)
+            s.box('oak_panel', a + 0.1, gy1 - 0.06, z0, a + 7.9, gy1, z0 + 3.0, faces='y', step=1.2)
+        s.box('metal_dark', -18, gy0, z0 + 3.0, 14, gy1, z0 + 3.05)
+    if key == 'lobby':                                   # oak reception wall + oak side walls behind the lounges
+        for sx in (-1, 1):
+            s.box('oak_panel', sx * 15 - 5, -24.0, z0, sx * 15 + 5, -23.8, z0 + 5.0, faces='y', step=1.2)
+            s.box('led_white', sx * 15 - 5, -23.82, z0 + 5.0, sx * 15 + 5, -23.78, z0 + 5.06)
+        s.box('oak_panel', -3.2, -7.6, z0, 3.2, -6.4, z0 + 1.1, faces='xXyYz', step=1.2); s.cbox(-3.2, -7.6, z0, 3.2, -6.4, z0 + 1.1, 70)
+        s.box('led_white', -3.2, -7.62, z0 + 0.06, 3.2, -7.58, z0 + 0.1)
+
+
 def core(s, z0, z1):
     x0, y0, x1, y1 = CORE
     s.box('concrete_wall', x0, y0, z0, x1, y1, z1, faces='xXyY', step=2.0); s.cbox(x0, y0, z0, x1, y1, z1, 1)
@@ -116,7 +155,7 @@ def base():
     # podium / lobby (door in the middle of the south side, 4 m wide)
     facade(s, POD, 0.0, 14.6, rnd, lit=0.0, door=(0, 21 - 2.5, 21 + 2.5, 3.6))
     s.box('stone', -3.0, -25.6, 3.6, 3.0, -24.6, 4.0); s.box('led_white', -2.6, -25.62, 3.5, 2.6, -25.58, 3.6)
-    interior(s, 'lobby', floor='tile_white')
+    interior(s, 'lobby', floor='tile_white'); mlo_dress(s, 'lobby')
     s.box('paint_charcoal', -7, -0.4, 0.02, 7, -0.05, 9.0)                  # dark marble logo wall in front of the core
     s.surf('sign_garage' if False else 'neon_hotel', (-3.5, -0.42, 6.5), X, Z, 7.0, 1.5, step=0, fit=True) if False else s.surf('sign_store', (-3.5, -0.42, 6.5), X, Z, 7.0, 1.4, step=0, fit=True)
     slab_ring(s, POD, 14.6, grow=1.03)
@@ -124,7 +163,7 @@ def base():
     core(s, 0.0, TOP_MID)
     # mid block: 14 floors, two of them walk-in
     facade(s, MID, Z0 + 0.6, TOP_MID, rnd, lit=0.22)
-    for k in ('office', 'executive'): interior(s, k, floor='carpet')
+    for k in ('office', 'executive'): interior(s, k, floor='carpet'); mlo_dress(s, k)
     led_corners(s, MID, Z0 + 0.6, TOP_MID); slab_ring(s, MID, TOP_MID, grow=1.08, h=0.5)
     s.bb = (-32, -27, 0, 32, 27, TOP_MID + 1)
     return s
