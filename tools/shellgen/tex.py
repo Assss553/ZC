@@ -627,6 +627,40 @@ def awning_stripe(c1, c2, seed, n=10):
     d = mix(col(c1) * np.ones((N, N, 1)), col(c2) * np.ones((N, N, 1)), st) * m[:, :, None]
     return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(fbm(2.0, seed + 1), 0.15))
 
+def tower_glass(seed, lit=False):
+    """Dark reflective curtain wall: 2 x 2 panes per tile with mullions + a spandrel band."""
+    y, x = np.mgrid[0:N, 0:N] / N
+    m = 0.75 + 0.5 * fbm(2.8, seed) - 0.25 * y
+    refl = np.clip(blur((fbm(2.2, seed + 1) > 0.6).astype(float), 14) * 1.1, 0, 1)
+    d = col((10, 14, 22)) * m[:, :, None] + col((52, 64, 84)) * refl[:, :, None]
+    if lit:
+        glow = 0.55 + 0.45 * np.exp(-((y - 0.25) ** 2) / 0.08)          # office ceiling light near the top of each pane
+        d = col((255, 216, 160)) * (glow * (0.85 + 0.25 * fbm(2.4, seed + 6)))[:, :, None] * 0.8
+    mul = ((np.abs(((x * 2) % 1) - 0.5) > 0.485) | (np.abs(((y * 2) % 1) - 0.5) > 0.49)).astype(float)
+    span = (y > 0.9).astype(float)
+    d = d * (1 - mul[:, :, None]) + col((40, 42, 46)) * mul[:, :, None]
+    d = d * (1 - span[:, :, None]) + col((24, 26, 30)) * span[:, :, None]
+    out = dict(d=np.clip(d, 0, 255).astype(np.uint8))
+    if not lit: out['s'] = spec_map(np.clip(0.9 - 0.7 * mul - 0.6 * span, 0, 1), np.full((N, N), 0.95))
+    return out
+
+def city_view(seed):
+    """What you see out of the window at night: blurred skyline with lit windows and bokeh."""
+    from PIL import ImageDraw, ImageFilter
+    S = 1024; rng = np.random.default_rng(seed)
+    im = Image.new('RGB', (S, S)); dr = ImageDraw.Draw(im)
+    for yy in range(S): t = yy / S; dr.line((0, yy, S, yy), fill=(int(8 + 30 * t), int(12 + 26 * t), int(30 + 40 * t)))
+    for k in range(26):
+        w = int(rng.integers(40, 140)); h = int(rng.integers(150, 700)); x0 = int(rng.integers(-40, S)); y0 = S - h
+        dr.rectangle((x0, y0, x0 + w, S), fill=(10, 12, 18))
+        for wy in range(y0 + 10, S - 10, 18):
+            for wx in range(x0 + 6, x0 + w - 6, 14):
+                if rng.random() < 0.35: dr.rectangle((wx, wy, wx + 7, wy + 9), fill=tuple(int(v) for v in rng.choice([(255, 210, 140), (220, 230, 255), (255, 180, 110)])))
+    for k in range(40):
+        x0, y0, r = int(rng.integers(0, S)), int(rng.integers(S // 2, S)), int(rng.integers(6, 22)); dr.ellipse((x0 - r, y0 - r, x0 + r, y0 + r), fill=(255, 190, 120))
+    im = im.filter(ImageFilter.GaussianBlur(3))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
 def build_all():
     T = {}
     T['rox_paint_white'] = paint((232, 230, 224), 1)
@@ -713,6 +747,10 @@ def build_all():
     T['rox_neon_burger'] = neon('ROX BURGER', (255, 210, 60), 313, aspect=6)
     T['rox_neon_slice'] = neon('PIZZA  BY THE SLICE', (255, 90, 60), 314, aspect=7)
     T['rox_neon_open'] = neon('OPEN', (255, 60, 80), 315, aspect=3)
+    T['rox_tower_glass'] = tower_glass(400)
+    T['rox_tower_glass_lit'] = tower_glass(401, lit=True)
+    T['rox_city_view'] = city_view(402)
+    T['rox_led_white'] = paint((235, 244, 255), 403, mottle=0.0)
     T['rox_window_day'] = window_day(28)
     T['rox_window_dark'] = window_dark(29)
     T['rox_light_panel'] = light_panel(30)
