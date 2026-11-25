@@ -492,6 +492,37 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
 .stt{font-size:12.5px;font-weight:700;padding:1px 9px;border-radius:99px;border:1px solid var(--line2)}
 .stt.delivered{color:#86efac;border-color:rgb(34 197 94/.5)}.stt.review{color:#fcd34d;border-color:rgb(245 158 11/.5)}.stt.rejected,.stt.refunded{color:#fca5a5;border-color:rgb(244 63 94/.5)}
 
+/* ====== لمسات التصميم v2: حواف، بطاقات، حركة ====== */
+:root{--r:16px;--r2:12px;--ease:cubic-bezier(.2,.8,.2,1)}
+::selection{background:var(--red);color:var(--on)}
+html{scrollbar-color:var(--line2) var(--bg)}
+h2{letter-spacing:-.02em}
+.rv{transition-delay:calc(var(--d,0)*70ms)}
+.pc .pc-in{border-radius:var(--r);background:linear-gradient(180deg,var(--s2),var(--s1));overflow:visible;transition:transform .35s var(--ease),border-color .3s,box-shadow .4s}
+.pc .pc-in:before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .35s;
+  background:linear-gradient(135deg,hsl(var(--h,4) 90% 62%),transparent 40%,transparent 60%,hsl(var(--h,4) 90% 62%));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.pc:hover .pc-in:before,.pc:focus-visible .pc-in:before{opacity:1}
+.pc:hover .pc-in{translate:0 -6px}
+.art,.top{border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0}
+.art:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.55));pointer-events:none}
+.bar{padding:16px 18px 18px}.bar h3{font-size:16.5px;font-weight:800}
+.price{background:rgb(var(--ac)/.12);border:1px solid rgb(var(--ac)/.35);color:#fff;font-weight:800;padding:5px 11px;border-radius:999px;line-height:1.1;font-size:15px}
+.price s{font-weight:500}
+.bdg{border-radius:999px;padding:3px 11px;box-shadow:0 6px 18px -6px rgba(0,0,0,.8)}
+.add,.btn{border-radius:max(var(--br),10px)}
+.add{transition:background .2s,color .2s,transform .2s var(--ease)}.add:active,.btn:active{transform:scale(.96)}
+.cat-h{border-radius:calc(var(--r) + 6px)}
+.chips button,.dim,.feat,.rev,.faq details,.dcbox,.live,.clock div{border-radius:var(--r2)}
+.faq details summary{transition:color .2s}.faq details[open] summary{color:var(--rt)}
+.faq details p{animation:fqIn .35s var(--ease)}
+@keyframes fqIn{from{opacity:0;transform:translateY(-6px)}}
+dialog[open]{animation:dlgIn .35s var(--ease)}dialog[open]::backdrop{animation:fade .3s}
+@keyframes dlgIn{from{opacity:0;transform:translateY(18px) scale(.97)}}@keyframes fade{from{opacity:0}}
+#prod{border-radius:calc(var(--r) + 4px)}.pd-g img{transition:opacity .25s}
+.cat-h{transition:transform .5s var(--ease)}
+.sec{scroll-margin-top:80px}
+@media (prefers-reduced-motion:reduce){.pc:hover .pc-in{translate:none}}
+
 /* ====== تصاميم المتجر العشرة — تتغيّر من لوحة التحكم ====== */
 .fx{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;display:none}
 .fx:before,.fx:after{content:"";position:absolute}
@@ -1075,7 +1106,7 @@ const fwHtml = p => `<div class="fw">${p.fw.map(f => `<span>${f}</span>`).join('
 const priceHtml = p => `<span class="price">${p.old ? `<s>${money(p.old)}</s>` : ''}${money(p.price)}</span>`;
 const imgs = p => sb && p.images && p.images.length ? p.images.map(x => sb.storage.from('products').getPublicUrl(x).data.publicUrl) : [];
 function card(p, c, wide) { const im = imgs(p);
-  return `<article class="pc${wide ? ' wide' : ''}${im.length ? ' ph' : ''}" data-id="${esc(p.id)}" tabindex="0" aria-label="${esc(p.name)} — عرض التفاصيل"><div class="pc-in">
+  return `<article class="pc rv${wide ? ' wide' : ''}${im.length ? ' ph' : ''}" style="--d:${(card.n = (card.n || 0) + 1) % 6}" data-id="${esc(p.id)}" tabindex="0" aria-label="${esc(p.name)} — عرض التفاصيل"><div class="pc-in">
     <div class="top">${im.length ? `<div class="art"><img class="pimg" src="${esc(im[0])}" alt="${esc(p.name)}" loading="lazy"></div>${im.length > 1 ? `<span class="pcnt">${im.length} صورة</span>` : ''}`
       : `<div class="art" style="--h:${p.h}"><span class="art-t lat">${p.art}</span></div><div class="glyph">${glyph(p.cat, p.h)}</div>`}
       ${p.tag ? `<span class="bdg${p.isNew ? ' new' : ''}">${p.tag}</span>` : ''}
