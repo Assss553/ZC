@@ -1,3 +1,4 @@
+import math
 # ROX shell generator - procedural tileable textures  (c) ROX Store
 import numpy as np, struct, os
 from PIL import Image
@@ -384,6 +385,37 @@ def sign_text(text, fg, bg, seed, glow=True, aspect=4, border=None):
     dr.text(pos, text, font=f, fill=fg)
     a = np.asarray(im.resize((N, N), Image.LANCZOS)).astype(np.float64)
     return dict(d=np.clip(a, 0, 255).astype(np.uint8))
+
+def police_badge(seed):
+    """Gold 7-point star badge on an oak plaque (emissive-lit wall logo)."""
+    from PIL import ImageDraw, ImageFilter
+    S = 1024; im = Image.new('RGB', (S, S), (150, 100, 56)); dr = ImageDraw.Draw(im)
+    for x in range(0, S, 96): dr.line((x, 0, x, S), fill=(118, 78, 44), width=4)
+    c = S / 2; pts = []
+    for k in range(14):
+        r = 430 if k % 2 == 0 else 250; a = math.pi * k / 7 - math.pi / 2; pts.append((c + r * math.cos(a), c + r * math.sin(a)))
+    sh = Image.new('L', (S, S), 0); ImageDraw.Draw(sh).polygon([(x + 14, y + 18) for x, y in pts], fill=160); sh = sh.filter(ImageFilter.GaussianBlur(14))
+    im.paste((40, 26, 14), (0, 0), sh); dr = ImageDraw.Draw(im)
+    dr.polygon(pts, fill=(214, 168, 70), outline=(120, 86, 30))
+    for k in range(0, 14, 2): dr.ellipse((pts[k][0] - 26, pts[k][1] - 26, pts[k][0] + 26, pts[k][1] + 26), fill=(232, 190, 90), outline=(120, 86, 30), width=4)
+    dr.ellipse((c - 215, c - 215, c + 215, c + 215), fill=(28, 52, 110), outline=(232, 196, 100), width=16)
+    dr.ellipse((c - 150, c - 150, c + 150, c + 150), fill=(236, 230, 214), outline=(232, 196, 100), width=8)
+    f, (l, tt, r, b) = _fit_text(dr, 'ROX', 240, 120); dr.text((c - (r - l) / 2 - l, c - (b - tt) / 2 - tt), 'ROX', font=f, fill=(28, 52, 110))
+    f2, (l, tt, r, b) = _fit_text(dr, 'POLICE DEPT', 330, 46); dr.text((c - (r - l) / 2 - l, c - 205), 'POLICE DEPT', font=f2, fill=(236, 220, 170))
+    f3, (l, tt, r, b) = _fit_text(dr, 'LOS SANTOS', 300, 42); dr.text((c - (r - l) / 2 - l, c + 160), 'LOS SANTOS', font=f3, fill=(236, 220, 170))
+    a = np.asarray(im.resize((N, N), Image.LANCZOS))
+    return dict(d=a)
+
+def height_chart(seed):
+    """Mugshot height chart: white board with black lines every 5 cm, numbers every foot."""
+    from PIL import ImageDraw
+    S = 1024; im = Image.new('RGB', (S, S), (232, 232, 226)); dr = ImageDraw.Draw(im)
+    for i in range(0, 41):                      # 0..200 cm over the board height
+        y = S - 12 - i * (S - 24) / 40; w = S if i % 4 == 0 else S * 0.18
+        dr.line((0, y, w, y), fill=(20, 20, 20), width=6 if i % 4 == 0 else 3); dr.line((S - w, y, S, y), fill=(20, 20, 20), width=3)
+        if i % 4 == 0 and i:
+            f, _ = _fit_text(dr, str(i * 5), 120, 50); dr.text((S * 0.42, y - 52), str(i * 5), font=f, fill=(20, 20, 20))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
 
 def shopfront(seed, kind=0):
     """Lit shop interior seen through glass: shelves / posters / counter, with a sky reflection on top."""
@@ -773,6 +805,9 @@ def build_all():
     T['rox_awning_green'] = fabric((38, 104, 78), 50, folds=6)
     T['rox_awning_red'] = fabric((150, 40, 36), 51, folds=6)
     T['rox_sign_garage'] = sign_text('ROX GARAGE', (255, 236, 200), (30, 22, 18), 52, aspect=8, border=(200, 150, 60))
+    T['rox_police_badge'] = police_badge(900)
+    T['rox_height_chart'] = height_chart(901)
+    T['rox_sign_police'] = sign_text('ROX POLICE', (255, 255, 255), (20, 40, 92), 902, aspect=8)
     T['rox_sign_store'] = sign_text('ROX STORE', (255, 255, 255), (190, 50, 24), 53, aspect=8)
     T['rox_sign_market'] = sign_text('24/7 MARKET', (255, 240, 120), (18, 66, 46), 54, aspect=8, border=(255, 240, 120))
     T['rox_sign_cafe'] = sign_text('BEAN MACHINE CAFE'.replace('BEAN MACHINE', 'ROX'), (255, 232, 190), (58, 34, 22), 55, aspect=8)

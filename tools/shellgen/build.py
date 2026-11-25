@@ -6,7 +6,7 @@ from kit import MATS
 
 # usage: build.py <workdir> [street] [only...]
 SET = 'shells'
-if len(sys.argv) > 2 and sys.argv[2] in ('street', 'open', 'build', 'laundry', 'nyc', 'towers'):
+if len(sys.argv) > 2 and sys.argv[2] in ('street', 'open', 'build', 'laundry', 'nyc', 'towers', 'police'):
     SET = sys.argv[2]; del sys.argv[2]
 
 W = sys.argv[1]
@@ -15,14 +15,14 @@ XML = os.path.join(W, 'xml'); OUT = os.path.join(W, 'out'); PRE = os.path.join(W
 for d in (XML, OUT, PRE):
     os.makedirs(d, exist_ok=True)
 CW = ['dotnet', os.path.join(W, 'cwconv/bin/Release/net8.0/cwconv.dll')]
-TXD = {'shells': 'rox_shells_txd', 'street': 'rox_street_txd', 'open': 'rox_open_txd', 'build': 'rox_build_txd', 'laundry': 'rox_laundry_txd', 'nyc': 'rox_nyc_txd', 'towers': 'rox_towers_txd'}[SET]
-TYP = {'shells': 'rox_shells', 'street': 'rox_street', 'open': 'rox_open', 'build': 'rox_build', 'laundry': 'rox_laundry', 'nyc': 'rox_nyc', 'towers': 'rox_towers'}[SET]
+TXD = {'shells': 'rox_shells_txd', 'street': 'rox_street_txd', 'open': 'rox_open_txd', 'build': 'rox_build_txd', 'laundry': 'rox_laundry_txd', 'nyc': 'rox_nyc_txd', 'towers': 'rox_towers_txd', 'police': 'rox_police_txd'}[SET]
+TYP = {'shells': 'rox_shells', 'street': 'rox_street', 'open': 'rox_open', 'build': 'rox_build', 'laundry': 'rox_laundry', 'nyc': 'rox_nyc', 'towers': 'rox_towers', 'police': 'rox_police'}[SET]
 only = sys.argv[2:] or None
 
 index = json.load(open(os.path.join(TEX, 'textures.json')))
 shells, used = [], set()
-if SET in ('street', 'open', 'build', 'laundry', 'nyc', 'towers'):
-    mod = __import__({'street': 'street', 'open': 'openhouses', 'build': 'buildkit', 'laundry': 'laundry', 'nyc': 'nyc', 'towers': 'towers'}[SET])
+if SET in ('street', 'open', 'build', 'laundry', 'nyc', 'towers', 'police'):
+    mod = __import__({'street': 'street', 'open': 'openhouses', 'build': 'buildkit', 'laundry': 'laundry', 'nyc': 'nyc', 'towers': 'towers', 'police': 'police'}[SET])
     makers = [(lambda p=p: p) for p in mod.all_pieces()]
     for m in makers: m.__name__ = m().name
 else:
