@@ -417,6 +417,71 @@ def height_chart(seed):
             f, _ = _fit_text(dr, str(i * 5), 120, 50); dr.text((S * 0.42, y - 52), str(i * 5), font=f, fill=(20, 20, 20))
     return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
 
+def marble(base, vein, seed, nx=2, ny=2, gloss=0.85, gap=0.004):
+    """Polished marble slabs: soft clouds + sharp branching veins, thin joints."""
+    y, x = np.mgrid[0:N, 0:N] / N
+    v = fbm(2.2, seed) * 2.0 + x * 1.3 + y * 0.7
+    veins = np.exp(-np.abs(np.sin(v * 9.0 + 3 * fbm(1.8, seed + 1))) * 14)
+    veins2 = np.exp(-np.abs(np.sin(v * 23.0 + 5 * fbm(2.0, seed + 2))) * 30) * 0.5
+    cloud = 0.92 + 0.1 * fbm(2.6, seed + 3)
+    t = np.clip(veins + veins2, 0, 1)
+    d = mix(col(base) * cloud[:, :, None], col(vein), t * 0.85)
+    fx, fy = (x * nx) % 1.0, (y * ny) % 1.0
+    e = np.minimum(np.minimum(fx, 1 - fx) / nx, np.minimum(fy, 1 - fy) / ny); g = (e < gap).astype(float)
+    d = mix(d, col(vein) * 0.6, g * 0.8)
+    h = 0.02 * fbm(2.0, seed + 4) - 0.5 * g
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(h, 0.2), s=spec_map(np.full((N, N), gloss) * (1 - g), np.full((N, N), 0.95)))
+
+def ops_map(seed):
+    """Glowing tactical city map for the operations centre video wall."""
+    from PIL import ImageDraw, ImageFilter
+    rng = np.random.default_rng(seed); S = 1024
+    im = Image.new('RGB', (S * 2, S), (6, 14, 26)); dr = ImageDraw.Draw(im)
+    for i in range(0, S * 2, 64): dr.line((i, 0, i, S), fill=(14, 34, 58), width=1)
+    for j in range(0, S, 64): dr.line((0, j, S * 2, j), fill=(14, 34, 58), width=1)
+    dr.polygon([(0, 700), (300, 640), (520, 760), (900, 720), (1300, 820), (2048, 760), (2048, 1024), (0, 1024)], fill=(8, 36, 70))
+    for _ in range(70):
+        x0, y0 = rng.integers(0, S * 2), rng.integers(0, 680); L = rng.integers(80, 600)
+        if rng.random() < 0.5: dr.line((x0, y0, x0 + L, y0), fill=(40, 110, 160), width=int(rng.integers(2, 6)))
+        else: dr.line((x0, y0, x0, y0 + L * 0.5), fill=(40, 110, 160), width=int(rng.integers(2, 6)))
+    for _ in range(14):
+        x0, y0 = rng.integers(60, S * 2 - 60), rng.integers(60, 640); c = [(255, 60, 60), (60, 160, 255), (255, 200, 60)][rng.integers(0, 3)]
+        dr.ellipse((x0 - 14, y0 - 14, x0 + 14, y0 + 14), fill=c); dr.ellipse((x0 - 34, y0 - 34, x0 + 34, y0 + 34), outline=c, width=3)
+    f, _ = _fit_text(dr, 'ROX PD  -  LIVE OPERATIONS', 900, 60); dr.text((40, 24), 'ROX PD  -  LIVE OPERATIONS', font=f, fill=(120, 200, 255))
+    im = im.filter(ImageFilter.GaussianBlur(0.8))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
+def cctv_wall(seed):
+    """3 x 3 grid of CCTV feeds (grainy grey scenes with timestamps)."""
+    from PIL import ImageDraw
+    rng = np.random.default_rng(seed); S = 1024; im = Image.new('RGB', (S, S), (10, 10, 12)); dr = ImageDraw.Draw(im)
+    c = S // 3
+    for i in range(3):
+        for j in range(3):
+            x0, y0 = i * c + 6, j * c + 6; x1, y1 = x0 + c - 12, y0 + c - 12
+            g = int(rng.integers(40, 90)); dr.rectangle((x0, y0, x1, y1), fill=(g, g + 4, g))
+            for _ in range(6):
+                a, b = rng.integers(x0, x1 - 40), rng.integers(y0 + 40, y1 - 20); w, h = rng.integers(20, 120), rng.integers(20, 90)
+                k = int(rng.integers(20, 160)); dr.rectangle((a, b, min(x1, a + w), min(y1, b + h)), fill=(k, k, k + 6))
+            dr.line((x0, y1 - 60, x1, y0 + 120), fill=(g + 40, g + 40, g + 40), width=3)
+            f, _ = _fit_text(dr, f'CAM {i * 3 + j + 1:02d}  23:4{j}:1{i}', c * 0.7, 26); dr.text((x0 + 10, y0 + 8), f'CAM {i * 3 + j + 1:02d}  23:4{j}:1{i}', font=f, fill=(230, 230, 230))
+            dr.ellipse((x1 - 30, y0 + 10, x1 - 14, y0 + 26), fill=(220, 30, 30))
+    a = np.asarray(im).astype(np.float64) + (np.random.default_rng(seed + 1).random((S, S, 1)) - 0.5) * 18
+    return dict(d=np.asarray(Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)))
+
+def info_screen(seed):
+    """Lobby information screen: ROX PD header, floor directory, clock."""
+    from PIL import ImageDraw
+    S = 1024; im = Image.new('RGB', (S, S), (12, 22, 44)); dr = ImageDraw.Draw(im)
+    dr.rectangle((0, 0, S, 150), fill=(20, 40, 92))
+    f, _ = _fit_text(dr, 'ROX POLICE HEADQUARTERS', 900, 70); dr.text((50, 40), 'ROX POLICE HEADQUARTERS', font=f, fill=(255, 255, 255))
+    rows = ['L   LOBBY  /  RECEPTION  /  SECURITY', '1   SECURITY  &  SERVICES', '2   OPERATIONS  CENTER', '3   ADMINISTRATION', '4   CONFERENCE  ROOMS',
+            '5   INVESTIGATIONS', '7   COMMAND  /  CHIEF  OF  POLICE', 'T   TOWER  OFFICES', 'S   SKY  LOUNGE']
+    for i, r in enumerate(rows):
+        y = 190 + i * 88; dr.rectangle((40, y, S - 40, y + 72), fill=(18, 34, 66) if i % 2 else (24, 44, 80))
+        f, _ = _fit_text(dr, r, 860, 40); dr.text((70, y + 14), r, font=f, fill=(220, 232, 255))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
 def shopfront(seed, kind=0):
     """Lit shop interior seen through glass: shelves / posters / counter, with a sky reflection on top."""
     from PIL import ImageDraw, ImageFilter
@@ -806,6 +871,15 @@ def build_all():
     T['rox_awning_red'] = fabric((150, 40, 36), 51, folds=6)
     T['rox_sign_garage'] = sign_text('ROX GARAGE', (255, 236, 200), (30, 22, 18), 52, aspect=8, border=(200, 150, 60))
     T['rox_police_badge'] = police_badge(900)
+    T['rox_marble_white'] = marble((236, 234, 230), (120, 120, 126), 910)
+    T['rox_marble_black'] = marble((22, 22, 26), (170, 160, 140), 911, gloss=0.9)
+    T['rox_ops_map'] = ops_map(912)
+    T['rox_cctv_wall'] = cctv_wall(913)
+    T['rox_info_screen'] = info_screen(914)
+    for k, (txt, c) in enumerate([('SECURITY CHECK', (20, 40, 92)), ('ELEVATORS', (30, 30, 34)), ('EMERGENCY EXIT', (20, 120, 50)), ('RESTROOMS', (30, 30, 34)),
+                                  ('OPERATIONS', (20, 40, 92)), ('CONFERENCE', (30, 30, 34)), ('INVESTIGATIONS', (92, 24, 24)), ('COMMAND', (20, 40, 92)),
+                                  ('EVIDENCE', (92, 24, 24)), ('SERVER ROOM', (30, 30, 34)), ('ADMINISTRATION', (30, 30, 34)), ('STAFF ONLY', (92, 24, 24))]):
+        T['rox_sign_' + txt.lower().replace(' ', '_')] = sign_text(txt, (255, 255, 255), c, 920 + k, aspect=6, glow=False)
     T['rox_height_chart'] = height_chart(901)
     T['rox_sign_police'] = sign_text('ROX POLICE', (255, 255, 255), (20, 40, 92), 902, aspect=8)
     T['rox_sign_store'] = sign_text('ROX STORE', (255, 255, 255), (190, 50, 24), 53, aspect=8)

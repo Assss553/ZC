@@ -4,10 +4,11 @@ game 'gta5'
 lua54 'yes'
 name 'rox_towers'
 author 'ROX Store'
-description 'ROX Twin Towers: dark glass + LED exterior, lobby / offices / executive / sky lounge furnished with real GTA props, elevator'
+description 'ROX Towers: twin glass towers (exterior) + full police HQ interior: lobby with security line, operations centre, admin, conference, investigations, command, services floors, twin tower offices, sky lounge. Real GTA furniture, working doors, elevator, stairs.'
 version '1.0.0'
 this_is_a_map 'yes'
 data_file 'DLC_ITYP_REQUEST' 'stream/rox_towers.ytyp'
 shared_scripts { 'config.lua' }
 server_scripts { 'server/main.lua' }
 client_scripts { 'client/main.lua' }
+files { 'data/interior.json' }

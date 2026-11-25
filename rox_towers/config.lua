@@ -8,15 +8,17 @@ Config.SpawnDistance = 900.0
 Config.PropFront = 180.0      -- GTA props look at -Y in model space; set 0.0 if sofas / desks face the wall
 Config.Locale = 'ar'
 
--- Walk-in floors (local z of the floor) and the elevator spot on each floor (in front of the core)
-Config.Floors = {
-    { key = 'lobby',     label = 'Lobby',       labelAr = 'اللوبي',        z = 0.0 },
-    { key = 'office',    label = 'Offices',     labelAr = 'المكاتب',       z = 26.3 },
-    { key = 'executive', label = 'Executive',   labelAr = 'دور المدير',    z = 45.8 },
-    { key = 'skylounge', label = 'Sky Lounge',  labelAr = 'لاونج السطح',  z = 131.9, elev = 'sky' },
+-- Floors, room furniture and doors come from data/interior.json (generated with the models by tools/shellgen/towers_int.py).
+Config.StreamRadius = 70.0          -- floors are spawned only when you are inside the tower footprint (+ this margin)
+Config.FloorWindow = 9.0            -- ... and within this height of the floor
+Config.KeycardAce = 'rox_towers.keycard'
+Config.KeycardJobs = { police = true, sheriff = true, lspd = true, bcso = true }   -- QBCore / ESX job names that open security doors
+Config.DoorModels = {               -- first model whose width fits the opening is used
+    std   = { 'v_ilev_ph_gendoor004', 'v_ilev_ph_gendoor005', 'v_ilev_fib_door1' },
+    glass = { 'v_ilev_fib_door2', 'v_ilev_fib_door1', 'v_ilev_ph_gendoor004' },
+    sec   = { 'v_ilev_arm_secdoor', 'v_ilev_ph_gendoor006', 'v_ilev_ph_gendoor004' },
 }
-Config.Elevator = { x = 0.0, y = -1.4 }          -- local point in front of the core (lobby), the same on every floor except the sky lounge
-Config.SkyElevator = { x = -13.0, y = -11.0 }
+Config.StairsPoint = { x = 6.0, y = 13.2 }     -- emergency stairs on every mid floor
 
 -- Real GTA props per floor: { models (first available is used), x, y, heading }  (local metres, floor level)
 local M = {
@@ -36,44 +38,8 @@ local M = {
     vase = { 'apa_mp_h_acc_vase_flowers_01' }, bookcase = { 'apa_mp_h_str_shelffreel_01' }, counter = { 'prop_ff_counter_01' },
     coffeemac = { 'apa_mp_h_acc_coffeemachine_01' }, pendant = { 'apa_mp_h_lit_lightpendant_05' },
 }
-Config.Furniture = { lobby = {}, office = {}, executive = {}, skylounge = {} }
+Config.Furniture = { skylounge = {} }   -- extra furniture (sky lounge lives in the exterior piece)
 local function add(f, m, x, y, h, extra) local t = { m = m, x = x, y = y, h = h or 0.0 }; if extra then for k, v in pairs(extra) do t[k] = v end end; table.insert(Config.Furniture[f], t) end
--- LOBBY: reception, two lounges, plants, art, lamps
-add('lobby', M.exechair, -1.2, -6.0, 180.0); add('lobby', M.exechair, 1.2, -6.0, 180.0); add('lobby', M.monitor, -1.2, -6.9, 180.0, { z = 1.1 }); add('lobby', M.monitor, 1.2, -6.9, 180.0, { z = 1.1 })
-for _, sx in ipairs({ -1, 1 }) do
-    local cx = sx * 15
-    add('lobby', M.rug, cx, -13.0, 0.0); add('lobby', M.sofa, cx, -11.0, 180.0); add('lobby', M.arm, cx - 2.6, -14.5, 90.0); add('lobby', M.arm, cx + 2.6, -14.5, 270.0)
-    add('lobby', M.coffee, cx, -13.2, 0.0); add('lobby', M.lamp, cx + 3.4, -11.0, 0.0); add('lobby', M.side, cx - 3.4, -11.2, 0.0)
-end
-for _, p in ipairs({ { -26, -18 }, { 26, -18 }, { -26, 16 }, { 26, 16 }, { -6, -20 }, { 6, -20 }, { -8, -1 }, { 8, -1 } }) do add('lobby', M.plant, p[1], p[2], 0.0) end
-add('lobby', M.art, -16.0, 22.5, 180.0, { z = 2.2 }); add('lobby', M.art, 16.0, 22.5, 180.0, { z = 2.2 })
--- OFFICES: 4 rows of desks with screens and chairs, meeting table, lounge corner
-for i = 0, 4 do for j = 0, 2 do
-    local x, y = -16 + i * 4.2, -13 + j * 4.0
-    add('office', M.desk, x, y, 0.0, { name = ('d%d%d'):format(i, j) }); add('office', M.monitor, x, y + 0.2, 0.0, { on = ('d%d%d'):format(i, j) })
-    add('office', M.offchair, x, y - 1.0, 0.0)
-end end
-add('office', M.dining, 15.0, -11.0, 90.0); for k = 0, 2 do add('office', M.dinchair, 13.8, -12.8 + k * 1.8, 270.0); add('office', M.dinchair, 16.2, -12.8 + k * 1.8, 90.0) end
-add('office', M.offsofa, 15.0, 10.0, 180.0); add('office', M.easy, 12.0, 8.0, 90.0); add('office', M.coffee, 15.0, 8.2, 0.0); add('office', M.tv, 15.0, 12.6, 180.0, { z = 1.2 })
-for _, p in ipairs({ { -21, 14 }, { -21, -16 }, { 21, -16 }, { 8, 14 } }) do add('office', M.plant, p[1], p[2], 0.0) end
-add('office', M.coffeemac, -18.0, 13.5, 180.0, { z = 0.9 }); add('office', M.sideboard, -18.0, 14.2, 180.0)
--- glass-box offices on the north side (x = -18..14, y = 9..15.5): desk, exec chair, 2 guest chairs, plant, shelf
-for i = 0, 3 do
-    local a = -14 + i * 8.0
-    add('office', M.desk, a, 13.2, 180.0, { name = 'g' .. i }); add('office', M.laptop, a, 13.2, 0.0, { on = 'g' .. i })
-    add('office', M.exechair, a, 14.3, 180.0); add('office', M.dinchair, a - 0.7, 11.9, 0.0); add('office', M.dinchair, a + 0.7, 11.9, 0.0)
-    add('office', M.plant, a + 3.3, 15.0, 0.0); add('office', M.shelf, a - 3.2, 15.1, 180.0)
-end
--- briefing room (south-east): rows of chairs facing a big screen
-for r = 0, 2 do for c = 0, 4 do add('office', M.offchair, 4.0 + c * 1.2, -4.0 - r * 1.4, 180.0) end end
-add('office', M.tv, 6.4, -1.2, 180.0, { z = 1.4 }); add('office', M.console, 6.4, -1.4, 180.0)
--- EXECUTIVE: big desk, exec chair, lounge, bookcase, art
-add('executive', M.rug, 0.0, -11.0, 0.0); add('executive', M.desk, 0.0, -12.0, 0.0, { name = 'exd' }); add('executive', M.laptop, 0.0, -12.0, 180.0, { on = 'exd' })
-add('executive', M.exechair, 0.0, -13.4, 0.0); add('executive', M.dinchair, -0.8, -10.6, 180.0); add('executive', M.dinchair, 0.8, -10.6, 180.0)
-add('executive', M.offsofa, -14.0, -11.0, 90.0); add('executive', M.easy, -10.5, -13.0, 270.0); add('executive', M.coffee, -12.0, -11.0, 0.0)
-add('executive', M.bookcase, 14.0, 4.0, 270.0); add('executive', M.sideboard, 14.0, -6.0, 270.0); add('executive', M.vase, 14.0, -6.0, 270.0, { z = 0.85 })
-add('executive', M.tv, -18.5, 2.0, 90.0, { z = 1.3 }); add('executive', M.dining, 8.0, 10.0, 0.0); for k = 0, 3 do add('executive', M.dinchair, 6.5 + (k % 2) * 3.0, 9.0 + (k // 2) * 2.0, (k // 2) == 0 and 0.0 or 180.0) end
-for _, p in ipairs({ { -20, -16 }, { 20, -16 }, { -20, 14 }, { 20, 14 } }) do add('executive', M.plant, p[1], p[2], 0.0) end
 -- SKY LOUNGE (top of the tall tower, centre x = -13): bar, sofas, stools
 add('skylounge', M.barfridge, -13.0, 12.6, 180.0); add('skylounge', M.counter, -14.0, 10.6, 180.0); add('skylounge', M.counter, -12.0, 10.6, 180.0)
 for k = 0, 3 do add('skylounge', M.stool, -15.6 + k * 1.1, 9.6, 0.0) end

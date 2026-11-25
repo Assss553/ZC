@@ -155,15 +155,13 @@ def base():
     # podium / lobby (door in the middle of the south side, 4 m wide)
     facade(s, POD, 0.0, 14.6, rnd, lit=0.0, door=(0, 21 - 2.5, 21 + 2.5, 3.6))
     s.box('stone', -3.0, -25.6, 3.6, 3.0, -24.6, 4.0); s.box('led_white', -2.6, -25.62, 3.5, 2.6, -25.58, 3.6)
-    interior(s, 'lobby', floor='tile_white'); mlo_dress(s, 'lobby')
-    s.box('paint_charcoal', -7, -0.4, 0.02, 7, -0.05, 9.0)                  # dark marble logo wall in front of the core
-    s.surf('sign_garage' if False else 'neon_hotel', (-3.5, -0.42, 6.5), X, Z, 7.0, 1.5, step=0, fit=True) if False else s.surf('sign_store', (-3.5, -0.42, 6.5), X, Z, 7.0, 1.4, step=0, fit=True)
+    interior(s, 'lobby', floor='marble_white', ceil='paint_black')       # hall shell; the fit-out is the rox_towers_lobby piece (towers_int.py)
     slab_ring(s, POD, 14.6, grow=1.03)
     led_corners(s, POD, 0.0, 15.2)
     core(s, 0.0, TOP_MID)
     # mid block: 14 floors, two of them walk-in
     facade(s, MID, Z0 + 0.6, TOP_MID, rnd, lit=0.22)
-    for k in ('office', 'executive'): interior(s, k, floor='carpet'); mlo_dress(s, k)
+    # walk-in office floors are separate pieces (towers_int.py), spawned at every floor level
     led_corners(s, MID, Z0 + 0.6, TOP_MID); slab_ring(s, MID, TOP_MID, grow=1.08, h=0.5)
     s.bb = (-32, -27, 0, 32, 27, TOP_MID + 1)
     return s
@@ -198,4 +196,5 @@ def twin():
 def all_pieces():
     b, t = base(), twin()
     b.meta = dict(floors={k: dict(z=round(v[0], 2), ceil=round(v[1], 2)) for k, v in FLOORS.items()}, core=CORE)
-    return [b, t]
+    import towers_int
+    return [b, t] + towers_int.all_pieces()
