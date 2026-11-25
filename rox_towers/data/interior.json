@@ -1213,7 +1213,7 @@
     "m": "prop_off_chair_01",
     "x": -23.0,
     "y": 15.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -1233,7 +1233,7 @@
     "m": "prop_off_chair_01",
     "x": -20.0,
     "y": 15.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -1253,7 +1253,7 @@
     "m": "prop_off_chair_01",
     "x": -17.0,
     "y": 15.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "v_corp_conftable",
@@ -1265,13 +1265,13 @@
     "m": "prop_off_chair_01",
     "x": 20.0,
     "y": 8.2,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 20.0,
     "y": 10.2,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -1665,7 +1665,7 @@
     "m": "prop_off_chair_01",
     "x": -17.5,
     "y": -12.9,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -1699,7 +1699,7 @@
     "m": "prop_off_chair_01",
     "x": -17.5,
     "y": -9.7,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -1733,7 +1733,7 @@
     "m": "prop_off_chair_01",
     "x": -14.1,
     "y": -12.9,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -1767,7 +1767,7 @@
     "m": "prop_off_chair_01",
     "x": -14.1,
     "y": -9.7,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -1801,7 +1801,7 @@
     "m": "prop_off_chair_01",
     "x": -10.7,
     "y": -12.9,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -1835,22 +1835,22 @@
     "m": "prop_off_chair_01",
     "x": -10.7,
     "y": -9.7,
+    "h": 180.0
+   },
+   {
+    "m": "ch_prop_ch_security_monitor_01a",
+    "x": -6.3,
+    "y": -12.9,
+    "h": 180.0
+   },
+   {
+    "m": "prop_off_chair_01",
+    "x": -6.3,
+    "y": -12.0,
     "h": 0.0
    },
    {
     "m": "ch_prop_ch_security_monitor_01a",
-    "x": -6.3,
-    "y": -12.9,
-    "h": 180.0
-   },
-   {
-    "m": "prop_off_chair_01",
-    "x": -6.3,
-    "y": -12.0,
-    "h": 180.0
-   },
-   {
-    "m": "ch_prop_ch_security_monitor_01a",
     "x": -3.9,
     "y": -12.9,
     "h": 180.0
@@ -1859,7 +1859,7 @@
     "m": "prop_off_chair_01",
     "x": -3.9,
     "y": -12.0,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ch_prop_ch_security_monitor_01a",
@@ -1871,7 +1871,7 @@
     "m": "prop_off_chair_01",
     "x": -1.5,
     "y": -12.0,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_din_table_04",
@@ -1883,25 +1883,25 @@
     "m": "apa_mp_h_din_chair_04",
     "x": 1.55,
     "y": -10.9,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_din_chair_04",
     "x": 3.05,
     "y": -10.9,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_din_chair_04",
     "x": 1.55,
     "y": -12.1,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "apa_mp_h_din_chair_04",
     "x": 3.05,
     "y": -12.1,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "apa_mp_h_din_table_04",
@@ -1913,25 +1913,25 @@
     "m": "apa_mp_h_din_chair_04",
     "x": 4.95,
     "y": -10.9,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_din_chair_04",
     "x": 6.45,
     "y": -10.9,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_din_chair_04",
     "x": 4.95,
     "y": -12.1,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "apa_mp_h_din_chair_04",
     "x": 6.45,
     "y": -12.1,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "ex_mp_h_off_sofa_01",
@@ -2336,19 +2336,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 2.0,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 1.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 2.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -2386,19 +2386,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 6.0,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 5.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 6.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -2637,7 +2637,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -13.1,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2678,7 +2678,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -9.35,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2719,7 +2719,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -5.6,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2760,7 +2760,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -1.85,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2801,7 +2801,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 1.9,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2842,7 +2842,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 5.65,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2883,7 +2883,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 9.4,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2924,7 +2924,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 13.15,
     "y": -10.1,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -2966,7 +2966,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -13.1,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3009,7 +3009,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -9.35,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3052,7 +3052,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -5.6,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3095,7 +3095,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -1.85,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3138,7 +3138,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 1.9,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3181,7 +3181,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 5.65,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3224,7 +3224,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 9.4,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3267,7 +3267,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 13.15,
     "y": -7.7,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.3
    },
    {
@@ -3310,7 +3310,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -13.1,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3353,7 +3353,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -9.35,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3396,7 +3396,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -5.6,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3439,7 +3439,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -1.85,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3482,7 +3482,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 1.9,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3525,7 +3525,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 5.65,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3568,7 +3568,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 9.4,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3611,7 +3611,7 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 13.15,
     "y": -5.3,
-    "h": 180.0,
+    "h": 0.0,
     "z": 0.6
    },
    {
@@ -3653,7 +3653,7 @@
     "m": "prop_off_chair_01",
     "x": -17.8,
     "y": 0.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -3687,7 +3687,7 @@
     "m": "prop_off_chair_01",
     "x": -14.2,
     "y": 0.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -3721,7 +3721,7 @@
     "m": "prop_off_chair_01",
     "x": -10.6,
     "y": 0.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -3755,7 +3755,7 @@
     "m": "prop_off_chair_01",
     "x": -17.8,
     "y": 4.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -3789,7 +3789,7 @@
     "m": "prop_off_chair_01",
     "x": -14.2,
     "y": 4.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -3823,103 +3823,103 @@
     "m": "prop_off_chair_01",
     "x": -10.6,
     "y": 4.8,
+    "h": 180.0
+   },
+   {
+    "m": "ex_prop_offchair_exec_01",
+    "x": -17.95,
+    "y": 10.05,
+    "h": 180.0
+   },
+   {
+    "m": "ex_prop_offchair_exec_01",
+    "x": -17.95,
+    "y": 12.55,
     "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
-    "x": -17.95,
+    "x": -16.85,
     "y": 10.05,
-    "h": 360.0
-   },
-   {
-    "m": "ex_prop_offchair_exec_01",
-    "x": -17.95,
-    "y": 12.55,
     "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -16.85,
-    "y": 10.05,
-    "h": 360.0
-   },
-   {
-    "m": "ex_prop_offchair_exec_01",
-    "x": -16.85,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -15.75,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -15.75,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -14.65,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -14.65,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -13.55,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -13.55,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -12.45,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -12.45,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -11.35,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -11.35,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -10.25,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -10.25,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_tv_flat_01",
@@ -3965,19 +3965,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 2.0,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 1.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 2.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -4508,19 +4508,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -18.9,
     "y": 2.0,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -17.0,
     "y": 1.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -17.0,
     "y": 2.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -4558,19 +4558,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -18.9,
     "y": 6.0,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -17.0,
     "y": 5.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -17.0,
     "y": 6.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -4608,19 +4608,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 2.0,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 1.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 2.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -4658,19 +4658,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 6.0,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 5.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 6.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -4722,7 +4722,7 @@
     "m": "prop_off_chair_01",
     "x": -1.6,
     "y": -13.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4756,7 +4756,7 @@
     "m": "prop_off_chair_01",
     "x": -1.6,
     "y": -10.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4790,7 +4790,7 @@
     "m": "prop_off_chair_01",
     "x": -1.6,
     "y": -7.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4824,7 +4824,7 @@
     "m": "prop_off_chair_01",
     "x": 1.8,
     "y": -13.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4858,7 +4858,7 @@
     "m": "prop_off_chair_01",
     "x": 1.8,
     "y": -10.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4892,7 +4892,7 @@
     "m": "prop_off_chair_01",
     "x": 1.8,
     "y": -7.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4926,7 +4926,7 @@
     "m": "prop_off_chair_01",
     "x": -17.8,
     "y": 8.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4960,7 +4960,7 @@
     "m": "prop_off_chair_01",
     "x": -17.8,
     "y": 11.6,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -4994,7 +4994,7 @@
     "m": "prop_off_chair_01",
     "x": -14.2,
     "y": 8.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -5028,7 +5028,7 @@
     "m": "prop_off_chair_01",
     "x": -14.2,
     "y": 11.6,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -5062,7 +5062,7 @@
     "m": "prop_off_chair_01",
     "x": -10.6,
     "y": 8.8,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -5096,7 +5096,7 @@
     "m": "prop_off_chair_01",
     "x": -10.6,
     "y": 11.6,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -5390,109 +5390,109 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -17.95,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -17.95,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -16.85,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -16.85,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -15.75,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -15.75,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -14.65,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -14.65,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -13.55,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -13.55,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -12.45,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -12.45,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -11.35,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -11.35,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -10.25,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -10.25,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -9.15,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -9.15,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_tv_flat_01",
@@ -5524,97 +5524,97 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -3.85,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -3.85,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -2.75,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -2.75,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -1.65,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -1.65,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -0.55,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -0.55,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 0.55,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 0.55,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 1.65,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 1.65,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 2.75,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 2.75,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 3.85,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 3.85,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_tv_flat_01",
@@ -5646,109 +5646,109 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 8.15,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 8.15,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 9.25,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 9.25,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 10.35,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 10.35,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 11.45,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 11.45,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 12.55,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 12.55,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 13.65,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 13.65,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 14.75,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 14.75,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 15.85,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 15.85,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 16.95,
     "y": -10.55,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": 16.95,
     "y": -8.05,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_tv_flat_01",
@@ -6373,19 +6373,19 @@
     "m": "prop_off_chair_01",
     "x": -16.05,
     "y": -10.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -16.55,
     "y": -8.3,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -15.55,
     "y": -8.3,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_acc_plant_tall_01",
@@ -6403,19 +6403,19 @@
     "m": "prop_off_chair_01",
     "x": -8.0,
     "y": -10.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -8.5,
     "y": -8.3,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -7.5,
     "y": -8.3,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_acc_plant_tall_01",
@@ -6427,13 +6427,13 @@
     "m": "prop_off_chair_04",
     "x": 8.0,
     "y": -10.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "prop_off_chair_04",
     "x": 8.0,
     "y": -8.3,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_cctv_cam_06a",
@@ -6446,13 +6446,13 @@
     "m": "prop_off_chair_04",
     "x": 16.05,
     "y": -10.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "prop_off_chair_04",
     "x": 16.05,
     "y": -8.3,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_cctv_cam_06a",
@@ -6493,7 +6493,7 @@
     "m": "prop_off_chair_01",
     "x": -1.6,
     "y": -13.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -6527,7 +6527,7 @@
     "m": "prop_off_chair_01",
     "x": -1.6,
     "y": -10.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -6561,7 +6561,7 @@
     "m": "prop_off_chair_01",
     "x": -1.6,
     "y": -7.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -6595,7 +6595,7 @@
     "m": "prop_off_chair_01",
     "x": 1.8,
     "y": -13.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -6629,7 +6629,7 @@
     "m": "prop_off_chair_01",
     "x": 1.8,
     "y": -10.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -6663,7 +6663,7 @@
     "m": "prop_off_chair_01",
     "x": 1.8,
     "y": -7.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -6797,19 +6797,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 2.0,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 1.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 2.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -7343,7 +7343,7 @@
     "m": "prop_off_chair_01",
     "x": -1.0,
     "y": -10.0,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "prop_monitor_01a",
@@ -7356,19 +7356,19 @@
     "m": "apa_mp_h_stn_chairarm_12",
     "x": -3.5,
     "y": -5.2,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_stn_chairarm_12",
     "x": 0.0,
     "y": -5.2,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_stn_chairarm_12",
     "x": 3.5,
     "y": -5.2,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "apa_mp_h_acc_plant_tall_01",
@@ -7449,19 +7449,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -18.9,
     "y": 6.0,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -17.0,
     "y": 5.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -17.0,
     "y": 6.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -7499,19 +7499,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 2.0,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 1.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 2.5,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -7535,97 +7535,97 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -17.95,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -17.95,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -16.85,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -16.85,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -15.75,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -15.75,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -14.65,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -14.65,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -13.55,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -13.55,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -12.45,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -12.45,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -11.35,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -11.35,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -10.25,
     "y": 10.05,
-    "h": 360.0
+    "h": 180.0
    },
    {
     "m": "ex_prop_offchair_exec_01",
     "x": -10.25,
     "y": 12.55,
-    "h": 180.0
+    "h": 0.0
    },
    {
     "m": "prop_tv_flat_01",
@@ -7961,7 +7961,7 @@
     "m": "prop_off_chair_01",
     "x": -17.6,
     "y": -9.7,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -7995,7 +7995,7 @@
     "m": "prop_off_chair_01",
     "x": -17.6,
     "y": -6.5,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -8029,7 +8029,7 @@
     "m": "prop_off_chair_01",
     "x": -17.6,
     "y": -3.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -8063,7 +8063,7 @@
     "m": "prop_off_chair_01",
     "x": -17.6,
     "y": -0.1,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "v_corp_conftable",
@@ -8132,19 +8132,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -7.1,
     "y": -7.05,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -9.0,
     "y": -7.55,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -9.0,
     "y": -6.55,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -8182,19 +8182,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": -7.1,
     "y": 0.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -9.0,
     "y": 0.0,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": -9.0,
     "y": 1.0,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -8278,7 +8278,7 @@
     "m": "prop_off_chair_01",
     "x": 8.4,
     "y": -7.7,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -8312,7 +8312,7 @@
     "m": "prop_off_chair_01",
     "x": 8.4,
     "y": -4.5,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -8346,7 +8346,7 @@
     "m": "prop_off_chair_01",
     "x": 8.4,
     "y": -1.3,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "h4_prop_office_desk_01",
@@ -8380,7 +8380,7 @@
     "m": "prop_off_chair_01",
     "x": 8.4,
     "y": 1.9,
-    "h": 0.0
+    "h": 180.0
    },
    {
     "m": "v_corp_conftable",
@@ -8449,19 +8449,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": -5.05,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": -5.55,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": -4.55,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",
@@ -8499,19 +8499,19 @@
     "m": "ex_prop_offchair_exec_01",
     "x": 18.9,
     "y": 2.5,
-    "h": 90.0
+    "h": 270.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 2.0,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "prop_off_chair_01",
     "x": 17.0,
     "y": 3.0,
-    "h": 270.0
+    "h": 90.0
    },
    {
     "m": "v_med_cor_filingcab",

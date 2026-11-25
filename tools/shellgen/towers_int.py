@@ -216,7 +216,7 @@ def office_kit(s, rm, face='N', boss=False):
         sgn = 1 if face == 'E' else -1; dx = (r['x0'] + 2.0) if face == 'E' else (r['x1'] - 2.0)
         hd = 270.0 if face == 'E' else 90.0
         F(s, 'h4_prop_office_desk_01', dx, cy, hd, name=rm + 'd'); F(s, 'prop_monitor_01a', dx, cy - 0.3, hd, on=rm + 'd')
-        F(s, 'ex_prop_offchair_exec_01', dx - sgn * 0.9, cy, hd); F(s, 'prop_off_chair_01', dx + sgn * 1.0, cy - 0.5, (hd + 180) % 360); F(s, 'prop_off_chair_01', dx + sgn * 1.0, cy + 0.5, (hd + 180) % 360)
+        F(s, 'ex_prop_offchair_exec_01', dx - sgn * 0.9, cy, (hd + 180) % 360); F(s, 'prop_off_chair_01', dx + sgn * 1.0, cy - 0.5, hd); F(s, 'prop_off_chair_01', dx + sgn * 1.0, cy + 0.5, hd)
         F(s, 'v_med_cor_filingcab', (r['x0'] + 0.35) if face == 'E' else (r['x1'] - 0.35), r['y1'] - 0.4, 180.0)
         F(s, 'apa_mp_h_str_shelffloorm_02', cx, r['y1'] - 0.35, 180.0); F(s, 'apa_mp_h_acc_plant_tall_01', (r['x0'] + 0.5) if face == 'E' else (r['x1'] - 0.5), r['y0'] + 0.5, 0.0)
     if boss:
@@ -230,7 +230,7 @@ def open_office(s, rm, rows, cols, x0, y0, dx=3.2, dy=3.0):
         for j in range(rows):
             x, y = x0 + i * dx, y0 + j * dy; n = f'{rm}{i}{j}'
             F(s, 'h4_prop_office_desk_01', x, y, 0.0, name=n); F(s, 'prop_monitor_01a', x - 0.3, y + 0.1, 0.0, on=n); F(s, 'prop_monitor_01a', x + 0.3, y + 0.1, 0.0, on=n)
-            F(s, 'prop_keyboard_01b', x, y - 0.15, 0.0, on=n); F(s, 'prop_off_chair_01', x, y - 0.9, 0.0)
+            F(s, 'prop_keyboard_01b', x, y - 0.15, 0.0, on=n); F(s, 'prop_off_chair_01', x, y - 0.9, 180.0)
     led_lines(s, rm, 2.4); lights(s, rm)
 
 
@@ -245,7 +245,7 @@ def meeting(s, rm, big=False):
             s.cbox(cx - L / 2, cy - 0.8, 0, cx + L / 2, cy + 0.8, 0.78, 70)
             for k in range(n):
                 x = cx - L / 2 + 0.55 + k * 1.1
-                F(s, 'ex_prop_offchair_exec_01', x, cy - 1.25, 180.0 + 180.0); F(s, 'ex_prop_offchair_exec_01', x, cy + 1.25, 180.0)
+                F(s, 'ex_prop_offchair_exec_01', x, cy - 1.25, 180.0); F(s, 'ex_prop_offchair_exec_01', x, cy + 1.25, 0.0)
             s.surf('ops_map', (r['x0'] + 0.02, cy + 1.6, 0.9), -Y * -1 if False else Y, Z, 3.2, 1.8, step=0, fit=True) if False else None
             F(s, 'prop_tv_flat_01', r['x0'] + 0.15, cy, 270.0, z=1.5); F(s, 'prop_tv_flat_01', r['x1'] - 0.15, cy, 90.0, z=1.5)
         else:
@@ -253,7 +253,7 @@ def meeting(s, rm, big=False):
             s.cbox(cx - 0.8, cy - L / 2, 0, cx + 0.8, cy + L / 2, 0.78, 70)
             for k in range(n):
                 y = cy - L / 2 + 0.55 + k * 1.1
-                F(s, 'ex_prop_offchair_exec_01', cx - 1.25, y, 90.0 + 180.0); F(s, 'ex_prop_offchair_exec_01', cx + 1.25, y, 90.0)
+                F(s, 'ex_prop_offchair_exec_01', cx - 1.25, y, 90.0); F(s, 'ex_prop_offchair_exec_01', cx + 1.25, y, 270.0)
             F(s, 'prop_tv_flat_01', cx, r['y1'] - 0.15, 180.0, z=1.5)
         s.box('led_white', cx - 2.5, cy - 0.04, CH - 0.5, cx + 2.5, cy + 0.04, CH - 0.46)            # pendant LED bar
         s.box('metal_dark', cx - 2.5, cy - 0.01, CH - 0.46, cx - 2.49, cy + 0.01, CH); s.box('metal_dark', cx + 2.49, cy - 0.01, CH - 0.46, cx + 2.5, cy + 0.01, CH)
@@ -280,12 +280,12 @@ def mid_floor(kind):
         gallery_windows(s, S, 'S')
         r = s.rooms['sec_office']; open_office(s, 'sec_office', 2, 3, r['x0'] + 2.5, r['y0'] + 2.5, dx=3.4, dy=3.2)
         r = s.rooms['cctv']; s.surf('cctv_wall', (r['x0'] + 7.7, r['y0'] + 0.02, 0.9), -X, Z, 7.4, 2.2, step=0, fit=True)
-        for k in range(3): F(s, 'ch_prop_ch_security_monitor_01a', r['x0'] + 1.6 + k * 2.4, r['y0'] + 1.6, 180.0); F(s, 'prop_off_chair_01', r['x0'] + 1.6 + k * 2.4, r['y0'] + 2.5, 180.0)
+        for k in range(3): F(s, 'ch_prop_ch_security_monitor_01a', r['x0'] + 1.6 + k * 2.4, r['y0'] + 1.6, 180.0); F(s, 'prop_off_chair_01', r['x0'] + 1.6 + k * 2.4, r['y0'] + 2.5, 0.0)
         led_lines(s, 'cctv', 2.0); lights(s, 'cctv', I=3.0)
         r = s.rooms['breakroom']
         for k in range(2):
             F(s, 'apa_mp_h_din_table_04', r['x0'] + 2.2 + k * 3.4, r['y0'] + 3.0, 0.0)
-            for a in range(4): F(s, 'apa_mp_h_din_chair_04', r['x0'] + 2.2 + k * 3.4 + (0.75 if a % 2 else -0.75), r['y0'] + 3.0 + (0.6 if a < 2 else -0.6), 0.0 if a >= 2 else 180.0)
+            for a in range(4): F(s, 'apa_mp_h_din_chair_04', r['x0'] + 2.2 + k * 3.4 + (0.75 if a % 2 else -0.75), r['y0'] + 3.0 + (0.6 if a < 2 else -0.6), 180.0 if a >= 2 else 0.0)
         F(s, 'ex_mp_h_off_sofa_01', r['x0'] + 4.0, r['y1'] - 0.7, 180.0); F(s, 'prop_vend_coffe_01', r['x1'] - 0.5, r['y1'] - 0.5, 180.0); F(s, 'v_ret_ml_fridge', r['x1'] - 1.4, r['y1'] - 0.45, 180.0)
         F(s, 'prop_tv_flat_01', r['x0'] + 4.0, r['y0'] + 0.12, 0.0, z=1.5); led_lines(s, 'breakroom', 2.0); lights(s, 'breakroom')
         r = s.rooms['lockers']
@@ -322,7 +322,7 @@ def mid_floor(kind):
                 x = -13.1 + k * 3.75; n = f'op{row}{k}'
                 F(s, 'h4_prop_office_desk_01', x, y, 180.0, z=z, name=n)
                 for m in (-0.45, 0.0, 0.45): F(s, 'hei_prop_hei_monitor_police_01' if m == 0 else 'prop_monitor_01a', x + m, y - 0.1, 180.0, on=n)
-                F(s, 'prop_phone_ing', x + 0.6, y + 0.15, 180.0, on=n); F(s, 'ex_prop_offchair_exec_01', x, y + 0.9, 180.0, z=z)
+                F(s, 'prop_phone_ing', x + 0.6, y + 0.15, 180.0, on=n); F(s, 'ex_prop_offchair_exec_01', x, y + 0.9, 0.0, z=z)
         F(s, 'xm_prop_x17_tv_ceiling_01', 0.0, -9.0, 180.0, z=CH - 0.05)
         s.box('led_white', XA + 0.6, YA + 0.6, CH - 0.04, XB - 0.6, YA + 0.66, CH); led_lines(s, 'ops', 3.0); lights(s, 'ops', I=3.5)
         sign(s, 'sg_operations', -10.0, -3.89, 2.5, 'S', w=1.6); sign(s, 'sg_operations', 10.0, -3.89, 2.5, 'S', w=1.6)
@@ -369,13 +369,13 @@ def mid_floor(kind):
             side_doors(s, 'W', ['observe1', 'observe2', 'evidence'], ('std', 'std', 'sec')); side_doors(s, 'E', ['inv_lead', 'lab', 'archive'], ('std', 'std', 'sec'))
             for rm in ('interview1', 'interview2'):
                 r = s.rooms[rm]; cx, cy = (r['x0'] + r['x1']) / 2, (r['y0'] + r['y1']) / 2
-                F(s, 'v_corp_conftable', cx, cy, 0.0); F(s, 'prop_off_chair_01', cx, cy - 1.0, 0.0); F(s, 'prop_off_chair_01', cx - 0.5, cy + 1.0, 180.0); F(s, 'prop_off_chair_01', cx + 0.5, cy + 1.0, 180.0)
+                F(s, 'v_corp_conftable', cx, cy, 0.0); F(s, 'prop_off_chair_01', cx, cy - 1.0, 180.0); F(s, 'prop_off_chair_01', cx - 0.5, cy + 1.0, 0.0); F(s, 'prop_off_chair_01', cx + 0.5, cy + 1.0, 0.0)
                 F(s, 'apa_mp_h_acc_plant_tall_01', r['x1'] - 0.5, r['y0'] + 0.5, 0.0); lights(s, rm); led_lines(s, rm, 2.0)
             for rm in ('interrog1', 'interrog2'):
                 r = s.rooms[rm]; cx, cy = (r['x0'] + r['x1']) / 2, (r['y0'] + r['y1']) / 2
                 s.box('black_glass', r['x0'] + 0.01, r['y0'] + 1.5, 1.0, r['x0'] + 0.03, r['y1'] - 1.5, 2.4, faces='X')     # one-way mirror
                 s.box('steel', cx - 0.9, cy - 0.5, 0.74, cx + 0.9, cy + 0.5, 0.78); s.box('steel', cx - 0.05, cy - 0.05, 0, cx + 0.05, cy + 0.05, 0.74); s.cbox(cx - 0.9, cy - 0.5, 0, cx + 0.9, cy + 0.5, 0.78, 56)
-                F(s, 'prop_off_chair_04', cx, cy - 1.0, 0.0); F(s, 'prop_off_chair_04', cx, cy + 1.0, 180.0); F(s, 'prop_cctv_cam_06a', r['x1'] - 0.3, r['y1'] - 0.3, 135.0, z=3.0)
+                F(s, 'prop_off_chair_04', cx, cy - 1.0, 180.0); F(s, 'prop_off_chair_04', cx, cy + 1.0, 0.0); F(s, 'prop_cctv_cam_06a', r['x1'] - 0.3, r['y1'] - 0.3, 135.0, z=3.0)
                 s.light(cx, cy, CH - 0.3, color=(255, 240, 220), intensity=7.0, falloff=5.0)
             r = s.rooms['detectives']; open_office(s, 'detectives', 3, 2, r['x0'] + 2.3, r['y0'] + 2.4, dx=3.4)
             for rm in ('observe1', 'observe2'):
@@ -408,8 +408,8 @@ def mid_floor(kind):
                 F(s, 'prop_flag_lsservices', r['x1'] - 0.5, r['y0'] + 0.5, 0.0)
             r = s.rooms['cmd_reception']; cx = (r['x0'] + r['x1']) / 2
             oak(s, cx - 3.0, -9.0, cx + 3.0, -8.4, 1.1, 'xXyYZ'); s.cbox(cx - 3.0, -9.0, 0, cx + 3.0, -8.4, 1.1, 70); s.box('marble_black', cx - 3.1, -9.1, 1.1, cx + 3.1, -8.3, 1.15)
-            F(s, 'prop_off_chair_01', cx - 1.0, -10.0, 0.0); F(s, 'prop_monitor_01a', cx - 1.0, -8.7, 0.0, z=1.15)
-            for k in range(3): F(s, 'apa_mp_h_stn_chairarm_12', cx - 3.5 + k * 3.5, -5.2, 180.0)
+            F(s, 'prop_off_chair_01', cx - 1.0, -10.0, 180.0); F(s, 'prop_monitor_01a', cx - 1.0, -8.7, 0.0, z=1.15)
+            for k in range(3): F(s, 'apa_mp_h_stn_chairarm_12', cx - 3.5 + k * 3.5, -5.2, 0.0)
             for x in (cx - 5.0, cx + 5.0): F(s, 'apa_mp_h_acc_plant_tall_01', x, YA + 0.6, 0.0)
             led_lines(s, 'cmd_reception', 2.0); lights(s, 'cmd_reception')
             meeting(s, 'cmd_meet'); office_kit(s, 'aide1', 'E'); office_kit(s, 'aide2', 'W')
@@ -492,8 +492,8 @@ def lobby():
         s.box('black_glass', r['x0'] + 0.3, r['y0'] + 0.01, 1.1, r['x1'] - 0.3, r['y0'] + 0.03, 2.4, faces='Y')
         for k in range(2): F(s, 'prop_sink_02', r['x0'] + 1.6 + k * 2.4, r['y0'] + 0.35, 0.0)
     r = s.rooms['l_secoff']; s.surf('cctv_wall', (r['x1'] - 6.5, r['y1'] - 0.02, 0.9), X, Z, 6.0, 2.4, step=0, fit=True)
-    for k in range(3): F(s, 'h4_prop_office_desk_01', r['x0'] + 3.0 + k * 3.0, r['y0'] + 3.0, 180.0, name=f'ls{k}'); F(s, 'ch_prop_ch_security_monitor_01a', r['x0'] + 3.0 + k * 3.0, r['y0'] + 3.0, 0.0, on=f'ls{k}'); F(s, 'prop_off_chair_01', r['x0'] + 3.0 + k * 3.0, r['y0'] + 2.1, 0.0)
-    r = s.rooms['l_interview']; F(s, 'v_corp_conftable', 20.0, 9.2, 0.0); F(s, 'prop_off_chair_01', 20.0, 8.2, 0.0); F(s, 'prop_off_chair_01', 20.0, 10.2, 180.0)
+    for k in range(3): F(s, 'h4_prop_office_desk_01', r['x0'] + 3.0 + k * 3.0, r['y0'] + 3.0, 180.0, name=f'ls{k}'); F(s, 'ch_prop_ch_security_monitor_01a', r['x0'] + 3.0 + k * 3.0, r['y0'] + 3.0, 0.0, on=f'ls{k}'); F(s, 'prop_off_chair_01', r['x0'] + 3.0 + k * 3.0, r['y0'] + 2.1, 180.0)
+    r = s.rooms['l_interview']; F(s, 'v_corp_conftable', 20.0, 9.2, 0.0); F(s, 'prop_off_chair_01', 20.0, 8.2, 180.0); F(s, 'prop_off_chair_01', 20.0, 10.2, 0.0)
     r = s.rooms['l_mail']
     for k in range(5): F(s, 'v_med_cor_filingcab', 15.0 + k * 1.6, r['y1'] - 0.4, 180.0)
     F(s, 'h4_prop_office_desk_01', 20.0, 14.5, 0.0)
