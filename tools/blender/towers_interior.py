@@ -115,32 +115,48 @@ def ceiling_lights(name, x0, y0, x1, y1, z, sp=3.0, strength=1.0):
     l = bpy.data.lights.new(name, 'AREA'); l.shape = 'RECTANGLE'; l.size = x1 - x0; l.size_y = y1 - y0; l.energy = 600 * strength * (x1 - x0) * (y1 - y0) / 100
     l.color = (1.0, 0.95, 0.88); o = bpy.data.objects.new(name, l); o.location = ((x0 + x1) / 2, (y0 + y1) / 2, z - 0.35); bpy.context.collection.objects.link(o)
 
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from phlib import ph          # real scanned CC0 furniture (Poly Haven), instanced
+PLANTS = ['potted_plant_01', 'potted_plant_02', 'potted_plant_04', 'pachira_aquatica_01', 'calathea_orbifolia_01']
 def plant(name, x, y, z, h=1.6):
-    cyl(f'{name}_pot', (x, y, z + 0.3), 0.3, 0.6, M['pot']); cyl(f'{name}_soil', (x, y, z + 0.6), 0.27, 0.02, M['wood'])
-    rr = random.Random(hash(name) & 0xffff)
-    for k in range(9):        # leafy crown: many small soft blobs
-        a = rr.uniform(0, 6.28); d = rr.uniform(0, 0.32); zz = z + 0.7 + rr.uniform(0.2, 1.0) * h * 0.8
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=rr.uniform(0.22, 0.38), location=(x + math.cos(a) * d, y + math.sin(a) * d, zz))
-        o = bpy.context.object; o.scale = (1, 1, 1.25); bpy.ops.object.shade_smooth(); o.data.materials.append(M['plant'])
-    cyl(f'{name}_stem', (x, y, z + 0.6 + h * 0.3), 0.03, h * 0.6, M['wood'], v=8)
+    rr = random.Random(hash(name) & 0xffff); ph(rr.choice(PLANTS), (x, y, z), rr.uniform(0, 360), h)
 
-def desk(name, x, y, z, rot=0.0):
-    box(f'{name}_top', (x, y, z + 0.74), (1.6, 0.8, 0.04), M['white'])
-    for dx in (-0.75, 0.75): box(f'{name}_leg{dx}', (x + dx, y, z + 0.37), (0.04, 0.7, 0.74), M['black'])
-    box(f'{name}_scr', (x, y + 0.25, z + 1.02), (0.6, 0.03, 0.36), M['screen']); box(f'{name}_stand', (x, y + 0.28, z + 0.8), (0.05, 0.05, 0.12), M['black'])
-    box(f'{name}_chair', (x, y - 0.65, z + 0.48), (0.5, 0.5, 0.08), M['black']); box(f'{name}_back', (x, y - 0.88, z + 0.8), (0.5, 0.06, 0.6), M['black'])
+_desk = [None]
+def _desk_coll():
+    if _desk[0]: return _desk[0]
+    col = bpy.data.collections.new('DESK'); objs = []
+    objs.append(box('d_top', (0, 0, 0.74), (1.6, 0.8, 0.04), M['white'], bev=0.01))
+    for dx in (-0.75, 0.75): objs.append(box(f'd_leg{dx}', (dx, 0, 0.37), (0.04, 0.7, 0.74), M['black'], bev=0))
+    objs.append(box('d_scr', (0, 0.25, 1.02), (0.6, 0.03, 0.36), M['screen'], bev=0)); objs.append(box('d_st', (0, 0.28, 0.8), (0.05, 0.05, 0.12), M['black'], bev=0))
+    objs.append(box('d_kb', (0, -0.05, 0.765), (0.45, 0.15, 0.015), M['black'], bev=0))
+    for o in objs:
+        for c in list(o.users_collection): c.objects.unlink(o)
+        col.objects.link(o)
+    _desk[0] = col; return col
+
+def desk(name, x, y, z, rot=0.0, chair=True):
+    o = bpy.data.objects.new(name, None); o.instance_type = 'COLLECTION'; o.instance_collection = _desk_coll()
+    bpy.context.scene.collection.objects.link(o); o.location = (x, y, z); o.rotation_euler.z = math.radians(rot)
+    if chair:
+        c, sn = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+        ph('modern_arm_chair_01', (x + 0.75 * sn, y - 0.75 * c, z), 180 + rot, 1.0)
+    rr = random.Random(hash(name) & 0xffff)
+    if rr.random() < 0.4: ph('office_notepads', (x + 0.5, y - 0.1, z + 0.76), rr.uniform(0, 360), 0.05)
+    if rr.random() < 0.3: ph('stationery_supplies', (x - 0.55, y + 0.1, z + 0.76), rr.uniform(0, 360), 0.15)
 
 def sofa(name, x, y, z, L=2.4, rot=0.0, m=None):
-    m = m or M['fabric']
-    box(f'{name}_base', (x, y, z + 0.14), (L, 0.9, 0.2), m, bev=0.04)
-    n = max(2, int(L / 0.8))
-    for k in range(n):        # separate seat + back cushions
-        cx = x - L / 2 + 0.2 + (L - 0.4) * (k + 0.5) / n
-        box(f'{name}_cush{k}', (cx, y - 0.05, z + 0.33), ((L - 0.4) / n - 0.03, 0.72, 0.18), m, bev=0.06)
-        box(f'{name}_bk{k}', (cx, y + 0.33, z + 0.62), ((L - 0.4) / n - 0.03, 0.2, 0.5), m, bev=0.07)
-    for dx in (-L / 2 + 0.1, L / 2 - 0.1): box(f'{name}_arm{dx}', (x + dx, y, z + 0.38), (0.2, 0.9, 0.5), m, bev=0.06)
-    for dx in (-L / 2 + 0.12, L / 2 - 0.12):
-        for dy in (-0.35, 0.35): box(f'{name}_leg{dx}{dy}', (x + dx, y + dy, z + 0.03), (0.05, 0.05, 0.06), M['brass'], bev=0)
+    ph('sofa_02' if (hash(name) & 1) else 'sofa_03', (x, y, z), rot, 0.85)
+
+def lounge(name, x, y, z, face=0.0, table=True):
+    """sofa facing `face`, two lounge chairs opposite, round table + rug between (all real models)"""
+    f = math.radians(face); fx, fy = math.sin(f), -math.cos(f)        # direction the sofa looks at
+    sofa(name, x, y, z, rot=face)
+    cx, cy = x + fx * 1.6, y + fy * 1.6
+    if table: ph('modern_coffee_table_01', (cx, cy, z), face, 0.42); ph('ceramic_vase_01', (cx, cy, z + 0.42), 0, 0.3)
+    px, py = fy, -fx
+    for sd in (-1, 1):
+        ph('mid_century_lounge_chair', (cx + fx * 1.4 + px * sd * 0.9, cy + fy * 1.4 + py * sd * 0.9, z), face + 180 + sd * 20, 0.85)
+    box(f'{name}_rug', (cx, cy, z + 0.012), (4.2, 3.6, 0.02), M['fabric'], bev=0)
 
 cam_data = bpy.data.cameras.new('cam'); cam = bpy.data.objects.new('cam', cam_data); bpy.context.collection.objects.link(cam); sc.camera = cam
 cam_data.lens = 24; cam_data.clip_end = 2000
@@ -172,8 +188,9 @@ box('logo_wall', (0, -0.3, 7.5), (14, 0.4, 9), M['darkmarble']); box('logo', (0,
 box('reception', (0, -6.5, 0.55), (8, 1.4, 1.1), M['wood']); box('reception_top', (0, -6.5, 1.12), (8.3, 1.6, 0.06), M['darkmarble'])
 box('reception_led', (0, -7.22, 0.15), (8, 0.04, 0.06), M['warm'])
 for k, x in enumerate((-18, -10, 10, 18)):
-    sofa(f'lob_sofa_{k}', x, -12, 0.02, m=M['leather'] if k % 2 else M['fabric']); box(f'lob_table_{k}', (x, -13.6, 0.22), (1.2, 0.7, 0.4), M['darkmarble'])
-for k, (x, y) in enumerate(((-24, -18), (24, -18), (-24, 14), (24, 14), (-6, -18), (6, -18))): plant(f'lob_plant_{k}', x, y, 0.02, 2.2)
+    lounge(f'lob_sofa_{k}', x, -11.0, 0.02, face=0)
+for k, (x, y) in enumerate(((-24, -18), (24, -18), (-24, 14), (24, 14), (-6, -18), (6, -18), (-26, -4), (26, -4), (-12, -18), (12, -18), (-20, -14), (20, -14))): plant(f'lob_plant_{k}', x, y, 0.02, 3.0)
+for k, x in enumerate((-18, 18)): lounge(f'lob_b_{k}', x, -17.5, 0.02, face=180)
 box('water_basin', (-16, 8, 0.2), (8, 4, 0.4), M['darkmarble']); box('water', (-16, 8, 0.42), (7.6, 3.6, 0.04), M['water'])
 for k in range(5): box(f'chand_{k}', (-12 + k * 6, -6, 11.5), (0.08, 3.5, 0.08), M['warm'])
 for k in range(8): cyl(f'pend_{k}', (-14 + k * 4, -14, 9.0), 0.35, 0.5, M['warm'])
@@ -181,6 +198,13 @@ ceiling_lights('lobby_l', -26, -22, 26, 20, 14.3, sp=4.0, strength=0.35)
 for k, (x, y) in enumerate(((-20, -6), (20, -6), (-20, 6), (20, 6), (-10, 12), (10, 12))):     # round columns with brass rings
     cyl(f'col_{k}', (x, y, 7.0), 0.55, 14.0, M['marble']); cyl(f'col_ring_{k}', (x, y, 0.3), 0.6, 0.6, M['brass']); cyl(f'col_top_{k}', (x, y, 13.7), 0.62, 0.6, M['brass'])
 box('lobby_rug', (0, -12.5, 0.04), (14, 6, 0.03), M['fabric'], bev=0)
+for k, x in enumerate((-2.4, 2.4)): ph('modern_arm_chair_01', (x, -5.4, 0.02), 0, 1.0); ph('classic_laptop', (x, -6.3, 1.15), 0, 0.25)
+ph('desk_lamp_arm_01', (3.6, -6.4, 1.15), 200, 0.55); ph('stationery_supplies', (-3.6, -6.5, 1.15), 0, 0.15)
+for k, x in enumerate((-5.5, 5.5)): ph('modern_wooden_cabinet', (x, -1.0, 0.02), 0, 0.8); ph('marble_bust_01', (x, -1.0, 0.82), 0, 0.45)
+for k, (x, y) in enumerate(((-14, 2), (14, 2))): ph('coffee_table_round_01', (x, y, 0.02), 0, 0.75)
+for cx in (-14, 14):
+    for k in range(4):
+        a = k * math.pi / 2 + math.pi / 4; ph('dining_chair_02', (cx + 1.1 * math.cos(a), 2 + 1.1 * math.sin(a), 0.02), math.degrees(math.atan2(-math.cos(a), math.sin(a))), 0.95)
 box('mezz', (0, 14, 7.0), (40, 8, 0.4), M['concrete'], bev=0); box('mezz_rail', (0, 10.05, 7.6), (40, 0.05, 1.0), M['glass'], bev=0); box('mezz_led', (0, 10.0, 6.78), (40, 0.05, 0.05), M['warm'], bev=0)
 for k in range(12): box(f'stair_{k}', (22, 9.5 - k * 0.0 - 0.0, 0.3 + k * 0.58) if False else (22 - 0.0, 2.0 + k * 0.6, 0.29 + k * 0.58), (2.2, 0.6, 0.12), M['darkmarble'], bev=0)
 shot('Lobby: reception, ROX wall, lounge', (-4, -22.5, 1.8), (1, -4, 3.5), 22)
@@ -199,23 +223,37 @@ r = random.Random(3)
 for k in range(NMID):
     z = Z0 + k * FH
     if k in (3, 8): continue
-    if r.random() < 0.55: ceiling_lights(f'mid_lt_{k}', -20, -15, 20, 15, z + FH, sp=4.0, strength=0.35)
+    if r.random() < 0.55:
+        ceiling_lights(f'mid_lt_{k}', -20, -15, 20, 15, z + FH, sp=4.0, strength=0.35)
+        for i in range(6):
+            for j in (-12, 10): desk(f'fd_{k}_{i}_{j}', -16 + i * 6.4, j, z, rot=0 if j < 0 else 180)
+        for i in range(3): plant(f'fp_{k}_{i}', -20 + i * 20, -15, z, 1.4)
 z = Z0 + 3 * FH
 for i in range(6):
     for j in range(3): desk(f'desk_{i}_{j}', -17 + i * 3.4, -13 + j * 3.2, z)
 for i in range(4): plant(f'off_plant_{i}', -21 + i * 14, 12, z, 1.4)
 box('meeting_glass', (14, -10, z + 1.4), (8, 0.05, 2.8), M['glass']); box('meeting_table', (14, -13, z + 0.75), (5, 1.6, 0.06), M['oak'])
-for i in range(6): box(f'meet_chair_{i}', (12 + (i % 3) * 2, -14.3 + (i // 3) * 2.6, z + 0.48), (0.5, 0.5, 0.08), M['black'])
+for i in range(6): ph('dining_chair_02', (12 + (i % 3) * 2, -14.3 + (i // 3) * 2.6, z), 180 if i < 3 else 0, 0.95)
+ph('projector_screen', (14, -16.5, z), 0, 2.2); lounge('off_lounge', 14, 6, z, face=0)
+ph('wall_clock', (-22.5, 0, z + 2.4), 90, 0.4)
 ceiling_lights('off_a', -22, -17, 22, 17, z + FH, sp=3.0, strength=0.35)
 z8 = Z0 + 8 * FH
-box('exec_desk', (0, -11, z8 + 0.75), (3.0, 1.2, 0.08), M['wood']); box('exec_chair', (0, -10, z8 + 0.6), (0.7, 0.7, 0.1), M['leather'])
-box('exec_back', (0, -9.6, z8 + 1.1), (0.7, 0.12, 0.9), M['leather'])
-sofa('exec_sofa', -12, -10, z8, L=3.2, m=M['leather']); box('exec_rug', (-12, -12, z8 + 0.03), (5, 3.5, 0.02), M['fabric'])
+box('exec_desk', (0, -11, z8 + 0.75), (3.0, 1.2, 0.08), M['darkmarble']); box('exec_desk_b', (0.6, -11, z8 + 0.36), (1.6, 1.1, 0.72), M['wood'])
+ph('modern_arm_chair_01', (0, -10.0, z8), 0, 1.05); ph('classic_laptop', (0, -11.1, z8 + 0.79), 180, 0.25); ph('desk_lamp_arm_01', (1.1, -11.2, z8 + 0.79), 20, 0.55)
+for dx in (-0.7, 0.7): ph('dining_chair_02', (dx, -12.4, z8), 180, 0.95)
+ph('book_encyclopedia_set_01', (14, -2.1, z8 + 1.2), 180, 0.3); ph('marble_bust_01', (12, -2.1, z8 + 1.2), 180, 0.4); lounge('exec_l2', 10, 8, z8, face=0)
+lounge('exec_sofa', -12, -9.5, z8, face=0)
+box('conf_table', (10, -11, z8 + 0.75), (6.0, 1.8, 0.07), M['oak'], bev=0.02); box('conf_base', (10, -11, z8 + 0.37), (4.0, 0.6, 0.72), M['black'], bev=0)
+for i in range(5):
+    for sd in (-1, 1): ph('dining_chair_02', (7.6 + i * 1.2, -11 + sd * 1.25, z8), 180 if sd < 0 else 0, 0.95)
+ph('projector_screen', (14.2, -11, z8), 270, 2.2)
+for i in range(6): plant(f'exec_p2_{i}', -20 + i * 8, 14, z8, 1.9)
+for i in range(4): desk(f'exec_d_{i}', -16 + i * 4.5, 8, z8, rot=180)
 for i in range(3): plant(f'exec_plant_{i}', -20 + i * 20, -14, z8, 1.8)
 box('exec_shelf', (14, -2, z8 + 1.4), (8, 0.5, 2.8), M['wood'])
 ceiling_lights('off_b', -22, -17, 22, 17, z8 + FH, sp=3.0, strength=0.3)
 shot('Office floor: open plan', (-16, -18, z + 1.7), (6, 0, z + 1.0), 20)
-shot('Executive floor', (16, -16, z8 + 1.7), (-6, -6, z8 + 1.0), 20)
+shot('Executive floor', (17, -16, z8 + 1.7), (4, -6, z8 + 0.8), 20)
 # 6 the tower splits: twin towers, all glass, lit floors
 for pts, top, nm in ((TL, 138.0, 'L'), (TR, 118.0, 'R')):
     nf = int((top - TOP_MID - 0.3) / FH)
@@ -231,7 +269,9 @@ shot('Split: twin glass towers + sky bridge', (150, -140, 130), (0, 0, 95), 28)
 nfl = int((138.0 - TOP_MID - 0.3) / FH); zt = TOP_MID + 0.3 + (nfl - 1) * FH + 0.02
 box('bar', (-13, 8, zt + 0.55), (8, 1.0, 1.1), M['darkmarble']); box('bar_led', (-13, 7.48, zt + 0.12), (8, 0.04, 0.05), M['warm'])
 box('bar_shelf', (-13, 10.5, zt + 1.6), (8, 0.4, 2.4), M['wood'])
-for i in range(4): sofa(f'sky_sofa_{i}', -17 + (i % 2) * 8, -6 - (i // 2) * 6, zt, L=2.6, m=M['fabric'] if i % 2 else M['leather'])
+lounge('sky_l1', -16, -2, zt, face=0); lounge('sky_l2', -10, -2, zt, face=0)
+for i in range(5): ph('bar_chair_round_01', (-15 + i * 1.0, 7.0, zt), 180, 0.95)
+ph('side_table_tall_01', (-19, -12, zt), 0, 0.9)
 for i in range(3): cyl(f'sky_pend_{i}', (-17 + i * 4, -3, zt + 2.6), 0.4, 0.4, M['warm'])
 for i in range(2): plant(f'sky_plant_{i}', -20 + i * 14, -13, zt, 1.6)
 ceiling_lights('sky', -21, -14, -5, 14, 138.0, sp=4.0, strength=0.25)
