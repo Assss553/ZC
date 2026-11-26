@@ -4,13 +4,14 @@ import re
 import time
 from pathlib import Path
 
-import cv2
-import numpy as np
-
 from ..config import data_dir
 from . import capture
 
-METHODS = {"template_fast": cv2.TM_CCOEFF_NORMED, "template_precise": cv2.TM_CCORR_NORMED}
+def _cv():
+    """Imported lazily so a missing OpenCV never prevents the server from starting."""
+    import cv2  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
+    return cv2, np
 
 
 def assets_dir() -> Path:
@@ -25,6 +26,7 @@ def safe_name(name: str) -> str:
 
 
 def save_asset_from_screen(name: str, region: dict) -> dict:
+    _cv2, np = _cv()
     img = capture._grab(region)
     if float(np.asarray(img.convert("L")).std()) < 6:
         raise ValueError("Selected region is almost a flat color; pick something more distinctive")
@@ -48,6 +50,8 @@ def find(name: str, area: dict | None = None, threshold: float = 0.85, method: s
     tpl_path = assets_dir() / f"{safe_name(name)}.png"
     if not tpl_path.exists():
         raise FileNotFoundError(f"asset not found: {name}")
+    cv2, np = _cv()
+    methods = {"template_fast": cv2.TM_CCOEFF_NORMED, "template_precise": cv2.TM_CCORR_NORMED}
     t0 = time.time()
     hay = cv2.cvtColor(np.array(capture._grab(area)), cv2.COLOR_RGB2BGR)
     tpl = cv2.imread(str(tpl_path))
@@ -57,7 +61,7 @@ def find(name: str, area: dict | None = None, threshold: float = 0.85, method: s
         hay, tpl = cv2.cvtColor(hay, cv2.COLOR_BGR2GRAY), cv2.cvtColor(tpl, cv2.COLOR_BGR2GRAY)
     if tpl.shape[0] > hay.shape[0] or tpl.shape[1] > hay.shape[1]:
         return {"found": False, "confidence": 0.0, "reason": "template larger than search area"}
-    res = cv2.matchTemplate(hay, tpl, METHODS.get(method, cv2.TM_CCOEFF_NORMED))
+    res = cv2.matchTemplate(hay, tpl, methods.get(method, cv2.TM_CCOEFF_NORMED))
     _, score, _, loc = cv2.minMaxLoc(res)
     ox, oy = (area["left"], area["top"]) if area else (0, 0)
     h, w = tpl.shape[:2]

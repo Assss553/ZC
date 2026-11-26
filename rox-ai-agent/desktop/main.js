@@ -11,20 +11,26 @@ const TOKEN = crypto.randomBytes(24).toString("hex");
 let backend = null, win = null;
 
 function backendCommand() {
-  const packed = path.join(process.resourcesPath || "", "backend", "rox-backend.exe");
+  const packed = path.join(process.resourcesPath || "", "backend", process.platform === "win32" ? "rox-backend.exe" : "rox-backend");
   if (app.isPackaged && fs.existsSync(packed)) return { cmd: packed, args: [], cwd: path.dirname(packed) };
   const root = path.join(__dirname, "..", "backend");
   const py = process.platform === "win32" ? path.join(root, ".venv", "Scripts", "python.exe") : path.join(root, ".venv", "bin", "python");
-  return { cmd: fs.existsSync(py) ? py : "python", args: ["-m", "rox.server"], cwd: root };
+  if (!fs.existsSync(py)) return { missing: `Python environment not found:\n${py}\n\nRun scripts\\setup.ps1 first, or use the ROX installer (.exe) which includes everything.` };
+  return { cmd: py, args: ["run_backend.py"], cwd: root };
 }
 
+let backendOut = "";
 function startBackend() {
-  const { cmd, args, cwd } = backendCommand();
+  const b = backendCommand();
+  if (b.missing) { backendOut = b.missing; return; }
+  const { cmd, args, cwd } = b;
   const env = { ...process.env, ROX_TOKEN: TOKEN, ROX_PORT: String(PORT), ROX_EXE_PATH: process.execPath, PYTHONUTF8: "1" };
   backend = spawn(cmd, args, { cwd, env, windowsHide: true });
   const log = fs.createWriteStream(path.join(app.getPath("userData"), "backend.log"), { flags: "a" });
-  backend.stdout.pipe(log); backend.stderr.pipe(log);
-  backend.on("exit", (code) => { if (!app.isQuitting) dialog.showErrorBox("ROX backend stopped", `Exit code ${code}. See ${app.getPath("userData")}\\backend.log`); });
+  const keep = (d) => { backendOut = (backendOut + d.toString()).slice(-4000); log.write(d); };
+  backend.stdout.on("data", keep); backend.stderr.on("data", keep);
+  backend.on("error", (e) => { backendOut += `\nFailed to launch backend: ${e.message}`; });
+  backend.on("exit", (code) => { if (!app.isQuitting && app.backendReady) dialog.showErrorBox("ROX backend stopped", `Exit code ${code}.\n\n${backendOut.slice(-1500)}`); });
 }
 
 function post(p) {
@@ -32,7 +38,7 @@ function post(p) {
   req.on("error", () => {}); req.end("{}");
 }
 
-function waitReady(tries = 80) {
+function waitReady(tries = 240) { // up to 60s: first start of a packaged backend can be slow (antivirus scan)
   return new Promise((resolve, reject) => {
     const tick = (n) => http.get({ host: "127.0.0.1", port: PORT, path: "/api/status", headers: { "x-rox-token": TOKEN } }, (r) => { r.resume(); resolve(); })
       .on("error", () => (n > 0 ? setTimeout(() => tick(n - 1), 250) : reject(new Error("backend did not start"))));
@@ -49,7 +55,10 @@ async function createWindow() {
   Menu.setApplicationMenu(null);
   win.once("ready-to-show", () => win.show());
   const dev = process.env.ROX_DEV_URL;
-  try { await waitReady(); } catch (e) { dialog.showErrorBox("ROX", "Backend failed to start: " + e.message); }
+  try { await waitReady(); app.backendReady = true; } catch (e) {
+    const logPath = path.join(app.getPath("userData"), "backend.log");
+    dialog.showErrorBox("ROX — backend failed to start", `${backendOut.slice(-1800) || "No output from backend."}\n\nFull log: ${logPath}\nPort ${PORT} must be free (set ROX_PORT to change it).`);
+  }
   if (dev) win.loadURL(dev); else win.loadFile(path.join(__dirname, "renderer", "index.html"));
 }
 

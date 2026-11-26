@@ -29,7 +29,20 @@
       }
     ],
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "requestedExecutionLevel": "asInvoker",
       "icon": "build/icon.ico"
     },
@@ -39,7 +52,15 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "ROX-AI-Agent-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "ROX-AI-Agent-Portable-${version}.exe"
+    },
+    "directories": {
+      "output": "dist"
     }
-  }
+  },
+  "author": "ROX"
 }

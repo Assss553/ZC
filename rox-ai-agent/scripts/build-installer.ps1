@@ -3,9 +3,9 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location "$root\backend"
 .\.venv\Scripts\python.exe -m pip install pyinstaller
-.\.venv\Scripts\pyinstaller.exe --noconfirm --name rox-backend --onedir --collect-submodules rox `
-  --hidden-import keyring.backends.Windows --hidden-import uvicorn.logging --hidden-import uvicorn.loops.auto `
-  --hidden-import uvicorn.protocols.http.auto --hidden-import uvicorn.protocols.websockets.auto --hidden-import uvicorn.lifespan.on `
+.\.venv\Scripts\pyinstaller.exe --noconfirm --name rox-backend --onedir --noconsole `
+  --collect-submodules rox --collect-submodules uvicorn --collect-submodules keyring `
+  --hidden-import keyring.backends.Windows --hidden-import win32ctypes.core --hidden-import cv2 --hidden-import pyautogui --hidden-import pygetwindow `
   run_backend.py
 Pop-Location
 Push-Location "$root\frontend"; npm run build; Pop-Location
