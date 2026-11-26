@@ -25,4 +25,8 @@ Legend: ✅ implemented & automatically tested · 🟡 implemented, needs first 
 | Studio | Split workspace (resizable panels): workspace tree, live view + floating toolbar, target settings, timelines | ✅ verified in browser |  |
 | Studio | Capture asset by dragging a box on the live view; OpenCV template matching with confidence, method, area of interest | ✅ tested on virtual display | Flat/featureless regions are rejected |
 | Studio | Timeline engine: Target / Wait Target / Click / Key / Type / Delay, run/stop, playhead, saved presets | ✅ logic + matching tested; 🟡 clicks on Windows | |
+| App Doctor | Real checks: Python syntax, JSON, Lua (luac or block heuristic), FiveM fxmanifest refs, HTML local links, TypeScript, npm lint/test, pytest | ✅ tested | Nothing installed automatically |
+| App Doctor | AI repair loop with live view: file + highlighted diff, narration, plan, terminal, health ring, issues struck through as fixed | ✅ UI + loop verified with scripted Claude; 🟡 with real key | |
+| App Doctor | Windows app crashes (Event Log 1000/1001/1002, read-only) + "Diagnose" with Claude | 🟡 Windows only | |
+| Design | Icon set (lucide) across the app, ROX logo, Windows .ico for exe/installer/taskbar | ✅ | |
 | Notifications | Push/email reports when away | ⛔ | Reports are in the app timeline only |

@@ -42,7 +42,7 @@ function waitReady(tries = 80) {
 
 async function createWindow() {
   win = new BrowserWindow({
-    width: 1440, height: 900, minWidth: 900, minHeight: 600, backgroundColor: "#0b0b0c", title: "ROX AI Agent", show: false,
+    width: 1440, height: 900, minWidth: 900, minHeight: 600, backgroundColor: "#0b0b0c", title: "ROX AI Agent", show: false, icon: path.join(__dirname, "build", process.platform === "win32" ? "icon.ico" : "icon.png"),
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: true,
       additionalArguments: [`--rox-token=${TOKEN}`, `--rox-port=${PORT}`] },
   });

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, TOKEN, WS } from "../api";
 import { usePoll, TaskLog, fmtDur } from "../components/common";
+import { Play, Square, Crosshair, MousePointerClick, Keyboard, Timer, Maximize2, Settings, Plus, Trash2, Save, Bot, Gamepad2, ListOrdered, Home, MessagesSquare, CalendarClock, Info, PlusCircle, Monitor, Target, Type as TypeI } from "lucide-react";
 
 type Action = { id: string; type: "target" | "wait_target" | "click" | "key" | "type" | "delay"; asset?: string; threshold?: number; method?: string;
   area?: { left: number; top: number; width: number; height: number } | null; x?: number | null; y?: number | null; button?: string; keys?: string; text?: string; ms?: number; timeout_ms?: number };
@@ -69,15 +70,15 @@ export default function Studio({ go }: { go: (p: any) => void }) {
       <div className="phead">PROJECT WORKSPACE</div>
       <div className="tree2">
         {(adapters ?? []).map((a) => { const mine = (tasks ?? []).filter((t) => t.kind === "game" && (t.state ?? "").includes(`"${a.id}"`)).slice(0, 4);
-          return <details key={a.id} open={a.id === "generic"}><summary><span className="star">★</span> {a.name}</summary>
-            <div className="leaf mute">ⓘ {a.tags.join(" · ") || "adapter"}</div>
+          return <details key={a.id} open={a.id === "generic"}><summary><Gamepad2 size={14} className="star" /> {a.name}</summary>
+            <div className="leaf mute"><Info size={12} /> {a.tags.join(" · ") || "adapter"}</div>
             <div className="sub">BOTS</div>
-            {mine.map((t) => <div key={t.id} className={`leaf ${t.status === "running" ? "on" : ""}`} onClick={() => setTaskId(t.id)}>🤖 #{t.id} {t.title.slice(0, 18)} {t.status === "running" && <b className="go">▶</b>}</div>)}
-            <div className="leaf mute" onClick={() => go("game")}>⊕ Assign bot…</div></details>; })}
-        <details open><summary><span className="star">★</span> Timelines</summary>
-          {tls.map((t) => <div key={t.id} className={`leaf ${t.id === sel ? "on" : ""}`} onClick={() => setSel(t.id)}>⏱ {t.name}</div>)}</details>
+            {mine.map((t) => <div key={t.id} className={`leaf ${t.status === "running" ? "on" : ""}`} onClick={() => setTaskId(t.id)}><Bot size={13} /> #{t.id} {t.title.slice(0, 18)} {t.status === "running" && <Play size={11} className="go" />}</div>)}
+            <div className="leaf mute" onClick={() => go("game")}><PlusCircle size={12} /> Assign bot…</div></details>; })}
+        <details open><summary><ListOrdered size={14} className="star" /> Timelines</summary>
+          {tls.map((t) => <div key={t.id} className={`leaf ${t.id === sel ? "on" : ""}`} onClick={() => setSel(t.id)}><Timer size={12} /> {t.name}</div>)}</details>
       </div>
-      <div className="pnav">{[["dashboard", "⌂ Home"], ["chat", "💬 Chat"], ["tasks", "⏱ Tasks"], ["settings", "⚙ Settings"]].map(([k, l]) => <div key={k} onClick={() => go(k)}>{l}</div>)}</div>
+      <div className="pnav">{([["dashboard", Home, "Home"], ["chat", MessagesSquare, "Chat"], ["tasks", CalendarClock, "Tasks"], ["settings", Settings, "Settings"]] as const).map(([k, I, l]) => <div key={k} onClick={() => go(k)}><I size={13} /> {l}</div>)}</div>
     </section>
     <div className="split v" style={{ gridRow: 1, gridColumn: 2 }} onMouseDown={dragL} />
 
@@ -87,15 +88,15 @@ export default function Studio({ go }: { go: (p: any) => void }) {
         onSelect={async (r) => { setSelecting(false); const name = prompt("Asset name / اسم العنصر:"); if (!name) return;
           await api("/api/assets", { body: { name, ...r } }).then(loadAssets).catch((e) => alert(e.message)); if (action?.type.includes("target")) updAct({ asset: name.replace(/[^\w-]+/g, "_") }); }}
         toolbar={<div className="ftool">
-          <button className={`ti ${running ? "act" : ""}`} onClick={play} title="Run timeline">{running ? "■" : "▶"}</button>
+          <button className={`ti ${running ? "act" : ""}`} onClick={play} title="Run timeline">{running ? <Square size={15} /> : <Play size={15} />}</button>
           <span className="tl">{running ? running.status : "Idle"}</span>
-          <select className="tsel" value={win} onChange={(e) => setWin(e.target.value)}><option value="">Full desktop</option>{(wins ?? []).map((w) => <option key={w.title}>{w.title}</option>)}</select>
-          <button className={`ti ${selecting ? "act" : ""}`} onClick={() => setSelecting(!selecting)} title="Capture asset: drag a box on the view">＋</button>
-          <button className="ti" onClick={() => addAction("click")} title="Add click">➚</button>
-          <button className="ti" onClick={() => addAction("key")} title="Add key">⌨</button>
-          <button className="ti" onClick={() => addAction("delay")} title="Add delay">◷</button>
-          <button className="ti" onClick={() => window.rox?.toggleFullscreen()} title="Fullscreen">⛶</button>
-          <button className="ti" onClick={() => go("settings")} title="Settings">⚙</button>
+          <Monitor size={14} className="mute" /><select className="tsel" value={win} onChange={(e) => setWin(e.target.value)}><option value="">Full desktop</option>{(wins ?? []).map((w) => <option key={w.title}>{w.title}</option>)}</select>
+          <button className={`ti ${selecting ? "act" : ""}`} onClick={() => setSelecting(!selecting)} title="Capture asset: drag a box on the view"><Crosshair size={16} /></button>
+          <button className="ti" onClick={() => addAction("click")} title="Add click"><MousePointerClick size={16} /></button>
+          <button className="ti" onClick={() => addAction("key")} title="Add key"><Keyboard size={16} /></button>
+          <button className="ti" onClick={() => addAction("delay")} title="Add delay"><Timer size={16} /></button>
+          <button className="ti" onClick={() => window.rox?.toggleFullscreen()} title="Fullscreen"><Maximize2 size={15} /></button>
+          <button className="ti" onClick={() => go("settings")} title="Settings"><Settings size={15} /></button>
           <span className="sess"><small>SESSION</small>{status ? fmtDur(status.uptime_s) : "--"}</span>
         </div>} />
     </section>
@@ -103,7 +104,7 @@ export default function Studio({ go }: { go: (p: any) => void }) {
 
     {/* ---------- RIGHT: target settings ---------- */}
     <section className="pane" style={{ gridRow: 1, gridColumn: 5 }}>
-      <div className="phead">TARGET SETTINGS {action && <button className="x" onClick={() => { upd((t) => ({ ...t, actions: t.actions.filter((a) => a.id !== act) })); setAct(""); }}>🗑</button>}</div>
+      <div className="phead">TARGET SETTINGS {action && <button className="x" onClick={() => { upd((t) => ({ ...t, actions: t.actions.filter((a) => a.id !== act) })); setAct(""); }}><Trash2 size={14} /></button>}</div>
       {!action ? <div className="mute small p">Select an action on the timeline, or add one.</div> : <div className="p">
         <div className="seg">{["target", "wait_target", "click", "key", "type", "delay"].map((k) => <button key={k} className={action.type === k ? "on" : ""} onClick={() => updAct({ type: k as any })}>{LABEL[k]}</button>)}</div>
         {action.type.includes("target") && <>
@@ -133,28 +134,28 @@ export default function Studio({ go }: { go: (p: any) => void }) {
     <div className="split h" style={{ gridRow: 2, gridColumn: "1 / -1" }} onMouseDown={dragB} />
     <section className="pane bottom" style={{ gridRow: 3, gridColumn: "1 / -1" }}>
       <div className="tlcol">
-        <div className="phead">TIMELINES <button className="x" onClick={() => { const t = { id: uid(), name: `Timeline ${tls.length + 1}`, actions: [] }; setTls([...tls, t]); setSel(t.id); setSaved(false); }}>＋</button></div>
+        <div className="phead">TIMELINES <button className="x" onClick={() => { const t = { id: uid(), name: `Timeline ${tls.length + 1}`, actions: [] }; setTls([...tls, t]); setSel(t.id); setSaved(false); }}><Plus size={14} /></button></div>
         {tls.map((t) => <div key={t.id} className={`tli ${t.id === sel ? "on" : ""}`} onClick={() => setSel(t.id)} onDoubleClick={() => { const n = prompt("Name", t.name); if (n) { setTls(tls.map((x) => x.id === t.id ? { ...x, name: n } : x)); setSaved(false); } }}>
           {t.name}<span>{t.actions.length} actions</span></div>)}
       </div>
       <div className="propcol">
-        <div className="row" style={{ padding: 8 }}><button className="ti" onClick={play}>{running ? "■" : "▶"}</button><span className="pill or">{(playMs / 1000).toFixed(2)}s</span>
-          <button className="ti" title="Delete timeline" onClick={() => { if (tls.length > 1 && confirm("Delete timeline?")) { const r = tls.filter((t) => t.id !== sel); setTls(r); setSel(r[0].id); setSaved(false); } }}>🗑</button></div>
+        <div className="row" style={{ padding: 8 }}><button className="ti" onClick={play}>{running ? <Square size={15} /> : <Play size={15} />}</button><span className="pill or">{(playMs / 1000).toFixed(2)}s</span>
+          <button className="ti" title="Delete timeline" onClick={() => { if (tls.length > 1 && confirm("Delete timeline?")) { const r = tls.filter((t) => t.id !== sel); setTls(r); setSel(r[0].id); setSaved(false); } }}><Trash2 size={15} /></button></div>
         <div className="sub" style={{ padding: "0 10px" }}>ASSETS</div>
         <div className="assets">{assets.map((a) => <img key={a.name} title={a.name} src={`data:image/png;base64,${a.b64}`} onClick={() => action?.type.includes("target") && updAct({ asset: a.name })} />)}
-          <button className="aadd" onClick={() => setSelecting(true)}>＋</button></div>
-        <div className="row" style={{ padding: 8 }}>{(["target", "click", "key", "delay"] as const).map((k) => <button key={k} className="btn small" onClick={() => addAction(k)}>+{LABEL[k]}</button>)}</div>
-        <button className={`btn ${saved ? "" : "pri"}`} style={{ margin: 8, textAlign: "center" }} onClick={save}>{saved ? "Saved" : "💾 Save preset"}</button>
+          <button className="aadd" onClick={() => setSelecting(true)}><Plus size={16} /></button></div>
+        <div className="row" style={{ padding: 8 }}>{(["target", "click", "key", "delay"] as const).map((k) => <button key={k} className="btn small" onClick={() => addAction(k)}><Plus size={12} />{LABEL[k]}</button>)}</div>
+        <button className={`btn ${saved ? "" : "pri"}`} style={{ margin: 8, textAlign: "center" }} onClick={save}>{saved ? "Saved" : <><Save size={14} /> Save preset</>}</button>
       </div>
       <div className="track" dir="ltr">
         <div className="ruler" style={{ width: total * PX }}>{Array.from({ length: Math.ceil(total / 1000) + 1 }, (_, i) => <span key={i} style={{ left: i * 1000 * PX }}>{i}s</span>)}</div>
         <div className="lane-l">ACTIONS LINE</div>
         <div className="lane" style={{ width: total * PX }}>{tl?.actions.map((a, i) => a.type !== "delay" &&
           <div key={a.id} className={`blk ${a.id === act ? "sel" : ""}`} style={{ left: starts[i] * PX, width: Math.max(70, dur(a) * PX), background: COLORS[a.type] }} onClick={() => setAct(a.id)}>
-            {LABEL[a.type]} {a.asset ?? a.keys ?? (a.x != null ? `${a.x},${a.y}` : "")}</div>)}</div>
+            {a.type.includes("target") ? <Target size={12} /> : a.type === "click" ? <MousePointerClick size={12} /> : a.type === "type" ? <TypeI size={12} /> : <Keyboard size={12} />} {LABEL[a.type]} {a.asset ?? a.keys ?? (a.x != null ? `${a.x},${a.y}` : "")}</div>)}</div>
         <div className="lane-l or">DELAY LINE</div>
         <div className="lane" style={{ width: total * PX }}>{tl?.actions.map((a, i) => a.type === "delay" &&
-          <div key={a.id} className={`blk dl ${a.id === act ? "sel" : ""}`} style={{ left: starts[i] * PX, width: Math.max(70, dur(a) * PX) }} onClick={() => setAct(a.id)}>◷ Delay ({a.ms}ms)</div>)}</div>
+          <div key={a.id} className={`blk dl ${a.id === act ? "sel" : ""}`} style={{ left: starts[i] * PX, width: Math.max(70, dur(a) * PX) }} onClick={() => setAct(a.id)}><Timer size={12} /> Delay ({a.ms}ms)</div>)}</div>
         {running && <div className="playhead" style={{ left: playMs * PX }}><em>{(playMs / 1000).toFixed(2)}</em></div>}
         {taskId && <div className="tlog"><TaskLog taskId={taskId} /></div>}
       </div>

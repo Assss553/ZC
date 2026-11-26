@@ -3,15 +3,20 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "scripts": { "dev": "vite", "build": "tsc -b && vite build", "typecheck": "tsc -b" },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b"
+  },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.0",
     "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-python": "^6.1.6",
-    "@codemirror/legacy-modes": "^6.4.2",
     "@codemirror/language": "^6.10.3",
+    "@codemirror/legacy-modes": "^6.4.2",
     "@uiw/react-codemirror": "^4.23.5",
+    "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

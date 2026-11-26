@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, onEvent, RoxEvent, TOKEN, WS } from "../api";
 import { useT } from "../i18n";
+import { ZoomIn, ZoomOut, Pause, Play, Maximize2, CheckCircle2, CircleDot, XCircle, Circle, AlertTriangle, LifeBuoy, Square } from "lucide-react";
 
 export function usePoll<T>(path: string, ms = 2000, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
@@ -43,11 +44,11 @@ export function ScreenView({ window: win = "", fps = 8, title }: { window?: stri
         <h2 style={{ margin: 0 }}>{title}</h2>
         <div className="row">
           <span className="pill or">{rate.toFixed(1)} fps</span>
-          <button className="btn" onClick={() => setZoom((z) => Math.max(1, z - 0.25))}>−</button>
+          <button className="btn ib" onClick={() => setZoom((z) => Math.max(1, z - 0.25))}><ZoomOut size={15} /></button>
           <span className="small mute">{Math.round(zoom * 100)}%</span>
-          <button className="btn" onClick={() => setZoom((z) => Math.min(3, z + 0.25))}>+</button>
-          <button className="btn" onClick={() => setOn(!on)}>{on ? "⏸" : "▶"}</button>
-          <button className="btn" onClick={() => window.rox?.toggleFullscreen()}>⛶</button>
+          <button className="btn ib" onClick={() => setZoom((z) => Math.min(3, z + 0.25))}><ZoomIn size={15} /></button>
+          <button className="btn ib" onClick={() => setOn(!on)}>{on ? <Pause size={15} /> : <Play size={15} />}</button>
+          <button className="btn ib" onClick={() => window.rox?.toggleFullscreen()}><Maximize2 size={15} /></button>
         </div>
       </div>
       <div className="screen" style={{ overflow: "auto" }}>
@@ -70,7 +71,7 @@ export function Approvals() {
   const a = list[0];
   if (a) return (
     <div className="modal"><div className="card">
-      <h1>⚠️ {t("approvalNeeded")}</h1>
+      <h1 className="row"><AlertTriangle color="var(--warn)" /> {t("approvalNeeded")}</h1>
       <p><span className="pill warn">{a.category}</span> <span className="mute small">{a.actor}</span></p>
       <pre className="mono">{a.detail?.diff ?? JSON.stringify(a.detail, null, 2)}</pre>
       <div className="row"><button className="btn pri" onClick={() => answer(a.id, true)}>{t("approve")}</button>
@@ -78,7 +79,7 @@ export function Approvals() {
     </div></div>);
   if (help) return (
     <div className="modal"><div className="card">
-      <h1>🙋 {t("helpNeeded")}</h1><p>{help.question}</p>
+      <h1 className="row"><LifeBuoy color="var(--orange)" /> {t("helpNeeded")}</h1><p>{help.question}</p>
       <textarea rows={3} value={ans} onChange={(e) => setAns(e.target.value)} />
       <div className="row" style={{ marginTop: 10 }}>
         <button className="btn pri" onClick={async () => { await api(`/api/tasks/${help.task_id}/message`, { body: { text: ans } }).catch(() => {}); setHelp(null); setAns(""); }}>{t("reply")}</button>
@@ -90,8 +91,8 @@ export function Approvals() {
 
 export function PlanView({ steps }: { steps: { title: string; status: string }[] }) {
   if (!steps?.length) return <div className="mute small">—</div>;
-  const icon: Record<string, string> = { done: "✅", active: "🟠", failed: "❌", pending: "⚪" };
-  return <div>{steps.map((s, i) => <div key={i} className="small" style={{ padding: "3px 0" }}>{icon[s.status] ?? "⚪"} {s.title}</div>)}</div>;
+  const icon: Record<string, JSX.Element> = { done: <CheckCircle2 size={15} color="var(--ok)" />, active: <CircleDot size={15} color="var(--orange)" className="spin-slow" />, failed: <XCircle size={15} color="var(--bad)" />, pending: <Circle size={15} color="#555" /> };
+  return <div>{steps.map((s, i) => <div key={i} className="small row" style={{ padding: "3px 0", flexWrap: "nowrap" }}>{icon[s.status] ?? icon.pending} {s.title}</div>)}</div>;
 }
 
 export function TaskControls({ task }: { task: any }) {
@@ -100,9 +101,9 @@ export function TaskControls({ task }: { task: any }) {
   const op = (o: string) => api(`/api/tasks/${task.id}/${o}`, { body: {} }).catch((e) => alert(e.message));
   return <div className="row">
     <span className="pill or">#{task.id} {task.status}</span>
-    <button className="btn" onClick={() => op("pause")} aria-disabled={task.status !== "running"}>{t("pause")}</button>
-    <button className="btn" onClick={() => op("resume")} aria-disabled={!["paused", "interrupted", "stopped"].includes(task.status)}>{t("resume")}</button>
-    <button className="btn danger" onClick={() => op("stop")}>{t("stop")}</button>
+    <button className="btn" onClick={() => op("pause")} aria-disabled={task.status !== "running"}><Pause size={13} /> {t("pause")}</button>
+    <button className="btn" onClick={() => op("resume")} aria-disabled={!["paused", "interrupted", "stopped"].includes(task.status)}><Play size={13} /> {t("resume")}</button>
+    <button className="btn danger" onClick={() => op("stop")}><Square size={13} /> {t("stop")}</button>
   </div>;
 }
 

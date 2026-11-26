@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 import { useT } from "../i18n";
 import { TaskLog, usePoll } from "../components/common";
+import { Play, Pause, Square } from "lucide-react";
 
 export default function Tasks() {
   const t = useT();
@@ -23,7 +24,7 @@ export default function Tasks() {
           <td>{x.id}</td><td>{x.kind}</td><td>{x.title}</td><td><span className={`pill ${cls(x.status)}`}>{x.status}</span>{x.error_count > 0 && <span className="pill bad">{x.error_count} err</span>}</td>
           <td>{Math.round(x.progress * 100)}%</td>
           <td className="small mute">{x.start_at ? new Date(x.start_at * 1000).toLocaleString() : "now"} → {x.end_at ? new Date(x.end_at * 1000).toLocaleString() : "∞"}</td>
-          <td className="row"><button className="btn small" onClick={() => op(x.id, "resume")}>▶</button><button className="btn small" onClick={() => op(x.id, "pause")}>⏸</button><button className="btn small danger" onClick={() => op(x.id, "stop")}>■</button></td></tr>)}</tbody></table></div>
+          <td className="row"><button className="btn ib" onClick={() => op(x.id, "resume")}><Play size={13} /></button><button className="btn ib" onClick={() => op(x.id, "pause")}><Pause size={13} /></button><button className="btn ib danger" onClick={() => op(x.id, "stop")}><Square size={13} /></button></td></tr>)}</tbody></table></div>
       <div className="card"><h2>{t("schedule")}</h2>
         <label>{t("kind")}</label><select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}><option value="game">game</option><option value="computer">computer</option><option value="coding">coding</option></select>
         {f.kind === "game" && <><label>{t("selectGame")}</label><select value={f.adapter} onChange={(e) => setF({ ...f, adapter: e.target.value })}>{adapters?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select>

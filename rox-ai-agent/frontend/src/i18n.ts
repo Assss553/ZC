@@ -3,7 +3,7 @@ export type Lang = "ar" | "en";
 const dict = {
   studio: ["الاستوديو", "Studio"], dashboard: ["لوحة التحكم", "Dashboard"], chat: ["المحادثة", "Chat"], game: ["وكيل الألعاب", "Game Agent"],
   computer: ["التحكم بالكمبيوتر", "Computer Agent"], coding: ["وكيل البرمجة", "Coding Agent"], tasks: ["المهام المستقلة", "Autonomous Tasks"],
-  settings: ["الإعدادات", "Settings"], audit: ["سجل التدقيق", "Audit Log"], estop: ["إيقاف طوارئ", "EMERGENCY STOP"],
+  settings: ["الإعدادات", "Settings"], doctor: ["فحص وإصلاح", "App Doctor"], audit: ["سجل التدقيق", "Audit Log"], estop: ["إيقاف طوارئ", "EMERGENCY STOP"],
   estopActive: ["الإيقاف مفعّل — إعادة تفعيل", "Stop active — re-arm"], liveDesktop: ["بث سطح المكتب المباشر", "Live Desktop View"],
   liveGame: ["بث اللعبة المباشر", "Live Game View"], aiStatus: ["حالة الذكاء الاصطناعي", "AI Status"], currentTask: ["المهمة الحالية", "Current Task"],
   progress: ["التقدم", "Progress"], connection: ["اتصال Claude", "Claude Connection"], cpu: ["المعالج", "CPU"], ram: ["الذاكرة", "RAM"],

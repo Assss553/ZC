@@ -9,6 +9,7 @@ import { lua } from "@codemirror/legacy-modes/mode/lua";
 import { api } from "../api";
 import { useT } from "../i18n";
 import { PlanView, TaskControls, TaskLog, usePoll } from "../components/common";
+import { Folder, FileCode2, FilePlus2, FilePen, Undo2, Save } from "lucide-react";
 
 const langFor = (p: string) => p.endsWith(".py") ? [python()] : p.endsWith(".lua") ? [StreamLanguage.define(lua)] : p.match(/\.html?$/) ? [html()]
   : p.endsWith(".css") ? [css()] : p.match(/\.(m?[jt]sx?)$/) ? [javascript({ jsx: true, typescript: /tsx?$/.test(p) })] : [];
@@ -44,17 +45,17 @@ export default function Coding() {
           {task && <><label>{t("plan")}</label><PlanView steps={task.plan ? JSON.parse(task.plan) : []} /></>}
         </div>
         <div className="card"><h2>{t("files")}</h2><div className="tree mono">{tree.map((n) =>
-          <div key={n.path} onClick={() => !n.dir && open(n.path)} style={{ paddingInlineStart: 8 * (n.rel.split(/[\\/]/).length - 1) }}>{n.dir ? "📁" : "📄"} {n.rel.split(/[\\/]/).pop()}</div>)}</div></div>
+          <div key={n.path} onClick={() => !n.dir && open(n.path)} style={{ paddingInlineStart: 8 * (n.rel.split(/[\\/]/).length - 1) }}>{n.dir ? <Folder size={13} color="var(--orange)" /> : <FileCode2 size={13} />} {n.rel.split(/[\\/]/).pop()}</div>)}</div></div>
       </div>
       <div className="grid">
         <div className="card">
           <div className="row" style={{ justifyContent: "space-between" }}><span className="mono small">{file?.path ?? "—"}</span>
-            <button className="btn pri" onClick={save} aria-disabled={!dirty}>{t("save")}</button></div>
-          {file && <CodeMirror value={file.content} height="420px" theme="dark" extensions={ext} onChange={(v) => { setFile({ ...file, content: v }); setDirty(true); }} />}
+            <button className="btn pri" onClick={save} aria-disabled={!dirty}><Save size={13} /> {t("save")}</button></div>
+          {file && <div dir="ltr"><CodeMirror value={file.content} height="420px" theme="dark" extensions={ext} onChange={(v) => { setFile({ ...file, content: v }); setDirty(true); }} /></div>}
         </div>
         <div className="card"><div className="row" style={{ justifyContent: "space-between" }}><h2>{t("changes")}</h2>
-          {taskId && <button className="btn danger" onClick={() => confirm("Undo?") && api(`/api/tasks/${taskId}/revert`, { body: {} }).then(() => { loadTree(); })}>{t("undo")}</button>}</div>
-          <div className="log">{(td?.changes ?? []).slice().reverse().map((c: any, i: number) => <details key={i}><summary className="mono">{c.created ? "➕" : "✏️"} {c.path}</summary>
+          {taskId && <button className="btn danger" onClick={() => confirm("Undo?") && api(`/api/tasks/${taskId}/revert`, { body: {} }).then(() => { loadTree(); })}><Undo2 size={13} /> {t("undo")}</button>}</div>
+          <div className="log">{(td?.changes ?? []).slice().reverse().map((c: any, i: number) => <details key={i}><summary className="mono">{c.created ? <FilePlus2 size={13} color="var(--ok)" /> : <FilePen size={13} color="var(--orange)" />} {c.path}</summary>
             <pre className="mono">{c.diff.split("\n").map((l: string, j: number) => <div key={j} className={l.startsWith("+") ? "diff-add" : l.startsWith("-") ? "diff-del" : ""}>{l}</div>)}</pre></details>)}</div>
         </div>
         <div className="card"><h2>Log</h2><TaskLog taskId={taskId} /></div>

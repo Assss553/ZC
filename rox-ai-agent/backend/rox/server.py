@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import config
-from .agents import chat, coding_agent, computer_agent, game_agent, runtime, timeline
+from .agents import chat, coding_agent, computer_agent, game_agent, runtime, timeline, doctor
 from .agents.game_adapters.base import ADAPTERS
 from .events import bus
 from .input_control import controller as ic
@@ -43,6 +43,7 @@ runtime.RUNNER.register("computer", computer_agent.handle)
 runtime.RUNNER.register("coding", coding_agent.handle)
 runtime.RUNNER.register("game", game_agent.handle)
 runtime.RUNNER.register("timeline", timeline.handle)
+runtime.RUNNER.register("doctor", doctor.handle)
 
 
 @app.on_event("startup")
@@ -283,7 +284,7 @@ class TaskIn(BaseModel):
 def create_task(t: TaskIn):
     if t.kind not in runtime.RUNNER.handlers:
         raise HTTPException(400, "unknown kind")
-    if t.kind == "coding":
+    if t.kind in ("coding", "doctor"):
         try:
             policy.resolve_allowed(t.state.get("root", ""))
         except PermissionError as e:
@@ -438,6 +439,23 @@ def put_timelines(tls: list[dict]):
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True}
+
+
+# ---------------- app doctor ----------------
+class ScanIn(BaseModel):
+    root: str
+
+
+@app.post("/api/doctor/scan", dependencies=A)
+def doctor_scan(s: ScanIn):
+    r = doctor.scan(s.root)
+    policy.audit("user", "doctor_scan", {"root": s.root, "issues": len(r["issues"])}, "executed")
+    return r
+
+
+@app.get("/api/doctor/windows-errors", dependencies=A)
+def doctor_win(days: int = 7):
+    return {"available": config.IS_WINDOWS, "events": doctor.windows_app_errors(days)}
 
 
 def main():
