@@ -482,6 +482,28 @@ def info_screen(seed):
         f, _ = _fit_text(dr, r, 860, 40); dr.text((70, y + 14), r, font=f, fill=(220, 232, 255))
     return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
 
+def swat_badge(seed):
+    """Black shield with gold rim, SWAT TEAM lettering and a crosshair (emissive-lit wall emblem)."""
+    from PIL import ImageDraw, ImageFilter
+    S = 1024; im = Image.new('RGB', (S, S), (14, 14, 16)); dr = ImageDraw.Draw(im)
+    sh = [(S * 0.5, S * 0.04), (S * 0.92, S * 0.16), (S * 0.86, S * 0.62), (S * 0.5, S * 0.96), (S * 0.14, S * 0.62), (S * 0.08, S * 0.16)]
+    dr.polygon(sh, fill=(214, 168, 70)); inner = [(S * 0.5 + (x - S * 0.5) * 0.9, S * 0.5 + (y - S * 0.5) * 0.9) for x, y in sh]; dr.polygon(inner, fill=(18, 18, 22))
+    c = (S * 0.5, S * 0.5); r = S * 0.2
+    dr.ellipse((c[0] - r, c[1] - r, c[0] + r, c[1] + r), outline=(214, 168, 70), width=14)
+    for a, b in (((c[0] - r * 1.3, c[1]), (c[0] - r * 0.4, c[1])), ((c[0] + r * 0.4, c[1]), (c[0] + r * 1.3, c[1])), ((c[0], c[1] - r * 1.3), (c[0], c[1] - r * 0.4)), ((c[0], c[1] + r * 0.4), (c[0], c[1] + r * 1.3))):
+        dr.line((a, b), fill=(214, 168, 70), width=12)
+    f, (l, tt, rr, b) = _fit_text(dr, 'SWAT', 440, 140); dr.text((S * 0.5 - (rr - l) / 2 - l, S * 0.15 - tt), 'SWAT', font=f, fill=(240, 240, 240))
+    f2, (l, tt, rr, b) = _fit_text(dr, 'TEAM  ROX', 330, 64); dr.text((S * 0.5 - (rr - l) / 2 - l, S * 0.74 - tt), 'TEAM  ROX', font=f2, fill=(214, 168, 70))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
+def hazard(seed):
+    """Yellow / black 45 degree hazard stripes with wear."""
+    y, x = np.mgrid[0:N, 0:N] / N
+    s = (((x + y) * 6) % 1.0) < 0.5
+    d = np.where(s[:, :, None], np.array([232, 180, 20]), np.array([22, 22, 22])).astype(np.float64)
+    d *= (0.85 + 0.2 * fbm(2.4, seed))[:, :, None]
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), s=spec_map(np.full((N, N), 0.3)))
+
 def shopfront(seed, kind=0):
     """Lit shop interior seen through glass: shelves / posters / counter, with a sky reflection on top."""
     from PIL import ImageDraw, ImageFilter
@@ -871,6 +893,11 @@ def build_all():
     T['rox_awning_red'] = fabric((150, 40, 36), 51, folds=6)
     T['rox_sign_garage'] = sign_text('ROX GARAGE', (255, 236, 200), (30, 22, 18), 52, aspect=8, border=(200, 150, 60))
     T['rox_police_badge'] = police_badge(900)
+    T['rox_swat_badge'] = swat_badge(940)
+    T['rox_hazard'] = hazard(941)
+    T['rox_sign_swat'] = sign_text('SWAT TEAM', (255, 255, 255), (8, 8, 10), 942, aspect=6, border=(214, 168, 70))
+    T['rox_sign_swat_range'] = sign_text('FIRING RANGE', (255, 255, 255), (8, 8, 10), 943, aspect=6, glow=False)
+    T['rox_sign_swat_garage'] = sign_text('SWAT GARAGE', (232, 180, 20), (8, 8, 10), 944, aspect=6, glow=False)
     T['rox_marble_white'] = marble((236, 234, 230), (120, 120, 126), 910)
     T['rox_marble_black'] = marble((22, 22, 26), (170, 160, 140), 911, gloss=0.9)
     T['rox_ops_map'] = ops_map(912)

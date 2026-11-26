@@ -6,7 +6,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from phlib import ph
 PIECE = os.environ['PIECE']; W = os.environ['SHELLS']; OUT = os.environ.get('OUT', '/tmp/design'); os.makedirs(OUT, exist_ok=True)
-DATA = json.load(open(os.path.join(os.path.dirname(__file__), '..', '..', 'rox_towers', 'data', 'interior.json')))
+DATA = json.load(open(os.environ.get('DATAFILE', os.path.join(os.path.dirname(__file__), '..', '..', 'rox_towers', 'data', 'interior.json'))))
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene; sc.render.engine = 'CYCLES'; sc.cycles.samples = int(os.environ.get('SAMPLES', '48')); sc.cycles.use_denoising = True
 sc.cycles.max_bounces = 6; sc.cycles.sample_clamp_indirect = 4.0
@@ -122,6 +122,21 @@ def furniture(items, z0):
         elif m == 'apa_mp_h_acc_rugwoolm_03': obox('rug', x, y, z, 3.0, 2.2, 0.01, h, RUG)
         elif m == 'apa_mp_h_floorlamp_c': obox('fl', x, y, z, 0.04, 0.04, 1.6, h, BLACK); obox('fls', x, y, z + 1.5, 0.35, 0.35, 0.3, h, bmat('lampshade', (1, 0.85, 0.6), 0.5, 0, 4.0))
         elif m == 'prop_toilet_01': obox('wc', x, y, z, 0.4, 0.6, 0.42, h, WHITE, 0.05)
+        elif m in ('bkr_prop_gunlocker_01a', 'gr_prop_gr_gunlocker_01a'): obox('gl', x, y, z, 1.4, 0.6, 2.0, h, BLACK, 0.01); lx, ly = local(x, y, h, 0, -0.31); obox('glf', lx, ly, z + 0.2, 1.2, 0.01, 1.6, h, GREY)
+        elif m in ('gr_prop_gr_bench_04a', 'prop_table_03'): obox('wb', x, y, z + 0.85, 2.4, 1.0, 0.08, h, GREY); obox('wbl', x, y, z, 2.2, 0.8, 0.85, h, BLACK)
+        elif m in ('prop_box_ammo04a', 'prop_gun_case_01'): obox('ammo', x, y, z, 0.6, 0.3, 0.25, h, bmat('olive', (0.25, 0.28, 0.15), 0.6))
+        elif m in ('v_med_bed1',): obox('bed', x, y, z + 0.5, 0.9, 2.0, 0.15, h, WHITE, 0.03); obox('bedb', x, y, z, 0.8, 1.8, 0.5, h, GREY)
+        elif m in ('v_med_trolley',): obox('tr', x, y, z, 0.5, 0.4, 0.9, h, STEEL)
+        elif m in ('xm_base_cia_server_01',): obox('srv', x, y, z, 0.6, 1.0, 2.0, h, BLACK); lx, ly = local(x, y, h, 0, -0.51); obox('srvled', lx, ly, z + 0.2, 0.4, 0.01, 1.6, h, bmat('srvl', (0.2, 0.6, 1.0), 0.3, 0, 3.0))
+        elif m in ('ba_prop_battle_hacker_screen',): obox('hs', x, y, z, 1.6, 0.05, 0.7, h, bmat('green', (0.1, 0.9, 0.3), 0.3, 0, 2.0))
+        elif m in ('xm_prop_x17_laptop_mrsr', 'hei_prop_hst_laptop', 'prop_cs_tablet'): ph('classic_laptop', (x, y, z), h, 0.22)
+        elif m in ('xm_prop_x17_computer_01',): obox('pc', x, y, z, 0.2, 0.45, 0.45, h, BLACK)
+        elif m.startswith('gr_prop_gr_target'): obox('tg', x, y, z, 0.05, 0.6, 1.8, h, WHITE); obox('tgr', x, y, z + 1.1, 0.06, 0.3, 0.3, h, RED)
+        elif m in ('prop_weight_bench_02', 'prop_muscle_bench_03'): obox('wb', x, y, z + 0.4, 0.35, 1.3, 0.12, h, BLACK); obox('bar', x, y, z + 1.1, 1.8, 0.04, 0.04, h, STEEL)
+        elif m in ('prop_weight_squat',): obox('sq', x, y, z, 1.4, 1.4, 2.3, h, GREY)
+        elif m in ('prop_beach_punchbag',): obox('pb', x, y, z + 0.6, 0.4, 0.4, 1.2, h, RED, 0.1)
+        elif m in ('apa_p_apdlc_treadmill_s',): obox('tm', x, y, z, 0.8, 1.9, 0.25, h, BLACK); lx, ly = local(x, y, h, 0, -0.85); obox('tmc', lx, ly, z, 0.8, 0.1, 1.3, h, GREY)
+        elif m in ('prop_toolchest_05', 'imp_prop_tool_chest_01a'): obox('tc', x, y, z, 1.0, 0.5, 1.1, h, RED)
         elif m == 'prop_sink_02': obox('sink', x, y, z + 0.9, 0.5, 0.4, 0.06, h, WHITE)
 
 def doors(items, z0):
@@ -136,9 +151,17 @@ def shot(tag, pos, look, lens=18):
     cam.location = pos; tgt.location = look; cam_d.lens = lens
     sc.render.filepath = os.path.join(OUT, f'{PIECE}_{tag}.png'); bpy.ops.render.render(write_still=True); print('SHOT', tag, flush=True)
 
-load_piece(PIECE)
+load_piece(PIECE, float(os.environ.get('PZ', '0')))
 if PIECE == 'rox_towers_lobby': load_piece('rox_towers_base')
-furniture(DATA['furniture'].get(PIECE, []), 0.0); doors(DATA['doors'].get(PIECE, []), 0.0)
+def place_piece(name, x, y, z, rz=0.0):
+    before = set(bpy.data.objects); load_piece(name, 0.0)
+    for o in bpy.data.objects:
+        if o not in before: o.location = (o.location.x + x, o.location.y + y, o.location.z + z)
+for e in json.loads(os.environ.get('EXTRA', '[]')): place_piece(*e)
+if isinstance(DATA['furniture'], dict):
+    furniture(DATA['furniture'].get(PIECE, []), 0.0); doors(DATA['doors'].get(PIECE, []), 0.0)
+else:
+    pz = float(os.environ.get('PZ', '0')); furniture(DATA['furniture'], pz); doors(DATA['doors'], pz)
 SHOTS = {
     'rox_towers_lobby': [('entrance', (0, -23.6, 1.7), (0, -6, 2.4), 16), ('security', (-9, -18.5, 2.2), (1, -12, 1.0), 18),
                          ('reception', (11, -9.5, 2.0), (0, -3, 2.6), 18), ('atrium', (22, -21, 9), (-4, -5, 1.5), 16)],
@@ -149,5 +172,6 @@ SHOTS = {
     'rox_towers_f_adm': [('corridor', (-19, -2.0, 1.7), (10, -2.0, 1.3), 18), ('open_office', (3.6, -4.6, 2.3), (-2, -12, 0.8), 16)],
     'rox_towers_f_svc': [('breakroom', (7.6, -4.6, 2.3), (1, -11, 0.8), 16), ('servers', (-19.5, 14.0, 2.3), (-12, 9, 0.8), 16)],
 }
+SHOTS.update(json.loads(os.environ.get('SHOTS', '{}')))
 for tag, p, l, lens in SHOTS.get(PIECE, []): shot(tag, p, l, lens)
 print('DONE')
