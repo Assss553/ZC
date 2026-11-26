@@ -29,4 +29,7 @@ Legend: ✅ implemented & automatically tested · 🟡 implemented, needs first 
 | App Doctor | AI repair loop with live view: file + highlighted diff, narration, plan, terminal, health ring, issues struck through as fixed | ✅ UI + loop verified with scripted Claude; 🟡 with real key | |
 | App Doctor | Windows app crashes (Event Log 1000/1001/1002, read-only) + "Diagnose" with Claude | 🟡 Windows only | |
 | Design | Icon set (lucide) across the app, ROX logo, Windows .ico for exe/installer/taskbar | ✅ | |
+| Operator (instant) | Executes immediately from chat or the command bar; direct system tools first (system info, processes, disks, network, installed/startup apps, services, crashes, windows, find/read files, launch apps, URLs, clipboard, PowerShell), computer use for GUI | ✅ loop + tools tested (real data); 🟡 Windows-specific tools and live Claude | Risky steps still ask approval; system processes protected |
+| Operator (instant) | Live card in chat: plan, narration, every tool call with its result, live screen thumbnail, pause/stop, add instructions mid-run | ✅ verified | |
+| Operator (instant) | Command bar: Ctrl+K in app, Ctrl+Shift+Space global | ✅ in-app; 🟡 global hotkey on Windows | |
 | Notifications | Push/email reports when away | ⛔ | Reports are in the app timeline only |

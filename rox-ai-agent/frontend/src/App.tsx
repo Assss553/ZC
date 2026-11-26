@@ -3,8 +3,9 @@ import { api } from "./api";
 import { Key, Lang, LangCtx, useT } from "./i18n";
 import { Approvals, usePoll } from "./components/common";
 import { Logo } from "./components/Logo";
-import { LayoutPanelTop, LayoutDashboard, MessagesSquare, Gamepad2, MousePointer2, Code2, Stethoscope, CalendarClock, Settings as Cog, ShieldCheck, OctagonX, RotateCcw, type LucideIcon } from "lucide-react";
+import { LayoutPanelTop, LayoutDashboard, MessagesSquare, Gamepad2, MousePointer2, Code2, Stethoscope, CalendarClock, Settings as Cog, ShieldCheck, OctagonX, RotateCcw, Zap, type LucideIcon } from "lucide-react";
 import Doctor from "./pages/Doctor";
+import { CommandBar } from "./components/CommandBar";
 import Dashboard from "./pages/Dashboard"; import Chat from "./pages/Chat"; import Game from "./pages/Game"; import Computer from "./pages/Computer";
 import Coding from "./pages/Coding"; import Studio from "./pages/Studio"; import Tasks from "./pages/Tasks"; import Settings from "./pages/Settings"; import Audit from "./pages/Audit";
 
@@ -23,10 +24,11 @@ function Shell() {
     <aside className="side">
       <div className="brand"><Logo /><b>ROX AI AGENT</b></div>
       {PAGES.map(([k, I]) => <button key={k} title={t(k)} className={`nav ${page === k ? "on" : ""}`} onClick={() => setPage(k)}><I size={18} strokeWidth={1.8} /> <span>{t(k)}</span></button>)}
+      <button className="nav cmdk" title="Ctrl+K" onClick={() => dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}><Zap size={18} /> <span>أمر فوري <kbd>Ctrl K</kbd></span></button>
       <div className="grow" />
       <button className={`estop ${s?.emergency_stop ? "armed" : ""}`} onClick={estop} title="Ctrl+Shift+X (global: Ctrl+Alt+Pause)">{s?.emergency_stop ? <RotateCcw size={18} /> : <OctagonX size={18} />}<span>{s?.emergency_stop ? t("estopActive") : t("estop")}</span></button>
     </aside>
-    <main key={page} className={page === "studio" ? "full" : ""}><P go={setPage} /></main><Approvals />
+    <main key={page} className={page === "studio" ? "full" : ""}><P go={setPage} /></main><Approvals /><CommandBar go={setPage} />
   </div>;
 }
 

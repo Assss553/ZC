@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import config
-from .agents import chat, coding_agent, computer_agent, game_agent, runtime, timeline, doctor
+from .agents import chat, coding_agent, computer_agent, game_agent, runtime, timeline, doctor, operator_agent
 from .agents.game_adapters.base import ADAPTERS
 from .events import bus
 from .input_control import controller as ic
@@ -44,6 +44,7 @@ runtime.RUNNER.register("coding", coding_agent.handle)
 runtime.RUNNER.register("game", game_agent.handle)
 runtime.RUNNER.register("timeline", timeline.handle)
 runtime.RUNNER.register("doctor", doctor.handle)
+runtime.RUNNER.register("operator", operator_agent.handle)
 
 
 @app.on_event("startup")
@@ -92,6 +93,7 @@ class SettingsIn(BaseModel):
     auto_resume: bool | None = None
     run_at_login: bool | None = None
     language: str | None = None
+    operator_effort: str | None = None
 
 
 @app.get("/api/settings", dependencies=A)
@@ -99,7 +101,7 @@ def get_settings():
     return {"provider": ac.provider(), "model": ac.model(), "effort": ac.effort(), "use_fallbacks": db.get_setting("use_fallbacks", True),
             "allowed_folders": policy.allowed_folders(), "max_output_tokens_total": db.get_setting("max_output_tokens_total", 0),
             "report_minutes": db.get_setting("report_minutes", 30), "auto_resume": db.get_setting("auto_resume", False),
-            "run_at_login": db.get_setting("run_at_login", False), "language": db.get_setting("language", "ar"),
+            "run_at_login": db.get_setting("run_at_login", False), "language": db.get_setting("language", "ar"), "operator_effort": db.get_setting("operator_effort", "medium"),
             "api_key_masked": credentials.mask(credentials.get_secret("anthropic_api_key")),
             "claude_code": ac.claude_code_status()}
 
@@ -439,6 +441,37 @@ def put_timelines(tls: list[dict]):
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True}
+
+
+# ---------------- instant operator ----------------
+class InstantIn(BaseModel):
+    text: str
+    conversation_id: int | None = None
+
+
+@app.post("/api/instant", dependencies=A)
+def instant(i: InstantIn):
+    """Start executing the request right now. Risky steps still pop an approval."""
+    if policy.STOP.active:
+        raise HTTPException(409, "Emergency stop is active — re-arm it first.")
+    if ac.provider() == "api" and not credentials.get_secret("anthropic_api_key"):
+        raise HTTPException(400, "Add your Claude API key in Settings first.")
+    cid = i.conversation_id or chat.new_conversation(i.text)
+    tid = runtime.create("operator", i.text[:80], i.text, {"conversation_id": cid})
+    import json as _j
+    db.execute("INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)",
+               (cid, "user", _j.dumps({"text": i.text, "task_id": tid}, ensure_ascii=False), db.now()))
+    db.execute("INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)",
+               (cid, "assistant", _j.dumps({"text": "", "task_id": tid}, ensure_ascii=False), db.now()))
+    runtime.RUNNER.start(tid)
+    policy.audit("user", "instant", {"task_id": tid, "text": i.text[:200]}, "executed")
+    return {"task_id": tid, "conversation_id": cid}
+
+
+@app.get("/api/tools/system-info", dependencies=A)
+def sysinfo_now():
+    from .agents import system_tools as stt
+    return {"system": stt.system_info(), "disks": stt.disk_usage(), "network": stt.network_info(), "top": stt.list_processes({"limit": 8})}
 
 
 # ---------------- app doctor ----------------

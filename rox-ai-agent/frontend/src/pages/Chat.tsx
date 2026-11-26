@@ -2,16 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useT } from "../i18n";
 import { usePoll } from "../components/common";
-import { Paperclip, Camera, SendHorizontal, Plus, Bot } from "lucide-react";
+import { Paperclip, Camera, SendHorizontal, Plus, Bot, Zap, ListChecks } from "lucide-react";
+import { LiveRun } from "../components/LiveRun";
 
-type Msg = { role: string; text: string; proposal?: any; images?: number };
+type Msg = { role: string; text: string; proposal?: any; images?: number; task_id?: number };
 
 export default function Chat() {
   const t = useT();
   const { data: convs, setData: setConvs } = usePoll<any[]>("/api/conversations", 10000);
   const [cid, setCid] = useState<number | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]); const [text, setText] = useState(""); const [busy, setBusy] = useState(false);
-  const [shot, setShot] = useState(false); const [imgs, setImgs] = useState<{ media_type: string; data: string }[]>([]);
+  const [shot, setShot] = useState(false); const [instant, setInstant] = useState(localStorage.getItem("instant") !== "0"); const [imgs, setImgs] = useState<{ media_type: string; data: string }[]>([]);
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
   useEffect(() => {
@@ -23,6 +24,14 @@ export default function Chat() {
     if (!text.trim() || busy) return;
     const mine: Msg = { role: "user", text, images: imgs.length + (shot ? 1 : 0) };
     setMsgs((m) => [...m, mine]); setText(""); setBusy(true);
+    if (instant && !imgs.length && !shot) {
+      try {
+        const r = await api<any>("/api/instant", { body: { text: mine.text, conversation_id: cid } });
+        if (!cid) { setCid(r.conversation_id); api<any[]>("/api/conversations").then(setConvs); } // history reload brings both bubbles
+        else setMsgs((m) => [...m, { role: "assistant", text: "", task_id: r.task_id }]);
+      } catch (e: any) { setMsgs((m) => [...m, { role: "assistant", text: "⚠️ " + e.message }]); }
+      setBusy(false); return;
+    }
     try {
       const r = await api<any>("/api/chat", { body: { conversation_id: cid, text: mine.text, images: imgs, attach_screenshot: shot } });
       if (!cid) { setCid(r.conversation_id); api<any[]>("/api/conversations").then(setConvs); }
@@ -40,12 +49,14 @@ export default function Chat() {
     <div className="card chat">
       <div className="msgs">
         {msgs.map((m, i) => <div key={i} className={`msg ${m.role}`}>
-          {m.text}{m.images ? <div className="small mute row"><Paperclip size={12} /> {m.images}</div> : null}
+          {m.task_id && m.role === "assistant" ? <LiveRun taskId={m.task_id} /> : m.text}{m.images ? <div className="small mute row"><Paperclip size={12} /> {m.images}</div> : null}
           {m.proposal && <Proposal p={m.proposal} />}
         </div>)}
         {busy && <div className="msg assistant mute">…</div>}<div ref={end} />
       </div>
       <div className="row" style={{ marginTop: 8 }}>
+        <div className="seg modes"><button className={instant ? "on" : ""} onClick={() => { setInstant(true); localStorage.setItem("instant", "1"); }}><Zap size={13} /> تنفيذ فوري</button>
+          <button className={!instant ? "on" : ""} onClick={() => { setInstant(false); localStorage.setItem("instant", "0"); }}><ListChecks size={13} /> خطة ثم موافقة</button></div>
         <label className="row small" style={{ margin: 0 }}><input type="checkbox" style={{ width: "auto" }} checked={shot} onChange={(e) => setShot(e.target.checked)} /> <Camera size={14} /> {t("attachShot")}</label>
         <label className="btn small" style={{ margin: 0 }}><Paperclip size={13} /> {t("attachImg")} ({imgs.length})<input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0])} /></label>
       </div>

@@ -38,6 +38,13 @@ class Screen:
         return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": base64.b64encode(data).decode()}}
 
 
+def _display_ok() -> bool:
+    try:
+        capture.screen_size(); return True
+    except Exception:
+        return False
+
+
 def toolset_of(block) -> str | None:
     return getattr(block, "toolset_name", None) or (getattr(block, "model_extra", None) or {}).get("toolset_name")
 
@@ -86,9 +93,11 @@ def execute_member(name: str, inp: dict, screen: Screen, actor: str, key_filter:
 
 
 def run_loop(ctx, system: str, first_user: list, custom_tools: list[dict], custom_handler: Callable,
-             screen: Screen, actor: str, key_filter=None, max_turns: int = 200, on_turn: Callable | None = None) -> str:
+             screen: Screen, actor: str, key_filter=None, max_turns: int = 200, on_turn: Callable | None = None, effort: str | None = None) -> str:
     """Generic agent loop. Persists the transcript (minus images) for crash recovery."""
     tools = [{"type": "computer_toolset_20260801"}] + custom_tools
+    if not (capture.mss and _display_ok()):  # no desktop session: still useful with direct tools only
+        tools = custom_tools
     messages = [{"role": "user", "content": first_user}]
     final_text = ""
     consecutive_errors = 0
@@ -98,7 +107,7 @@ def run_loop(ctx, system: str, first_user: list, custom_tools: list[dict], custo
             messages.append({"role": "user", "content": "Update from the user: " + "\n".join(ctx.injected)})
             ctx.injected.clear()
         try:
-            msg = ac.create(messages, system, tools)
+            msg = ac.create(messages, system, tools, **({"effort_override": effort} if effort else {}))
             consecutive_errors = 0
         except Exception as e:
             consecutive_errors += 1
@@ -133,7 +142,10 @@ def run_loop(ctx, system: str, first_user: list, custom_tools: list[dict], custo
                     entry["content"] = execute_member(u.name, dict(u.input), screen, actor, key_filter)
                     entry["toolset_name"] = TOOLSET_NAME
                 else:
+                    if u.name not in ("update_plan",):
+                        bus.publish("decision", {"task_id": ctx.id, "action": u.name, "input": u.input})
                     entry["content"] = custom_handler(u.name, dict(u.input))
+                    bus.publish("tool_result", {"task_id": ctx.id, "action": u.name, "result": str(entry["content"])[:1500]})
             except (ic.InputUnavailable, capture.CaptureUnavailable) as e:
                 entry.update(content=str(e), is_error=True)
                 if toolset == TOOLSET_NAME:

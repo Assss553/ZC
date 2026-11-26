@@ -61,11 +61,12 @@ def check_budget() -> None:
             raise RuntimeError("Token budget reached (Settings → Limits). Raise it to continue.")
 
 
-def create(messages: list, system: str, tools: list | None = None, max_tokens: int = 32000):
+def create(messages: list, system: str, tools: list | None = None, max_tokens: int = 32000, effort_override: str | None = None):
     """One Messages API call (streamed to avoid HTTP timeouts). Returns the final Message."""
     check_budget()
-    kwargs = dict(model=model(), max_tokens=max_tokens, system=system, messages=messages,
-                  thinking={"type": "adaptive"}, output_config={"effort": effort()})
+    # system + tools are stable per agent -> cache them; effort can be overridden per agent (operator runs fast)
+    kwargs = dict(model=model(), max_tokens=max_tokens, system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+                  messages=messages, thinking={"type": "adaptive"}, output_config={"effort": effort_override or effort()})
     if tools:
         kwargs["tools"] = tools
     extra = {}

@@ -4,4 +4,5 @@ contextBridge.exposeInMainWorld("rox", {
   token: arg("rox-token"), port: Number(arg("rox-port") || 8765),
   toggleFullscreen: () => ipcRenderer.send("toggle-fullscreen"),
   pickFolder: () => ipcRenderer.invoke("pick-folder"),
+  onCommand: (cb) => { const h = () => cb(); ipcRenderer.on("open-command", h); return () => ipcRenderer.removeListener("open-command", h); },
 });

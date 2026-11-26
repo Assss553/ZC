@@ -61,6 +61,8 @@ app.whenReady().then(() => {
   // Global emergency stop works even when a game has focus.
   globalShortcut.register("Control+Alt+Pause", () => post("/api/emergency-stop"));
   globalShortcut.register("Control+Alt+End", () => post("/api/emergency-stop"));
+  // Quick command from anywhere in Windows: bring ROX to front and open the command bar.
+  globalShortcut.register("Control+Shift+Space", () => { if (!win) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); win.webContents.send("open-command"); });
   globalShortcut.register("F11", () => win && win.setFullScreen(!win.isFullScreen()));
 });
 app.on("before-quit", () => { app.isQuitting = true; post("/api/emergency-stop"); setTimeout(() => backend && backend.kill(), 300); });
