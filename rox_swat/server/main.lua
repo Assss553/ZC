@@ -67,11 +67,35 @@ RegisterNetEvent('rox_swat:get', function()
     local src = source
     TriggerClientEvent('rox_swat:origin', src, { x = origin.x, y = origin.y, z = origin.z, w = origin.w })
     send(src); TriggerClientEvent('rox_swat:doors', src, doors)
+    for id, open in pairs(secrets) do TriggerClientEvent('rox_swat:secretState', src, id, open, 0) end
 end)
-RegisterNetEvent('rox_swat:foot', function() local src = source; if not allowed(src) then deny(src) else TriggerClientEvent('rox_swat:footOk', src) end end)
+RegisterNetEvent('rox_swat:elev', function(i) local src = source; if not allowed(src) then deny(src) else TriggerClientEvent('rox_swat:elevOk', src, i) end end)
+local secrets = {}
+local function secretAllowed(src)
+    if IsPlayerAceAllowed(src, Config.SecretAce) then return true end
+    if GetResourceState('qb-core') == 'started' then
+        local ok, QB = pcall(function() return exports['qb-core']:GetCoreObject() end)
+        local p = ok and QB and QB.Functions.GetPlayer(src)
+        local j = p and p.PlayerData.job
+        if j and Config.SecretJobs[j.name] and (j.grade and (j.grade.level or 0) or 0) >= Config.SecretJobs[j.name] then return true end
+    end
+    if GetResourceState('es_extended') == 'started' then
+        local ok, ESX = pcall(function() return exports['es_extended']:getSharedObject() end)
+        local p = ok and ESX and ESX.GetPlayerFromId(src)
+        if p and p.job and Config.SecretJobs[p.job.name] and (p.job.grade or 0) >= Config.SecretJobs[p.job.name] then return true end
+    end
+    return false
+end
+RegisterNetEvent('rox_swat:secret', function(id)
+    local src = source
+    if type(id) ~= 'string' or #id > 32 then return end
+    if not secretAllowed(src) then return deny(src) end
+    secrets[id] = not secrets[id]
+    TriggerClientEvent('rox_swat:secretState', -1, id, secrets[id], GetGameTimer())
+end)
 RegisterNetEvent('rox_swat:door', function(id, locked)
     local src = source
-    if type(id) ~= 'string' or not id:match('^rox_swat_%d+$') then return end
+    if type(id) ~= 'string' or not id:match('^rox_swat_[%w]+_%d+$') then return end
     if not allowed(src) then return deny(src) end
     doors[id] = locked and true or false
     TriggerClientEvent('rox_swat:doorState', -1, id, doors[id])

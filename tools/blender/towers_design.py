@@ -141,6 +141,17 @@ def furniture(items, z0):
         elif m in ('prop_beach_punchbag',): obox('pb', x, y, z + 0.6, 0.4, 0.4, 1.2, h, RED, 0.1)
         elif m in ('apa_p_apdlc_treadmill_s',): obox('tm', x, y, z, 0.8, 1.9, 0.25, h, BLACK); lx, ly = local(x, y, h, 0, -0.85); obox('tmc', lx, ly, z, 0.8, 0.1, 1.3, h, GREY)
         elif m in ('prop_toolchest_05', 'imp_prop_tool_chest_01a'): obox('tc', x, y, z, 1.0, 0.5, 1.1, h, RED)
+        elif 'trophy' in m: obox('tro', x, y, z, 0.18, 0.18, 0.35, h, bmat('gold', (0.8, 0.6, 0.3), 0.2, 1.0))
+        elif m.startswith('prop_bodyarmour') or m == 'prop_mask_ballistic': obox('vest', x, y, z, 0.45, 0.2, 0.55, h, bmat('olive', (0.25, 0.28, 0.15), 0.6))
+        elif m in ('prop_ballistic_shield', 'prop_riot_shield'): obox('sh', x, y, z, 0.6, 0.08, 1.2, h, BLACK)
+        elif m == 'ch_prop_whiteboard': obox('wbd', x, y, z + 0.8, 1.8, 0.04, 1.1, h, WHITE)
+        elif m in ('prop_copier_01',): obox('cop', x, y, z, 0.7, 0.6, 1.1, h, GREY)
+        elif m in ('prop_printer_01',): obox('prn', x, y, z, 0.45, 0.4, 0.3, h, GREY)
+        elif m in ('prop_shower_rack_01', 'prop_fire_exting_1a'): obox('ex', x, y, z, 0.15, 0.15, 0.5, h, RED)
+        elif m in ('gr_prop_gr_rsply_crate01a', 'xm_prop_crates_rifles_01a', 'prop_box_guncase_02a'): obox('crate', x, y, z, 1.2, 0.6, 0.5, h, bmat('olive', (0.25, 0.28, 0.15), 0.6))
+        elif m in ('p_v_43_safe_s',): obox('safe', x, y, z, 0.8, 0.8, 1.4, h, GREY, 0.02)
+        elif m == 'p_ld_heist_bag_s': obox('bag', x, y, z, 0.7, 0.35, 0.35, h, BLACK, 0.08)
+        elif m == 'prop_tv_cam_02': obox('cam', x, y, z + 1.4, 0.3, 0.5, 0.3, h, BLACK); obox('tri', x, y, z, 0.05, 0.05, 1.4, h, BLACK)
         elif m == 'prop_sink_02': obox('sink', x, y, z + 0.9, 0.5, 0.4, 0.06, h, WHITE)
 
 def doors(items, z0):
@@ -159,8 +170,14 @@ load_piece(PIECE, float(os.environ.get('PZ', '0')))
 if PIECE == 'rox_towers_lobby': load_piece('rox_towers_base')
 def place_piece(name, x, y, z, rz=0.0):
     before = set(bpy.data.objects); load_piece(name, 0.0)
+    a = math.radians(rz); c, sn = math.cos(a), math.sin(a)
     for o in bpy.data.objects:
-        if o not in before: o.location = (o.location.x + x, o.location.y + y, o.location.z + z)
+        if o not in before:
+            if o.type == 'MESH':
+                for v in o.data.vertices: v.co = (v.co.x * c - v.co.y * sn, v.co.x * sn + v.co.y * c, v.co.z)
+            else:
+                o.location = (o.location.x * c - o.location.y * sn, o.location.x * sn + o.location.y * c, o.location.z)
+            o.location = (o.location.x + x, o.location.y + y, o.location.z + z)
 for e in json.loads(os.environ.get('EXTRA', '[]')): place_piece(*e)
 if os.environ.get('GROUND'):
     bpy.ops.mesh.primitive_plane_add(size=400, location=(0, 0, -0.02)); gp = bpy.context.object; gp.data.materials.append(bmat('asphalt', (0.06, 0.06, 0.065), 0.8))
@@ -168,7 +185,7 @@ if os.environ.get('GROUND'):
         if abs(i) > 1: obox('stripe', i * 1.0 + 0.0, -40, 0.0, 0.15, 80, 0.01, 0, bmat('lane', (0.8, 0.8, 0.8), 0.6)) if False else None
     sun = bpy.data.lights.new('moon', 'SUN'); sun.energy = 0.3; sun.color = (0.6, 0.7, 1.0); so = bpy.data.objects.new('moon', sun); so.rotation_euler = (0.9, 0.2, 0.6); sc.collection.objects.link(so)
 if isinstance(DATA['furniture'], dict):
-    furniture(DATA['furniture'].get(PIECE, []), 0.0); doors(DATA['doors'].get(PIECE, []), 0.0)
+    fk = os.environ.get('FURNKEY', PIECE); furniture(DATA['furniture'].get(fk, []), 0.0); doors(DATA['doors'].get(fk, []), 0.0)
 else:
     pz = float(os.environ.get('PZ', '0')); furniture(DATA['furniture'], pz); doors(DATA['doors'], pz)
 SHOTS = {

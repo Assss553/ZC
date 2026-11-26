@@ -504,6 +504,105 @@ def hazard(seed):
     d *= (0.85 + 0.2 * fbm(2.4, seed))[:, :, None]
     return dict(d=np.clip(d, 0, 255).astype(np.uint8), s=spec_map(np.full((N, N), 0.3)))
 
+def marble_vein(base, vein, seed, gloss=0.92, warp=3.5, freq=5.0, width=26.0, slab=1):
+    """polished stone with strong warped veins (calacatta / nero marquina look)"""
+    y, x = np.mgrid[0:N, 0:N] / N
+    w1, w2 = fbm(3.6, seed), fbm(3.4, seed + 1)
+    u = (x * 0.8 + y * 0.6) * freq + warp * (w1 - 0.5) * 2 + 0.8 * (w2 - 0.5)
+    v1 = np.exp(-np.abs(np.sin(u * np.pi)) * width)
+    v2 = np.exp(-np.abs(np.sin(u * np.pi * 2.7 + 4 * w2)) * width * 2.2) * 0.45
+    cloud = 0.9 + 0.14 * fbm(2.6, seed + 3)
+    t = np.clip(v1 + v2, 0, 1)
+    d = mix(col(base) * cloud[:, :, None], col(vein), t)
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(0.01 * fbm(2.0, seed + 4), 0.1), s=spec_map(np.full((N, N), gloss), np.full((N, N), 0.95)))
+
+def cmd_emblem(seed):
+    """art-deco command emblem: gold star, rings, laurels and rays on nero marble (backlit wall panel)"""
+    from PIL import ImageDraw, ImageFilter
+    S = 1024
+    m = marble_vein((16, 16, 18), (150, 150, 150), seed, width=34)['d']
+    im = Image.fromarray(m).resize((S, S)); dr = ImageDraw.Draw(im)
+    G, W = (226, 176, 72), 10
+    dr.rectangle((24, 24, S - 24, S - 24), outline=G, width=W)
+    for a, b in (((24, 24), (S * 0.36, S * 0.36)), ((S - 24, 24), (S * 0.64, S * 0.36)), ((S * 0.2, 24), (S * 0.42, S * 0.3)), ((S * 0.8, 24), (S * 0.58, S * 0.3)),
+                 ((24, S - 24), (S * 0.3, S * 0.72)), ((S - 24, S - 24), (S * 0.7, S * 0.72))):
+        dr.line((a, b), fill=G, width=W)
+    c = S / 2
+    for r, w in ((S * 0.33, 12), (S * 0.25, 8)): dr.ellipse((c - r, c - r, c + r, c + r), outline=G, width=w)
+    pts = []
+    for k in range(10):
+        r = S * 0.18 if k % 2 == 0 else S * 0.075; a = math.pi * k / 5 - math.pi / 2; pts.append((c + r * math.cos(a), c + r * math.sin(a)))
+    dr.polygon(pts, fill=(240, 196, 92), outline=(140, 100, 30))
+    for sgn in (-1, 1):            # laurel branches
+        for k in range(7):
+            a = math.radians(110 + k * 14) if sgn < 0 else math.radians(70 - k * 14)
+            px, py = c + S * 0.21 * math.cos(a), c + S * 0.21 * math.sin(a) + S * 0.02
+            dr.ellipse((px - 16, py - 8, px + 16, py + 8), fill=G)
+    gl = im.filter(ImageFilter.GaussianBlur(6)); im = Image.blend(im, gl, 0.25)
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
+def facet_panel(seed):
+    """dark acoustic wall panels with angled grooves (faceted look)"""
+    y, x = np.mgrid[0:N, 0:N] / N
+    base = 0.9 + 0.08 * fbm(2.5, seed)
+    lines = np.zeros((N, N))
+    for a, b, c0 in ((1.0, 0.55, 0.0), (1.0, -0.8, 0.62), (0.0, 1.0, 0.5), (1.0, 0.0, 0.02)):
+        dd = np.abs(a * x + b * y - c0) / math.hypot(a, b); lines = np.maximum(lines, (dd < 0.004).astype(float))
+    lines = blur(lines, 0.6)
+    d = col((26, 28, 27)) * base[:, :, None] * (1 - 0.6 * lines[:, :, None])
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(-lines * 1.0 + 0.02 * fbm(2.0, seed + 1), 0.35), s=spec_map(np.full((N, N), 0.25)))
+
+def wood_perf(seed):
+    """perforated walnut acoustic ceiling tiles with a dot grid and joints"""
+    w = wood((92, 60, 36), (150, 104, 66), seed, vertical=False)['d'].astype(np.float64)
+    y, x = np.mgrid[0:N, 0:N] / N
+    dots = (((x * 48) % 1 - 0.5) ** 2 + ((y * 48) % 1 - 0.5) ** 2) < 0.06
+    joint = ((x % 0.5) < 0.006) | ((y % 0.5) < 0.006)
+    w = w * np.where(dots[:, :, None], 0.35, 1.0) * np.where(joint[:, :, None], 0.4, 1.0)
+    return dict(d=np.clip(w, 0, 255).astype(np.uint8), n=normal_map(-(dots * 0.5 + joint * 1.0).astype(float), 0.25), s=spec_map(np.full((N, N), 0.2)))
+
+def poster(text, sub, seed, dark=False):
+    """framed print: title banner + rows of uniformed silhouettes (motivational poster)"""
+    from PIL import ImageDraw
+    S = 1024; rng = np.random.default_rng(seed)
+    im = Image.new('RGB', (S, S // 2 * 2), (30, 30, 34) if dark else (214, 210, 200)); dr = ImageDraw.Draw(im)
+    dr.rectangle((0, 0, S, S), outline=(20, 20, 20), width=26)
+    dr.rectangle((60, 60, S - 60, S - 60), fill=(70, 76, 86))
+    dr.rectangle((S * 0.3, 90, S * 0.7, 230), fill=(236, 236, 230))
+    f, (l, t_, r, b) = _fit_text(dr, text, S * 0.36, 70); dr.text((S / 2 - (r - l) / 2 - l, 120 - t_), text, font=f, fill=(20, 20, 20))
+    f2, (l, t_, r, b) = _fit_text(dr, sub, S * 0.3, 40); dr.text((S / 2 - (r - l) / 2 - l, 190 - t_), sub, font=f2, fill=(20, 20, 20))
+    for k in range(9):
+        x = 120 + k * 92; h = rng.integers(330, 380)
+        dr.ellipse((x - 22, S - 60 - h - 50, x + 22, S - 60 - h - 6), fill=(36, 40, 36))
+        dr.rectangle((x - 34, S - 60 - h, x + 34, S - 70), fill=(30, 44, 34))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
+def portrait(seed):
+    """black & white framed portrait of a commander (stylised)"""
+    from PIL import ImageDraw, ImageFilter
+    S = 1024; im = Image.new('RGB', (S, S), (10, 10, 10)); dr = ImageDraw.Draw(im)
+    dr.rectangle((40, 40, S - 40, S - 40), fill=(46, 46, 46))
+    dr.ellipse((S * 0.34, S * 0.2, S * 0.66, S * 0.6), fill=(150, 150, 150))
+    dr.polygon([(S * 0.3, S * 0.2), (S * 0.7, S * 0.2), (S * 0.66, S * 0.3), (S * 0.34, S * 0.3)], fill=(26, 26, 26))
+    dr.rectangle((S * 0.3, S * 0.14, S * 0.7, S * 0.22), fill=(30, 30, 30))
+    dr.polygon([(S * 0.15, S * 0.96), (S * 0.3, S * 0.66), (S * 0.7, S * 0.66), (S * 0.85, S * 0.96)], fill=(28, 28, 30))
+    dr.polygon([(S * 0.44, S * 0.66), (S * 0.56, S * 0.66), (S * 0.5, S * 0.86)], fill=(210, 210, 210))
+    im = im.filter(ImageFilter.GaussianBlur(3))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
+def plate(text, seed):
+    """door name plate: white engraved card in a black frame"""
+    from PIL import ImageDraw
+    Wd, Hd = 1024, 170
+    im = Image.new('RGB', (Wd, Hd), (18, 18, 18)); dr = ImageDraw.Draw(im)
+    dr.rectangle((14, 14, Wd - 14, Hd - 14), fill=(222, 220, 214))
+    f, (l, t_, r, b) = _fit_text(dr, text, Wd * 0.86, Hd * 0.5); dr.text(((Wd - (r - l)) / 2 - l, (Hd - (b - t_)) / 2 - t_), text, font=f, fill=(24, 24, 24))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
+PLATES = ['COMMAND', 'SWAT COMMANDER', 'BOOKING', 'PROCESSING', 'HOLDING CELLS', 'LOCKER ROOM - MEN', 'LOCKER ROOM - WOMEN', 'TACTICAL GEAR',
+          'ARMOURY', 'RECORDS', 'HUMAN RESOURCES', 'BRIEFING', 'CONFERENCE', 'CYBER UNIT', 'FIRING RANGE', 'GYM', 'MEDICAL', 'SERVER ROOM',
+          'CANTEEN', 'INTERVIEW', 'LOBBY', 'SECURITY', 'ELEVATOR', 'EXIT', 'OFFICE', 'RECEPTION', 'TRAINING']
+
 def shopfront(seed, kind=0):
     """Lit shop interior seen through glass: shelves / posters / counter, with a sky reflection on top."""
     from PIL import ImageDraw, ImageFilter
@@ -895,6 +994,15 @@ def build_all():
     T['rox_police_badge'] = police_badge(900)
     T['rox_swat_badge'] = swat_badge(940)
     T['rox_glass_clear'] = glass_clear(950)
+    T['rox_marble_nero'] = marble_vein((18, 18, 20), (190, 170, 130), 960, width=30)
+    T['rox_marble_calacatta'] = marble_vein((236, 234, 228), (140, 126, 100), 961, width=22)
+    T['rox_cmd_emblem'] = cmd_emblem(962)
+    T['rox_facet_panel'] = facet_panel(963)
+    T['rox_wood_perf'] = wood_perf(964)
+    T['rox_poster_protect'] = poster('PROTECT', 'AND SERVE', 965)
+    T['rox_poster_grad'] = poster('SWAT', 'GRADUATION 2026', 966, dark=True)
+    T['rox_portrait'] = portrait(967)
+    for k, p in enumerate(PLATES): T['rox_plate_' + p.lower().replace(' - ', '_').replace(' ', '_')] = plate(p, 970 + k)
     T['rox_hazard'] = hazard(941)
     T['rox_sign_swat'] = sign_text('SWAT TEAM', (255, 255, 255), (8, 8, 10), 942, aspect=6, border=(214, 168, 70))
     T['rox_sign_swat_range'] = sign_text('FIRING RANGE', (255, 255, 255), (8, 8, 10), 943, aspect=6, glow=False)

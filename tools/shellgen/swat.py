@@ -436,10 +436,18 @@ def sign():
 
 
 def all_pieces():
-    DOORS.clear(); FURN.clear()
-    ps = [hq(), plaza(), lift(), leaf(), pillar(), sign()]
+    import swat_levels as L
+    for v in L.LV.values(): v['furn'].clear(); v['doors'].clear()
+    L.SECRETS.clear()
+    ps = [L.level1(), L.level2(), L.bookcase(), L.emblemdoor(), plaza(), lift(), leaf(), pillar(), sign()]
     out = os.environ.get('ROX_SWAT_DATA', os.path.join(os.path.dirname(__file__), '..', '..', 'rox_swat', 'data', 'swat.json'))
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    json.dump(dict(depth=DEPTH, plaza=PLAZA, hatch=[HW, HD], pillars=PILLARS, pillarHeight=PH, doors=DOORS, furniture=FURN,
-                   garageSpawn=[0.0, 12.0], footDown=[-15.0, -4.6], footUp=[7.5, 7.6]), open(out, 'w'), indent=1)
+    stops = [dict(label='Street (booth)', labelAr='الشارع', x=7.5, y=7.6 - 1.5, z=PLAZA),
+             dict(label='L1 - Lobby / Security', labelAr='الدور الأول - اللوبي والتفتيش', x=0.0, y=-23.5, z=L.L1Z),
+             dict(label='L1 - Garage', labelAr='الدور الأول - الكراج', x=-15.0, y=-3.0, z=L.L1Z),
+             dict(label='L1 - Cells / Lockers', labelAr='الدور الأول - الزنازين والملابس', x=-37.6, y=-8.7, z=L.L1Z),
+             dict(label='L2 - Command', labelAr='الدور الثاني - القيادة', x=-37.6, y=-8.7, z=L.L2Z)]
+    json.dump(dict(depth=DEPTH, plaza=PLAZA, hatch=[HW, HD], pillars=PILLARS, pillarHeight=PH, levels=dict(l1=L.L1Z, l2=L.L2Z),
+                   furniture={k: v['furn'] for k, v in L.LV.items()}, doors={k: v['doors'] for k, v in L.LV.items()},
+                   secrets=L.SECRETS, stops=stops), open(out, 'w'), indent=1)
     return ps

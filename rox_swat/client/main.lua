@@ -72,8 +72,10 @@ local function doorModel(kind, w)
         end
     end
 end
-local function spawnDoors()
-    for i, d in ipairs(D.doors or {}) do
+local function spawnDoors(LZ)
+    for lv, list in pairs(D.doors or {}) do
+    local DEPTH = -(LZ[lv] or -DEPTH)
+    for i, d in ipairs(list) do
         local leaves = d.w > 1.7 and 2 or 1
         for k = 1, leaves do
             local lw = d.w / leaves; local hash = doorModel(d.kind, lw)
@@ -82,39 +84,65 @@ local function spawnDoors()
                 local hd = d.h
                 if k == 2 then hx, hy, hd = d.x + math.cos(a) * d.w, d.y + math.sin(a) * d.w, d.h + 180.0 end
                 local o = obj(ents, hash, hx, hy, -DEPTH, hd, false)
-                local id = ('rox_swat_%d'):format(i * 10 + k); local dh = joaat(id); local p = toWorld(hx, hy, -DEPTH)
+                local id = ('rox_swat_%s_%d'):format(lv, i * 10 + k); local dh = joaat(id); local p = toWorld(hx, hy, -DEPTH)
                 AddDoorToSystem(dh, hash, p.x, p.y, p.z, false, false, false)
-                local locked = d.kind == 'sec'; if doorState[id] ~= nil then locked = doorState[id] end
+                local locked = d.kind == 'sec' or d.kind == 'cell'; if doorState[id] ~= nil then locked = doorState[id] end
                 DoorSystemSetDoorState(dh, locked and 1 or 0, false, true)
                 doorRecs[#doorRecs + 1] = { id = id, hash = dh, pos = p, kind = d.kind }
             end
         end
     end
+    end
 end
 
 local function spawn()
     obj(ents, 'rox_swat_plaza', 0, 0, 0, 0)
-    obj(ents, 'rox_swat_hq', 0, 0, -DEPTH, 0)
+    local LZ = D.levels or { l1 = -DEPTH, l2 = -DEPTH - 7.0 }
+    obj(ents, 'rox_swat_l1', 0, 0, LZ.l1, 0); obj(ents, 'rox_swat_l2', 0, 0, LZ.l2, 0)
+    for _, sc in ipairs(D.secrets or {}) do
+        local o = obj(ents, sc.model, sc.x, sc.y, LZ[sc.lvl], sc.h); parts['secret_' .. sc.id] = o
+    end
     parts.lift = obj(ents, 'rox_swat_lift', 0, 0, -DEPTH, 0)
     parts.leafL = obj(ents, 'rox_swat_leaf', -HW / 2, 0, PLAZA, 0); parts.leafR = obj(ents, 'rox_swat_leaf', HW / 2, 0, PLAZA, 0)
     for i, p in ipairs(D.pillars or {}) do parts['pillar' .. i] = obj(ents, 'rox_swat_pillar', p[1], p[2], PLAZA - PH, 0) end
     parts.sign = obj(ents, 'rox_swat_sign', 0, -HD - 1.6, PLAZA - 1.6, 0)
-    local named = {}
-    for _, f in ipairs(D.furniture or {}) do
-        local hash = loadModel(f.m)
-        if hash then
-            local z = -DEPTH + (f.z or 0.0)
-            if f.on and named[f.on] then local _, mx = GetModelDimensions(GetEntityModel(named[f.on])); z = -DEPTH + mx.z end
-            local o = obj(ents, hash, f.x, f.y, z, (f.h or 0.0) + Config.PropFront - 180.0)
-            if f.name then named[f.name] = o end
+    for lv, list in pairs(D.furniture or {}) do
+        local named, z0 = {}, LZ[lv] or -DEPTH
+        for _, f in ipairs(list) do
+            local hash = loadModel(f.m)
+            if hash then
+                local z = z0 + (f.z or 0.0)
+                if f.on and named[f.on] then local _, mx = GetModelDimensions(GetEntityModel(named[f.on])); z = z0 + mx.z end
+                local o = obj(ents, hash, f.x, f.y, z, (f.h or 0.0) + Config.PropFront - 180.0)
+                if f.name then named[f.name] = o end
+            end
         end
     end
-    spawnDoors(); pose(); on = true
+    spawnDoors(LZ); pose(); on = true
 end
 local function despawn()
     for _, d in ipairs(doorRecs) do if IsDoorRegisteredWithSystem(d.hash) then RemoveDoorFromSystem(d.hash) end end
     for _, e in ipairs(ents) do if DoesEntityExist(e) then DeleteObject(e) end end
     ents, parts, doorRecs, on = {}, {}, {}, false
+end
+
+-- secret doors + elevator menu ---------------------------------------------------------------------------------
+secretOpen, secretAt = {}, {}
+RegisterNetEvent('rox_swat:secretState', function(id, open, _) secretOpen[id] = open; secretAt[id] = GetGameTimer() end)
+function elevatorMenu(cur)
+    local opts = {}
+    for i, st in ipairs(D.stops or {}) do if i ~= cur then opts[#opts + 1] = { i = i, label = L and st.labelAr or st.label } end end
+    local sel = 1
+    while true do
+        Wait(0)
+        local txt = '~y~SWAT TEAM~s~\n'
+        for k, o in ipairs(opts) do txt = txt .. (k == sel and '~g~> ' or '   ') .. o.label .. '~s~\n' end
+        BeginTextCommandDisplayHelp('STRING'); AddTextComponentSubstringPlayerName(txt .. '~c~↑ ↓  ENTER  BACKSPACE'); EndTextCommandDisplayHelp(0, false, false, -1)
+        if IsControlJustPressed(0, 172) then sel = sel > 1 and sel - 1 or #opts end
+        if IsControlJustPressed(0, 173) then sel = sel < #opts and sel + 1 or 1 end
+        if IsControlJustPressed(0, 177) then return end
+        if IsControlJustPressed(0, 191) then TriggerServerEvent('rox_swat:elev', opts[sel].i); return end
+    end
 end
 
 -- carry the player's car / ped with the lift --------------------------------------------------------------------
@@ -163,12 +191,28 @@ CreateThread(function()
                     help(L and '~INPUT_CONTEXT~ الصعود للشارع' or '~INPUT_CONTEXT~ Go up'); if IsControlJustPressed(0, 38) then TriggerServerEvent('rox_swat:call', 'up') end
                 end
             end
-            -- pedestrian access booth <-> garage
-            local fu, fd = D.footUp or { 7.5, 7.6 }, D.footDown or { -15.0, -4.6 }
-            point(fu[1], fu[2], PLAZA + 1.0, L and '~INPUT_CONTEXT~ النزول للمقر (درج)' or '~INPUT_CONTEXT~ Stairs down', function() TriggerServerEvent('rox_swat:foot'); _G.__roxswat_go = 'down' end)
-            point(fd[1], fd[2], -DEPTH + 1.0, L and '~INPUT_CONTEXT~ الصعود للشارع (درج)' or '~INPUT_CONTEXT~ Stairs up', function() TriggerServerEvent('rox_swat:foot'); _G.__roxswat_go = 'up' end)
+            -- elevator / stairs stops (street booth, lobby, garage, level 1, level 2)
+            for i, st in ipairs(D.stops or {}) do
+                point(st.x, st.y, st.z + 1.0, L and '~INPUT_CONTEXT~ المصعد' or '~INPUT_CONTEXT~ Elevator', function() elevatorMenu(i) end)
+            end
+            -- secret doors: animate + E near them (commander only, checked by the server)
+            local LZ = D.levels or {}
+            for _, sc in ipairs(D.secrets or {}) do
+                local o = parts['secret_' .. sc.id]
+                if o then
+                    local t = math.min(1.0, (GetGameTimer() - (secretAt[sc.id] or 0)) / (Config.SecretTime * 1000.0)); t = t * t * (3 - 2 * t)
+                    local p = secretOpen[sc.id] and t or (1.0 - t)
+                    if secretAt[sc.id] == nil then p = secretOpen[sc.id] and 1.0 or 0.0 end
+                    local w = toWorld(sc.x + sc.dx * p, sc.y + sc.dy * p, LZ[sc.lvl] or -DEPTH); SetEntityCoordsNoOffset(o, w.x, w.y, w.z, false, false, false)
+                    local hp = toWorld(sc.x, sc.y, (LZ[sc.lvl] or -DEPTH) + 1.0)
+                    if #(pos - hp) < 2.2 then
+                        help(L and '~INPUT_CONTEXT~ ~y~الباب السري' or '~INPUT_CONTEXT~ ~y~Secret door')
+                        if IsControlJustPressed(0, 38) then TriggerServerEvent('rox_swat:secret', sc.id) end
+                    end
+                end
+            end
             for _, dr in ipairs(doorRecs) do
-                if dr.kind == 'sec' and #(pos - dr.pos) < 1.8 then
+                if (dr.kind == 'sec' or dr.kind == 'cell') and #(pos - dr.pos) < 1.8 then
                     local locked = DoorSystemGetDoorState(dr.hash) ~= 0
                     help((L and '~INPUT_CONTEXT~ بطاقة الدخول: ' or '~INPUT_CONTEXT~ Keycard: ') .. (locked and '~r~🔒' or '~g~🔓'))
                     if IsControlJustPressed(0, 38) then TriggerServerEvent('rox_swat:door', dr.id, not locked) end
@@ -179,9 +223,9 @@ CreateThread(function()
     end
 end)
 
-RegisterNetEvent('rox_swat:footOk', function()
-    local fu, fd = D.footUp or { 7.5, 7.6 }, D.footDown or { -15.0, -4.6 }
-    local p = _G.__roxswat_go == 'down' and toWorld(fd[1], fd[2] + 1.5, -DEPTH + 1.0) or toWorld(fu[1], fu[2] - 1.5, PLAZA + 1.0)
+RegisterNetEvent('rox_swat:elevOk', function(i)
+    local st = (D.stops or {})[i]; if not st then return end
+    local p = toWorld(st.x + 1.2, st.y, st.z + 1.0)
     DoScreenFadeOut(400); while not IsScreenFadedOut() do Wait(0) end
     RequestCollisionAtCoord(p.x, p.y, p.z); SetEntityCoords(PlayerPedId(), p.x, p.y, p.z, false, false, false, false)
     Wait(700); DoScreenFadeIn(500)
