@@ -20,6 +20,10 @@ def piece_mat(m):
     key = m['tex'] + m['sh']
     if key in _mats: return _mats[key]
     mt = bpy.data.materials.new(m['mat']); mt.use_nodes = True; t = mt.node_tree; b = t.nodes['Principled BSDF']
+    if m['sh'] == 'g':
+        b.inputs['Base Color'].default_value = (0.85, 0.92, 0.96, 1); b.inputs['Roughness'].default_value = 0.02
+        b.inputs['Transmission Weight' if 'Transmission Weight' in b.inputs else 'Transmission'].default_value = 1.0; b.inputs['IOR'].default_value = 1.05
+        _mats[key] = mt; return mt
     png = os.path.join(W, 'tex', 'png', m['tex'] + '.png')
     if os.path.exists(png):
         im = t.nodes.new('ShaderNodeTexImage'); im.image = bpy.data.images.load(png)

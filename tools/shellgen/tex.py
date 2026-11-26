@@ -894,6 +894,7 @@ def build_all():
     T['rox_sign_garage'] = sign_text('ROX GARAGE', (255, 236, 200), (30, 22, 18), 52, aspect=8, border=(200, 150, 60))
     T['rox_police_badge'] = police_badge(900)
     T['rox_swat_badge'] = swat_badge(940)
+    T['rox_glass_clear'] = glass_clear(950)
     T['rox_hazard'] = hazard(941)
     T['rox_sign_swat'] = sign_text('SWAT TEAM', (255, 255, 255), (8, 8, 10), 942, aspect=6, border=(214, 168, 70))
     T['rox_sign_swat_range'] = sign_text('FIRING RANGE', (255, 255, 255), (8, 8, 10), 943, aspect=6, glow=False)
@@ -963,7 +964,33 @@ def mips(img):
         out.append(np.clip(a + 0.5, 0, 255).astype(np.uint8))
     return out
 
+def write_dds_argb(path, img):
+    """uncompressed A8R8G8B8 with mips (for alpha textures such as glass)"""
+    ml = [img]
+    while ml[-1].shape[0] > 4:
+        a = ml[-1].astype(np.float64); a = (a[0::2, 0::2] + a[1::2, 0::2] + a[0::2, 1::2] + a[1::2, 1::2]) / 4
+        ml.append(np.clip(a + 0.5, 0, 255).astype(np.uint8))
+    h, w = img.shape[:2]
+    data = b''.join(m[:, :, [2, 1, 0, 3]].tobytes() for m in ml)
+    DDSD = 0x1 | 0x2 | 0x4 | 0x8 | 0x1000 | 0x20000
+    hdr = struct.pack('<4sIIIIIII44x', b'DDS ', 124, DDSD, h, w, w * 4, 0, len(ml))
+    pf = struct.pack('<II4sIIIII', 32, 0x41, b'\0\0\0\0', 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
+    caps = struct.pack('<IIIII', 0x1000 | 0x8 | 0x400000, 0, 0, 0, 0)
+    with open(path, 'wb') as f:
+        f.write(hdr + pf + caps + data)
+    return len(ml)
+
+def glass_clear(seed, tint=(205, 222, 232), alpha=70):
+    """clear architectural glass: light tint, faint streaks, frosted privacy band, alpha channel"""
+    n = 256; y, x = np.mgrid[0:n, 0:n] / n
+    a = np.full((n, n), float(alpha)) + 10 * (fbm(2.0, seed, n=n) - 0.5) + 12 * np.exp(-((x + y * 0.4 - 0.6) * 9) ** 2)
+    band = ((y > 0.46) & (y < 0.54)).astype(float); a = a + band * 120
+    rgb = np.ones((n, n, 3)) * np.array(tint)
+    rgb = rgb * (1 + band[:, :, None] * 0.08)
+    return dict(d=np.dstack([np.clip(rgb, 0, 255), np.clip(a, 0, 255)]).astype(np.uint8))
+
 def write_dds(path, img):
+    if img.ndim == 3 and img.shape[2] == 4: return write_dds_argb(path, img)
     ml = mips(img[:, :, :3])
     h, w = img.shape[:2]
     data = b''.join(_bc1_blocks(m) for m in ml)
@@ -987,6 +1014,6 @@ if __name__ == '__main__':
                 nm = name + suf
                 lv = write_dds(f'{out}/dds/{nm}.dds', t[k])
                 Image.fromarray(t[k]).save(f'{out}/png/{nm}.png')
-                index[nm] = [int(t[k].shape[1]), int(t[k].shape[0]), lv]
+                index[nm] = [int(t[k].shape[1]), int(t[k].shape[0]), lv] + (['D3DFMT_A8R8G8B8'] if t[k].ndim == 3 and t[k].shape[2] == 4 else [])
     import json; json.dump(index, open(out + '/textures.json', 'w'), indent=1)
     print(len(index), 'textures', sum(os.path.getsize(f'{out}/dds/{f}') for f in os.listdir(out + '/dds')) // 1024, 'KB')

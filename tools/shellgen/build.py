@@ -47,10 +47,10 @@ if not only:
     L = ['<?xml version="1.0" encoding="UTF-8"?>', '<TextureDictionary>']
     for t in sorted(used):
         assert t in index, 'missing texture ' + t
-        w, h, lv = index[t]
+        w, h, lv = index[t][:3]; fmt = index[t][3] if len(index[t]) > 3 else 'D3DFMT_DXT1'
         shutil.copy(os.path.join(TEX, 'dds', t + '.dds'), os.path.join(XML, t + '.dds'))
         L += [' <Item>', f'  <Name>{t}</Name>', '  <Unk32 value="0" />', '  <Usage>DEFAULT</Usage>', '  <UsageFlags>0</UsageFlags>', '  <ExtraFlags value="0" />',
-              f'  <Width value="{w}" />', f'  <Height value="{h}" />', f'  <MipLevels value="{lv}" />', '  <Format>D3DFMT_DXT1</Format>', f'  <FileName>{t}.dds</FileName>', ' </Item>']
+              f'  <Width value="{w}" />', f'  <Height value="{h}" />', f'  <MipLevels value="{lv}" />', f'  <Format>{fmt}</Format>', f'  <FileName>{t}.dds</FileName>', ' </Item>']
     L += ['</TextureDictionary>']
     open(os.path.join(XML, TXD + '.ytd.xml'), 'w').write('\n'.join(L) + '\n')
     # archetypes

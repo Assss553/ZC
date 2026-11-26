@@ -60,6 +60,31 @@ def ceiling_with_hole(s, mat, x0, y0, x1, y1, z, hole):
         s.cbox(a[0], a[1], z, a[2], a[3], z + 0.3, 1)
 
 
+def glass_wall(s, room, side, to, spans, sill=0.1, head=2.9):
+    """replace parts of the wall between `room` and `to` by clear glass in black frames (you see into the room)"""
+    o = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}[side]
+    r, q = s.rooms[room], s.rooms[to]
+    for c0, c1 in spans:
+        s._cut(room, side, c0, c1, sill, head, 'window'); s._cut(to, o, c0, c1, sill, head, 'window')
+        if side in 'NS':
+            ya = r['y1'] if side == 'N' else r['y0']; yb = q['y0'] if side == 'N' else q['y1']
+            lo, hi = min(ya, yb), max(ya, yb); m = (lo + hi) / 2
+            s.surf('glass_clear', (c0, m, sill), X, Z, c1 - c0, head - sill, step=0, fit=True); s.surf('glass_clear', (c1, m + 0.002, sill), -X, Z, c1 - c0, head - sill, step=0, fit=True)
+            for z0, z1 in ((sill - 0.05, sill), (head, head + 0.05)): s.box('metal_dark', c0, lo - 0.1, z0, c1, hi + 0.1, z1)
+            n = max(1, round((c1 - c0) / 1.25))
+            for k in range(n + 1):
+                x = c0 + k * (c1 - c0) / n; s.box('metal_dark', x - 0.03, lo - 0.1, sill, x + 0.03, hi + 0.1, head)
+            s.box('metal_dark', c0, lo - 0.1, sill, c0 + 0.001, hi + 0.1, head, faces='X'); s.box('metal_dark', c1 - 0.001, lo - 0.1, sill, c1, hi + 0.1, head, faces='x')
+        else:
+            xa = r['x1'] if side == 'E' else r['x0']; xb = q['x0'] if side == 'E' else q['x1']
+            lo, hi = min(xa, xb), max(xa, xb); m = (lo + hi) / 2
+            s.surf('glass_clear', (m, c1, sill), -Y, Z, c1 - c0, head - sill, step=0, fit=True); s.surf('glass_clear', (m + 0.002, c0, sill), Y, Z, c1 - c0, head - sill, step=0, fit=True)
+            for z0, z1 in ((sill - 0.05, sill), (head, head + 0.05)): s.box('metal_dark', lo - 0.1, c0, z0, hi + 0.1, c1, z1)
+            n = max(1, round((c1 - c0) / 1.25))
+            for k in range(n + 1):
+                y = c0 + k * (c1 - c0) / n; s.box('metal_dark', lo - 0.1, y - 0.03, sill, hi + 0.1, y + 0.03, head)
+
+
 def led_lines(s, rm, sp=2.4, along='x'):
     r = s.rooms[rm]; z = r['H']
     if along == 'x':
@@ -152,6 +177,17 @@ def hq():
     door(s, 'corr2', 'S', 0.0, to='range', w=2.4, h=2.6); door(s, 'corr2', 'S', 15.0, to='range')
     door(s, 'range', 'W', -42.0, to='killhouse', w=1.6); door(s, 'range', 'S', 5.0, to='gym', w=2.4, h=2.6)
     door(s, 'meeting', 'S', -6.0, to='corr2')
+    # glass fronts: you see into the halls and offices from the corridors (each section stays a closed room)
+    glass_wall(s, 'meeting', 'N', 'corr', [(-11.4, -3.5), (-0.5, 7.4)])
+    glass_wall(s, 'cyber', 'N', 'corr', [(8.6, 12.0), (14.0, 17.4)])
+    glass_wall(s, 'auditorium', 'N', 'corr', [(-39.4, -33.5), (-30.5, -19.5), (-16.5, -12.8)])
+    glass_wall(s, 'medical', 'S', 'corr', [(-39.4, -34.0), (-32.0, -26.8)])
+    glass_wall(s, 'armory', 'W', 'garage', [(-5.3, 1.1), (2.9, 7.5)], sill=0.9)
+    glass_wall(s, 'servers', 'E', 'garage', [(8.7, 14.2), (15.8, 21.5)], sill=0.9)
+    glass_wall(s, 'range', 'N', 'corr2', [(-11.5, -1.5), (1.5, 14.2), (15.8, 21.4)], sill=1.0)
+    glass_wall(s, 'gym', 'N', 'range', [(-11.5, 3.6), (6.4, 21.4)], sill=0.9)
+    for rm, sd, c in offs:
+        r = s.rooms[rm]; glass_wall(s, rm, sd, 'corr_off', [(r['y0'] + 0.3, c - 0.8), (c + 0.8, r['y1'] - 0.3)], sill=0.1, head=2.8)
     s.build_rooms()
     outer(s)
 

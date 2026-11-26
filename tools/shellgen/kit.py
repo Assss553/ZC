@@ -143,6 +143,7 @@ MATS = {
     'sg_server_room': dict(tex='rox_sign_server_room', sh='e', tile=1.0, emis=1.2, col=56),
     'sg_administration': dict(tex='rox_sign_administration', sh='e', tile=1.0, emis=1.2, col=56),
     'sg_staff_only': dict(tex='rox_sign_staff_only', sh='e', tile=1.0, emis=1.2, col=56),
+    'glass_clear':   dict(tex='rox_glass_clear', sh='g', tile=1.0, spec=1.0, col=114),
     'swat_badge':    dict(tex='rox_swat_badge', sh='e', tile=1.0, emis=1.3, col=70),
     'hazard':        dict(tex='rox_hazard', sh='s', tile=1.2, spec=0.3, fall=40, col=56),
     'sign_swat':     dict(tex='rox_sign_swat', sh='e', tile=1.0, emis=3.0, col=56),
@@ -739,8 +740,8 @@ class Shell:
         for m in mats:
             M = MATS[m]; sh = M['sh']; t = M['tex']
             name, fn = {'ns': ('normal_spec', 'normal_spec.sps'), 'n': ('normal', 'normal.sps'), 's': ('spec', 'spec.sps'),
-                        'd': ('default', 'default.sps'), 'e': ('emissive', 'emissive.sps')}[sh]
-            L += ['   <Item>', f'    <Name>{name}</Name>', f'    <FileName>{fn}</FileName>', '    <RenderBucket value="0" />', '    <Parameters>']
+                        'd': ('default', 'default.sps'), 'e': ('emissive', 'emissive.sps'), 'g': ('glass', 'glass.sps')}[sh]
+            L += ['   <Item>', f'    <Name>{name}</Name>', f'    <FileName>{fn}</FileName>', f'    <RenderBucket value="{1 if sh == "g" else 0}" />', '    <Parameters>']
             sp, fl = M.get('spec', 0.1), M.get('fall', 40)
             if sh == 'ns':
                 L += [tex('DiffuseSampler', t), tex('BumpSampler', t + '_n'), tex('SpecSampler', t + '_s'), vec('HardAlphaBlend', 1), vec('useTessellation', 0),
@@ -754,6 +755,9 @@ class Shell:
                 L += [tex('DiffuseSampler', t), tex('SpecSampler', t + '_s'), vec('HardAlphaBlend', 1), vec('useTessellation', 0), vec('wetnessMultiplier', 0),
                       vec('specMapIntMask', 1, 0, 0), vec('specularIntensityMult', sp), vec('specularFalloffMult', fl), vec('specularFresnel', 0.97),
                       vec('globalAnimUV1', 0, 1, 0), vec('globalAnimUV0', 1, 0, 0)]
+            elif sh == 'g':
+                L += [tex('DiffuseSampler', t), vec('matMaterialColorScale', 1, 0, 0, 1), vec('HardAlphaBlend', 0), vec('useTessellation', 0),
+                      vec('wetnessMultiplier', 0), vec('globalAnimUV1', 0, 1, 0), vec('globalAnimUV0', 1, 0, 0)]
             elif sh == 'e':
                 L += [tex('DiffuseSampler', t), vec('matMaterialColorScale', 1, 0, 0, 1), vec('HardAlphaBlend', 1), vec('useTessellation', 0),
                       vec('emissiveMultiplier', M.get('emis', 4)), vec('globalAnimUV1', 0, 1, 0), vec('globalAnimUV0', 1, 0, 0)]
