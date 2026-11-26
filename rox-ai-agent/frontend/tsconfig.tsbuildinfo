@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/api.ts","./src/i18n.ts","./src/main.tsx","./src/components/common.tsx","./src/pages/Audit.tsx","./src/pages/Chat.tsx","./src/pages/Coding.tsx","./src/pages/Computer.tsx","./src/pages/Dashboard.tsx","./src/pages/Game.tsx","./src/pages/Settings.tsx","./src/pages/Tasks.tsx"],"version":"5.9.3"}
