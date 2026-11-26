@@ -178,6 +178,7 @@ MATS = {
     'pl_office': dict(tex='rox_plate_office', sh='d', tile=1.0, col=56),
     'pl_reception': dict(tex='rox_plate_reception', sh='d', tile=1.0, col=56),
     'pl_training': dict(tex='rox_plate_training', sh='d', tile=1.0, col=56),
+    'epoxy':         dict(tex='rox_epoxy', sh='ns', tile=4.0, spec=0.8, fall=120, col=1),
     'glass_clear':   dict(tex='rox_glass_clear', sh='g', tile=1.0, spec=1.0, col=114),
     'swat_badge':    dict(tex='rox_swat_badge', sh='e', tile=1.0, emis=1.3, col=70),
     'hazard':        dict(tex='rox_hazard', sh='s', tile=1.2, spec=0.3, fall=40, col=56),

@@ -119,14 +119,14 @@ def office(rm, s, face, boss=False):
         sgn = 1 if face == 'E' else -1                       # door on E -> desk near the W wall looking east
         dx = (r['x0'] + 1.8) if face == 'E' else (r['x1'] - 1.8); hd = 270.0 if face == 'E' else 90.0
         F('h4_prop_office_desk_01', dx, cy, hd, name=rm); F('prop_monitor_01a', dx, cy - 0.35, hd, on=rm); F('prop_monitor_01a', dx, cy + 0.35, hd, on=rm)
-        F('ex_prop_offchair_exec_01', dx - sgn * 0.9, cy, (hd + 180) % 360); F('prop_off_chair_01', dx + sgn * 1.1, cy - 0.5, hd); F('prop_off_chair_01', dx + sgn * 1.1, cy + 0.5, hd)
+        F('ex_prop_offchair_exec_01', dx - sgn * 0.9, cy, (hd + 180) % 360); F('ex_prop_offchair_exec_04', dx + sgn * 1.1, cy - 0.5, hd); F('ex_prop_offchair_exec_04', dx + sgn * 1.1, cy + 0.5, hd)
         F('v_med_cor_filingcab', (r['x0'] + 0.35) if face == 'E' else (r['x1'] - 0.35), r['y1'] - 0.45, 180.0)
         F('apa_mp_h_acc_plant_tall_01', (r['x0'] + 0.45) if face == 'E' else (r['x1'] - 0.45), r['y0'] + 0.45, 0.0)
         s.surf('swat_badge', ((r['x0'] + 0.03) if face == 'E' else (r['x1'] - 0.03), cy + (0.6 if face == 'E' else -0.6), 1.5), Y if face == 'E' else -Y, Z, 1.2, 1.2, step=0, fit=True)
     else:
         dy = r['y0'] + 2.2
         F('h4_prop_office_desk_01', cx, dy, 180.0, name=rm); F('prop_monitor_01a', cx - 0.35, dy, 180.0, on=rm); F('prop_monitor_01a', cx + 0.35, dy, 180.0, on=rm)
-        F('ex_prop_offchair_exec_01', cx, dy - 0.9, 180.0); F('prop_off_chair_01', cx - 0.5, dy + 1.1, 0.0); F('prop_off_chair_01', cx + 0.5, dy + 1.1, 0.0)
+        F('ex_prop_offchair_exec_01', cx, dy - 0.9, 180.0); F('ex_prop_offchair_exec_04', cx - 0.5, dy + 1.1, 0.0); F('ex_prop_offchair_exec_04', cx + 0.5, dy + 1.1, 0.0)
         F('v_med_cor_filingcab', r['x0'] + 0.4, r['y0'] + 0.4, 0.0); F('apa_mp_h_acc_plant_tall_01', r['x1'] - 0.5, r['y0'] + 0.5, 0.0)
         s.surf('swat_badge', (cx + 1.0, r['y0'] + 0.03, 1.4), -X, Z, 2.0, 2.0, step=0, fit=True)
     if boss:
@@ -246,7 +246,7 @@ def hq():
     # medical
     r = s.rooms['medical']
     for k in range(4): F('v_med_bed1', r['x0'] + 1.8 + k * 3.2, r['y1'] - 1.4, 180.0); F('v_med_trolley', r['x0'] + 3.2 + k * 3.2, r['y1'] - 0.6, 180.0)
-    F('h4_prop_office_desk_01', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, name='med'); F('prop_monitor_01a', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, on='med'); F('prop_off_chair_01', r['x1'] - 2.0, r['y0'] + 1.1, 180.0)
+    F('h4_prop_office_desk_01', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, name='med'); F('prop_monitor_01a', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, on='med'); F('ex_prop_offchair_exec_04', r['x1'] - 2.0, r['y0'] + 1.1, 180.0)
     led_lines(s, 'medical', 1.8); lights(s, 'medical', I=6.0)
     # server room
     r = s.rooms['servers']
@@ -296,7 +296,7 @@ def hq():
     for k in range(3):
         F('h4_prop_office_desk_01', r['x0'] + 1.6 + k * 3.2, r['y1'] - 1.6, 0.0, name=f'cy{k}')
         for m in (-0.45, 0.0, 0.45): F('prop_monitor_01a', r['x0'] + 1.6 + k * 3.2 + m, r['y1'] - 1.5, 0.0, on=f'cy{k}')
-        F('prop_off_chair_01', r['x0'] + 1.6 + k * 3.2, r['y1'] - 2.5, 180.0)
+        F('ex_prop_offchair_exec_04', r['x0'] + 1.6 + k * 3.2, r['y1'] - 2.5, 180.0)
     for k in range(3): F('xm_base_cia_server_01', r['x1'] - 0.6, r['y0'] + 3.0 + k * 1.2, 90.0)
     s.box('led_white', r['x0'] + 0.3, r['y0'] + 0.3, 3.55, r['x1'] - 0.3, r['y0'] + 0.36, 3.6); lights(s, 'cyber', I=3.0, col=(150, 190, 255))
 
@@ -438,7 +438,7 @@ def sign():
 def all_pieces():
     import swat_levels as L
     for v in L.LV.values(): v['furn'].clear(); v['doors'].clear()
-    L.SECRETS.clear()
+    L.SECRETS.clear(); L.VEH.clear()
     ps = [L.level1(), L.level2(), L.bookcase(), L.emblemdoor(), plaza(), lift(), leaf(), pillar(), sign()]
     out = os.environ.get('ROX_SWAT_DATA', os.path.join(os.path.dirname(__file__), '..', '..', 'rox_swat', 'data', 'swat.json'))
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -449,5 +449,5 @@ def all_pieces():
              dict(label='L2 - Command', labelAr='الدور الثاني - القيادة', x=-37.6, y=-8.7, z=L.L2Z)]
     json.dump(dict(depth=DEPTH, plaza=PLAZA, hatch=[HW, HD], pillars=PILLARS, pillarHeight=PH, levels=dict(l1=L.L1Z, l2=L.L2Z),
                    furniture={k: v['furn'] for k, v in L.LV.items()}, doors={k: v['doors'] for k, v in L.LV.items()},
-                   secrets=L.SECRETS, stops=stops), open(out, 'w'), indent=1)
+                   secrets=L.SECRETS, stops=stops, vehicles=L.VEH), open(out, 'w'), indent=1)
     return ps

@@ -5,6 +5,7 @@ local DEPTH, PLAZA = D.depth or 11.0, D.plaza or 1.0
 local HW, HD = D.hatch and D.hatch[1] or 3.6, D.hatch and D.hatch[2] or 4.6
 local PH = D.pillarHeight or 7.0
 local ents, parts, doorRecs, on = {}, {}, {}, false
+local vehs = {}
 local state, startAt = { pillars = 0, doors = 0, lift = 0 }, { pillars = 0, doors = 0, lift = 0 }
 local prev = { pillars = 0, doors = 0, lift = 0 }
 local doorState = {}
@@ -118,12 +119,25 @@ local function spawn()
             end
         end
     end
+    if Config.ShowcaseVehicles then
+        for _, v in ipairs(D.vehicles or {}) do
+            local hash = loadModel(v.m)
+            if hash then
+                local p = toWorld(v.x, v.y, LZ.l1 + 0.5)
+                local veh = CreateVehicle(hash, p.x, p.y, p.z, (origin.w + v.h) % 360.0, false, false)
+                SetVehicleOnGroundProperly(veh); FreezeEntityPosition(veh, true); SetEntityInvincible(veh, true)
+                SetVehicleDoorsLocked(veh, 2); SetVehicleDirtLevel(veh, 0.0); SetModelAsNoLongerNeeded(hash)
+                vehs[#vehs + 1] = veh
+            end
+        end
+    end
     spawnDoors(LZ); pose(); on = true
 end
 local function despawn()
     for _, d in ipairs(doorRecs) do if IsDoorRegisteredWithSystem(d.hash) then RemoveDoorFromSystem(d.hash) end end
     for _, e in ipairs(ents) do if DoesEntityExist(e) then DeleteObject(e) end end
-    ents, parts, doorRecs, on = {}, {}, {}, false
+    for _, v in ipairs(vehs) do if DoesEntityExist(v) then DeleteEntity(v) end end
+    ents, parts, doorRecs, on, vehs = {}, {}, {}, false, {}
 end
 
 -- secret doors + elevator menu ---------------------------------------------------------------------------------

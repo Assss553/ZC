@@ -82,6 +82,31 @@ STEEL = bmat('steel', (0.75, 0.76, 0.78), 0.2, 1.0); GLASSD = bmat('door_glass',
 PLANTS = ['potted_plant_01', 'potted_plant_02', 'potted_plant_04', 'pachira_aquatica_01', 'calathea_orbifolia_01']
 TOPS = {}
 
+LEATHER = bmat('leather', (0.05, 0.045, 0.04), 0.35)
+MESH = bmat('mesh', (0.03, 0.03, 0.035), 0.6)
+CHROME = bmat('chrome', (0.8, 0.8, 0.82), 0.12, 1.0)
+def office_chair(x, y, z, h, exec_=False):
+    """swivel office chair stand-in: 5-star chrome base, gas lift, seat, (high) back, arms"""
+    for k in range(5):
+        a = math.radians(h + k * 72); obox('leg', x + 0.18 * math.sin(a), y - 0.18 * math.cos(a), z + 0.04, 0.05, 0.36, 0.04, h + k * 72, CHROME)
+    obox('lift', x, y, z + 0.08, 0.05, 0.05, 0.36, h, CHROME)
+    obox('seat', x, y, z + 0.44, 0.52, 0.5, 0.09, h, LEATHER if exec_ else MESH, 0.03)
+    bx, by = local(x, y, h, 0, 0.27); bh = 0.85 if exec_ else 0.6
+    obox('back', bx, by, z + 0.55, 0.5, 0.07, bh, h, LEATHER if exec_ else MESH, 0.03)
+    for dx in (-0.27, 0.27):
+        ax, ay = local(x, y, h, dx, 0.05); obox('arm', ax, ay, z + 0.6, 0.05, 0.36, 0.04, h, BLACK); obox('armp', ax, ay, z + 0.5, 0.03, 0.04, 0.1, h, BLACK)
+
+def car(x, y, z, h, m):
+    col = {'riot': (0.1, 0.1, 0.11), 'fbi2': (0.02, 0.02, 0.02), 'fbi': (0.02, 0.02, 0.02)}.get(m, (0.9, 0.9, 0.9))
+    big = m in ('riot', 'policet'); L, W_, H_ = (6.0, 2.4, 1.6) if big else (4.9, 2.0, 0.9)
+    obox('car', x, y, z + 0.35, W_, L, H_, h + 90 - 90, bmat('car_' + m, col, 0.25, 0.5), 0.12)
+    cx, cy = local(x, y, h, 0, 0.3 if not big else 0.0)
+    obox('cab', cx, cy, z + 0.35 + H_, W_ - 0.2, L * (0.45 if not big else 0.8), 0.65 if not big else 0.9, h, bmat('cab_' + m, col if big else (0.05, 0.06, 0.07), 0.1, 0.3), 0.1)
+    for dx in (-W_ / 2, W_ / 2):
+        for dy in (-L * 0.32, L * 0.32):
+            wx, wy = local(x, y, h, dx, dy); obox('wh', wx, wy, z, 0.3, 0.75, 0.75, h, BLACK, 0.1)
+    lx, ly = local(x, y, h, 0, -0.2); obox('bar', lx, ly, z + 0.35 + H_ + (0.65 if not big else 0.9), 1.2, 0.25, 0.1, h, bmat('lightbar', (0.2, 0.3, 1.0), 0.3, 0, 3.0))
+
 def furniture(items, z0):
     rr = random.Random(5)
     for f in items:
@@ -94,13 +119,15 @@ def furniture(items, z0):
         elif m in ('prop_monitor_01a', 'hei_prop_hei_monitor_police_01', 'ch_prop_ch_security_monitor_01a'):
             lx, ly = local(x, y, h, 0, 0.15); obox('scr', lx, ly, z + 0.12, 0.56, 0.03, 0.34, h, SCREEN); obox('st', lx, ly, z, 0.05, 0.05, 0.14, h, BLACK)
         elif m == 'prop_keyboard_01b': obox('kb', x, y, z, 0.45, 0.14, 0.015, h, BLACK)
-        elif m in ('ex_prop_offchair_exec_01',): ph('modern_arm_chair_01', (x, y, z), h, 1.0)
-        elif m in ('prop_off_chair_01', 'prop_off_chair_04', 'apa_mp_h_din_chair_04', 'apa_mp_h_din_chair_12'): ph('dining_chair_02', (x, y, z), h, 0.95)
+        elif m in ('ex_prop_offchair_exec_01',): office_chair(x, y, z, h, True)
+        elif m in ('ex_prop_offchair_exec_04',): office_chair(x, y, z, h, False)
+        elif m in ('prop_off_chair_04',): office_chair(x, y, z, h, False)
+        elif m in ('prop_off_chair_01', 'apa_mp_h_din_chair_04', 'apa_mp_h_din_chair_12'): ph('dining_chair_02', (x, y, z), h, 0.95)
         elif m == 'apa_mp_h_acc_plant_tall_01': ph(rr.choice(PLANTS), (x, y, z), rr.uniform(0, 360), rr.uniform(1.3, 1.9))
         elif m in ('v_med_cor_filingcab',): ph('drawer_cabinet', (x, y, z), h, 1.25)
         elif m == 'apa_mp_h_str_shelffloorm_02': ph('steel_frame_shelves_03', (x, y, z), h, 1.8)
-        elif m in ('ex_mp_h_off_sofa_01', 'apa_mp_h_stn_sofacorn_05'): ph('sofa_02', (x, y, z), h, 0.85)
-        elif m in ('apa_mp_h_stn_chairarm_12', 'ex_mp_h_off_easychair_01'): ph('mid_century_lounge_chair', (x, y, z), h, 0.85)
+        elif m in ('ex_mp_h_off_sofa_01', 'ex_mp_h_off_sofa_02', 'apa_mp_h_stn_sofacorn_05'): ph('sofa_03', (x, y, z), h, 0.85)
+        elif m in ('apa_mp_h_stn_chairarm_12', 'apa_mp_h_stn_chairarm_23', 'ex_mp_h_off_easychair_01'): ph('mid_century_lounge_chair', (x, y, z), h, 0.85)
         elif m == 'apa_mp_h_tab_coffee_07': ph('modern_coffee_table_01', (x, y, z), h, 0.42)
         elif m == 'apa_mp_h_din_table_04': ph('coffee_table_round_01', (x, y, z), h, 0.75)
         elif m == 'v_corp_conftable': obox('ct', x, y, z + 0.72, 2.4, 1.2, 0.05, h, WOOD, 0.01); obox('cb', x, y, z, 1.6, 0.5, 0.72, h, BLACK)
@@ -152,6 +179,13 @@ def furniture(items, z0):
         elif m in ('p_v_43_safe_s',): obox('safe', x, y, z, 0.8, 0.8, 1.4, h, GREY, 0.02)
         elif m == 'p_ld_heist_bag_s': obox('bag', x, y, z, 0.7, 0.35, 0.35, h, BLACK, 0.08)
         elif m == 'prop_tv_cam_02': obox('cam', x, y, z + 1.4, 0.3, 0.5, 0.3, h, BLACK); obox('tri', x, y, z, 0.05, 0.05, 1.4, h, BLACK)
+        elif m == 'h4_prop_battle_sports_helmet': obox('helm', x, y, z, 0.28, 0.3, 0.22, h, BLACK, 0.1)
+        elif m == 'ex_prop_ex_tv_flat_01': obox('tv', x, y, z, 1.9, 0.05, 1.1, h, SCREEN)
+        elif m == 'apa_mp_h_str_sideboardl_06': obox('sb', x, y, z, 2.2, 0.5, 0.75, h, WOOD, 0.01)
+        elif m == 'apa_mp_h_str_shelfwallm_01': obox('ws', x, y, z, 1.4, 0.3, 0.04, h, WOOD)
+        elif m == 'ex_office_citymodel_01': obox('cm', x, y, z, 1.6, 1.0, 0.75, h, WOOD); obox('cmb', x, y, z + 0.75, 1.4, 0.8, 0.3, h, WHITE)
+        elif m == 'apa_mp_h_lit_lightpendant_01': obox('pend', x, y, z, 0.4, 0.4, 0.25, h, bmat('pendant', (1, 0.8, 0.5), 0.4, 0, 6.0)); obox('cord', x, y, z + 0.25, 0.01, 0.01, 1.0, h, BLACK)
+        elif m == 'apa_mp_h_acc_vase_06': ph('ceramic_vase_01', (x, y, z), h, 0.35)
         elif m == 'prop_sink_02': obox('sink', x, y, z + 0.9, 0.5, 0.4, 0.06, h, WHITE)
 
 def doors(items, z0):
@@ -186,6 +220,8 @@ if os.environ.get('GROUND'):
     sun = bpy.data.lights.new('moon', 'SUN'); sun.energy = 0.3; sun.color = (0.6, 0.7, 1.0); so = bpy.data.objects.new('moon', sun); so.rotation_euler = (0.9, 0.2, 0.6); sc.collection.objects.link(so)
 if isinstance(DATA['furniture'], dict):
     fk = os.environ.get('FURNKEY', PIECE); furniture(DATA['furniture'].get(fk, []), 0.0); doors(DATA['doors'].get(fk, []), 0.0)
+    if fk == 'l1':
+        for v in DATA.get('vehicles', []): car(v['x'], v['y'], 0.0, v['h'], v['m'])
 else:
     pz = float(os.environ.get('PZ', '0')); furniture(DATA['furniture'], pz); doors(DATA['doors'], pz)
 SHOTS = {

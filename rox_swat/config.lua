@@ -30,3 +30,6 @@ Config.DoorModels = {
 Config.SecretAce = 'rox_swat.secret'
 Config.SecretJobs = { swat = 3, police = 4 }      -- job name = minimum grade (QBCore grade.level / ESX grade)
 Config.SecretTime = 2.5
+
+-- SWAT vehicles parked in the garage as decoration (local, locked, frozen; set false if you park real ones)
+Config.ShowcaseVehicles = true

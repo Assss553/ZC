@@ -603,6 +603,52 @@ PLATES = ['COMMAND', 'SWAT COMMANDER', 'BOOKING', 'PROCESSING', 'HOLDING CELLS',
           'ARMOURY', 'RECORDS', 'HUMAN RESOURCES', 'BRIEFING', 'CONFERENCE', 'CYBER UNIT', 'FIRING RANGE', 'GYM', 'MEDICAL', 'SERVER ROOM',
           'CANTEEN', 'INTERVIEW', 'LOBBY', 'SECURITY', 'ELEVATOR', 'EXIT', 'OFFICE', 'RECEPTION', 'TRAINING']
 
+def swat_seal(seed):
+    """round SWAT seal: gold rope ring with lettering around it, black field, shield + star + crossed rifles silhouette"""
+    from PIL import ImageDraw, ImageFilter, ImageFont
+    S = 1024; c = S / 2; im = Image.new('RGB', (S, S), (14, 14, 16)); dr = ImageDraw.Draw(im)
+    G, G2, D = (222, 172, 70), (150, 108, 36), (14, 14, 16)
+    dr.ellipse((8, 8, S - 8, S - 8), fill=G2); dr.ellipse((20, 20, S - 20, S - 20), fill=G)
+    dr.ellipse((60, 60, S - 60, S - 60), fill=(20, 20, 24)); dr.ellipse((150, 150, S - 150, S - 150), fill=G); dr.ellipse((162, 162, S - 162, S - 162), fill=(24, 24, 28))
+    for k in range(72):                                           # rope ring
+        a = 2 * math.pi * k / 72; r = (S - 120) / 2 + 30
+        x, y = c + r * math.cos(a), c + r * math.sin(a); dr.ellipse((x - 9, y - 9, x + 9, y + 9), outline=G2, width=3)
+    font = _font(54)
+    def arc_text(txt, r, start, span, bottom=False):
+        n = len(txt)
+        for i, ch in enumerate(txt):
+            a = start + span * (i + 0.5) / n
+            ci = Image.new('RGBA', (80, 80), (0, 0, 0, 0)); ImageDraw.Draw(ci).text((40, 40), ch, font=font, fill=G, anchor='mm')
+            rot = -math.degrees(a) - 90 if not bottom else -math.degrees(a) + 90
+            ci = ci.rotate(rot, resample=Image.BICUBIC)
+            x, y = c + r * math.cos(a), c + r * math.sin(a); im.paste(ci, (int(x - 40), int(y - 40)), ci)
+    arc_text('SPECIAL WEAPONS AND TACTICS', 400, math.radians(-200), math.radians(220))
+    arc_text('ROX  POLICE', 400, math.radians(140), math.radians(-100), bottom=True)
+    for a in (math.radians(160), math.radians(20)):
+        x, y = c + 400 * math.cos(a), c + 400 * math.sin(a); dr.ellipse((x - 12, y - 12, x + 12, y + 12), fill=G)
+    dr = ImageDraw.Draw(im)
+    for sgn in (-1, 1):                                            # crossed rifles behind the shield
+        dr.line((c - sgn * 260, c + 230, c + sgn * 250, c - 230), fill=(120, 120, 126), width=26)
+        dr.line((c - sgn * 260, c + 230, c - sgn * 150, c + 130), fill=(90, 60, 30), width=40)
+    sh = [(c, c - 250), (c + 200, c - 190), (c + 180, c + 60), (c, c + 250), (c - 180, c + 60), (c - 200, c - 190)]
+    dr.polygon(sh, fill=G); sh2 = [(c + (x - c) * 0.9, c + (y - c) * 0.9) for x, y in sh]; dr.polygon(sh2, fill=(16, 16, 18))
+    pts = []
+    for k in range(10):
+        r = 70 if k % 2 == 0 else 28; a = math.pi * k / 5 - math.pi / 2; pts.append((c + r * math.cos(a), c + 70 + r * math.sin(a)))
+    dr.polygon(pts, fill=G)
+    f, (l, tt, r_, b) = _fit_text(dr, 'SWAT', 300, 110); dr.text((c - (r_ - l) / 2 - l, c - 150 - tt), 'SWAT', font=f, fill=(245, 245, 245))
+    hi = Image.new('L', (S, S), 0); ImageDraw.Draw(hi).ellipse((30, 30, S - 30, S * 0.55), fill=40); hi = hi.filter(ImageFilter.GaussianBlur(40))
+    im = Image.composite(Image.new('RGB', (S, S), (255, 240, 200)), im, hi.point(lambda v: v // 2))
+    return dict(d=np.asarray(im.resize((N, N), Image.LANCZOS)))
+
+def epoxy(color, seed):
+    """sealed garage floor: dark epoxy with flakes, glossy, faint tyre marks"""
+    y, x = np.mgrid[0:N, 0:N] / N
+    m = 0.9 + 0.1 * fbm(2.6, seed) - 0.08 * np.exp(-((np.sin((x + 0.2 * fbm(3.0, seed + 1)) * 14) ** 2) * 60)) * (fbm(3.0, seed + 2) > 0.5)
+    fl = (white(seed + 3) > 0.985).astype(float) * 0.25
+    d = col(color) * m[:, :, None] + fl[:, :, None] * 60
+    return dict(d=np.clip(d, 0, 255).astype(np.uint8), n=normal_map(0.01 * fbm(2.0, seed + 4), 0.1), s=spec_map(np.full((N, N), 0.75) * m, np.full((N, N), 0.85)))
+
 def shopfront(seed, kind=0):
     """Lit shop interior seen through glass: shelves / posters / counter, with a sky reflection on top."""
     from PIL import ImageDraw, ImageFilter
@@ -992,7 +1038,8 @@ def build_all():
     T['rox_awning_red'] = fabric((150, 40, 36), 51, folds=6)
     T['rox_sign_garage'] = sign_text('ROX GARAGE', (255, 236, 200), (30, 22, 18), 52, aspect=8, border=(200, 150, 60))
     T['rox_police_badge'] = police_badge(900)
-    T['rox_swat_badge'] = swat_badge(940)
+    T['rox_swat_badge'] = swat_seal(940)
+    T['rox_epoxy'] = epoxy((58, 60, 64), 945)
     T['rox_glass_clear'] = glass_clear(950)
     T['rox_marble_nero'] = marble_vein((18, 18, 20), (190, 170, 130), 960, width=30)
     T['rox_marble_calacatta'] = marble_vein((236, 234, 228), (140, 126, 100), 961, width=22)

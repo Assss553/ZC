@@ -17,6 +17,7 @@ L1Z, L2Z = -DEPTH, -DEPTH - 7.0
 R = dict(base='metal_dark')
 LV = {'l1': dict(furn=[], doors=[]), 'l2': dict(furn=[], doors=[])}
 SECRETS = []
+VEH = []
 
 
 def use(lv):
@@ -67,6 +68,52 @@ def wall_panel(s, rm, side, mat, z1=None, step=1.2):
     if side == 'E': s.box(mat, r['x1'] - e, r['y0'], 0.09, r['x1'], r['y1'], z1, faces='x', step=step)
 
 
+def disc(s, mat, cx, cy, z, r, seg=48, uv=True):
+    """flat round inlay facing up with planar UVs (round logo decals / brass rings)"""
+    P = [(cx, cy, z)] + [(cx + r * math.cos(2 * math.pi * k / seg), cy + r * math.sin(2 * math.pi * k / seg), z) for k in range(seg)]
+    I = []
+    for k in range(seg): I += [0, 1 + k, 1 + (k + 1) % seg]
+    UV = [(0.5 + (p[0] - cx) / (2 * r), 0.5 - (p[1] - cy) / (2 * r)) for p in P] if uv else [(p[0] / 2, -p[1] / 2) for p in P]
+    s._add(mat, '', np.array(P, float), np.tile((0, 0, 1), (len(P), 1)), UV, np.tile((1, 0, 0, 1), (len(P), 1)), I)
+
+
+def floor_seal(s, cx, cy, r=2.6, z=0.0):
+    disc(s, 'brass', cx, cy, z + 0.006, r + 0.18, uv=False); disc(s, 'marble_nero', cx, cy, z + 0.008, r + 0.1, uv=False); disc(s, 'swat_badge', cx, cy, z + 0.01, r)
+
+
+def locker_bank(s, x0, x1, y, face, h=2.1, d=0.55, w=0.6, mat='oak_panel'):
+    """built-in lockers (doors with reveals, black handles, number plates, crown + LED); face = 'N' or 'S' side they open to"""
+    sg = 1 if face == 'N' else -1; yb, yf = (y, y + sg * d)
+    lo, hi = min(yb, yf), max(yb, yf)
+    s.box('paint_black', x0, lo, 0, x1, hi, 0.12, faces='xXyYZ'); s.box('metal_dark', x0, lo, h, x1, hi, h + 0.12, faces='xXyYz')
+    s.cbox(x0, lo, 0, x1, hi, h + 0.12, 70)
+    n = int((x1 - x0) / w)
+    for k in range(n):
+        a = x0 + k * w + 0.01; b = a + w - 0.02
+        s.box(mat, a, yf - sg * 0.02 if sg > 0 else yf, 0.12, b, yf if sg > 0 else yf + 0.02, h, faces='Y' if sg > 0 else 'y', step=1.2)
+        hx = b - 0.08
+        s.box('metal_dark', hx, yf + sg * 0.0, 0.9, hx + 0.02, yf + sg * 0.03, 1.2) if sg > 0 else s.box('metal_dark', hx, yf - 0.03, 0.9, hx + 0.02, yf, 1.2)
+        for zz in (0.6, 1.7): s.box('paint_black', a + 0.15, (yf if sg > 0 else yf - 0.005), zz, b - 0.15, (yf + 0.005 if sg > 0 else yf), zz + 0.015)
+    s.box('led_white', x0, (yf if sg > 0 else yf - 0.03), h - 0.03, x1, (yf + 0.03 if sg > 0 else yf), h)
+
+
+def bench(s, x0, x1, y, w=0.4):
+    s.box('oak_panel', x0, y - w / 2, 0.42, x1, y + w / 2, 0.47, step=1.2); s.cbox(x0, y - w / 2, 0, x1, y + w / 2, 0.47, 70)
+    for x in (x0 + 0.1, x1 - 0.14): s.box('metal_dark', x, y - w / 2 + 0.03, 0, x + 0.04, y + w / 2 - 0.03, 0.42)
+
+
+def gear_cage(s, x, y, face='S', w=1.1, d=0.65, h=2.3):
+    """SWAT gear cage: black steel frame, perforated back, shelf, hanging rail (vest / helmet / bag props go in it)"""
+    sg = -1 if face == 'S' else 1; yb = y; yf = y + sg * d; lo, hi = min(yb, yf), max(yb, yf)
+    s.box('facet', x, (yb - 0.02 if sg < 0 else yb), 0, x + w, (yb if sg < 0 else yb + 0.02), h, faces='y' if sg < 0 else 'Y', step=1.2)
+    for xx in (x, x + w - 0.05):
+        s.box('metal_dark', xx, lo, 0, xx + 0.05, hi, h); s.cbox(xx, lo, 0, xx + 0.05, hi, h, 56)
+    s.box('metal_dark', x, lo, h - 0.05, x + w, hi, h); s.box('steel', x, lo, 1.75, x + w, hi, 1.78); s.box('steel', x, lo, 0.3, x + w, hi, 0.33)
+    s.box('steel', x + 0.05, (yb - 0.25 if sg < 0 else yb + 0.25) - 0.01, 1.6, x + w - 0.05, (yb - 0.25 if sg < 0 else yb + 0.25) + 0.01, 1.62)
+    s.box('led_white', x + 0.05, lo, h - 0.07, x + w - 0.05, hi, h - 0.05)
+    return (x + w / 2, (yb + yf) / 2)
+
+
 def extinguisher(x, y, h): F('prop_fire_exting_1a', x, y, h, z=0.0)
 
 
@@ -101,7 +148,7 @@ def garage_detail(s):
 def level1():
     use('l1')
     s = shell('rox_swat_l1', 'ROX SWAT HQ level 1', lod=220)
-    s.room('garage', -26.0, -5.8, 26.0, 22.0, floor='concrete_floor', wall='concrete_wall', ceil=None, H=5.0, **R)
+    s.room('garage', -26.0, -5.8, 26.0, 22.0, floor='epoxy', wall='concrete_wall', ceil=None, H=5.0, **R)
     s.room('corr', -40.0, -11.2, 41.8, -6.2, floor='tile_white', wall='facet', ceil='paint_black', H=3.6, **R)
     s.room('armory', 26.2, -5.8, 41.8, 8.0, floor='concrete_floor', wall='facet', ceil='paint_black', H=3.6, **R)
     s.room('gear', 26.2, 8.2, 41.8, 22.0, floor='concrete_floor', wall='facet', ceil='paint_black', H=3.6, **R)
@@ -166,6 +213,21 @@ def level1():
         s.box('concrete_wall', x - 0.35, 14.05, 0, x + 0.35, 14.75, 5.0, faces='xXyY'); s.cbox(x - 0.35, 14.05, 0, x + 0.35, 14.75, 5.0, 1)
         s.box('hazard', x - 0.36, 14.04, 0, x + 0.36, 14.76, 1.2, faces='xXyY')
     garage_detail(s)
+    g = s.rooms['garage']
+    for a in (('S', g['y0']), ('N', g['y1'])):
+        y = a[1]; sg = 1 if a[0] == 'S' else -1; f = 'Y' if sg > 0 else 'y'
+        s.box('paint_charcoal', g['x0'], min(y, y + sg * 0.01), 0.0, g['x1'], max(y, y + sg * 0.01), 1.2, faces=f)
+        s.box('paint_yellow', g['x0'], min(y, y + sg * 0.012), 1.2, g['x1'], max(y, y + sg * 0.012), 1.3, faces=f)
+    for a in (('W', g['x0']), ('E', g['x1'])):
+        x = a[1]; sg = 1 if a[0] == 'W' else -1; f = 'X' if sg > 0 else 'x'
+        s.box('paint_charcoal', min(x, x + sg * 0.01), g['y0'], 0.0, max(x, x + sg * 0.01), g['y1'], 1.2, faces=f)
+        s.box('paint_yellow', min(x, x + sg * 0.012), g['y0'], 1.2, max(x, x + sg * 0.012), g['y1'], 1.3, faces=f)
+    for i in range(10):                                            # bay numbers (white plates on the floor)
+        x = -24.5 + i * 5.0 + 2.5
+        for y in (21.2, 7.6): s.box('paint_white', x - 0.35, y - 0.25, 0.0, x + 0.35, y + 0.25, 0.013, faces='Z')
+    VEH.extend([dict(m='riot', x=-22.0, y=19.2, h=180.0), dict(m='fbi2', x=-17.0, y=19.2, h=180.0), dict(m='fbi2', x=-12.0, y=19.2, h=180.0),
+                dict(m='police4', x=13.0, y=19.2, h=180.0), dict(m='police3', x=18.0, y=19.2, h=180.0), dict(m='policet', x=23.0, y=19.2, h=180.0),
+                dict(m='riot', x=-22.0, y=9.6, h=0.0), dict(m='fbi', x=18.0, y=9.6, h=0.0)])
     for x in range(-22, 24, 6):
         for y in (0.5, 9.0, 19.0):
             s.box('light', x - 0.8, y - 0.15, 4.36, x + 0.8, y + 0.15, 4.4, faces='z'); s.light(x, y, 4.2, color=(240, 246, 255), intensity=6.0, falloff=11.0)
@@ -186,36 +248,47 @@ def level1():
     for k in range(4): F('xm_prop_crates_rifles_01a', r['x0'] + 2.0 + k * 3.5, r['y0'] + 0.6, 0.0)
     s.box('hazard', r['x0'] + 0.5, r['y0'] + 1.6, 0.0, r['x1'] - 0.5, r['y0'] + 1.7, 0.012, faces='Z'); downlights(s, 'armory'); cove(s, 'armory')
     r = s.rooms['gear']
-    for k in range(7):
-        x = r['x0'] + 1.2 + k * 2.1
-        F('p_cs_locker_01_s', x, r['y1'] - 0.35, 180.0); F('prop_bodyarmour_02', x, r['y1'] - 0.6, 180.0, z=1.1)
-        F('prop_ballistic_shield', x, r['y0'] + 0.4, 0.0) if k % 2 else F('prop_riot_shield', x, r['y0'] + 0.4, 0.0)
-    for k in range(3): F('gr_prop_gr_bench_04a', r['x0'] + 3.5 + k * 4.5, (r['y0'] + r['y1']) / 2, 0.0); F('prop_mask_ballistic', r['x0'] + 3.0 + k * 4.5, (r['y0'] + r['y1']) / 2, 0.0, z=0.93); F('prop_cs_walkie_talkie', r['x0'] + 4.0 + k * 4.5, (r['y0'] + r['y1']) / 2, 0.0, z=0.93)
-    for k in range(4): F('p_ld_heist_bag_s', r['x0'] + 2.0 + k * 3.0, (r['y0'] + r['y1']) / 2 - 1.2, 0.0)
-    downlights(s, 'gear'); cove(s, 'gear')
+    for k in range(12):                                             # 12 personal gear cages on the north wall + 12 on the south wall
+        for face, y in (('S', r['y1']), ('N', r['y0'])):
+            if face == 'N' and k in (6, 7): continue                 # leave room for the door side
+            cx, cy = gear_cage(s, r['x0'] + 0.5 + k * 1.25, y, face, w=1.15)
+            hh = 180.0 if face == 'S' else 0.0
+            F('prop_bodyarmour_03', cx, cy, hh, z=1.0); F('h4_prop_battle_sports_helmet', cx, cy, hh, z=1.8)
+            F('p_ld_heist_bag_s', cx, cy, hh) if k % 2 else F('prop_box_ammo04a', cx, cy, hh, z=0.33)
+    cx = (r['x0'] + r['x1']) / 2; cy = (r['y0'] + r['y1']) / 2
+    s.box('metal_dark', cx - 3.0, cy - 0.6, 0, cx + 3.0, cy + 0.6, 0.9, faces='xXyY'); s.box('steel', cx - 3.05, cy - 0.65, 0.9, cx + 3.05, cy + 0.65, 0.95); s.cbox(cx - 3.0, cy - 0.6, 0, cx + 3.0, cy + 0.6, 0.95, 56)
+    for k in range(6): F('prop_cs_walkie_talkie', cx - 2.5 + k * 1.0, cy - 0.2, 0.0, z=0.95); F('prop_mask_ballistic', cx - 2.5 + k * 1.0, cy + 0.25, 0.0, z=0.95)
+    for k in range(4): F('prop_ballistic_shield', r['x1'] - 0.3, r['y0'] + 3.0 + k * 0.8, 270.0)
+    s.box('hazard', r['x0'] + 0.5, cy - 1.6, 0.0, r['x1'] - 0.5, cy - 1.5, 0.012, faces='Z'); s.box('hazard', r['x0'] + 0.5, cy + 1.5, 0.0, r['x1'] - 0.5, cy + 1.6, 0.012, faces='Z')
+    downlights(s, 'gear', I=4.0, col=(225, 238, 255)); cove(s, 'gear')
     # medical, servers
     r = s.rooms['medical']
     for k in range(4): F('v_med_bed1', r['x0'] + 1.8 + k * 3.2, r['y1'] - 1.4, 180.0); F('v_med_trolley', r['x0'] + 3.2 + k * 3.2, r['y1'] - 0.6, 180.0)
-    F('h4_prop_office_desk_01', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, name='med'); F('prop_monitor_01a', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, on='med'); F('prop_off_chair_01', r['x1'] - 2.0, r['y0'] + 1.1, 180.0)
+    F('h4_prop_office_desk_01', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, name='med'); F('prop_monitor_01a', r['x1'] - 2.0, r['y0'] + 2.0, 180.0, on='med'); F('ex_prop_offchair_exec_04', r['x1'] - 2.0, r['y0'] + 1.1, 180.0)
     downlights(s, 'medical', I=4.5)
     r = s.rooms['servers']
     for row in range(4):
         for k in range(8): F('xm_base_cia_server_01' if (row + k) % 3 else 'v_corp_servercln', r['x0'] + 1.6 + k * 1.4, r['y0'] + 2.0 + row * 3.0, 0.0 if row % 2 else 180.0)
     s.box('led_white', r['x0'] + 0.5, r['y0'] + 0.5, 3.56, r['x1'] - 0.5, r['y0'] + 0.56, 3.6); lights(s, 'servers', I=3.0, col=(160, 200, 255))
-    # locker rooms: lockers on 2 walls, benches, shower stalls, mirrors
+    # locker rooms: built-in oak lockers (2 banks), oak benches, marble + glass shower stalls, vanity with mirror
     for rm in ('lock_m', 'lock_f'):
         r = s.rooms[rm]
-        for k in range(16): F('p_cs_locker_01_s', r['x0'] + 0.5 + k * 0.8, r['y1'] - 0.35, 180.0)
-        for k in range(3): F('v_ilev_ph_bench', r['x0'] + 3.0 + k * 4.0, r['y1'] - 2.2, 0.0)
+        locker_bank(s, r['x0'] + 0.3, r['x1'] - 0.3, r['y1'], 'S')
+        locker_bank(s, r['x0'] + 3.0, r['x1'] - 3.0, r['y1'] - 4.6, 'S'); locker_bank(s, r['x0'] + 3.0, r['x1'] - 3.0, r['y1'] - 4.6, 'N') if False else None
+        bench(s, r['x0'] + 2.0, r['x1'] - 2.0, r['y1'] - 2.3); bench(s, r['x0'] + 3.0, r['x1'] - 3.0, r['y1'] - 6.0)
         for k in range(5):
-            x = r['x0'] + 1.0 + k * 2.4
-            s.box('marble_cal', x, r['y0'], 0.0, x + 0.06, r['y0'] + 2.0, 2.2); s.cbox(x, r['y0'], 0, x + 0.06, r['y0'] + 2.0, 2.2, 81)
-            F('prop_shower_rack_01', x + 1.2, r['y0'] + 0.1, 0.0, z=1.7)
-        s.box('black_glass', r['x1'] - 0.03, r['y0'] + 3.0, 1.0, r['x1'] - 0.01, r['y1'] - 2.0, 2.2, faces='x')
+            x = r['x0'] + 0.8 + k * 1.6
+            s.box('marble_cal', x, r['y0'], 0.0, x + 0.05, r['y0'] + 1.6, 2.3); s.cbox(x, r['y0'], 0, x + 0.05, r['y0'] + 1.6, 2.3, 81)
+            s.box('glass_clear', x + 0.05, r['y0'] + 1.58, 0.05, x + 1.55, r['y0'] + 1.6, 2.1, faces='yY')
+            s.box('steel', x + 0.7, r['y0'] + 0.02, 2.0, x + 0.9, r['y0'] + 0.3, 2.04); s.box('steel', x + 0.78, r['y0'] + 0.0, 2.04, x + 0.82, r['y0'] + 0.04, 2.3)
+        s.box('marble_cal', r['x0'] + 0.8, r['y0'], 0.0, r['x0'] + 8.8, r['y0'] + 0.01, 2.3, faces='Y')
+        s.box('marble_cal', r['x1'] - 0.6, r['y0'] + 2.4, 0.82, r['x1'] - 0.02, r['y0'] + 7.6, 0.88); s.cbox(r['x1'] - 0.6, r['y0'] + 2.4, 0, r['x1'] - 0.02, r['y0'] + 7.6, 0.88, 81)
+        s.box('black_glass', r['x1'] - 0.03, r['y0'] + 2.5, 1.1, r['x1'] - 0.01, r['y0'] + 7.5, 2.4, faces='x'); s.box('led_white', r['x1'] - 0.05, r['y0'] + 2.5, 2.4, r['x1'] - 0.01, r['y0'] + 7.5, 2.44)
+        for k in range(3): F('prop_sink_02', r['x1'] - 0.3, r['y0'] + 3.2 + k * 1.7, 270.0)
         downlights(s, rm, I=4.0); cove(s, rm, inset=0.6)
     # lobby: perforated wood ceiling + LED lines, floor emblem, turnstiles + detectors, reception, posters, portrait, benches
     r = s.rooms['lobby']
-    s.surf('swat_badge', (-2.4, -23.4, 0.012), X, Y, 4.8, 4.8, step=0, fit=True)
+    floor_seal(s, 0.0, -21.4, 2.4)
     for y in (-24.0, -20.0, -15.0):
         s.box('led_white', r['x0'] + 1.0, y - 0.03, 4.35, r['x1'] - 1.0, y + 0.03, 4.39)
     cove(s, 'lobby', drop=0.4, inset=1.0)
@@ -228,7 +301,7 @@ def level1():
     for x in (-3.0, 0.0, 3.0): F('ch_prop_ch_metal_detector_01a', x, -15.2, 0.0)
     F('ch_prop_baggage_scanner_01a', -7.5, -15.2, 90.0)
     s.box('oak_panel', 7.0, -24.5, 0, 11.0, -23.7, 1.1, faces='xXyYZ', step=1.2); s.cbox(7.0, -24.5, 0, 11.0, -23.7, 1.1, 70)
-    s.box('marble_nero', 6.9, -24.6, 1.1, 11.1, -23.6, 1.15); F('prop_off_chair_01', 9.0, -25.2, 180.0); F('prop_monitor_01a', 9.0, -24.1, 180.0, z=1.15)
+    s.box('marble_nero', 6.9, -24.6, 1.1, 11.1, -23.6, 1.15); F('ex_prop_offchair_exec_04', 9.0, -25.2, 180.0); F('prop_monitor_01a', 9.0, -24.1, 180.0, z=1.15)
     for x in (6.0, 6.0):
         pass
     s.box('oak_panel', r['x1'] - 0.02, -25.6, 0.0, r['x1'], -18.5, 4.4, faces='x', step=1.2)
@@ -243,7 +316,7 @@ def level1():
     s.box('marble_cal', r['x0'] + 0.95, -20.05, 1.0, r['x1'] - 0.95, -19.15, 1.05)
     for k in range(3):
         x = r['x0'] + 2.5 + k * 3.2
-        F('prop_monitor_01a', x, -19.6, 0.0, z=1.05); F('prop_keyboard_01b', x, -19.9, 0.0, z=1.05); F('prop_off_chair_01', x, -18.6, 180.0)
+        F('prop_monitor_01a', x, -19.6, 0.0, z=1.05); F('prop_keyboard_01b', x, -19.9, 0.0, z=1.05); F('ex_prop_offchair_exec_04', x, -18.6, 180.0)
     F('prop_printer_01', r['x1'] - 1.6, -19.6, 0.0, z=1.05); F('prop_cd_paper_pile1', r['x0'] + 1.5, -19.6, 0.0, z=1.05)
     s.box('metal_dark', r['x0'] + 2.0, r['y0'] + 0.02, 0.0, r['x1'] - 2.0, r['y0'] + 0.08, 3.0, faces='Y')
     for k in range(int((r['x1'] - r['x0'] - 4.0) / 0.3)): s.box('steel', r['x0'] + 2.0 + k * 0.3, r['y0'] + 0.09, 0.0, r['x0'] + 2.02 + k * 0.3, r['y0'] + 0.11, 3.0)
@@ -259,7 +332,7 @@ def level1():
         s.surf('height_chart', (x + 2.15, r['y0'] + 0.055, 0.45), -X, Z, 2.1, 2.0, step=0, fit=True)
         F('prop_cd_paper_pile1' if k else 'prop_paper_box_01', x + 2.6, r['y0'] + 0.3, 0.0)
     F('prop_tv_cam_02', r['x0'] + 3.6, r['y1'] - 2.5, 0.0); F('h4_prop_office_desk_01', r['x1'] - 1.0, r['y1'] - 1.6, 90.0, name='mg')
-    F('prop_monitor_01a', r['x1'] - 1.0, r['y1'] - 1.6, 270.0, on='mg'); F('prop_off_chair_01', r['x1'] - 2.0, r['y1'] - 1.6, 270.0); downlights(s, 'mugshot', I=4.5)
+    F('prop_monitor_01a', r['x1'] - 1.0, r['y1'] - 1.6, 270.0, on='mg'); F('ex_prop_offchair_exec_04', r['x1'] - 2.0, r['y1'] - 1.6, 270.0); downlights(s, 'mugshot', I=4.5)
     # cells: bed, toilet, CCTV, cell corridor
     for c in cells:
         r = s.rooms[c]; cy = (r['y0'] + r['y1']) / 2
@@ -281,7 +354,7 @@ def level1():
             for dx in (-0.9, 0.9):
                 n = f'rc{row}{k}{int(dx > 0)}'
                 F('h4_prop_office_desk_01', x + dx, y + 0.35, 180.0, name=n); F('prop_monitor_01a', x + dx, y + 0.45, 180.0, on=n)
-                F('prop_keyboard_01b', x + dx, y + 0.15, 180.0, on=n); F('prop_off_chair_01', x + dx, y - 0.6, 180.0)
+                F('prop_keyboard_01b', x + dx, y + 0.15, 180.0, on=n); F('ex_prop_offchair_exec_04', x + dx, y - 0.6, 180.0)
                 F('prop_office_phone_tnt' if dx < 0 else 'prop_mug_01', x + dx + 0.5, y + 0.3, 0.0, on=n)
     for k in range(6): F('v_med_cor_filingcab', r['x0'] + 0.4, r['y0'] + 1.2 + k * 0.9, 90.0)
     F('prop_copier_01', r['x1'] - 0.8, r['y0'] + 1.0, 270.0); F('ch_prop_whiteboard', r['x1'] - 0.1, r['y0'] + 6.0, 270.0); F('prop_watercooler', r['x1'] - 0.5, r['y0'] + 3.0, 270.0)
@@ -411,6 +484,18 @@ def level2():
     F('ex_mp_h_off_sofa_01', r['x1'] - 0.7, 0.5, 270.0); F('apa_mp_h_tab_coffee_07', r['x1'] - 2.1, 0.5, 0.0); F('ex_mp_h_off_easychair_01', r['x1'] - 3.6, -2.5, 30.0)
     for p in ((r['x0'] + 0.6, 3.8), (4.8, r['y1'] - 0.5), (r['x1'] - 0.5, r['y1'] - 0.5), (r['x1'] - 0.5, -5.3), (-4.6, r['y1'] - 0.5)): F('apa_mp_h_acc_plant_tall_01', p[0], p[1], 0.0)
     F('prop_flag_us', -3.6, r['y1'] - 0.6, 0.0); F('prop_flag_lsservices', 1.6, r['y1'] - 0.6, 0.0)
+    # lounge zone (2 sofas + 2 armchairs + table + rug), sideboard, TV wall, display shelves, pendant lights, brass wall inlays
+    s.box('carpet', 6.0, -5.0, 0.0, 12.6, 0.8, 0.015, faces='Z')
+    F('ex_mp_h_off_sofa_01', 9.3, -4.6, 180.0); F('ex_mp_h_off_sofa_02', 9.3, 0.4, 0.0); F('apa_mp_h_stn_chairarm_23', 6.6, -2.1, 90.0); F('apa_mp_h_stn_chairarm_23', 12.1, -2.1, 270.0)
+    F('apa_mp_h_tab_coffee_07', 9.3, -2.1, 0.0); F('apa_mp_h_acc_vase_06', 9.3, -2.1, 0.0, z=0.42)
+    F('ex_prop_ex_tv_flat_01', r['x1'] - 0.1, 3.5, 270.0, z=1.4); F('apa_mp_h_str_sideboardl_06', r['x1'] - 0.35, 3.5, 270.0)
+    F('apa_mp_h_str_sideboardl_06', cx, r['y1'] - 0.45, 180.0) if False else None
+    F('ex_office_citymodel_01', 3.0, 1.2, 0.0)
+    for x in (-2.0, 0.0): F('apa_mp_h_lit_lightpendant_01', x, cy, 0.0, z=H - 1.2)
+    for z in (0.95, 3.3):
+        s.box('brass', r['x0'] + 0.005, r['y0'], z, r['x0'] + 0.015, r['y1'], z + 0.02, faces='X'); s.box('brass', r['x1'] - 0.015, r['y0'], z, r['x1'] - 0.005, r['y1'], z + 0.02, faces='x')
+        s.box('brass', r['x0'], r['y1'] - 0.015, z, r['x1'], r['y1'] - 0.005, z + 0.02, faces='y')
+    for k in range(3): F('apa_mp_h_str_shelfwallm_01', r['x1'] - 0.15, 6.5 + k * 0.0 + (k - 1) * 1.2 if False else 7.5, 270.0, z=1.2 + k * 0.6)
     # ceiling: dropped black border with warm cove + square downlights
     cove(s, 'cmd', drop=0.45, inset=1.2)
     for x in (-3.0, 1.0, 5.0, 9.0):
@@ -471,7 +556,7 @@ def level2():
             x = r['x0'] + 2.0 + k * 3.6; y = r['y0'] + 3.0 + row * 3.5; n = f'cy{row}{k}'
             F('h4_prop_office_desk_01', x, y, 0.0, name=n)
             for m in (-0.45, 0.0, 0.45): F('prop_monitor_01a', x + m, y + 0.1, 0.0, on=n)
-            F('prop_off_chair_01', x, y - 0.9, 180.0)
+            F('ex_prop_offchair_exec_04', x, y - 0.9, 180.0)
     for k in range(4): F('xm_base_cia_server_01', r['x1'] - 0.6, r['y1'] - 1.2 - k * 1.2, 90.0)
     s.box('led_white', r['x0'] + 0.3, r['y1'] - 0.36, 3.55, r['x1'] - 0.3, r['y1'] - 0.3, 3.6); lights(s, 'cyber', I=3.0, col=(150, 190, 255))
     # ---- auditorium 100, meeting 30, HR, offices, range, kill house, gym (as before, wider corridors)
@@ -498,7 +583,7 @@ def level2():
     for k in range(2):
         for j in range(2):
             x, y = r['x0'] + 2.4 + k * 4.6, r['y0'] + 3.0 + j * 4.5; n = f'hr{k}{j}'
-            F('h4_prop_office_desk_01', x, y, 0.0, name=n); F('prop_monitor_01a', x, y + 0.1, 0.0, on=n); F('prop_off_chair_01', x, y - 0.9, 180.0); F('prop_office_phone_tnt', x + 0.5, y, 0.0, on=n)
+            F('h4_prop_office_desk_01', x, y, 0.0, name=n); F('prop_monitor_01a', x, y + 0.1, 0.0, on=n); F('ex_prop_offchair_exec_04', x, y - 0.9, 180.0); F('prop_office_phone_tnt', x + 0.5, y, 0.0, on=n)
     for k in range(5): F('v_med_cor_filingcab', r['x1'] - 0.4, r['y0'] + 1.0 + k * 0.9, 270.0)
     F('ch_prop_whiteboard', r['x0'] + 0.1, r['y0'] + 6.0, 90.0); downlights(s, 'hr')
     for rm in ('link', 'corr2', 'corr_off'): led_lines(s, rm, 1.3, 'y' if rm != 'corr2' else 'x'); lights(s, rm, I=4.0, fo=8.0)
