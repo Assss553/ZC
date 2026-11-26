@@ -180,9 +180,9 @@ def hq():
         s.box('led_white', -25.0, y - 0.04, 4.94, 25.0, y + 0.04, 5.0)
     for x in range(-22, 24, 7):
         for y in (0.5, 9.0, 19.0): s.light(x, y, 4.6, color=(240, 246, 255), intensity=6.0, falloff=11.0)
-    s.surf('sign_swat', (6.0, 21.98, 3.0), -X, Z, 12.0, 2.0, step=0, fit=True)
+    s.surf('sign_swat', (-6.0, 21.98, 3.0), X, Z, 12.0, 2.0, step=0, fit=True)
     s.surf('sg_garage', (-14.0 - 1.5, -5.78, 2.9), X, Z, 3.0, 0.5, step=0, fit=True); s.surf('sg_garage', (15.0 - 1.5, -5.78, 2.9), X, Z, 3.0, 0.5, step=0, fit=True)
-    s.surf('swat_badge', (-20.0, 21.98, 1.2), -X, Z, 2.4, 2.4, step=0, fit=True)
+    s.surf('swat_badge', (-22.4, 21.98, 1.2), X, Z, 2.4, 2.4, step=0, fit=True)
     F('prop_toolchest_05', -25.4, 2.0, 270.0); F('prop_toolchest_05', -25.4, 4.0, 270.0); F('imp_prop_tool_chest_01a', 25.4, 9.0, 90.0)
     for x in (-8.0, 8.0): F('prop_cctv_cam_06a', x, -5.6, 0.0, z=4.4)
 
