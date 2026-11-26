@@ -43,6 +43,7 @@ if ($Verify) {
   }
   foreach($s in $st){ $now=(Get-Gpu|Where-Object Name -match $s.Vendor).DriverVersion
     if ($s.Vendor -eq 'NVIDIA' -and (NvVer $now) -ge [version]$s.Target) { Say "NVIDIA على آخر إصدار $($s.Target) ✔" "Green" }
+    elseif ($s.Vendor -eq 'Intel' -and [version]$now -lt [version]$s.Target) { Say "Intel ما تحدث للهدف $($s.Target) - أعيد المحاولة..." "Red"; & $PSCommandPath; exit }
     elseif ($s.Vendor -ne 'NVIDIA') { Say "$($s.Vendor): التعريف الحالي $now" "Green" }
     else { Say "NVIDIA ما تحدث للهدف $($s.Target) - أعيد المحاولة..." "Red"; & $PSCommandPath; exit } }
   $bad = Get-PnpDevice -PresentOnly | Where-Object { $_.Status -eq 'Error' }
@@ -109,20 +110,37 @@ if ($amd) {
 # ======================= Intel =======================
 $intel = Get-Gpu | Where-Object Name -match 'Intel'
 if ($intel) {
-  Say "Intel: $($intel.Name) | الإصدار الحالي $($intel.DriverVersion)"
-  if ($intel.Name -match 'Arc') {
-    $html = (Invoke-WebRequest "https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html" -UserAgent $UA -UseBasicParsing).Content
-    $m = [regex]::Match($html,'https://downloadmirror\.intel\.com/\d+/gfx_win_([\d\.]+)\.exe')
-    $latest = $m.Groups[1].Value
-    if ($m.Success -and [version]$intel.DriverVersion -lt [version]$latest) {
+  $cur = [version]$intel.DriverVersion
+  $cpuName = (Get-CimInstance Win32_Processor).Name
+  $gen = if ($cpuName -match 'i\d-(\d{2})\d{2,3}') { [int]$Matches[1] } elseif ($cpuName -match 'i\d-(\d)\d{3}') { [int]$Matches[1] } elseif ($cpuName -match 'Core\(TM\) (Ultra)') { 14 } else { 0 }
+  Say "Intel: $($intel.Name) | الجيل $gen | الإصدار الحالي $cur"
+  # Arc + Iris Xe + UHD (جيل 11 وأحدث) = تعريف موحد  |  جيل 6-10 = تعريف Legacy
+  $page = if ($intel.Name -match 'Arc|Iris\(R\) Xe' -or $gen -ge 11) { "https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html" }
+          else { "https://www.intel.com/content/www/us/en/download/776137/intel-7th-10th-gen-processor-graphics-windows.html" }
+  $html = (Invoke-WebRequest $page -UserAgent $UA -UseBasicParsing).Content
+  $m = [regex]::Match($html,'https://downloadmirror\.intel\.com/\d+/gfx_win_([\d\.]+)\.exe')
+  if (-not $m.Success) {
+    Say "  ما قدرت أجيب رابط Intel - بركب Intel Driver & Support Assistant يحدثه" "Yellow"
+    winget install -e --id Intel.IntelDriverAndSupportAssistant --silent --accept-package-agreements --accept-source-agreements | Out-Null }
+  else {
+    $latest = [version]$m.Groups[1].Value
+    if ($cur -ge $latest) { Say "  تعريفك محدث على آخر إصدار ($latest) ✔" "Green" }
+    else {
       Say "  فيه إصدار أحدث: $latest → تحميل..." "Yellow"
       $f="$W\intel_$latest.exe"; Invoke-WebRequest $m.Value -OutFile $f -UserAgent $UA
-      Remove-OldDisplayDrivers 'Intel'
-      Start-Process $f -ArgumentList "-s --overwrite" -Wait   # Intel installer: silent clean
-      $state += @{Vendor='Intel';Target=$latest}; $needReboot=$true; Say "  تم ✔" "Green"
-    } elseif ($m.Success) { Say "  محدث ✔" "Green" }
-  }
-  else { Say "  Intel مدمج - التحديث عبر Windows Update + Intel Driver Assistant" }
+      if ((Get-Item $f).Length -lt 100MB) { Say "  التحميل خربان - أعد تشغيل الأداة" "Red" }
+      else {
+        Get-Process IntelGraphicsSoftware,igfxEM,igfxHK,igfxTray,IntelCpHDCPSvc | Stop-Process -Force
+        Remove-OldDisplayDrivers 'Intel'
+        Say "  تثبيت Intel $latest (تثبيت نظيف)..." "Yellow"
+        $p = Start-Process $f -ArgumentList "-s -f -o" -Wait -PassThru
+        if ($p.ExitCode -notin 0,14) {   # 14 = يحتاج ريستارت
+          Say "  الطريقة الصامتة فشلت (كود $($p.ExitCode)) - أثبت بفك الملف..." "Yellow"
+          $z=Get-7z; & $z x $f "-o$W\intel" -y | Out-Null
+          Get-ChildItem "$W\intel" -Recurse -Filter iigd_dch*.inf | ForEach-Object { pnputil /add-driver $_.FullName /install | Out-Null } }
+        $state += @{Vendor='Intel';Target="$latest"}; $needReboot=$true; Say "  تم تثبيت Intel $latest ✔" "Green" } } }
+  # باقي تعريفات Intel (شيبست، واي فاي، بلوتوث، Management Engine)
+  Say "  تحديث تعريفات Intel الثانية (WiFi / Bluetooth / Chipset)..."
   winget install -e --id Intel.IntelDriverAndSupportAssistant --silent --accept-package-agreements --accept-source-agreements | Out-Null
 }
 

@@ -1,7 +1,7 @@
 ﻿# ================================================================
 #  FPS Tweak - VC21   |   Windows 10 / 11   |   شغله كمسؤول (Admin)
 # ================================================================
-$WallpaperText = "VC21"   # النص اللي ينكتب بالخلفية (غيره لو تبي)
+$WallpaperText = "VC2"   # النص اللي ينكتب بالخلفية (غيره لو تبي)
 $ErrorActionPreference = "SilentlyContinue"
 
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -131,7 +131,9 @@ $gr.TextRenderingHint = "AntiAliasGridFit"; $gr.Clear([Drawing.Color]::Black)
 $font = New-Object Drawing.Font "Segoe UI Black",([int]($h/4)),([Drawing.FontStyle]::Bold),([Drawing.GraphicsUnit]::Pixel)
 $fmt = New-Object Drawing.StringFormat; $fmt.Alignment="Center"; $fmt.LineAlignment="Center"
 $gr.DrawString($WallpaperText,$font,[Drawing.Brushes]::White,(New-Object Drawing.RectangleF 0,0,$w,$h),$fmt)
-$wp = "$env:USERPROFILE\Pictures\VC21_wallpaper.png"; $bmp.Save($wp,[Drawing.Imaging.ImageFormat]::Png); $gr.Dispose(); $bmp.Dispose()
+$wp = "$env:USERPROFILE\Pictures\VC21_wallpaper.png"
+if (Test-Path "$PSScriptRoot\VC21_wallpaper.png") { Copy-Item "$PSScriptRoot\VC21_wallpaper.png" $wp -Force }   # تصميم VC2 الجاهز
+else { $bmp.Save($wp,[Drawing.Imaging.ImageFormat]::Png) }; $gr.Dispose(); $bmp.Dispose()
 Add-Type 'using System.Runtime.InteropServices; public class WP{[DllImport("user32.dll")]public static extern int SystemParametersInfo(int a,int b,string c,int d);}'
 Reg "HKCU:\Control Panel\Desktop" "WallpaperStyle" "10" "String"
 [WP]::SystemParametersInfo(20,0,$wp,3) | Out-Null
