@@ -133,3 +133,37 @@ def test_computer_loop_with_fake_claude(monkeypatch):
     assert results[1]["toolset_name"] == "computer" and results[1]["content"] == "OK"
     assert "toolset_name" not in results[0]
     assert runtime.get(tid)["progress"] == 1.0
+
+
+def test_timeline_validation_and_run(monkeypatch):
+    from rox.agents import timeline
+    with pytest.raises(ValueError):
+        timeline.save_all([{"id": "x", "actions": [{"type": "hack"}]}])
+    clicks = []
+    monkeypatch.setattr(timeline.ic, "click", lambda x, y, button="left", clicks_=1, actor="", **k: clicks.append((x, y)))
+    monkeypatch.setattr(timeline.match, "find", lambda *a, **k: {"found": True, "confidence": 0.97, "cx": 50, "cy": 60})
+    timeline.save_all([{"id": "t1", "name": "Farm", "actions": [{"type": "target", "asset": "a"}, {"type": "click"}, {"type": "delay", "ms": 10}]}])
+    tid = runtime.create("timeline", "Farm", "", {"timeline_id": "t1", "loops": 2})
+    timeline.handle(runtime.TaskContext(tid), runtime.get(tid))
+    assert clicks == [(50, 60), (50, 60)]
+
+
+def test_template_match_real(monkeypatch):
+    import numpy as np
+    from PIL import Image
+    from rox.vision import match
+    rng = np.random.default_rng(1)
+    screen = Image.fromarray(rng.integers(0, 255, (300, 400, 3), dtype=np.uint8))
+    monkeypatch.setattr(match.capture, "_grab", lambda area=None: screen.crop((area["left"], area["top"], area["left"] + area["width"], area["top"] + area["height"])) if area else screen)
+    match.save_asset_from_screen("enemy", {"left": 120, "top": 80, "width": 40, "height": 30})
+    r = match.find("enemy")
+    assert r["found"] and r["confidence"] > 0.99 and (r["x"], r["y"]) == (120, 80)
+
+
+def test_flat_asset_rejected(monkeypatch):
+    from PIL import Image
+    from rox.vision import match
+    flat = Image.new("RGB", (200, 200), (40, 80, 40))
+    monkeypatch.setattr(match.capture, "_grab", lambda area=None: flat)
+    with pytest.raises(ValueError):
+        match.save_asset_from_screen("flat", {"left": 0, "top": 0, "width": 20, "height": 20})

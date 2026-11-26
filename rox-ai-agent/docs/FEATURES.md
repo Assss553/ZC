@@ -22,4 +22,7 @@ Legend: ✅ implemented & automatically tested · 🟡 implemented, needs first 
 | Power | Keep awake during tasks, run at login (HKCU\Run) | 🟡 | Windows API calls |
 | Security | Emergency stop (button, global hotkey, API), approvals, blocked categories, folder sandbox, audit log, localhost+token | ✅ tested | Global hotkey 🟡 |
 | Security | Not admin by default | ✅ | Installer `asInvoker`; warning banner if elevated |
+| Studio | Split workspace (resizable panels): workspace tree, live view + floating toolbar, target settings, timelines | ✅ verified in browser |  |
+| Studio | Capture asset by dragging a box on the live view; OpenCV template matching with confidence, method, area of interest | ✅ tested on virtual display | Flat/featureless regions are rejected |
+| Studio | Timeline engine: Target / Wait Target / Click / Key / Type / Delay, run/stop, playhead, saved presets | ✅ logic + matching tested; 🟡 clicks on Windows | |
 | Notifications | Push/email reports when away | ⛔ | Reports are in the app timeline only |

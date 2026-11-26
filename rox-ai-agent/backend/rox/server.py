@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import config
-from .agents import chat, coding_agent, computer_agent, game_agent, runtime
+from .agents import chat, coding_agent, computer_agent, game_agent, runtime, timeline
 from .agents.game_adapters.base import ADAPTERS
 from .events import bus
 from .input_control import controller as ic
@@ -19,7 +19,7 @@ from .scheduler import power, scheduler
 from .scheduler.scheduler import parse_hhmm
 from .security import credentials, policy
 from .storage import db
-from .vision import capture
+from .vision import capture, match
 
 TOKEN = os.environ.get("ROX_TOKEN", "")
 START = time.time()
@@ -42,6 +42,7 @@ A = [Depends(auth)]
 runtime.RUNNER.register("computer", computer_agent.handle)
 runtime.RUNNER.register("coding", coding_agent.handle)
 runtime.RUNNER.register("game", game_agent.handle)
+runtime.RUNNER.register("timeline", timeline.handle)
 
 
 @app.on_event("startup")
@@ -366,6 +367,76 @@ def file_write(w: WriteIn):
     p.parent.mkdir(parents=True, exist_ok=True); p.write_text(w.content, encoding="utf-8")
     coding_agent.record_change(0, p, before, w.content)  # task 0 = manual edits
     policy.audit("user", "file_write", {"path": str(p)}, "executed")
+    return {"ok": True}
+
+
+# ---------------- studio: assets, matching, timelines ----------------
+class AssetIn(BaseModel):
+    name: str
+    left: int
+    top: int
+    width: int
+    height: int
+
+
+@app.get("/api/assets", dependencies=A)
+def assets():
+    return match.list_assets()
+
+
+@app.post("/api/assets", dependencies=A)
+def add_asset(a: AssetIn):
+    if a.width < 4 or a.height < 4:
+        raise HTTPException(400, "selection too small")
+    try:
+        r = match.save_asset_from_screen(a.name, {"left": a.left, "top": a.top, "width": a.width, "height": a.height})
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    policy.audit("user", "asset_saved", r, "executed"); return r
+
+
+@app.delete("/api/assets/{name}", dependencies=A)
+def del_asset(name: str):
+    match.delete_asset(name); return {"ok": True}
+
+
+class MatchIn(BaseModel):
+    asset: str
+    threshold: float = 0.85
+    method: str = "template_fast"
+    area: dict | None = None
+    gray: bool = False
+
+
+@app.post("/api/match", dependencies=A)
+def do_match(m: MatchIn):
+    try:
+        return match.find(m.asset, m.area, m.threshold, m.method, m.gray)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    except capture.CaptureUnavailable as e:
+        raise HTTPException(409, str(e))
+
+
+@app.get("/api/screen/size", dependencies=A)
+def scr_size():
+    try:
+        w, h = capture.screen_size(); return {"w": w, "h": h}
+    except Exception as e:
+        raise HTTPException(409, str(e))
+
+
+@app.get("/api/timelines", dependencies=A)
+def get_timelines():
+    return timeline.get_all()
+
+
+@app.put("/api/timelines", dependencies=A)
+def put_timelines(tls: list[dict]):
+    try:
+        timeline.save_all(tls)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
     return {"ok": True}
 
 

@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 export type Lang = "ar" | "en";
 const dict = {
-  dashboard: ["لوحة التحكم", "Dashboard"], chat: ["المحادثة", "Chat"], game: ["وكيل الألعاب", "Game Agent"],
+  studio: ["الاستوديو", "Studio"], dashboard: ["لوحة التحكم", "Dashboard"], chat: ["المحادثة", "Chat"], game: ["وكيل الألعاب", "Game Agent"],
   computer: ["التحكم بالكمبيوتر", "Computer Agent"], coding: ["وكيل البرمجة", "Coding Agent"], tasks: ["المهام المستقلة", "Autonomous Tasks"],
   settings: ["الإعدادات", "Settings"], audit: ["سجل التدقيق", "Audit Log"], estop: ["إيقاف طوارئ", "EMERGENCY STOP"],
   estopActive: ["الإيقاف مفعّل — إعادة تفعيل", "Stop active — re-arm"], liveDesktop: ["بث سطح المكتب المباشر", "Live Desktop View"],
