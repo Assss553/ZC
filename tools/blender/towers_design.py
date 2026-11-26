@@ -244,4 +244,8 @@ SHOTS = {
 }
 SHOTS.update(json.loads(os.environ.get('SHOTS', '{}')))
 for tag, p, l, lens in SHOTS.get(PIECE, []): shot(tag, p, l, lens)
+if os.environ.get('SAVEBLEND'):
+    try: bpy.ops.file.pack_all()
+    except Exception as e: print('pack failed', e)
+    bpy.ops.wm.save_as_mainfile(filepath=os.environ['SAVEBLEND'], compress=True)
 print('DONE')
