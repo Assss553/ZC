@@ -158,6 +158,11 @@ def place_piece(name, x, y, z, rz=0.0):
     for o in bpy.data.objects:
         if o not in before: o.location = (o.location.x + x, o.location.y + y, o.location.z + z)
 for e in json.loads(os.environ.get('EXTRA', '[]')): place_piece(*e)
+if os.environ.get('GROUND'):
+    bpy.ops.mesh.primitive_plane_add(size=400, location=(0, 0, -0.02)); gp = bpy.context.object; gp.data.materials.append(bmat('asphalt', (0.06, 0.06, 0.065), 0.8))
+    for i in range(-6, 7, 3):
+        if abs(i) > 1: obox('stripe', i * 1.0 + 0.0, -40, 0.0, 0.15, 80, 0.01, 0, bmat('lane', (0.8, 0.8, 0.8), 0.6)) if False else None
+    sun = bpy.data.lights.new('moon', 'SUN'); sun.energy = 0.3; sun.color = (0.6, 0.7, 1.0); so = bpy.data.objects.new('moon', sun); so.rotation_euler = (0.9, 0.2, 0.6); sc.collection.objects.link(so)
 if isinstance(DATA['furniture'], dict):
     furniture(DATA['furniture'].get(PIECE, []), 0.0); doors(DATA['doors'].get(PIECE, []), 0.0)
 else:
