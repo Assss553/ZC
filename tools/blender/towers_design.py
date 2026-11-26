@@ -155,7 +155,7 @@ def furniture(items, z0):
         elif m == 'prop_toilet_01': obox('wc', x, y, z, 0.4, 0.6, 0.42, h, WHITE, 0.05)
         elif m in ('bkr_prop_gunlocker_01a', 'gr_prop_gr_gunlocker_01a'): obox('gl', x, y, z, 1.4, 0.6, 2.0, h, BLACK, 0.01); lx, ly = local(x, y, h, 0, -0.31); obox('glf', lx, ly, z + 0.2, 1.2, 0.01, 1.6, h, GREY)
         elif m in ('gr_prop_gr_bench_04a', 'prop_table_03'): obox('wb', x, y, z + 0.85, 2.4, 1.0, 0.08, h, GREY); obox('wbl', x, y, z, 2.2, 0.8, 0.85, h, BLACK)
-        elif m in ('prop_box_ammo04a', 'prop_gun_case_01'): obox('ammo', x, y, z, 0.6, 0.3, 0.25, h, bmat('olive', (0.25, 0.28, 0.15), 0.6))
+        elif m in ('prop_box_ammo04a', 'prop_gun_case_01'): obox('ammo', x, y, z, 0.5, 0.25, 0.22, h, bmat('ammo', (0.2, 0.22, 0.14), 0.5, 0.3), 0.01); lx_, ly_ = local(x, y, h, 0, 0); obox('lid', lx_, ly_, z + 0.22, 0.12, 0.05, 0.03, h, BLACK)
         elif m in ('v_med_bed1',): obox('bed', x, y, z + 0.5, 0.9, 2.0, 0.15, h, WHITE, 0.03); obox('bedb', x, y, z, 0.8, 1.8, 0.5, h, GREY)
         elif m in ('v_med_trolley',): obox('tr', x, y, z, 0.5, 0.4, 0.9, h, STEEL)
         elif m in ('xm_base_cia_server_01',): obox('srv', x, y, z, 0.6, 1.0, 2.0, h, BLACK); lx, ly = local(x, y, h, 0, -0.51); obox('srvled', lx, ly, z + 0.2, 0.4, 0.01, 1.6, h, bmat('srvl', (0.2, 0.6, 1.0), 0.3, 0, 3.0))
@@ -169,17 +169,26 @@ def furniture(items, z0):
         elif m in ('apa_p_apdlc_treadmill_s',): obox('tm', x, y, z, 0.8, 1.9, 0.25, h, BLACK); lx, ly = local(x, y, h, 0, -0.85); obox('tmc', lx, ly, z, 0.8, 0.1, 1.3, h, GREY)
         elif m in ('prop_toolchest_05', 'imp_prop_tool_chest_01a'): obox('tc', x, y, z, 1.0, 0.5, 1.1, h, RED)
         elif 'trophy' in m: obox('tro', x, y, z, 0.18, 0.18, 0.35, h, bmat('gold', (0.8, 0.6, 0.3), 0.2, 1.0))
-        elif m.startswith('prop_bodyarmour') or m == 'prop_mask_ballistic': obox('vest', x, y, z, 0.45, 0.2, 0.55, h, bmat('olive', (0.25, 0.28, 0.15), 0.6))
-        elif m in ('prop_ballistic_shield', 'prop_riot_shield'): obox('sh', x, y, z, 0.6, 0.08, 1.2, h, BLACK)
+        elif m.startswith('prop_bodyarmour'):
+            V = bmat('vest', (0.06, 0.065, 0.07), 0.8); P = bmat('pouch', (0.1, 0.105, 0.1), 0.8)
+            obox('vest', x, y, z, 0.48, 0.22, 0.6, h, V, 0.05)
+            for dx in (-0.15, 0.0, 0.15): px, py = local(x, y, h, dx, -0.13); obox('pouch', px, py, z + 0.12, 0.12, 0.07, 0.18, h, P, 0.02)
+            for dx in (-0.14, 0.14): sx, sy = local(x, y, h, dx, 0); obox('strap', sx, sy, z + 0.6, 0.08, 0.2, 0.12, h, V)
+            px, py = local(x, y, h, 0, -0.115); obox('patch', px, py, z + 0.42, 0.22, 0.01, 0.07, h, bmat('patch', (0.85, 0.8, 0.6), 0.6))
+        elif m == 'prop_mask_ballistic': obox('mask', x, y, z, 0.2, 0.12, 0.25, h, BLACK, 0.06)
+        elif m in ('prop_ballistic_shield', 'prop_riot_shield'): obox('sh', x, y, z, 0.6, 0.06, 1.2, h, BLACK, 0.04); vx, vy = local(x, y, h, 0, -0.035); obox('shv', vx, vy, z + 0.85, 0.3, 0.01, 0.12, h, bmat('visor', (0.02, 0.02, 0.03), 0.05, 0.8)); obox('shp', vx, vy, z + 0.5, 0.36, 0.01, 0.1, h, bmat('patch', (0.85, 0.8, 0.6), 0.6))
         elif m == 'ch_prop_whiteboard': obox('wbd', x, y, z + 0.8, 1.8, 0.04, 1.1, h, WHITE)
         elif m in ('prop_copier_01',): obox('cop', x, y, z, 0.7, 0.6, 1.1, h, GREY)
         elif m in ('prop_printer_01',): obox('prn', x, y, z, 0.45, 0.4, 0.3, h, GREY)
+        elif m == 'prop_cs_walkie_talkie': obox('wt', x, y, z, 0.06, 0.035, 0.17, h, BLACK, 0.01); obox('ant', x + 0.02, y, z + 0.17, 0.01, 0.01, 0.08, h, BLACK)
         elif m in ('prop_shower_rack_01', 'prop_fire_exting_1a'): obox('ex', x, y, z, 0.15, 0.15, 0.5, h, RED)
         elif m in ('gr_prop_gr_rsply_crate01a', 'xm_prop_crates_rifles_01a', 'prop_box_guncase_02a'): obox('crate', x, y, z, 1.2, 0.6, 0.5, h, bmat('olive', (0.25, 0.28, 0.15), 0.6))
         elif m in ('p_v_43_safe_s',): obox('safe', x, y, z, 0.8, 0.8, 1.4, h, GREY, 0.02)
-        elif m == 'p_ld_heist_bag_s': obox('bag', x, y, z, 0.7, 0.35, 0.35, h, BLACK, 0.08)
+        elif m == 'p_ld_heist_bag_s': obox('bag', x, y, z, 0.7, 0.35, 0.32, h, BLACK, 0.1); obox('handle', x, y, z + 0.32, 0.3, 0.04, 0.08, h, BLACK)
         elif m == 'prop_tv_cam_02': obox('cam', x, y, z + 1.4, 0.3, 0.5, 0.3, h, BLACK); obox('tri', x, y, z, 0.05, 0.05, 1.4, h, BLACK)
-        elif m == 'h4_prop_battle_sports_helmet': obox('helm', x, y, z, 0.28, 0.3, 0.22, h, BLACK, 0.1)
+        elif m == 'h4_prop_battle_sports_helmet':
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.15, location=(x, y, z + 0.02)); hm = bpy.context.object; hm.scale = (1, 1.15, 0.85); bpy.ops.object.shade_smooth(); hm.data.materials.append(bmat('helmet', (0.05, 0.055, 0.05), 0.55))
+            gx, gy = local(x, y, h, 0, -0.14); obox('visor', gx, gy, z + 0.02, 0.22, 0.03, 0.06, h, bmat('visor', (0.02, 0.02, 0.03), 0.05, 0.8))
         elif m == 'ex_prop_ex_tv_flat_01': obox('tv', x, y, z, 1.9, 0.05, 1.1, h, SCREEN)
         elif m == 'apa_mp_h_str_sideboardl_06': obox('sb', x, y, z, 2.2, 0.5, 0.75, h, WOOD, 0.01)
         elif m == 'apa_mp_h_str_shelfwallm_01': obox('ws', x, y, z, 1.4, 0.3, 0.04, h, WOOD)
@@ -220,8 +229,7 @@ if os.environ.get('GROUND'):
     sun = bpy.data.lights.new('moon', 'SUN'); sun.energy = 0.3; sun.color = (0.6, 0.7, 1.0); so = bpy.data.objects.new('moon', sun); so.rotation_euler = (0.9, 0.2, 0.6); sc.collection.objects.link(so)
 if isinstance(DATA['furniture'], dict):
     fk = os.environ.get('FURNKEY', PIECE); furniture(DATA['furniture'].get(fk, []), 0.0); doors(DATA['doors'].get(fk, []), 0.0)
-    if fk == 'l1':
-        for v in DATA.get('vehicles', []): car(v['x'], v['y'], 0.0, v['h'], v['m'])
+
 else:
     pz = float(os.environ.get('PZ', '0')); furniture(DATA['furniture'], pz); doors(DATA['doors'], pz)
 SHOTS = {

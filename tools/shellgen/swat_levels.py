@@ -111,6 +111,10 @@ def gear_cage(s, x, y, face='S', w=1.1, d=0.65, h=2.3):
     s.box('metal_dark', x, lo, h - 0.05, x + w, hi, h); s.box('steel', x, lo, 1.75, x + w, hi, 1.78); s.box('steel', x, lo, 0.3, x + w, hi, 0.33)
     s.box('steel', x + 0.05, (yb - 0.25 if sg < 0 else yb + 0.25) - 0.01, 1.6, x + w - 0.05, (yb - 0.25 if sg < 0 else yb + 0.25) + 0.01, 1.62)
     s.box('led_white', x + 0.05, lo, h - 0.07, x + w - 0.05, hi, h - 0.05)
+    s.box('oak_panel', x + 0.06, lo + 0.02, 0.42, x + w - 0.06, hi - 0.02, 0.46); s.cbox(x + 0.06, lo, 0, x + w - 0.06, hi, 0.46, 70)        # seat
+    s.box('led_white', x + 0.06, lo + 0.04, 0.38, x + w - 0.06, hi - 0.04, 0.4, faces='z')
+    yf2 = yf - sg * 0.0
+    s.surf('pl_tactical_gear', (x + 0.15, yf2 - 0.003 * sg, h + 0.05) if False else (x + 0.15 if sg > 0 else x + w - 0.15, yf, h - 0.2), X if sg > 0 else -X, Z, w - 0.3, 0.12, step=0, fit=True) if False else None
     return (x + w / 2, (yb + yf) / 2)
 
 
@@ -151,7 +155,7 @@ def level1():
     s.room('garage', -26.0, -5.8, 26.0, 22.0, floor='epoxy', wall='concrete_wall', ceil=None, H=5.0, **R)
     s.room('corr', -40.0, -11.2, 41.8, -6.2, floor='tile_white', wall='facet', ceil='paint_black', H=3.6, **R)
     s.room('armory', 26.2, -5.8, 41.8, 8.0, floor='concrete_floor', wall='facet', ceil='paint_black', H=3.6, **R)
-    s.room('gear', 26.2, 8.2, 41.8, 22.0, floor='concrete_floor', wall='facet', ceil='paint_black', H=3.6, **R)
+    s.room('gear', 26.2, 8.2, 41.8, 22.0, floor='epoxy', wall='facet', ceil='paint_black', H=3.6, **R)
     s.room('medical', -40.0, -5.8, -26.2, 8.0, floor='tile_white', wall='paint_white', ceil='paint_white', H=3.6, **R)
     s.room('servers', -40.0, 8.2, -26.2, 22.0, floor='concrete_floor', wall='paint_charcoal', ceil='paint_black', H=3.6, **R)
     # row A
@@ -256,7 +260,11 @@ def level1():
             F('prop_bodyarmour_03', cx, cy, hh, z=1.0); F('h4_prop_battle_sports_helmet', cx, cy, hh, z=1.8)
             F('p_ld_heist_bag_s', cx, cy, hh) if k % 2 else F('prop_box_ammo04a', cx, cy, hh, z=0.33)
     cx = (r['x0'] + r['x1']) / 2; cy = (r['y0'] + r['y1']) / 2
-    s.box('metal_dark', cx - 3.0, cy - 0.6, 0, cx + 3.0, cy + 0.6, 0.9, faces='xXyY'); s.box('steel', cx - 3.05, cy - 0.65, 0.9, cx + 3.05, cy + 0.65, 0.95); s.cbox(cx - 3.0, cy - 0.6, 0, cx + 3.0, cy + 0.6, 0.95, 56)
+    s.box('metal_dark', cx - 3.0, cy - 0.6, 0.1, cx + 3.0, cy + 0.6, 0.9, faces='xXyY'); s.box('oak_panel', cx - 3.05, cy - 0.65, 0.9, cx + 3.05, cy + 0.65, 0.96, step=1.2); s.cbox(cx - 3.0, cy - 0.6, 0, cx + 3.0, cy + 0.6, 0.96, 56)
+    s.box('led_white', cx - 3.0, cy - 0.62, 0.05, cx + 3.0, cy + 0.62, 0.1, faces='xXyY')
+    for k in range(6):
+        for sg in (-1, 1): s.box('steel', cx - 2.7 + k * 1.0, cy + sg * 0.601 - (0.005 if sg < 0 else 0), 0.6, cx - 2.4 + k * 1.0, cy + sg * 0.601 + (0.005 if sg > 0 else 0), 0.62)
+    s.surf('swat_badge', (r['x0'] + 0.012, cy + 1.2, 1.0), -Y * -1 if False else Y, Z, 2.4, 2.4, step=0, fit=True) if False else s.surf('swat_badge', (r['x1'] - 0.012, cy + 1.2, 0.9), -Y, Z, 2.4, 2.4, step=0, fit=True)
     for k in range(6): F('prop_cs_walkie_talkie', cx - 2.5 + k * 1.0, cy - 0.2, 0.0, z=0.95); F('prop_mask_ballistic', cx - 2.5 + k * 1.0, cy + 0.25, 0.0, z=0.95)
     for k in range(4): F('prop_ballistic_shield', r['x1'] - 0.3, r['y0'] + 3.0 + k * 0.8, 270.0)
     s.box('hazard', r['x0'] + 0.5, cy - 1.6, 0.0, r['x1'] - 0.5, cy - 1.5, 0.012, faces='Z'); s.box('hazard', r['x0'] + 0.5, cy + 1.5, 0.0, r['x1'] - 0.5, cy + 1.6, 0.012, faces='Z')
