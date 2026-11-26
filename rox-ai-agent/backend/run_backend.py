@@ -3,7 +3,23 @@ import sys
 import traceback
 
 
+def _ensure_streams():
+    """Windowed (no-console) builds have sys.stdout/stderr = None, which crashes logging setups. Point them at a log file."""
+    if sys.stdout is None or sys.stderr is None:
+        try:
+            from rox.config import data_dir
+            f = open(data_dir() / "logs" / "backend.log", "a", encoding="utf-8", buffering=1)  # noqa: SIM115
+        except Exception:  # noqa: BLE001
+            import os
+            f = open(os.devnull, "w")  # noqa: SIM115
+        if sys.stdout is None:
+            sys.stdout = f
+        if sys.stderr is None:
+            sys.stderr = f
+
+
 def main():
+    _ensure_streams()
     try:
         from rox.server import main as serve
         serve()

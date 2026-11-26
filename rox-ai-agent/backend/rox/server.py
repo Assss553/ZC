@@ -493,7 +493,8 @@ def doctor_win(days: int = 7):
 
 def main():
     import uvicorn
-    uvicorn.run(app, host=config.HOST, port=config.PORT, log_level="warning")
+    # log_config=None: don't let uvicorn configure console formatters (they need a real TTY/stdout)
+    uvicorn.run(app, host=config.HOST, port=config.PORT, log_level="warning", log_config=None)
 
 
 if __name__ == "__main__":
